@@ -11,7 +11,7 @@
 | Layer        | Technology                         |
 |--------------|------------------------------------|
 | Backend      | Java 21, Spring Boot, Maven        |
-| Frontend     | Angular 19, Angular Material, NgRx |
+| Frontend     | Angular 19, Angular Material, NgRx, D3.js |
 | Database     | PostgreSQL                         |
 | Auth         | OIDC via Keycloak                  |
 | Packaging    | Docker, docker-compose             |
@@ -65,7 +65,8 @@
 
 - **Project dashboard**: summary of test cases by status, recent test runs, pass/fail trends.
 - **Test run report**: per-run breakdown of results.
-- Exportable reports (PDF or CSV) — **deferred to a later version**.
+- Charts and visualisations rendered in-app using **D3.js** (e.g., pass/fail pie charts, trend lines, coverage bar charts).
+- Reports are **exportable to PDF** directly from the application.
 
 ---
 
@@ -182,11 +183,16 @@ All endpoints require a valid OIDC bearer token. CORS is configured to allow the
 
 ---
 
-## 10. Open Questions / Decisions for Later
+## 10. Decisions Made
 
-- Attachment storage (local filesystem vs. S3-compatible object store)
+| Topic                | Decision                                                                 |
+|----------------------|--------------------------------------------------------------------------|
+| Attachment storage   | Local filesystem                                                         |
+| Reports              | In-app via D3.js, exportable to PDF                                      |
+| Import/Export        | Not in v1 — intentionally omitted to avoid encouraging off-tool authoring |
+
+## 11. Open Questions / Decisions for Later
+
 - Notification system (in-app, email)
 - Test case versioning / history
-- Import/export of test cases (CSV, XML)
 - Jenkins plugin or webhook-based integration
-- PDF/CSV report generation
