@@ -37,6 +37,10 @@
       "rights": "All rights reserved."
     }
   },
+  "auth": {
+    "email": "Email",
+    "password": "Password"
+  },
   "login": {
     "title": "Welcome Back",
     "subtitle": "Sign in to continue to Test Management.",
@@ -75,6 +79,19 @@
       "testCasesHint": "Define and manage your test cases with steps and expected results.",
       "testSuitesHint": "Group test cases into suites for organised execution.",
       "testRunsHint": "Execute test suites and track results across environments."
+    },
+    "members": {
+      "title": "Members",
+      "add": "Add Member",
+      "addTitle": "Add Project Member",
+      "selectUser": "Select User",
+      "role": "Role",
+      "empty": "No members yet. Add members to grant access to this project.",
+      "roles": {
+        "ADMIN": "Admin",
+        "TESTER": "Tester",
+        "VIEWER": "Viewer"
+      }
     }
   },
   "testCase": {
@@ -193,6 +210,20 @@
       "revoked": "Revoked",
       "never": "Never",
       "empty": "No API keys yet. Create one to allow external tools to submit test results."
+    },
+    "users": {
+      "title": "Users",
+      "description": "Manage user accounts. Only system administrators can create and manage users.",
+      "create": "Create User",
+      "createTitle": "Create User",
+      "editTitle": "Edit User",
+      "displayName": "Display Name",
+      "role": "Role",
+      "admin": "Admin",
+      "user": "User",
+      "systemAdminLabel": "System Administrator",
+      "newPassword": "New Password (leave blank to keep current)",
+      "empty": "No users yet. Create your first user account."
     }
   },
   "common": {

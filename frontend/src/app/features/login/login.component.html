@@ -8,21 +8,39 @@
     <h2 data-test-id="login-title">{{ 'login.title' | translate }}</h2>
     <p class="login-subtitle">{{ 'login.subtitle' | translate }}</p>
 
-    <button
-      mat-flat-button
-      class="login-btn"
-      (click)="onLogin()"
-      [disabled]="loading$ | async"
-      data-test-id="login-submit-btn">
-      @if (loading$ | async) {
-        <mat-spinner diameter="20"></mat-spinner>
-      } @else {
-        <ng-container>
-          <mat-icon>login</mat-icon>
-          {{ 'login.signIn' | translate }}
-        </ng-container>
-      }
-    </button>
+    @if (error$ | async; as error) {
+      <div class="login-error" data-test-id="login-error">{{ error }}</div>
+    }
+
+    <form (ngSubmit)="onLogin()" class="login-form">
+      <mat-form-field appearance="outline" class="login-field">
+        <mat-label>{{ 'auth.email' | translate }}</mat-label>
+        <input matInput type="email" [(ngModel)]="email" name="email"
+               required data-test-id="login-email" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="login-field">
+        <mat-label>{{ 'auth.password' | translate }}</mat-label>
+        <input matInput type="password" [(ngModel)]="password" name="password"
+               required data-test-id="login-password" />
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        type="submit"
+        class="login-btn"
+        [disabled]="(loading$ | async) || !email || !password"
+        data-test-id="login-submit-btn">
+        @if (loading$ | async) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          <ng-container>
+            <mat-icon>login</mat-icon>
+            {{ 'login.signIn' | translate }}
+          </ng-container>
+        }
+      </button>
+    </form>
 
     <a routerLink="/" class="back-link" data-test-id="login-back-home">
       {{ 'login.backToHome' | translate }}

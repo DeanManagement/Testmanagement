@@ -53,12 +53,25 @@ class ProjectServiceTest {
     }
 
     @Test
-    void findAll_returnsMappedProjects() {
+    void findAll_asAdmin_returnsAllProjects() {
         Project project = sampleProject();
         when(projectRepository.findAll()).thenReturn(List.of(project));
         when(projectMapper.toResponse(project)).thenReturn(sampleResponse());
 
-        List<ProjectResponse> result = projectService.findAll();
+        List<ProjectResponse> result = projectService.findAll(UUID.randomUUID(), true);
+
+        assertThat(result).hasSize(1);
+        assertThat(result.getFirst().name()).isEqualTo("Test Project");
+    }
+
+    @Test
+    void findAll_asNonAdmin_returnsMemberProjects() {
+        UUID userId = UUID.randomUUID();
+        Project project = sampleProject();
+        when(projectRepository.findByMembersUserId(userId)).thenReturn(List.of(project));
+        when(projectMapper.toResponse(project)).thenReturn(sampleResponse());
+
+        List<ProjectResponse> result = projectService.findAll(userId, false);
 
         assertThat(result).hasSize(1);
         assertThat(result.getFirst().name()).isEqualTo("Test Project");

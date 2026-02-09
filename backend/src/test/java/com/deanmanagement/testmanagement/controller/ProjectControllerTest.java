@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
@@ -51,9 +52,9 @@ class ProjectControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
     void findAll_returnsProjects() throws Exception {
-        when(projectService.findAll()).thenReturn(List.of(sampleResponse()));
+        when(projectService.findAll(any(UUID.class), anyBoolean())).thenReturn(List.of(sampleResponse()));
 
         mockMvc.perform(get("/api/projects"))
                 .andExpect(status().isOk())

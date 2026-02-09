@@ -14,4 +14,7 @@ public interface ProjectRepository extends JpaRepository<Project, UUID> {
     Optional<Project> findByKey(String key);
 
     List<Project> findByKeyContainingIgnoreCase(String key);
+
+    @org.springframework.data.jpa.repository.Query("SELECT p FROM Project p JOIN p.members m WHERE m.user.id = :userId")
+    List<Project> findByMembersUserId(@org.springframework.data.repository.query.Param("userId") UUID userId);
 }

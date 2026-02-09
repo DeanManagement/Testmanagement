@@ -1,5 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { adminGuard } from './core/guards/admin.guard';
 import { ShellComponent } from './core/components/shell/shell.component';
 
 export const routes: Routes = [
@@ -33,6 +34,7 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
+        canActivate: [adminGuard],
         loadChildren: () =>
           import('./features/settings/settings.routes').then((m) => m.settingsRoutes),
       },

@@ -22,3 +22,8 @@ export const selectAuthError = createSelector(
   selectAuthState,
   (state) => state.error
 );
+
+export const selectIsSystemAdmin = createSelector(
+  selectAuthUser,
+  (user) => user?.systemAdmin ?? false
+);

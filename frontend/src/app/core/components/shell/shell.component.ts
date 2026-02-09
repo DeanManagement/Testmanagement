@@ -11,7 +11,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../../services/auth.service';
-import { selectAuthUser } from '../../../store/auth/auth.selectors';
+import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
 
 @Component({
   selector: 'app-shell',
@@ -40,6 +40,7 @@ export class ShellComponent {
   private readonly authService = inject(AuthService);
 
   user$ = this.store.select(selectAuthUser);
+  isAdmin$ = this.store.select(selectIsSystemAdmin);
 
   switchLanguage(lang: string): void {
     this.translate.use(lang);

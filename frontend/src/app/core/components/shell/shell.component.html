@@ -14,13 +14,15 @@
         <span matListItemTitle>{{ 'nav.projects' | translate }}</span>
       </a>
     </mat-nav-list>
-    <mat-divider></mat-divider>
-    <mat-nav-list>
-      <a mat-list-item routerLink="/settings" routerLinkActive="active-link" data-test-id="nav-settings">
-        <mat-icon matListItemIcon>settings</mat-icon>
-        <span matListItemTitle>{{ 'nav.settings' | translate }}</span>
-      </a>
-    </mat-nav-list>
+    @if (isAdmin$ | async) {
+      <mat-divider></mat-divider>
+      <mat-nav-list>
+        <a mat-list-item routerLink="/settings" routerLinkActive="active-link" data-test-id="nav-settings">
+          <mat-icon matListItemIcon>settings</mat-icon>
+          <span matListItemTitle>{{ 'nav.settings' | translate }}</span>
+        </a>
+      </mat-nav-list>
+    }
     <div class="sidenav-footer">
       <small>v0.1.0</small>
     </div>

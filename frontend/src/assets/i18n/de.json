@@ -37,6 +37,10 @@
       "rights": "Alle Rechte vorbehalten."
     }
   },
+  "auth": {
+    "email": "E-Mail",
+    "password": "Passwort"
+  },
   "login": {
     "title": "Willkommen zurück",
     "subtitle": "Melden Sie sich an, um zum Testmanagement zu gelangen.",
@@ -75,6 +79,19 @@
       "testCasesHint": "Definieren und verwalten Sie Testfälle mit Schritten und erwarteten Ergebnissen.",
       "testSuitesHint": "Gruppieren Sie Testfälle in Suiten für organisierte Ausführung.",
       "testRunsHint": "Führen Sie Testsuiten aus und verfolgen Sie Ergebnisse über Umgebungen hinweg."
+    },
+    "members": {
+      "title": "Mitglieder",
+      "add": "Mitglied hinzufügen",
+      "addTitle": "Projektmitglied hinzufügen",
+      "selectUser": "Benutzer auswählen",
+      "role": "Rolle",
+      "empty": "Noch keine Mitglieder. Fügen Sie Mitglieder hinzu, um Zugriff auf dieses Projekt zu gewähren.",
+      "roles": {
+        "ADMIN": "Administrator",
+        "TESTER": "Tester",
+        "VIEWER": "Betrachter"
+      }
     }
   },
   "testCase": {
@@ -193,6 +210,20 @@
       "revoked": "Widerrufen",
       "never": "Nie",
       "empty": "Noch keine API-Schlüssel. Erstellen Sie einen, um externen Tools das Übermitteln von Testergebnissen zu ermöglichen."
+    },
+    "users": {
+      "title": "Benutzer",
+      "description": "Verwalten Sie Benutzerkonten. Nur Systemadministratoren können Benutzer erstellen und verwalten.",
+      "create": "Benutzer erstellen",
+      "createTitle": "Benutzer erstellen",
+      "editTitle": "Benutzer bearbeiten",
+      "displayName": "Anzeigename",
+      "role": "Rolle",
+      "admin": "Admin",
+      "user": "Benutzer",
+      "systemAdminLabel": "Systemadministrator",
+      "newPassword": "Neues Passwort (leer lassen für aktuelles)",
+      "empty": "Noch keine Benutzer. Erstellen Sie Ihr erstes Benutzerkonto."
     }
   },
   "common": {

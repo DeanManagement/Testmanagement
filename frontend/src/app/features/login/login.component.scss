@@ -51,6 +51,25 @@ h2 {
   margin: 0 0 32px;
 }
 
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.login-field {
+  width: 100%;
+}
+
+.login-error {
+  background: #fde8e8;
+  color: #c53030;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
 .login-btn {
   width: 100%;
   background: var(--tm-primary) !important;

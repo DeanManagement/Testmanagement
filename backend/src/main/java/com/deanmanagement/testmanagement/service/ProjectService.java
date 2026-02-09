@@ -22,8 +22,13 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
 
-    public List<ProjectResponse> findAll() {
-        return projectRepository.findAll().stream()
+    public List<ProjectResponse> findAll(UUID userId, boolean isSystemAdmin) {
+        if (isSystemAdmin) {
+            return projectRepository.findAll().stream()
+                    .map(projectMapper::toResponse)
+                    .toList();
+        }
+        return projectRepository.findByMembersUserId(userId).stream()
                 .map(projectMapper::toResponse)
                 .toList();
     }

@@ -67,6 +67,7 @@ h1 {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
+  margin-bottom: 32px;
 }
 
 .section-card {
@@ -110,4 +111,53 @@ h1 {
   font-size: 13px;
   margin: 0;
   line-height: 1.5;
+}
+
+.members-section {
+  padding: 24px;
+}
+
+.members-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+
+  h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--tm-text);
+  }
+}
+
+.add-member-btn {
+  background: var(--tm-accent) !important;
+  color: #fff !important;
+}
+
+.members-empty {
+  color: var(--tm-text-secondary);
+  text-align: center;
+  padding: 32px;
+}
+
+.members-table {
+  width: 100%;
+}
+
+.role-select {
+  width: 120px;
+}
+
+.actions-cell {
+  text-align: right;
+}
+
+.remove-btn {
+  color: var(--tm-text-secondary);
+
+  &:hover {
+    color: var(--tm-danger);
+  }
 }

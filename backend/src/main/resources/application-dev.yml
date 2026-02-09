@@ -1,19 +1,19 @@
 spring:
   datasource:
-    url: jdbc:h2:mem:testmanagement;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/testmanagement}
+    username: ${DB_USERNAME:testmanagement}
+    password: ${DB_PASSWORD:testmanagement}
   jpa:
     hibernate:
       ddl-auto: validate
+    open-in-view: false
   flyway:
+    enabled: true
     locations: classpath:db/migration
   h2:
     console:
       enabled: true
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: http://localhost:8180/realms/testmanagement
+
+app:
+  jwt:
+    secret: dev-secret-key-for-local-development-only

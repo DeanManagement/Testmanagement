@@ -19,13 +19,12 @@ import java.util.List;
 public class User extends BaseEntity {
 
     @Column(nullable = false, unique = true)
-    private String oidcSubject;
-
-    @Column(nullable = false)
     private String email;
 
     @Column(nullable = false)
     private String displayName;
+
+    private String passwordHash;
 
     @Column(nullable = false)
     private boolean systemAdmin;
