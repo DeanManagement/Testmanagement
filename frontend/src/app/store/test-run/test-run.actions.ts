@@ -1,0 +1,38 @@
+import { createActionGroup, props } from '@ngrx/store';
+import { CreateTestRunRequest, TestRun, UpdateTestRunRequest, UpdateTestResultRequest, UpdateStepResultRequest, TestResult, StepResult } from '../../shared/models/test-run.model';
+
+export const TestRunActions = createActionGroup({
+  source: 'TestRuns',
+  events: {
+    'Load Test Runs': props<{ projectId: string }>(),
+    'Load Test Runs Success': props<{ testRuns: TestRun[] }>(),
+    'Load Test Runs Failure': props<{ error: string }>(),
+    'Load Test Run': props<{ projectId: string; id: string }>(),
+    'Load Test Run Success': props<{ testRun: TestRun }>(),
+    'Load Test Run Failure': props<{ error: string }>(),
+    'Create Test Run': props<{ projectId: string; request: CreateTestRunRequest }>(),
+    'Create Test Run Success': props<{ testRun: TestRun }>(),
+    'Create Test Run Failure': props<{ error: string }>(),
+    'Update Test Run': props<{ projectId: string; id: string; request: UpdateTestRunRequest }>(),
+    'Update Test Run Success': props<{ testRun: TestRun }>(),
+    'Update Test Run Failure': props<{ error: string }>(),
+    'Delete Test Run': props<{ projectId: string; id: string }>(),
+    'Delete Test Run Success': props<{ id: string }>(),
+    'Delete Test Run Failure': props<{ error: string }>(),
+    'Update Test Result': props<{ projectId: string; runId: string; resultId: string; request: UpdateTestResultRequest }>(),
+    'Update Test Result Success': props<{ runId: string; result: TestResult }>(),
+    'Update Test Result Failure': props<{ error: string }>(),
+    'Update Step Result': props<{ projectId: string; runId: string; resultId: string; stepResultId: string; request: UpdateStepResultRequest }>(),
+    'Update Step Result Success': props<{ runId: string; resultId: string; stepResult: StepResult }>(),
+    'Update Step Result Failure': props<{ error: string }>(),
+    'Upload Screenshot': props<{ runId: string; resultId: string; stepResultId: string; file: File }>(),
+    'Upload Screenshot Success': props<{ runId: string; resultId: string; stepResultId: string; screenshotId: string }>(),
+    'Upload Screenshot Failure': props<{ error: string }>(),
+    'Delete Screenshot': props<{ runId: string; resultId: string; stepResultId: string; screenshotId: string }>(),
+    'Delete Screenshot Success': props<{ runId: string; resultId: string; stepResultId: string }>(),
+    'Delete Screenshot Failure': props<{ error: string }>(),
+    'Clone Test Run': props<{ projectId: string; runId: string; request: { name: string; environment?: string } }>(),
+    'Clone Test Run Success': props<{ testRun: TestRun }>(),
+    'Clone Test Run Failure': props<{ error: string }>(),
+  },
+});

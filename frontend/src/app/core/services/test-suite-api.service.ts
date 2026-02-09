@@ -1,0 +1,33 @@
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { CreateTestSuiteRequest, TestSuite, UpdateTestSuiteRequest } from '../../shared/models/test-suite.model';
+
+@Injectable({ providedIn: 'root' })
+export class TestSuiteApiService {
+  private readonly http = inject(HttpClient);
+
+  private baseUrl(projectId: string): string {
+    return `/api/projects/${projectId}/test-suites`;
+  }
+
+  getAll(projectId: string): Observable<TestSuite[]> {
+    return this.http.get<TestSuite[]>(this.baseUrl(projectId));
+  }
+
+  getById(projectId: string, id: string): Observable<TestSuite> {
+    return this.http.get<TestSuite>(`${this.baseUrl(projectId)}/${id}`);
+  }
+
+  create(projectId: string, request: CreateTestSuiteRequest): Observable<TestSuite> {
+    return this.http.post<TestSuite>(this.baseUrl(projectId), request);
+  }
+
+  update(projectId: string, id: string, request: UpdateTestSuiteRequest): Observable<TestSuite> {
+    return this.http.put<TestSuite>(`${this.baseUrl(projectId)}/${id}`, request);
+  }
+
+  delete(projectId: string, id: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl(projectId)}/${id}`);
+  }
+}

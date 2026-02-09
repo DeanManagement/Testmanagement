@@ -1,0 +1,71 @@
+import { Component, inject, OnInit } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { AsyncPipe, DatePipe } from '@angular/common';
+import { MatTableModule } from '@angular/material/table';
+import { MatButtonModule } from '@angular/material/button';
+import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
+import { TranslateModule } from '@ngx-translate/core';
+import { Actions, ofType } from '@ngrx/effects';
+import { take } from 'rxjs/operators';
+import { ApiKeyActions } from '../../../store/api-key/api-key.actions';
+import { selectAllApiKeys, selectApiKeysLoading } from '../../../store/api-key/api-key.selectors';
+import { CreateApiKeyDialogComponent } from '../create-api-key-dialog/create-api-key-dialog.component';
+
+@Component({
+  selector: 'app-api-key-list',
+  standalone: true,
+  imports: [
+    AsyncPipe,
+    DatePipe,
+    MatTableModule,
+    MatButtonModule,
+    MatIconModule,
+    MatProgressSpinnerModule,
+    MatChipsModule,
+    TranslateModule,
+  ],
+  templateUrl: './api-key-list.component.html',
+  styleUrl: './api-key-list.component.scss',
+})
+export class ApiKeyListComponent implements OnInit {
+  private readonly store = inject(Store);
+  private readonly dialog = inject(MatDialog);
+  private readonly actions$ = inject(Actions);
+
+  apiKeys$ = this.store.select(selectAllApiKeys);
+  loading$ = this.store.select(selectApiKeysLoading);
+  displayedColumns = ['name', 'keyPrefix', 'createdAt', 'lastUsedAt', 'status', 'actions'];
+
+  ngOnInit(): void {
+    this.store.dispatch(ApiKeyActions.loadApiKeys());
+  }
+
+  openCreateDialog(): void {
+    const dialogRef = this.dialog.open(CreateApiKeyDialogComponent, {
+      disableClose: true,
+    });
+
+    dialogRef.afterClosed().subscribe((result) => {
+      if (result?.action === 'create') {
+        this.store.dispatch(ApiKeyActions.createApiKey({ request: { name: result.name } }));
+
+        this.actions$.pipe(
+          ofType(ApiKeyActions.createApiKeySuccess),
+          take(1)
+        ).subscribe(({ created }) => {
+          const newDialogRef = this.dialog.open(CreateApiKeyDialogComponent, {
+            disableClose: true,
+          });
+          newDialogRef.componentInstance.setCreatedKey(created);
+        });
+      }
+    });
+  }
+
+  revokeKey(id: string): void {
+    this.store.dispatch(ApiKeyActions.revokeApiKey({ id }));
+  }
+}

@@ -1,0 +1,19 @@
+<div class="project-card tm-card" data-test-id="project-card">
+
+  <div class="card-header">
+    <span class="project-key">{{ project.key }}</span>
+    <a mat-button [routerLink]="['/projects', project.id]" data-test-id="project-card-open">
+      <h3 class="project-name">{{ project.name }}</h3>
+    </a>
+  </div>
+
+  @if (project.description) {
+    <p class="project-description">{{ project.description }}</p>
+  }
+  <div class="card-actions">
+    <a mat-button [routerLink]="['/projects', project.id]" data-test-id="project-card-open">
+      <mat-icon>open_in_new</mat-icon>
+      {{ 'dashboard.projects.open' | translate }}
+    </a>
+  </div>
+</div>

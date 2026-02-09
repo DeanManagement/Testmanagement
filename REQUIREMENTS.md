@@ -8,14 +8,14 @@
 
 ## 2. Technology Stack
 
-| Layer        | Technology                         |
-|--------------|------------------------------------|
-| Backend      | Java 21, Spring Boot, Maven        |
-| Frontend     | Angular 19, Angular Material, NgRx, D3.js |
-| Database     | PostgreSQL                         |
-| Auth         | OIDC via Keycloak                  |
-| Packaging    | Docker, docker-compose             |
-| API Style    | REST (JSON)                        |
+| Layer        | Technology                                   |
+|--------------|----------------------------------------------|
+| Backend      | Java 21, Spring Boot, Maven                  |
+| Frontend     | Angular 19, Angular Material, NgRx, Chart.js |
+| Database     | PostgreSQL                                   |
+| Auth         | OIDC via Keycloak                            |
+| Packaging    | Docker, docker-compose                       |
+| API Style    | REST (JSON)                                  |
 
 ---
 
@@ -65,7 +65,7 @@
 
 - **Project dashboard**: summary of test cases by status, recent test runs, pass/fail trends.
 - **Test run report**: per-run breakdown of results.
-- Charts and visualisations rendered in-app using **D3.js** (e.g., pass/fail pie charts, trend lines, coverage bar charts).
+- Charts and visualisations rendered in-app using **Chart.js** (e.g., pass/fail pie charts, trend lines, coverage bar charts).
 - Reports are **exportable to PDF** directly from the application.
 
 ---

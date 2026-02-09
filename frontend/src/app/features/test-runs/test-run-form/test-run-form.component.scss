@@ -1,0 +1,73 @@
+.form-container {
+  padding: 32px;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.full-width {
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.test-cases-picker {
+  margin: 16px 0;
+
+  h3 {
+    margin: 0 0 4px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tm-text);
+  }
+}
+
+.picker-hint {
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+  margin: 0 0 12px;
+}
+
+.tc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-radius);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.tc-checkbox {
+  font-size: 14px;
+}
+
+.empty-hint {
+  color: var(--tm-text-secondary);
+  font-size: 14px;
+}
+
+.actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+
+  [mat-flat-button] {
+    background: var(--tm-accent) !important;
+    color: #fff !important;
+  }
+}
+
+:host ::ng-deep {
+  .mat-mdc-card {
+    border: 1px solid var(--tm-border);
+    box-shadow: var(--tm-shadow) !important;
+    border-radius: var(--tm-radius);
+  }
+
+  .mat-mdc-card-header {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--tm-border);
+    margin-bottom: 24px;
+  }
+}

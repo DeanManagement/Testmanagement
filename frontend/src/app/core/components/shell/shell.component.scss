@@ -1,0 +1,110 @@
+.app-container {
+  height: 100%;
+}
+
+// -- Sidenav --
+.sidenav {
+  width: 250px;
+  background: var(--tm-primary);
+  border-right: none !important;
+}
+
+.sidenav-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  margin-bottom: 8px;
+}
+
+.brand-icon {
+  color: var(--tm-accent);
+  font-size: 32px;
+  width: 32px;
+  height: 32px;
+}
+
+.brand-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+}
+
+.sidenav ::ng-deep {
+  .mat-mdc-nav-list {
+    padding: 0 8px;
+  }
+
+  .mat-mdc-list-item {
+    border-radius: 6px;
+    margin-bottom: 2px;
+    color: rgba(255, 255, 255, 0.75);
+
+    .mat-icon {
+      color: rgba(255, 255, 255, 0.55);
+    }
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    &.active-link {
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+
+      .mat-icon {
+        color: var(--tm-accent);
+      }
+    }
+  }
+}
+
+.sidenav-footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 12px 20px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+// -- Toolbar --
+.app-toolbar {
+  background: var(--tm-surface) !important;
+  color: var(--tm-text) !important;
+  border-bottom: 1px solid var(--tm-border);
+  box-shadow: none !important;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.toolbar-title {
+  font-weight: 600;
+  font-size: 16px;
+  margin-left: 8px;
+}
+
+.toolbar-action {
+  color: var(--tm-text-secondary);
+}
+
+.user-display {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--tm-text);
+  margin-right: 4px;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+// -- Content --
+.app-content {
+  min-height: calc(100vh - 64px);
+  background: var(--tm-bg);
+}

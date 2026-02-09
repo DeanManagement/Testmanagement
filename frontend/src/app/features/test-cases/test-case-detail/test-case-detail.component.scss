@@ -1,0 +1,83 @@
+.detail-container {
+  padding: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.back-link { color: var(--tm-text-secondary) !important; }
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.delete-btn {
+  color: var(--tm-danger) !important;
+  border-color: var(--tm-danger) !important;
+}
+
+.tc-hero {
+  padding: 32px;
+  margin-bottom: 24px;
+}
+
+.hero-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+
+  h1 {
+    margin: 0;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--tm-text);
+  }
+}
+
+.hero-badges {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.tc-description {
+  color: var(--tm-text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+
+.tc-preconditions {
+  margin-bottom: 16px;
+  strong { color: var(--tm-text); }
+  p { color: var(--tm-text-secondary); margin: 4px 0 0; }
+}
+
+.tc-labels {
+  display: flex;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.steps-section {
+  padding: 24px;
+
+  h3 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tm-text);
+  }
+}
+
+.steps-table {
+  width: 100%;
+}

@@ -1,0 +1,209 @@
+{
+  "app": {
+    "title": "Testmanagement"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projekte",
+    "testCases": "Testfälle",
+    "testSuites": "Testsuiten",
+    "testRuns": "Testläufe",
+    "settings": "Einstellungen"
+  },
+  "landing": {
+    "nav": {
+      "login": "Anmelden"
+    },
+    "hero": {
+      "title": "Testmanagement leicht gemacht",
+      "subtitle": "Organisieren, ausführen und verfolgen Sie Ihre Testfälle mit einem leichtgewichtigen, selbst gehosteten Tool für kleine Teams.",
+      "cta": "Jetzt starten"
+    },
+    "features": {
+      "testCases": {
+        "title": "Testfälle",
+        "description": "Definieren Sie Testfälle mit Schritten, erwarteten Ergebnissen, Prioritäten und Labels. Alles strukturiert und durchsuchbar."
+      },
+      "testRuns": {
+        "title": "Testläufe",
+        "description": "Führen Sie Testsuiten über Umgebungen hinweg aus und verfolgen Sie Ergebnisse in Echtzeit."
+      },
+      "reporting": {
+        "title": "Berichte",
+        "description": "Visualisieren Sie Testabdeckung, Erfolgsraten und Trends mit integrierten Diagrammen und Dashboards."
+      }
+    },
+    "footer": {
+      "rights": "Alle Rechte vorbehalten."
+    }
+  },
+  "login": {
+    "title": "Willkommen zurück",
+    "subtitle": "Melden Sie sich an, um zum Testmanagement zu gelangen.",
+    "signIn": "Anmelden",
+    "backToHome": "Zurück zur Startseite"
+  },
+  "dashboard": {
+    "welcome": "Willkommen zurück",
+    "subtitle": "Hier ist eine Übersicht Ihrer Projekte.",
+    "actions": {
+      "createProject": "Projekt erstellen",
+      "viewAll": "Alle Projekte anzeigen"
+    },
+    "projects": {
+      "title": "Ihre Projekte",
+      "open": "Öffnen",
+      "empty": "Noch keine Projekte. Erstellen Sie Ihr erstes Projekt."
+    }
+  },
+  "project": {
+    "list": {
+      "title": "Projekte",
+      "create": "Projekt erstellen",
+      "empty": "Noch keine Projekte. Erstellen Sie Ihr erstes Projekt.",
+      "search": "Projekte suchen"
+    },
+    "form": {
+      "createTitle": "Projekt erstellen",
+      "editTitle": "Projekt bearbeiten",
+      "name": "Name",
+      "description": "Beschreibung",
+      "key": "Schlüssel",
+      "keyHint": "Automatisch vom Projektnamen generiert"
+    },
+    "detail": {
+      "testCasesHint": "Definieren und verwalten Sie Testfälle mit Schritten und erwarteten Ergebnissen.",
+      "testSuitesHint": "Gruppieren Sie Testfälle in Suiten für organisierte Ausführung.",
+      "testRunsHint": "Führen Sie Testsuiten aus und verfolgen Sie Ergebnisse über Umgebungen hinweg."
+    }
+  },
+  "testCase": {
+    "key": "Schlüssel",
+    "list": {
+      "title": "Testfälle",
+      "create": "Testfall erstellen",
+      "empty": "Noch keine Testfälle. Erstellen Sie Ihren ersten Testfall."
+    },
+    "form": {
+      "createTitle": "Testfall erstellen",
+      "editTitle": "Testfall bearbeiten",
+      "title": "Titel",
+      "description": "Beschreibung",
+      "preconditions": "Vorbedingungen",
+      "priority": "Priorität",
+      "status": "Status",
+      "labels": "Labels",
+      "labelsHint": "Kommagetrennte Labels",
+      "tabDetails": "Details",
+      "tabScript": "Skript",
+      "steps": "Testschritte",
+      "stepsEmpty": "Noch keine Schritte. Fügen Sie den ersten Schritt hinzu, um das Testskript zu definieren.",
+      "addStep": "Schritt hinzufügen",
+      "action": "Aktion",
+      "expectedResult": "Erwartetes Ergebnis"
+    }
+  },
+  "testSuite": {
+    "list": {
+      "title": "Testsuiten",
+      "create": "Testsuite erstellen",
+      "empty": "Noch keine Testsuiten."
+    },
+    "form": {
+      "createTitle": "Testsuite erstellen",
+      "editTitle": "Testsuite bearbeiten",
+      "name": "Name",
+      "description": "Beschreibung",
+      "testCases": "Testfälle"
+    }
+  },
+  "testRun": {
+    "list": {
+      "title": "Testläufe",
+      "create": "Testlauf starten",
+      "empty": "Noch keine Testläufe."
+    },
+    "form": {
+      "createTitle": "Testlauf starten",
+      "name": "Name",
+      "environment": "Umgebung"
+    },
+    "status": {
+      "PLANNED": "Geplant",
+      "IN_PROGRESS": "Laufend",
+      "COMPLETED": "Abgeschlossen",
+      "ABORTED": "Abgebrochen"
+    },
+    "clone": "Klonen",
+    "cloneDialog": {
+      "title": "Testlauf klonen",
+      "name": "Name",
+      "environment": "Umgebung",
+      "cancel": "Abbrechen",
+      "confirm": "Klonen"
+    },
+    "execution": {
+      "search": "Testfälle suchen",
+      "prev": "Zurück",
+      "next": "Weiter",
+      "noSelection": "Wählen Sie einen Testfall aus der Seitenleiste aus."
+    }
+  },
+  "priority": {
+    "LOW": "Niedrig",
+    "MEDIUM": "Mittel",
+    "HIGH": "Hoch",
+    "CRITICAL": "Kritisch"
+  },
+  "testCaseStatus": {
+    "DRAFT": "Entwurf",
+    "ACTIVE": "Aktiv",
+    "DEPRECATED": "Veraltet"
+  },
+  "stepResult": {
+    "results": "Ergebnisse",
+    "step": "Schritt",
+    "expected": "Erwartetes Ergebnis",
+    "actualResult": "Tatsächliches Ergebnis",
+    "addScreenshot": "Screenshot hinzufügen",
+    "noSteps": "Keine Schritte für diesen Testfall definiert."
+  },
+  "resultStatus": {
+    "PENDING": "Ausstehend",
+    "PASSED": "Bestanden",
+    "FAILED": "Fehlgeschlagen",
+    "BLOCKED": "Blockiert",
+    "SKIPPED": "Übersprungen"
+  },
+  "settings": {
+    "apiKeys": {
+      "title": "API-Schlüssel",
+      "description": "Verwalten Sie API-Schlüssel für externe Testautomatisierungstools zur Übermittlung von Testergebnissen.",
+      "create": "API-Schlüssel erstellen",
+      "createTitle": "API-Schlüssel erstellen",
+      "createdTitle": "API-Schlüssel erstellt",
+      "createdWarning": "Kopieren Sie diesen Schlüssel jetzt. Sie können ihn danach nicht mehr einsehen.",
+      "done": "Fertig",
+      "name": "Name",
+      "key": "Schlüssel",
+      "createdAt": "Erstellt",
+      "lastUsed": "Zuletzt verwendet",
+      "status": "Status",
+      "active": "Aktiv",
+      "revoked": "Widerrufen",
+      "never": "Nie",
+      "empty": "Noch keine API-Schlüssel. Erstellen Sie einen, um externen Tools das Übermitteln von Testergebnissen zu ermöglichen."
+    }
+  },
+  "common": {
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "back": "Zurück",
+    "confirm": "Bestätigen",
+    "loading": "Laden...",
+    "actions": "Aktionen",
+    "noResults": "Keine Ergebnisse gefunden."
+  }
+}

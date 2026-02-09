@@ -1,0 +1,110 @@
+<div class="form-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title data-test-id="test-case-form-title">
+        {{ (editMode ? 'testCase.form.editTitle' : 'testCase.form.createTitle') | translate }}
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" data-test-id="test-case-form">
+        <mat-tab-group animationDuration="0ms" data-test-id="test-case-form-tabs">
+          <mat-tab [label]="'testCase.form.tabDetails' | translate">
+            <div class="tab-content">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>{{ 'testCase.form.title' | translate }}</mat-label>
+                <input matInput formControlName="title" data-test-id="test-case-title-input" />
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>{{ 'testCase.form.description' | translate }}</mat-label>
+                <textarea matInput formControlName="description" rows="3" data-test-id="test-case-description-input"></textarea>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>{{ 'testCase.form.preconditions' | translate }}</mat-label>
+                <textarea matInput formControlName="preconditions" rows="2" data-test-id="test-case-preconditions-input"></textarea>
+              </mat-form-field>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ 'testCase.form.priority' | translate }}</mat-label>
+                  <mat-select formControlName="priority" data-test-id="test-case-priority-select">
+                    @for (p of priorities; track p) {
+                      <mat-option [value]="p">{{ 'priority.' + p | translate }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ 'testCase.form.status' | translate }}</mat-label>
+                  <mat-select formControlName="status" data-test-id="test-case-status-select">
+                    @for (s of statuses; track s) {
+                      <mat-option [value]="s">{{ 'testCaseStatus.' + s | translate }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>{{ 'testCase.form.labels' | translate }}</mat-label>
+                <input matInput formControlName="labels" data-test-id="test-case-labels-input" />
+                <mat-hint>{{ 'testCase.form.labelsHint' | translate }}</mat-hint>
+              </mat-form-field>
+            </div>
+          </mat-tab>
+
+          <mat-tab [label]="'testCase.form.tabScript' | translate">
+            <div class="tab-content">
+              <div class="steps-section">
+                <div class="steps-header">
+                  <h3>{{ 'testCase.form.steps' | translate }}</h3>
+                  <button mat-stroked-button type="button" (click)="addStep()" data-test-id="test-case-add-step-btn">
+                    <mat-icon>add</mat-icon>
+                    {{ 'testCase.form.addStep' | translate }}
+                  </button>
+                </div>
+
+                @if (steps.length === 0) {
+                  <div class="steps-empty" data-test-id="test-case-steps-empty">
+                    <mat-icon>list_alt</mat-icon>
+                    <p>{{ 'testCase.form.stepsEmpty' | translate }}</p>
+                    <button mat-stroked-button type="button" (click)="addStep()" data-test-id="test-case-add-first-step-btn">
+                      <mat-icon>add</mat-icon>
+                      {{ 'testCase.form.addStep' | translate }}
+                    </button>
+                  </div>
+                }
+
+                @for (step of steps.controls; track $index; let i = $index) {
+                  <div class="step-row" [formGroupName]="'steps'">
+                    <div [formGroupName]="i" class="step-fields">
+                      <span class="step-number">{{ i + 1 }}</span>
+                      <mat-form-field appearance="outline" class="step-action">
+                        <mat-label>{{ 'testCase.form.action' | translate }}</mat-label>
+                        <input matInput formControlName="action" [attr.data-test-id]="'test-case-step-action-' + i" />
+                      </mat-form-field>
+                      <mat-form-field appearance="outline" class="step-expected">
+                        <mat-label>{{ 'testCase.form.expectedResult' | translate }}</mat-label>
+                        <input matInput formControlName="expectedResult" [attr.data-test-id]="'test-case-step-expected-' + i" />
+                      </mat-form-field>
+                      <button mat-icon-button type="button" (click)="removeStep(i)" class="remove-step" [attr.data-test-id]="'test-case-remove-step-' + i">
+                        <mat-icon>close</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+          </mat-tab>
+        </mat-tab-group>
+
+        <div class="actions">
+          <a mat-button [routerLink]="['/projects', projectId, 'test-cases']" data-test-id="test-case-form-cancel">{{ 'common.cancel' | translate }}</a>
+          <button mat-flat-button type="submit" [disabled]="form.invalid" data-test-id="test-case-form-submit">
+            {{ 'common.save' | translate }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

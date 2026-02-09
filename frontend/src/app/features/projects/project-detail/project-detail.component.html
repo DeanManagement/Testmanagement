@@ -1,0 +1,54 @@
+@if (project$ | async; as project) {
+  <div class="detail-container">
+    <div class="detail-header">
+      <a mat-button routerLink="/projects" class="back-link" data-test-id="project-detail-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <div class="detail-actions">
+        <a mat-stroked-button [routerLink]="['/projects', project.id, 'edit']" data-test-id="project-detail-edit-btn">
+          <mat-icon>edit</mat-icon>
+          {{ 'common.edit' | translate }}
+        </a>
+        <button mat-stroked-button (click)="deleteProject(project.id)" class="delete-btn" data-test-id="project-detail-delete-btn">
+          <mat-icon>delete</mat-icon>
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="project-hero tm-card" data-test-id="project-hero">
+      <div class="hero-top">
+        <span class="project-key" data-test-id="project-detail-key">{{ project.key }}</span>
+        <h1 data-test-id="project-detail-name">{{ project.name }}</h1>
+      </div>
+      @if (project.description) {
+        <p class="project-description" data-test-id="project-detail-description">{{ project.description }}</p>
+      }
+    </div>
+
+    <div class="detail-sections">
+      <a class="section-card tm-card" [routerLink]="['/projects', project.id, 'test-cases']" data-test-id="section-test-cases">
+        <div class="section-header">
+          <mat-icon>bug_report</mat-icon>
+          <h3>{{ 'nav.testCases' | translate }}</h3>
+        </div>
+        <p class="section-hint">{{ 'project.detail.testCasesHint' | translate }}</p>
+      </a>
+      <a class="section-card tm-card" [routerLink]="['/projects', project.id, 'test-suites']" data-test-id="section-test-suites">
+        <div class="section-header">
+          <mat-icon>playlist_add_check</mat-icon>
+          <h3>{{ 'nav.testSuites' | translate }}</h3>
+        </div>
+        <p class="section-hint">{{ 'project.detail.testSuitesHint' | translate }}</p>
+      </a>
+      <a class="section-card tm-card" [routerLink]="['/projects', project.id, 'test-runs']" data-test-id="section-test-runs">
+        <div class="section-header">
+          <mat-icon>play_circle</mat-icon>
+          <h3>{{ 'nav.testRuns' | translate }}</h3>
+        </div>
+        <p class="section-hint">{{ 'project.detail.testRunsHint' | translate }}</p>
+      </a>
+    </div>
+  </div>
+}

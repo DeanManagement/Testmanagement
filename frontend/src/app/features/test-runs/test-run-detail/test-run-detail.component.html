@@ -1,0 +1,236 @@
+@if (testRun$ | async; as run) {
+  <div class="detail-container">
+    <div class="detail-header">
+      <a mat-button [routerLink]="['/projects', projectId, 'test-runs']" class="back-link" data-test-id="test-run-detail-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <div class="detail-actions">
+        @if (run.status === 'PLANNED') {
+          <button mat-flat-button (click)="updateStatus(run, 'IN_PROGRESS')" class="start-btn" data-test-id="test-run-start-btn">
+            <mat-icon>play_arrow</mat-icon>
+            Start
+          </button>
+        }
+        @if (run.status === 'IN_PROGRESS') {
+          <button mat-flat-button (click)="saveAll(run)" [disabled]="!hasUnsavedChanges" class="save-btn" data-test-id="test-run-save-btn">
+            <mat-icon>save</mat-icon>
+            {{ 'common.save' | translate }}
+          </button>
+          <button mat-flat-button (click)="updateStatus(run, 'COMPLETED')" class="complete-btn" data-test-id="test-run-complete-btn">
+            <mat-icon>check</mat-icon>
+            Complete
+          </button>
+          <button mat-stroked-button (click)="updateStatus(run, 'ABORTED')" class="abort-btn" data-test-id="test-run-abort-btn">
+            <mat-icon>stop</mat-icon>
+            Abort
+          </button>
+        }
+        <button mat-stroked-button (click)="cloneTestRun(run)" class="clone-btn" data-test-id="test-run-clone-btn">
+          <mat-icon>content_copy</mat-icon>
+          {{ 'testRun.clone' | translate }}
+        </button>
+        <button mat-stroked-button (click)="deleteTestRun(run.id)" class="delete-btn" data-test-id="test-run-detail-delete-btn">
+          <mat-icon>delete</mat-icon>
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="run-hero tm-card" data-test-id="test-run-hero">
+      <div class="hero-top">
+        <h1 data-test-id="test-run-detail-name">{{ run.name }}</h1>
+        <span class="badge badge--{{ run.status | lowercase }}" data-test-id="test-run-detail-status">{{ 'testRun.status.' + run.status | translate }}</span>
+      </div>
+      @if (run.environment) {
+        <p class="run-env" data-test-id="test-run-detail-env">
+          <mat-icon class="env-icon">dns</mat-icon>
+          {{ run.environment }}
+        </p>
+      }
+      <div class="run-meta">
+        @if (run.startTime) {
+          <span class="meta-item" data-test-id="test-run-start-time">Started: {{ run.startTime | date:'medium' }}</span>
+        }
+        @if (run.endTime) {
+          <span class="meta-item" data-test-id="test-run-end-time">Ended: {{ run.endTime | date:'medium' }}</span>
+        }
+      </div>
+    </div>
+
+    @if (run.results.length) {
+      @if (run.status === 'IN_PROGRESS') {
+        <div class="execution-layout" data-test-id="test-run-execution-layout">
+          <div class="execution-sidebar" data-test-id="execution-sidebar">
+            <mat-form-field appearance="outline" class="sidebar-search">
+              <mat-icon matPrefix>search</mat-icon>
+              <input matInput [(ngModel)]="executionSearchTerm" [placeholder]="'testRun.execution.search' | translate" />
+            </mat-form-field>
+            <div class="result-list">
+              @for (result of filteredResults(run); track result.id) {
+                <div class="result-item" [class.result-item--active]="result.id === activeResultId" (click)="setActiveResult(result.id)" [attr.data-test-id]="'execution-sidebar-item-' + result.id">
+                  <span class="result-item-title">{{ result.testCaseTitle }}</span>
+                  <span class="badge badge--{{ getResultStatus(result) | lowercase }} badge--small">{{ 'resultStatus.' + getResultStatus(result) | translate }}</span>
+                </div>
+              }
+            </div>
+          </div>
+
+          <div class="execution-main" data-test-id="execution-main">
+            @if (activeResult(run); as result) {
+              <div class="case-header">
+                <h3 class="case-title">
+                  <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link" data-test-id="execution-tc-link">
+                    {{ result.testCaseTitle }}
+                  </a>
+                </h3>
+                <mat-form-field appearance="outline" class="status-select">
+                  <mat-select [value]="getResultStatus(result)" (selectionChange)="onResultStatusChange(result.id, $event.value)" [attr.data-test-id]="'execution-result-status-' + result.id">
+                    @for (s of resultStatuses; track s) {
+                      <mat-option [value]="s">{{ 'resultStatus.' + s | translate }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+              </div>
+
+              @if (sortedSteps(result).length) {
+                <div class="steps-list">
+                  @for (step of sortedSteps(result); track step.id; let i = $index) {
+                    <div class="step-row" [attr.data-test-id]="'step-result-row-' + step.id">
+                      <div class="step-header">
+                        <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
+                        <span class="badge badge--{{ getStepStatus(step) | lowercase }} badge--small">{{ 'resultStatus.' + getStepStatus(step) | translate }}</span>
+                      </div>
+                      <div class="step-spec">
+                        <div class="spec-item">
+                          <span class="spec-label">{{ 'testCase.form.action' | translate }}</span>
+                          <span class="spec-text">{{ step.action }}</span>
+                        </div>
+                        @if (step.expectedResult) {
+                          <div class="spec-item">
+                            <span class="spec-label">{{ 'stepResult.expected' | translate }}</span>
+                            <span class="spec-text">{{ step.expectedResult }}</span>
+                          </div>
+                        }
+                      </div>
+                      <div class="step-inputs">
+                        <mat-form-field appearance="outline" class="step-status-select">
+                          <mat-label>{{ 'testCase.form.status' | translate }}</mat-label>
+                          <mat-select [value]="getStepStatus(step)" (selectionChange)="onStepStatusChange(step.id, $event.value)">
+                            @for (s of resultStatuses; track s) {
+                              <mat-option [value]="s">{{ 'resultStatus.' + s | translate }}</mat-option>
+                            }
+                          </mat-select>
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="step-actual-input">
+                          <mat-label>{{ 'stepResult.actualResult' | translate }}</mat-label>
+                          <textarea matInput
+                            [ngModel]="getStepActualResult(step)"
+                            (ngModelChange)="onStepActualChange(step.id, $event)"
+                            rows="2"></textarea>
+                        </mat-form-field>
+                      </div>
+                      <div class="step-screenshot">
+                        @if (step.screenshotId) {
+                          <div class="screenshot-preview">
+                            <img [src]="getScreenshotUrl(step.screenshotId)" alt="Screenshot" class="screenshot-thumb" />
+                            <button mat-icon-button class="screenshot-delete" (click)="deleteScreenshot(result.id, step)">
+                              <mat-icon>close</mat-icon>
+                            </button>
+                          </div>
+                        } @else {
+                          <button mat-stroked-button class="upload-btn" (click)="focusFileInput.click()">
+                            <mat-icon>add_a_photo</mat-icon>
+                            {{ 'stepResult.addScreenshot' | translate }}
+                          </button>
+                          <input #focusFileInput type="file" accept="image/*" hidden (change)="onScreenshotUpload(result.id, step.id, $event)" />
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              } @else {
+                <p class="no-steps">{{ 'stepResult.noSteps' | translate }}</p>
+              }
+
+              <div class="case-nav">
+                <button mat-stroked-button [disabled]="!canNavigate('prev', run)" (click)="navigateResult('prev', run)" data-test-id="execution-prev-btn">
+                  <mat-icon>chevron_left</mat-icon>
+                  {{ 'testRun.execution.prev' | translate }}
+                </button>
+                <span class="case-counter">{{ activeResultIndex(run) + 1 }} / {{ run.results.length }}</span>
+                <button mat-stroked-button [disabled]="!canNavigate('next', run)" (click)="navigateResult('next', run)" data-test-id="execution-next-btn">
+                  {{ 'testRun.execution.next' | translate }}
+                  <mat-icon>chevron_right</mat-icon>
+                </button>
+              </div>
+            } @else {
+              <div class="no-selection">
+                <mat-icon>touch_app</mat-icon>
+                <p>{{ 'testRun.execution.noSelection' | translate }}</p>
+              </div>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="results-section" data-test-id="test-run-results-section">
+          <h3 class="results-title">{{ 'stepResult.results' | translate }} ({{ run.results.length }})</h3>
+          <mat-accordion multi data-test-id="test-run-results-accordion">
+            @for (result of run.results; track result.id) {
+              <mat-expansion-panel class="result-panel" [attr.data-test-id]="'test-result-panel-' + result.id">
+                <mat-expansion-panel-header>
+                  <mat-panel-title class="panel-title">
+                    <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link" (click)="$event.stopPropagation()" data-test-id="test-result-tc-link">
+                      {{ result.testCaseTitle }}
+                    </a>
+                  </mat-panel-title>
+                  <mat-panel-description class="panel-description">
+                    <span class="badge badge--{{ getResultStatus(result) | lowercase }}" data-test-id="test-result-status-badge">{{ 'resultStatus.' + getResultStatus(result) | translate }}</span>
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+
+                @if (sortedSteps(result).length) {
+                  <div class="steps-list">
+                    @for (step of sortedSteps(result); track step.id; let i = $index) {
+                      <div class="step-row" [attr.data-test-id]="'step-result-row-' + step.id">
+                        <div class="step-header">
+                          <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
+                          <span class="badge badge--{{ getStepStatus(step) | lowercase }} badge--small">{{ 'resultStatus.' + getStepStatus(step) | translate }}</span>
+                        </div>
+                        <div class="step-spec">
+                          <div class="spec-item">
+                            <span class="spec-label">{{ 'testCase.form.action' | translate }}</span>
+                            <span class="spec-text">{{ step.action }}</span>
+                          </div>
+                          @if (step.expectedResult) {
+                            <div class="spec-item">
+                              <span class="spec-label">{{ 'stepResult.expected' | translate }}</span>
+                              <span class="spec-text">{{ step.expectedResult }}</span>
+                            </div>
+                          }
+                        </div>
+                        @if (step.actualResult) {
+                          <div class="step-actual-readonly">
+                            <span class="spec-label">{{ 'stepResult.actualResult' | translate }}</span>
+                            <span class="spec-text">{{ step.actualResult }}</span>
+                          </div>
+                        }
+                        @if (step.screenshotId) {
+                          <div class="screenshot-preview screenshot-preview--readonly">
+                            <img [src]="getScreenshotUrl(step.screenshotId)" alt="Screenshot" class="screenshot-thumb" />
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                } @else {
+                  <p class="no-steps">{{ 'stepResult.noSteps' | translate }}</p>
+                }
+              </mat-expansion-panel>
+            }
+          </mat-accordion>
+        </div>
+      }
+    }
+  </div>
+}

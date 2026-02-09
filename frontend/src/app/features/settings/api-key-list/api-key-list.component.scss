@@ -1,0 +1,73 @@
+.api-key-list-container {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-description {
+  color: var(--tm-text-secondary);
+  margin-bottom: 24px;
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  padding: 64px;
+}
+
+.create-btn {
+  background: var(--tm-accent) !important;
+  color: #fff !important;
+}
+
+.api-key-table {
+  width: 100%;
+}
+
+.key-prefix {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--tm-primary-lighter);
+  color: var(--tm-primary);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  letter-spacing: 0.03em;
+}
+
+.actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.action-btn {
+  color: var(--tm-text-secondary);
+
+  &:hover {
+    color: var(--tm-text);
+  }
+
+  &--danger:hover {
+    color: var(--tm-danger);
+  }
+}
+
+.revoked-chip {
+  opacity: 0.6;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 64px;
+  color: var(--tm-text-secondary);
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+}

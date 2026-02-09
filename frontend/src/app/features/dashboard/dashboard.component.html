@@ -1,0 +1,48 @@
+<div class="dashboard" data-test-id="dashboard">
+  <!-- Welcome Banner -->
+  <div class="welcome-banner" data-test-id="dashboard-welcome">
+    <div class="welcome-text">
+      <h1>{{ 'dashboard.welcome' | translate }}, {{ (user$ | async)?.displayName }}!</h1>
+      <p>{{ 'dashboard.subtitle' | translate }}</p>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions" data-test-id="dashboard-quick-actions">
+    <a mat-flat-button routerLink="/projects/new" class="action-btn" data-test-id="dashboard-create-project">
+      <mat-icon>add</mat-icon>
+      {{ 'dashboard.actions.createProject' | translate }}
+    </a>
+    <a mat-stroked-button routerLink="/projects" data-test-id="dashboard-view-all">
+      <mat-icon>list</mat-icon>
+      {{ 'dashboard.actions.viewAll' | translate }}
+    </a>
+  </div>
+
+  <!-- Projects Grid -->
+  <section class="projects-section">
+    <h2>{{ 'dashboard.projects.title' | translate }}</h2>
+
+    @if (loading$ | async) {
+      <div class="loading-state">
+        <mat-spinner diameter="40"></mat-spinner>
+      </div>
+    } @else {
+      @if ((projects$ | async)?.length) {
+        <div class="projects-grid" data-test-id="dashboard-projects-grid">
+          @for (project of projects$ | async; track project.id) {
+            <app-project-card [project]="project" />
+          }
+        </div>
+      } @else {
+        <div class="empty-state" data-test-id="dashboard-empty">
+          <mat-icon>folder_open</mat-icon>
+          <p>{{ 'dashboard.projects.empty' | translate }}</p>
+          <a mat-flat-button routerLink="/projects/new" data-test-id="dashboard-empty-create">
+            {{ 'project.list.create' | translate }}
+          </a>
+        </div>
+      }
+    }
+  </section>
+</div>

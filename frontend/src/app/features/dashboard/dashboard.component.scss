@@ -1,0 +1,60 @@
+.dashboard {
+  padding: 24px;
+}
+
+// -- Welcome Banner --
+.welcome-banner {
+  background: linear-gradient(135deg, var(--tm-primary) 0%, var(--tm-primary-light) 100%);
+  border-radius: var(--tm-radius);
+  padding: 32px;
+  margin-bottom: 24px;
+  color: #ffffff;
+}
+
+.welcome-text {
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    opacity: 0.85;
+    margin: 0;
+  }
+}
+
+// -- Quick Actions --
+.quick-actions {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 32px;
+}
+
+.action-btn {
+  background: var(--tm-accent) !important;
+  color: #ffffff !important;
+}
+
+// -- Projects Section --
+.projects-section {
+  h2 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--tm-text);
+    margin: 0 0 16px;
+  }
+}
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 48px 0;
+}

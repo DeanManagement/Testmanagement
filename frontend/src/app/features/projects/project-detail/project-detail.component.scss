@@ -1,0 +1,113 @@
+.detail-container {
+  padding: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.back-link {
+  color: var(--tm-text-secondary) !important;
+}
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.delete-btn {
+  color: var(--tm-danger) !important;
+  border-color: var(--tm-danger) !important;
+}
+
+.project-hero {
+  padding: 32px;
+  margin-bottom: 32px;
+}
+
+.hero-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 12px;
+}
+
+.project-key {
+  display: inline-block;
+  padding: 4px 12px;
+  background: var(--tm-primary-lighter);
+  color: var(--tm-primary);
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  letter-spacing: 0.04em;
+}
+
+h1 {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--tm-text);
+}
+
+.project-description {
+  color: var(--tm-text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.detail-sections {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.section-card {
+  display: block;
+  padding: 24px;
+  cursor: pointer;
+  transition: box-shadow 0.2s, border-color 0.2s;
+  text-decoration: none !important;
+  color: inherit;
+
+  &:hover {
+    box-shadow: var(--tm-shadow-md);
+    border-color: var(--tm-primary-light);
+    text-decoration: none !important;
+  }
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+
+  mat-icon {
+    color: var(--tm-accent);
+    font-size: 28px;
+    width: 28px;
+    height: 28px;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tm-text);
+  }
+}
+
+.section-hint {
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+  margin: 0;
+  line-height: 1.5;
+}

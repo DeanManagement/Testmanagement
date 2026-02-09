@@ -1,0 +1,49 @@
+<div class="form-container">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title data-test-id="test-run-form-title">{{ 'testRun.form.createTitle' | translate }}</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" data-test-id="test-run-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'testRun.form.name' | translate }}</mat-label>
+          <input matInput formControlName="name" data-test-id="test-run-name-input" />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'testRun.form.environment' | translate }}</mat-label>
+          <input matInput formControlName="environment" placeholder="e.g. staging, production" data-test-id="test-run-environment-input" />
+        </mat-form-field>
+
+        <div class="test-cases-picker" data-test-id="test-run-tc-picker">
+          <h3>{{ 'testSuite.form.testCases' | translate }}</h3>
+          <p class="picker-hint">Select test cases to include in this run. A pending result will be created for each selected case.</p>
+          @if (testCases$ | async; as testCases) {
+            @if (testCases.length === 0) {
+              <p class="empty-hint">{{ 'testCase.list.empty' | translate }}</p>
+            } @else {
+              <div class="tc-list">
+                @for (tc of testCases; track tc.id) {
+                  <mat-checkbox
+                    [checked]="selectedTestCaseIds.has(tc.id)"
+                    (change)="toggleTestCase(tc.id)"
+                    class="tc-checkbox"
+                    [attr.data-test-id]="'test-run-tc-checkbox-' + tc.id">
+                    {{ tc.title }}
+                  </mat-checkbox>
+                }
+              </div>
+            }
+          }
+        </div>
+
+        <div class="actions">
+          <a mat-button [routerLink]="['/projects', projectId, 'test-runs']" data-test-id="test-run-form-cancel">{{ 'common.cancel' | translate }}</a>
+          <button mat-flat-button type="submit" [disabled]="form.invalid" data-test-id="test-run-form-submit">
+            {{ 'testRun.list.create' | translate }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

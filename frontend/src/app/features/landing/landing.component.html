@@ -1,0 +1,56 @@
+<div class="landing">
+  <!-- Navigation -->
+  <nav class="landing-nav" data-test-id="landing-nav">
+    <div class="nav-brand">
+      <mat-icon class="brand-icon">science</mat-icon>
+      <span class="brand-text">TestMgmt</span>
+    </div>
+    <div class="nav-actions">
+      <button mat-icon-button [matMenuTriggerFor]="langMenu" data-test-id="landing-language-menu">
+        <mat-icon>language</mat-icon>
+      </button>
+      <mat-menu #langMenu="matMenu">
+        <button mat-menu-item (click)="switchLanguage('en')" data-test-id="landing-lang-en">English</button>
+        <button mat-menu-item (click)="switchLanguage('de')" data-test-id="landing-lang-de">Deutsch</button>
+      </mat-menu>
+      <a mat-flat-button routerLink="/login" data-test-id="landing-login-btn">
+        {{ 'landing.nav.login' | translate }}
+      </a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="hero" data-test-id="landing-hero">
+    <h1 class="hero-title">{{ 'landing.hero.title' | translate }}</h1>
+    <p class="hero-subtitle">{{ 'landing.hero.subtitle' | translate }}</p>
+    <div class="hero-actions">
+      <a mat-flat-button routerLink="/login" class="hero-cta" data-test-id="landing-get-started">
+        {{ 'landing.hero.cta' | translate }}
+      </a>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section class="features" data-test-id="landing-features">
+    <div class="feature-card">
+      <mat-icon class="feature-icon">checklist</mat-icon>
+      <h3>{{ 'landing.features.testCases.title' | translate }}</h3>
+      <p>{{ 'landing.features.testCases.description' | translate }}</p>
+    </div>
+    <div class="feature-card">
+      <mat-icon class="feature-icon">play_circle</mat-icon>
+      <h3>{{ 'landing.features.testRuns.title' | translate }}</h3>
+      <p>{{ 'landing.features.testRuns.description' | translate }}</p>
+    </div>
+    <div class="feature-card">
+      <mat-icon class="feature-icon">bar_chart</mat-icon>
+      <h3>{{ 'landing.features.reporting.title' | translate }}</h3>
+      <p>{{ 'landing.features.reporting.description' | translate }}</p>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="landing-footer" data-test-id="landing-footer">
+    <span>&copy; 2026 DeanManagement. {{ 'landing.footer.rights' | translate }}</span>
+  </footer>
+</div>

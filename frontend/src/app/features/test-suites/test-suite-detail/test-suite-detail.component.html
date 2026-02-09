@@ -1,0 +1,48 @@
+@if (testSuite$ | async; as suite) {
+  <div class="detail-container">
+    <div class="detail-header">
+      <a mat-button [routerLink]="['/projects', projectId, 'test-suites']" class="back-link" data-test-id="test-suite-detail-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <div class="detail-actions">
+        <a mat-stroked-button [routerLink]="['/projects', projectId, 'test-suites', suite.id, 'edit']" data-test-id="test-suite-detail-edit-btn">
+          <mat-icon>edit</mat-icon>
+          {{ 'common.edit' | translate }}
+        </a>
+        <button mat-stroked-button (click)="deleteTestSuite(suite.id)" class="delete-btn" data-test-id="test-suite-detail-delete-btn">
+          <mat-icon>delete</mat-icon>
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="suite-hero tm-card" data-test-id="test-suite-hero">
+      <h1 data-test-id="test-suite-detail-name">{{ suite.name }}</h1>
+      @if (suite.description) {
+        <p class="suite-description" data-test-id="test-suite-detail-description">{{ suite.description }}</p>
+      }
+    </div>
+
+    <div class="test-cases-section tm-card" data-test-id="test-suite-test-cases-section">
+      <div class="section-header">
+        <mat-icon>bug_report</mat-icon>
+        <h3>{{ 'testSuite.form.testCases' | translate }} ({{ suite.testCases.length }})</h3>
+      </div>
+      @if (suite.testCases.length) {
+        <mat-list>
+          @for (tc of suite.testCases; track tc.id) {
+            <mat-list-item>
+              <mat-icon matListItemIcon>check_circle_outline</mat-icon>
+              <a matListItemTitle [routerLink]="['/projects', projectId, 'test-cases', tc.id]" class="item-link" data-test-id="test-suite-tc-link">
+                {{ tc.title }}
+              </a>
+            </mat-list-item>
+          }
+        </mat-list>
+      } @else {
+        <p class="empty-hint">{{ 'common.noResults' | translate }}</p>
+      }
+    </div>
+  </div>
+}

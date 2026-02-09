@@ -1,0 +1,47 @@
+.project-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  transition: box-shadow 0.2s ease;
+
+  &:hover {
+    box-shadow: var(--tm-shadow-md);
+  }
+}
+
+.card-header {
+  margin-bottom: 8px;
+}
+
+.project-key {
+  display: inline-block;
+  background: var(--tm-primary-lighter);
+  color: var(--tm-primary);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  margin-bottom: 6px;
+}
+
+.project-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--tm-text);
+  margin: 4px 0 0;
+}
+
+.project-description {
+  font-size: 13px;
+  color: var(--tm-text-secondary);
+  margin: 0;
+  line-height: 1.5;
+  flex: 1;
+}
+
+.card-actions {
+  margin-top: 12px;
+  display: flex;
+  justify-content: flex-end;
+}

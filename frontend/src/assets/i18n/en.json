@@ -1,0 +1,209 @@
+{
+  "app": {
+    "title": "Test Management"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "projects": "Projects",
+    "testCases": "Test Cases",
+    "testSuites": "Test Suites",
+    "testRuns": "Test Runs",
+    "settings": "Settings"
+  },
+  "landing": {
+    "nav": {
+      "login": "Sign In"
+    },
+    "hero": {
+      "title": "Test Management Made Simple",
+      "subtitle": "Organise, execute and track your test cases with a lightweight, self-hosted tool built for small teams.",
+      "cta": "Get Started"
+    },
+    "features": {
+      "testCases": {
+        "title": "Test Cases",
+        "description": "Define test cases with steps, expected results, priorities and labels. Keep everything structured and searchable."
+      },
+      "testRuns": {
+        "title": "Test Runs",
+        "description": "Execute test suites across environments and track pass/fail results in real time."
+      },
+      "reporting": {
+        "title": "Reporting",
+        "description": "Visualise test coverage, pass rates and trends with built-in charts and dashboards."
+      }
+    },
+    "footer": {
+      "rights": "All rights reserved."
+    }
+  },
+  "login": {
+    "title": "Welcome Back",
+    "subtitle": "Sign in to continue to Test Management.",
+    "signIn": "Sign In",
+    "backToHome": "Back to Home"
+  },
+  "dashboard": {
+    "welcome": "Welcome back",
+    "subtitle": "Here's an overview of your projects.",
+    "actions": {
+      "createProject": "Create Project",
+      "viewAll": "View All Projects"
+    },
+    "projects": {
+      "title": "Your Projects",
+      "open": "Open",
+      "empty": "No projects yet. Create your first project to get started."
+    }
+  },
+  "project": {
+    "list": {
+      "title": "Projects",
+      "create": "Create Project",
+      "empty": "No projects yet. Create your first project to get started.",
+      "search": "Search projects"
+    },
+    "form": {
+      "createTitle": "Create Project",
+      "editTitle": "Edit Project",
+      "name": "Name",
+      "description": "Description",
+      "key": "Key",
+      "keyHint": "Auto-generated from project name"
+    },
+    "detail": {
+      "testCasesHint": "Define and manage your test cases with steps and expected results.",
+      "testSuitesHint": "Group test cases into suites for organised execution.",
+      "testRunsHint": "Execute test suites and track results across environments."
+    }
+  },
+  "testCase": {
+    "key": "Key",
+    "list": {
+      "title": "Test Cases",
+      "create": "Create Test Case",
+      "empty": "No test cases yet. Create your first test case."
+    },
+    "form": {
+      "createTitle": "Create Test Case",
+      "editTitle": "Edit Test Case",
+      "title": "Title",
+      "description": "Description",
+      "preconditions": "Preconditions",
+      "priority": "Priority",
+      "status": "Status",
+      "labels": "Labels",
+      "labelsHint": "Comma-separated labels",
+      "tabDetails": "Details",
+      "tabScript": "Script",
+      "steps": "Test Steps",
+      "stepsEmpty": "No steps yet. Add your first step to define the test script.",
+      "addStep": "Add Step",
+      "action": "Action",
+      "expectedResult": "Expected Result"
+    }
+  },
+  "testSuite": {
+    "list": {
+      "title": "Test Suites",
+      "create": "Create Test Suite",
+      "empty": "No test suites yet."
+    },
+    "form": {
+      "createTitle": "Create Test Suite",
+      "editTitle": "Edit Test Suite",
+      "name": "Name",
+      "description": "Description",
+      "testCases": "Test Cases"
+    }
+  },
+  "testRun": {
+    "list": {
+      "title": "Test Runs",
+      "create": "Start Test Run",
+      "empty": "No test runs yet."
+    },
+    "form": {
+      "createTitle": "Start Test Run",
+      "name": "Name",
+      "environment": "Environment"
+    },
+    "status": {
+      "PLANNED": "Planned",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "ABORTED": "Aborted"
+    },
+    "clone": "Clone",
+    "cloneDialog": {
+      "title": "Clone Test Run",
+      "name": "Name",
+      "environment": "Environment",
+      "cancel": "Cancel",
+      "confirm": "Clone"
+    },
+    "execution": {
+      "search": "Search test cases",
+      "prev": "Previous",
+      "next": "Next",
+      "noSelection": "Select a test case from the sidebar to begin."
+    }
+  },
+  "priority": {
+    "LOW": "Low",
+    "MEDIUM": "Medium",
+    "HIGH": "High",
+    "CRITICAL": "Critical"
+  },
+  "testCaseStatus": {
+    "DRAFT": "Draft",
+    "ACTIVE": "Active",
+    "DEPRECATED": "Deprecated"
+  },
+  "stepResult": {
+    "results": "Results",
+    "step": "Step",
+    "expected": "Expected Result",
+    "actualResult": "Actual Result",
+    "addScreenshot": "Add Screenshot",
+    "noSteps": "No steps defined for this test case."
+  },
+  "resultStatus": {
+    "PENDING": "Pending",
+    "PASSED": "Passed",
+    "FAILED": "Failed",
+    "BLOCKED": "Blocked",
+    "SKIPPED": "Skipped"
+  },
+  "settings": {
+    "apiKeys": {
+      "title": "API Keys",
+      "description": "Manage API keys for external test automation tools to report test results.",
+      "create": "Create API Key",
+      "createTitle": "Create API Key",
+      "createdTitle": "API Key Created",
+      "createdWarning": "Copy this key now. You will not be able to see it again.",
+      "done": "Done",
+      "name": "Name",
+      "key": "Key",
+      "createdAt": "Created",
+      "lastUsed": "Last Used",
+      "status": "Status",
+      "active": "Active",
+      "revoked": "Revoked",
+      "never": "Never",
+      "empty": "No API keys yet. Create one to allow external tools to submit test results."
+    }
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "confirm": "Confirm",
+    "loading": "Loading...",
+    "actions": "Actions",
+    "noResults": "No results found."
+  }
+}

@@ -1,0 +1,66 @@
+.project-list-container {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  padding: 64px;
+}
+
+.create-btn {
+  background: var(--tm-accent) !important;
+  color: #fff !important;
+}
+
+.project-table {
+  width: 100%;
+}
+
+.project-key {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--tm-primary-lighter);
+  color: var(--tm-primary);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  letter-spacing: 0.03em;
+}
+
+.project-name {
+  font-weight: 500;
+  color: var(--tm-primary-light) !important;
+
+  &:hover {
+    text-decoration: underline !important;
+  }
+}
+
+.description-cell {
+  color: var(--tm-text-secondary);
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.action-btn {
+  color: var(--tm-text-secondary);
+
+  &:hover {
+    color: var(--tm-text);
+  }
+
+  &--danger:hover {
+    color: var(--tm-danger);
+  }
+}

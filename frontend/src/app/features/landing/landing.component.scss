@@ -1,0 +1,129 @@
+.landing {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--tm-bg);
+}
+
+// -- Navigation --
+.landing-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 32px;
+  background: var(--tm-surface);
+  border-bottom: 1px solid var(--tm-border);
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.brand-icon {
+  color: var(--tm-accent);
+  font-size: 28px;
+  width: 28px;
+  height: 28px;
+}
+
+.brand-text {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--tm-primary);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+// -- Hero --
+.hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 96px 32px 80px;
+  background: linear-gradient(135deg, var(--tm-primary) 0%, var(--tm-primary-light) 100%);
+  color: #ffffff;
+}
+
+.hero-title {
+  font-size: 42px;
+  font-weight: 800;
+  margin: 0 0 16px;
+  letter-spacing: -0.02em;
+}
+
+.hero-subtitle {
+  font-size: 18px;
+  margin: 0 0 32px;
+  opacity: 0.85;
+  max-width: 560px;
+  line-height: 1.6;
+}
+
+.hero-cta {
+  background: var(--tm-accent) !important;
+  color: #ffffff !important;
+  font-size: 16px;
+  font-weight: 600;
+  padding: 8px 32px;
+}
+
+// -- Features --
+.features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 64px 32px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.feature-card {
+  background: var(--tm-surface);
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-radius);
+  padding: 32px 24px;
+  text-align: center;
+  box-shadow: var(--tm-shadow);
+
+  h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--tm-text);
+    margin: 16px 0 8px;
+  }
+
+  p {
+    font-size: 14px;
+    color: var(--tm-text-secondary);
+    margin: 0;
+    line-height: 1.6;
+  }
+}
+
+.feature-icon {
+  font-size: 40px;
+  width: 40px;
+  height: 40px;
+  color: var(--tm-accent);
+}
+
+// -- Footer --
+.landing-footer {
+  margin-top: auto;
+  padding: 24px 32px;
+  text-align: center;
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+  border-top: 1px solid var(--tm-border);
+  background: var(--tm-surface);
+}

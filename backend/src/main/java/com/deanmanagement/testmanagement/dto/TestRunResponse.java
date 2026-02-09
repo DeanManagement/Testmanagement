@@ -1,0 +1,20 @@
+package com.deanmanagement.testmanagement.dto;
+
+import com.deanmanagement.testmanagement.entity.TestRunStatus;
+
+import java.time.Instant;
+import java.util.List;
+import java.util.UUID;
+
+public record TestRunResponse(
+        UUID id,
+        String name,
+        String environment,
+        TestRunStatus status,
+        Instant startTime,
+        Instant endTime,
+        List<TestResultResponse> results,
+        Instant createdAt,
+        Instant updatedAt
+) {
+}

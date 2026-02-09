@@ -1,0 +1,55 @@
+<mat-sidenav-container class="app-container">
+  <mat-sidenav #sidenav mode="side" opened class="sidenav">
+    <div class="sidenav-brand">
+      <mat-icon class="brand-icon">science</mat-icon>
+      <span class="brand-text">TestMgmt</span>
+    </div>
+    <mat-nav-list>
+      <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link" data-test-id="nav-dashboard">
+        <mat-icon matListItemIcon>dashboard</mat-icon>
+        <span matListItemTitle>{{ 'nav.dashboard' | translate }}</span>
+      </a>
+      <a mat-list-item routerLink="/projects" routerLinkActive="active-link" data-test-id="nav-projects">
+        <mat-icon matListItemIcon>folder</mat-icon>
+        <span matListItemTitle>{{ 'nav.projects' | translate }}</span>
+      </a>
+    </mat-nav-list>
+    <mat-divider></mat-divider>
+    <mat-nav-list>
+      <a mat-list-item routerLink="/settings" routerLinkActive="active-link" data-test-id="nav-settings">
+        <mat-icon matListItemIcon>settings</mat-icon>
+        <span matListItemTitle>{{ 'nav.settings' | translate }}</span>
+      </a>
+    </mat-nav-list>
+    <div class="sidenav-footer">
+      <small>v0.1.0</small>
+    </div>
+  </mat-sidenav>
+
+  <mat-sidenav-content>
+    <mat-toolbar class="app-toolbar">
+      <button mat-icon-button (click)="sidenav.toggle()" data-test-id="sidenav-toggle">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <span class="toolbar-title">{{ 'app.title' | translate }}</span>
+      <span class="spacer"></span>
+      <button mat-icon-button [matMenuTriggerFor]="langMenu" class="toolbar-action" data-test-id="language-menu-trigger">
+        <mat-icon>language</mat-icon>
+      </button>
+      <mat-menu #langMenu="matMenu">
+        <button mat-menu-item (click)="switchLanguage('en')" data-test-id="lang-en">English</button>
+        <button mat-menu-item (click)="switchLanguage('de')" data-test-id="lang-de">Deutsch</button>
+      </mat-menu>
+      @if (user$ | async; as user) {
+        <span class="user-display" data-test-id="user-display">{{ user.displayName }}</span>
+        <button mat-icon-button (click)="logout()" class="toolbar-action" data-test-id="logout-btn">
+          <mat-icon>account_circle</mat-icon>
+        </button>
+      }
+    </mat-toolbar>
+
+    <main class="app-content">
+      <router-outlet />
+    </main>
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -1,0 +1,31 @@
+<div class="login-page">
+  <div class="login-card" data-test-id="login-card">
+    <div class="login-brand">
+      <mat-icon class="login-brand-icon">science</mat-icon>
+      <span class="login-brand-text">TestMgmt</span>
+    </div>
+
+    <h2 data-test-id="login-title">{{ 'login.title' | translate }}</h2>
+    <p class="login-subtitle">{{ 'login.subtitle' | translate }}</p>
+
+    <button
+      mat-flat-button
+      class="login-btn"
+      (click)="onLogin()"
+      [disabled]="loading$ | async"
+      data-test-id="login-submit-btn">
+      @if (loading$ | async) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        <ng-container>
+          <mat-icon>login</mat-icon>
+          {{ 'login.signIn' | translate }}
+        </ng-container>
+      }
+    </button>
+
+    <a routerLink="/" class="back-link" data-test-id="login-back-home">
+      {{ 'login.backToHome' | translate }}
+    </a>
+  </div>
+</div>
