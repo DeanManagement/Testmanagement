@@ -1,0 +1,4 @@
+app:
+  jwt:
+    secret: test-secret-key-for-unit-tests-at-least-32-chars
+    expiration-ms: 86400000
