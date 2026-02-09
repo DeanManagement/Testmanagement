@@ -1,4 +1,4 @@
-import { createActionGroup, emptyProps, props } from '@ngrx/store';
+import { createActionGroup, props } from '@ngrx/store';
 import { CreateTestCaseRequest, TestCase, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 
 export const TestCaseActions = createActionGroup({
