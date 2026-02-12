@@ -1,10 +1,11 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
-import com.deanmanagement.testmanagement.project.internal.dto.CloneTestRunRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.CreateTestResultRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.CreateTestRunRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.CompletionInfoResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.CloneTestRunRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestResultRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.StepResultResponse;
-import com.deanmanagement.testmanagement.project.internal.dto.TestRunMapper;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.TestRunMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateStepResultRequest;
@@ -24,6 +25,8 @@ import com.deanmanagement.testmanagement.project.internal.repository.StepResultR
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
+import com.deanmanagement.testmanagement.user.User;
+import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -33,6 +36,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+
+import com.deanmanagement.testmanagement.project.internal.dto.report.TestRunReportResponse;
 
 @Service
 @RequiredArgsConstructor
@@ -45,6 +50,12 @@ public class TestRunService {
     private final ProjectRepository projectRepository;
     private final TestCaseRepository testCaseRepository;
     private final TestRunMapper testRunMapper;
+    private final UserService userService;
+
+    private static final List<TestResultStatus> SEVERITY_ORDER = List.of(
+            TestResultStatus.FAILED, TestResultStatus.BLOCKED, TestResultStatus.SKIPPED,
+            TestResultStatus.PENDING, TestResultStatus.PASSED
+    );
 
     public List<TestRunResponse> findByProject(UUID projectId) {
         return testRunRepository.findByProjectIdOrderByCreatedAtDesc(projectId).stream()
@@ -57,6 +68,50 @@ public class TestRunService {
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", id));
         return testRunMapper.toResponse(run);
+    }
+
+    public TestRunReportResponse getReport(UUID projectId, UUID id) {
+        TestRun run = testRunRepository.findById(id)
+                .filter(r -> r.getProject().getId().equals(projectId))
+                .orElseThrow(() -> new ResourceNotFoundException("TestRun", id));
+
+        List<TestResult> results = run.getResults();
+        int total = results.size();
+        int passed = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.PASSED).count();
+        int failed = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.FAILED).count();
+        int blocked = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.BLOCKED).count();
+        int skipped = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.SKIPPED).count();
+        int pending = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.PENDING).count();
+        double passRate = total > 0 ? Math.round(passed * 10000.0 / total) / 100.0 : 0.0;
+
+        List<TestResultResponse> resultResponses = results.stream()
+                .map(testRunMapper::toResultResponse)
+                .toList();
+
+        return new TestRunReportResponse(
+                run.getId(), run.getName(), run.getEnvironment(), run.getStatus(),
+                run.getStartTime(), run.getEndTime(),
+                total, passed, failed, blocked, skipped, pending, passRate,
+                resultResponses
+        );
+    }
+
+    public CompletionInfoResponse getCompletionInfo(UUID projectId, UUID id) {
+        TestRun run = testRunRepository.findById(id)
+                .filter(r -> r.getProject().getId().equals(projectId))
+                .orElseThrow(() -> new ResourceNotFoundException("TestRun", id));
+
+        List<TestResult> results = run.getResults();
+        int total = results.size();
+        int passed = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.PASSED).count();
+        int failed = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.FAILED).count();
+        int blocked = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.BLOCKED).count();
+        int skipped = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.SKIPPED).count();
+        int pending = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.PENDING).count();
+
+        String worstStatus = computeWorstStatus(results);
+
+        return new CompletionInfoResponse(total, passed, failed, blocked, skipped, pending, worstStatus);
     }
 
     @Transactional
@@ -112,7 +167,7 @@ public class TestRunService {
     }
 
     @Transactional
-    public TestRunResponse update(UUID projectId, UUID id, UpdateTestRunRequest request) {
+    public TestRunResponse update(UUID projectId, UUID id, UpdateTestRunRequest request, UUID currentUserId) {
         TestRun run = testRunRepository.findById(id)
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", id));
@@ -126,7 +181,25 @@ public class TestRunService {
 
             if (request.status() == TestRunStatus.IN_PROGRESS && oldStatus == TestRunStatus.PLANNED) {
                 run.setStartTime(Instant.now());
-            } else if (request.status() == TestRunStatus.COMPLETED || request.status() == TestRunStatus.ABORTED) {
+            } else if (request.status() == TestRunStatus.IN_PROGRESS && oldStatus == TestRunStatus.COMPLETED) {
+                // Reopen
+                if (request.reopenReason() == null || request.reopenReason().isBlank()) {
+                    throw new IllegalArgumentException("Reopen reason is required when reopening a completed test run");
+                }
+                run.setReopenReason(request.reopenReason());
+                run.setEndTime(null);
+                if (currentUserId != null) {
+                    User user = userService.findEntityById(currentUserId).orElse(null);
+                    run.setCompletedBy(user);
+                }
+            } else if (request.status() == TestRunStatus.COMPLETED) {
+                run.setEndTime(Instant.now());
+                run.setReopenReason(null);
+                if (currentUserId != null) {
+                    User user = userService.findEntityById(currentUserId).orElse(null);
+                    run.setCompletedBy(user);
+                }
+            } else if (request.status() == TestRunStatus.ABORTED) {
                 run.setEndTime(Instant.now());
             }
         }
@@ -202,5 +275,31 @@ public class TestRunService {
 
         stepResult = stepResultRepository.save(stepResult);
         return testRunMapper.toStepResultResponse(stepResult);
+    }
+
+    @Transactional
+    public TestRunResponse setExecutor(UUID projectId, UUID id, UUID executorId) {
+        TestRun run = testRunRepository.findById(id)
+                .filter(r -> r.getProject().getId().equals(projectId))
+                .orElseThrow(() -> new ResourceNotFoundException("TestRun", id));
+
+        User executor = userService.findEntityById(executorId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", executorId));
+        run.setExecutor(executor);
+
+        run = testRunRepository.save(run);
+        return testRunMapper.toResponse(run);
+    }
+
+    private String computeWorstStatus(List<TestResult> results) {
+        if (results.isEmpty()) {
+            return TestResultStatus.PASSED.name();
+        }
+        for (TestResultStatus severity : SEVERITY_ORDER) {
+            if (results.stream().anyMatch(r -> r.getStatus() == severity)) {
+                return severity.name();
+            }
+        }
+        return TestResultStatus.PASSED.name();
     }
 }

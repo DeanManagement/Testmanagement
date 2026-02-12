@@ -13,6 +13,9 @@ public record TestRunResponse(
         TestRunStatus status,
         Instant startTime,
         Instant endTime,
+        String executorName,
+        String completedByName,
+        String reopenReason,
         List<TestResultResponse> results,
         Instant createdAt,
         Instant updatedAt

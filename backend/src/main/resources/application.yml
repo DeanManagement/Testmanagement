@@ -25,3 +25,7 @@ app:
   jwt:
     secret: ${JWT_SECRET:default-dev-secret-that-is-at-least-32-characters-long}
     expiration-ms: 86400000
+  admin:
+    email: ${ADMIN_EMAIL:admin@localhost.ch}
+    password: ${ADMIN_PASSWORD:admin}
+    display-name: ${ADMIN_DISPLAY_NAME:Administrator}

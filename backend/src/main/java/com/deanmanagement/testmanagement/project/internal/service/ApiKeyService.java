@@ -1,8 +1,8 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
-import com.deanmanagement.testmanagement.project.internal.dto.ApiKeyCreatedResponse;
-import com.deanmanagement.testmanagement.project.internal.dto.ApiKeyResponse;
-import com.deanmanagement.testmanagement.project.internal.dto.CreateApiKeyRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.apiKey.ApiKeyCreatedResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.apiKey.ApiKeyResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.ApiKey;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ApiKeyRepository;

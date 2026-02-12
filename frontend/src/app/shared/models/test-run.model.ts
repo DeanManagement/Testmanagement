@@ -31,6 +31,9 @@ export interface TestRun {
   status: TestRunStatus;
   startTime: string;
   endTime: string;
+  executorName: string | null;
+  completedByName: string | null;
+  reopenReason: string | null;
   results: TestResult[];
   createdAt: string;
   updatedAt: string;
@@ -46,6 +49,17 @@ export interface UpdateTestRunRequest {
   name: string;
   environment?: string;
   status?: TestRunStatus;
+  reopenReason?: string;
+}
+
+export interface CompletionInfo {
+  total: number;
+  passed: number;
+  failed: number;
+  blocked: number;
+  skipped: number;
+  pending: number;
+  worstStatus: string;
 }
 
 export interface CreateTestResultRequest {
@@ -64,4 +78,21 @@ export interface UpdateTestResultRequest {
 export interface UpdateStepResultRequest {
   status: TestResultStatus;
   actualResult?: string;
+}
+
+export interface TestRunReport {
+  id: string;
+  name: string;
+  environment: string;
+  status: TestRunStatus;
+  startTime: string;
+  endTime: string;
+  total: number;
+  passed: number;
+  failed: number;
+  blocked: number;
+  skipped: number;
+  pending: number;
+  passRate: number;
+  results: TestResult[];
 }

@@ -151,6 +151,23 @@
       "COMPLETED": "Abgeschlossen",
       "ABORTED": "Abgebrochen"
     },
+    "executor": "Ausführender",
+    "completedBy": "Abgeschlossen von",
+    "reopenReason": "Grund für Wiedereröffnung",
+    "complete": {
+      "title": "Testlauf abschließen",
+      "warning": "Dieser Testlauf enthält {{failed}} fehlgeschlagene und {{blocked}} blockierte Ergebnisse. Der Status wird auf {{worstStatus}} gesetzt.",
+      "allPassed": "Alle Tests bestanden!",
+      "confirm": "Abschließen",
+      "cancel": "Abbrechen"
+    },
+    "reopen": {
+      "title": "Testlauf wiedereröffnen",
+      "reason": "Grund für die Wiedereröffnung",
+      "reasonRequired": "Ein Grund ist erforderlich",
+      "confirm": "Wiedereröffnen",
+      "cancel": "Abbrechen"
+    },
     "clone": "Klonen",
     "cloneDialog": {
       "title": "Testlauf klonen",
@@ -225,6 +242,23 @@
       "newPassword": "Neues Passwort (leer lassen für aktuelles)",
       "empty": "Noch keine Benutzer. Erstellen Sie Ihr erstes Benutzerkonto."
     }
+  },
+  "report": {
+    "title": "Bericht",
+    "summary": "Zusammenfassung",
+    "total": "Gesamt",
+    "passed": "Bestanden",
+    "failed": "Fehlgeschlagen",
+    "blocked": "Blockiert",
+    "skipped": "Übersprungen",
+    "pending": "Ausstehend",
+    "untested": "Nicht getestet",
+    "passRate": "Erfolgsrate",
+    "testCase": "Testfall",
+    "latestResult": "Letztes Ergebnis",
+    "fromRun": "Aus Testlauf",
+    "resultDate": "Datum",
+    "chart": "Statusverteilung"
   },
   "common": {
     "save": "Speichern",

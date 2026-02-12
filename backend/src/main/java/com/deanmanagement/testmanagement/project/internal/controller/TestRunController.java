@@ -1,10 +1,12 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
-import com.deanmanagement.testmanagement.project.internal.dto.CloneTestRunRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.CreateTestResultRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.CreateTestRunRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.CompletionInfoResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.CloneTestRunRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestResultRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.StepResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.report.TestRunReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateStepResultRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestResultRequest;
@@ -14,6 +16,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -25,6 +28,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -45,6 +49,16 @@ public class TestRunController {
         return testRunService.findById(projectId, id);
     }
 
+    @GetMapping("/{id}/report")
+    public TestRunReportResponse getReport(@PathVariable UUID projectId, @PathVariable UUID id) {
+        return testRunService.getReport(projectId, id);
+    }
+
+    @GetMapping("/{id}/completion-info")
+    public CompletionInfoResponse getCompletionInfo(@PathVariable UUID projectId, @PathVariable UUID id) {
+        return testRunService.getCompletionInfo(projectId, id);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TestRunResponse create(@PathVariable UUID projectId,
@@ -55,8 +69,17 @@ public class TestRunController {
     @PutMapping("/{id}")
     public TestRunResponse update(@PathVariable UUID projectId,
                                   @PathVariable UUID id,
-                                  @Valid @RequestBody UpdateTestRunRequest request) {
-        return testRunService.update(projectId, id, request);
+                                  @Valid @RequestBody UpdateTestRunRequest request,
+                                  Authentication authentication) {
+        UUID currentUserId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return testRunService.update(projectId, id, request, currentUserId);
+    }
+
+    @PutMapping("/{id}/executor")
+    public TestRunResponse setExecutor(@PathVariable UUID projectId,
+                                       @PathVariable UUID id,
+                                       @RequestBody Map<String, UUID> body) {
+        return testRunService.setExecutor(projectId, id, body.get("executorId"));
     }
 
     @PostMapping("/{runId}/clone")

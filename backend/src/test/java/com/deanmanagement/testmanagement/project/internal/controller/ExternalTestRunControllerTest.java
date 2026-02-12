@@ -1,7 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
-import com.deanmanagement.testmanagement.project.internal.dto.ExternalCreateTestRunRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.ExternalTestResultRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.ExternalCreateTestRunRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.ExternalTestResultRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
@@ -48,6 +48,7 @@ class ExternalTestRunControllerTest {
         return new TestRunResponse(
                 UUID.randomUUID(), "CI Run", "staging",
                 TestRunStatus.COMPLETED, NOW, NOW,
+                null, null, null,
                 List.of(), NOW, NOW
         );
     }

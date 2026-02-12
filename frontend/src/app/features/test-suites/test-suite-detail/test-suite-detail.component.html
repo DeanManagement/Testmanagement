@@ -6,6 +6,10 @@
         {{ 'common.back' | translate }}
       </a>
       <div class="detail-actions">
+        <a mat-stroked-button [routerLink]="['/projects', projectId, 'test-suites', suite.id, 'report']" class="report-btn" data-test-id="test-suite-report-btn">
+          <mat-icon>assessment</mat-icon>
+          {{ 'report.title' | translate }}
+        </a>
         <a mat-stroked-button [routerLink]="['/projects', projectId, 'test-suites', suite.id, 'edit']" data-test-id="test-suite-detail-edit-btn">
           <mat-icon>edit</mat-icon>
           {{ 'common.edit' | translate }}

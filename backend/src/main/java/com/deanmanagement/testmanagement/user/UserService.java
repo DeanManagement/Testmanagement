@@ -2,9 +2,10 @@ package com.deanmanagement.testmanagement.user;
 
 import com.deanmanagement.testmanagement.shared.exception.DuplicateKeyException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
-import com.deanmanagement.testmanagement.user.internal.CreateUserRequest;
-import com.deanmanagement.testmanagement.user.internal.UpdateUserRequest;
-import com.deanmanagement.testmanagement.user.internal.UserRepository;
+import com.deanmanagement.testmanagement.user.internal.requests.UserResponse;
+import com.deanmanagement.testmanagement.user.internal.requests.CreateUserRequest;
+import com.deanmanagement.testmanagement.user.internal.requests.UpdateUserRequest;
+import com.deanmanagement.testmanagement.user.internal.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;

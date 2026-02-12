@@ -1,8 +1,8 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
-import com.deanmanagement.testmanagement.project.internal.dto.AddProjectMemberRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.ProjectMemberResponse;
-import com.deanmanagement.testmanagement.project.internal.dto.UpdateProjectMemberRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.project.AddProjectMemberRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectMemberResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectMemberRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
 import com.deanmanagement.testmanagement.shared.exception.DuplicateKeyException;

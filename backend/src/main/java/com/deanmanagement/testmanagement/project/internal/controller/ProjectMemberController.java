@@ -1,8 +1,8 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
-import com.deanmanagement.testmanagement.project.internal.dto.AddProjectMemberRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.ProjectMemberResponse;
-import com.deanmanagement.testmanagement.project.internal.dto.UpdateProjectMemberRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.project.AddProjectMemberRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectMemberResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectMemberRequest;
 import com.deanmanagement.testmanagement.project.internal.service.ProjectMemberService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

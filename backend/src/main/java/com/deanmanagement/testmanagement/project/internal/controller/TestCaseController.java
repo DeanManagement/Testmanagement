@@ -1,7 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
-import com.deanmanagement.testmanagement.project.internal.dto.CreateTestCaseRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.TestCaseResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.CreateTestCaseRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
 import io.swagger.v3.oas.annotations.tags.Tag;

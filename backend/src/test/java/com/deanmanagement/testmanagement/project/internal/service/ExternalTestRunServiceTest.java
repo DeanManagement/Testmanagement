@@ -1,9 +1,9 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
-import com.deanmanagement.testmanagement.project.internal.dto.ExternalCreateTestRunRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.ExternalStepResultRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.ExternalTestResultRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.TestRunMapper;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.ExternalCreateTestRunRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.ExternalStepResultRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.ExternalTestResultRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.TestRunMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
@@ -96,6 +96,7 @@ class ExternalTestRunServiceTest {
         return new TestRunResponse(
                 UUID.randomUUID(), "CI Run", "staging",
                 TestRunStatus.COMPLETED, NOW, NOW,
+                null, null, null,
                 List.of(), NOW, NOW
         );
     }

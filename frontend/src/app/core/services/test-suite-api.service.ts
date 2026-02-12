@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateTestSuiteRequest, TestSuite, UpdateTestSuiteRequest } from '../../shared/models/test-suite.model';
+import { CreateTestSuiteRequest, TestSuite, TestSuiteReport, UpdateTestSuiteRequest } from '../../shared/models/test-suite.model';
 
 @Injectable({ providedIn: 'root' })
 export class TestSuiteApiService {
@@ -17,6 +17,10 @@ export class TestSuiteApiService {
 
   getById(projectId: string, id: string): Observable<TestSuite> {
     return this.http.get<TestSuite>(`${this.baseUrl(projectId)}/${id}`);
+  }
+
+  getReport(projectId: string, id: string): Observable<TestSuiteReport> {
+    return this.http.get<TestSuiteReport>(`${this.baseUrl(projectId)}/${id}/report`);
   }
 
   create(projectId: string, request: CreateTestSuiteRequest): Observable<TestSuite> {

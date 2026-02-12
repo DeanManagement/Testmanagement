@@ -23,3 +23,26 @@ export interface UpdateTestSuiteRequest {
   description?: string;
   testCaseIds?: string[];
 }
+
+export interface TestCaseLatestResult {
+  testCaseId: string;
+  testCaseTitle: string;
+  status: string | null;
+  testRunId: string | null;
+  testRunName: string | null;
+  updatedAt: string | null;
+}
+
+export interface TestSuiteReport {
+  id: string;
+  name: string;
+  description: string;
+  total: number;
+  passed: number;
+  failed: number;
+  blocked: number;
+  skipped: number;
+  untested: number;
+  passRate: number;
+  results: TestCaseLatestResult[];
+}

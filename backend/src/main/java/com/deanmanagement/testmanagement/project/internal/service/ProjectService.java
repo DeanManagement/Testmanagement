@@ -1,9 +1,9 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
-import com.deanmanagement.testmanagement.project.internal.dto.CreateProjectRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.ProjectMapper;
-import com.deanmanagement.testmanagement.project.internal.dto.ProjectResponse;
-import com.deanmanagement.testmanagement.project.internal.dto.UpdateProjectRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProjectRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectMapper;
+import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;

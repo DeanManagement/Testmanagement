@@ -1,6 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
-import com.deanmanagement.testmanagement.project.internal.dto.ExternalCreateTestRunRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.ExternalCreateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.service.ExternalTestRunService;
 import io.swagger.v3.oas.annotations.tags.Tag;

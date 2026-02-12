@@ -2,8 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
+  CompletionInfo,
   CreateTestRunRequest,
   TestRun,
+  TestRunReport,
   UpdateTestRunRequest,
   CreateTestResultRequest,
   UpdateTestResultRequest,
@@ -26,6 +28,14 @@ export class TestRunApiService {
 
   getById(projectId: string, id: string): Observable<TestRun> {
     return this.http.get<TestRun>(`${this.baseUrl(projectId)}/${id}`);
+  }
+
+  getReport(projectId: string, id: string): Observable<TestRunReport> {
+    return this.http.get<TestRunReport>(`${this.baseUrl(projectId)}/${id}/report`);
+  }
+
+  getCompletionInfo(projectId: string, id: string): Observable<CompletionInfo> {
+    return this.http.get<CompletionInfo>(`${this.baseUrl(projectId)}/${id}/completion-info`);
   }
 
   create(projectId: string, request: CreateTestRunRequest): Observable<TestRun> {

@@ -1,8 +1,8 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
-import com.deanmanagement.testmanagement.project.internal.dto.CreateTestCaseRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.TestCaseMapper;
-import com.deanmanagement.testmanagement.project.internal.dto.TestCaseResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.CreateTestCaseRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseMapper;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestStepRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;

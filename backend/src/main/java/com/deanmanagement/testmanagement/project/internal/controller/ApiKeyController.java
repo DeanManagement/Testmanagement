@@ -1,8 +1,8 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
-import com.deanmanagement.testmanagement.project.internal.dto.ApiKeyCreatedResponse;
-import com.deanmanagement.testmanagement.project.internal.dto.ApiKeyResponse;
-import com.deanmanagement.testmanagement.project.internal.dto.CreateApiKeyRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.apiKey.ApiKeyCreatedResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.apiKey.ApiKeyResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
 import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

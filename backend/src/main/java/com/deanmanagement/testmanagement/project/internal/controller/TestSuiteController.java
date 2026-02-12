@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
-import com.deanmanagement.testmanagement.project.internal.dto.CreateTestSuiteRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testSuite.CreateTestSuiteRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuiteReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestSuiteResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestSuiteRequest;
 import com.deanmanagement.testmanagement.project.internal.service.TestSuiteService;
@@ -37,6 +38,11 @@ public class TestSuiteController {
     @GetMapping("/{id}")
     public TestSuiteResponse findById(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testSuiteService.findById(projectId, id);
+    }
+
+    @GetMapping("/{id}/report")
+    public TestSuiteReportResponse getReport(@PathVariable UUID projectId, @PathVariable UUID id) {
+        return testSuiteService.getReport(projectId, id);
     }
 
     @PostMapping

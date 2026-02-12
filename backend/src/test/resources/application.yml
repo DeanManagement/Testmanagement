@@ -2,3 +2,7 @@ app:
   jwt:
     secret: test-secret-key-for-unit-tests-at-least-32-chars
     expiration-ms: 86400000
+  admin:
+    email: admin@test.local
+    password: testadmin
+    display-name: Test Admin

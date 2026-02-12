@@ -18,6 +18,8 @@ import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
 import { TestRun, TestResult, StepResult, TestResultStatus } from '../../../shared/models/test-run.model';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-test-run-dialog/clone-test-run-dialog.component';
+import { CompleteTestRunDialogComponent } from '../complete-test-run-dialog/complete-test-run-dialog.component';
+import { ReopenTestRunDialogComponent } from '../reopen-test-run-dialog/reopen-test-run-dialog.component';
 
 interface StepChange {
   status?: TestResultStatus;
@@ -227,6 +229,38 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
 
   sortedSteps(result: TestResult): StepResult[] {
     return [...result.stepResults].sort((a, b) => a.orderIndex - b.orderIndex);
+  }
+
+  completeRun(run: TestRun): void {
+    this.testRunApi.getCompletionInfo(this.projectId, run.id).subscribe(info => {
+      const dialogRef = this.dialog.open(CompleteTestRunDialogComponent, { data: info });
+      dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+        if (confirmed) {
+          this.store.dispatch(
+            TestRunActions.updateTestRun({
+              projectId: this.projectId,
+              id: run.id,
+              request: { name: run.name, environment: run.environment, status: 'COMPLETED' },
+            })
+          );
+        }
+      });
+    });
+  }
+
+  reopenRun(run: TestRun): void {
+    const dialogRef = this.dialog.open(ReopenTestRunDialogComponent);
+    dialogRef.afterClosed().subscribe((reason: string | undefined) => {
+      if (reason) {
+        this.store.dispatch(
+          TestRunActions.updateTestRun({
+            projectId: this.projectId,
+            id: run.id,
+            request: { name: run.name, environment: run.environment, status: 'IN_PROGRESS', reopenReason: reason },
+          })
+        );
+      }
+    });
   }
 
   cloneTestRun(run: TestRun): void {

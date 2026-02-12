@@ -17,7 +17,7 @@
             <mat-icon>save</mat-icon>
             {{ 'common.save' | translate }}
           </button>
-          <button mat-flat-button (click)="updateStatus(run, 'COMPLETED')" class="complete-btn" data-test-id="test-run-complete-btn">
+          <button mat-flat-button (click)="completeRun(run)" class="complete-btn" data-test-id="test-run-complete-btn">
             <mat-icon>check</mat-icon>
             Complete
           </button>
@@ -26,6 +26,16 @@
             Abort
           </button>
         }
+        @if (run.status === 'COMPLETED') {
+          <button mat-stroked-button (click)="reopenRun(run)" class="reopen-btn" data-test-id="test-run-reopen-btn">
+            <mat-icon>replay</mat-icon>
+            {{ 'testRun.reopen.confirm' | translate }}
+          </button>
+        }
+        <a mat-stroked-button [routerLink]="['/projects', projectId, 'test-runs', run.id, 'report']" class="report-btn" data-test-id="test-run-report-btn">
+          <mat-icon>assessment</mat-icon>
+          {{ 'report.title' | translate }}
+        </a>
         <button mat-stroked-button (click)="cloneTestRun(run)" class="clone-btn" data-test-id="test-run-clone-btn">
           <mat-icon>content_copy</mat-icon>
           {{ 'testRun.clone' | translate }}
@@ -55,7 +65,25 @@
         @if (run.endTime) {
           <span class="meta-item" data-test-id="test-run-end-time">Ended: {{ run.endTime | date:'medium' }}</span>
         }
+        @if (run.executorName) {
+          <span class="meta-item" data-test-id="test-run-executor">
+            <mat-icon class="meta-icon">person</mat-icon>
+            {{ 'testRun.executor' | translate }}: {{ run.executorName }}
+          </span>
+        }
+        @if (run.completedByName) {
+          <span class="meta-item" data-test-id="test-run-completed-by">
+            <mat-icon class="meta-icon">verified_user</mat-icon>
+            {{ 'testRun.completedBy' | translate }}: {{ run.completedByName }}
+          </span>
+        }
       </div>
+      @if (run.reopenReason) {
+        <div class="reopen-reason" data-test-id="test-run-reopen-reason">
+          <mat-icon class="meta-icon">info</mat-icon>
+          <span><strong>{{ 'testRun.reopenReason' | translate }}:</strong> {{ run.reopenReason }}</span>
+        </div>
+      }
     </div>
 
     @if (run.results.length) {

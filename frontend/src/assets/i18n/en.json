@@ -151,6 +151,23 @@
       "COMPLETED": "Completed",
       "ABORTED": "Aborted"
     },
+    "executor": "Executor",
+    "completedBy": "Completed by",
+    "reopenReason": "Reopen reason",
+    "complete": {
+      "title": "Complete Test Run",
+      "warning": "This run contains {{failed}} failed and {{blocked}} blocked results. The run status will be set to {{worstStatus}}.",
+      "allPassed": "All tests passed!",
+      "confirm": "Complete",
+      "cancel": "Cancel"
+    },
+    "reopen": {
+      "title": "Reopen Test Run",
+      "reason": "Reason for reopening",
+      "reasonRequired": "A reason is required to reopen",
+      "confirm": "Reopen",
+      "cancel": "Cancel"
+    },
     "clone": "Clone",
     "cloneDialog": {
       "title": "Clone Test Run",
@@ -225,6 +242,23 @@
       "newPassword": "New Password (leave blank to keep current)",
       "empty": "No users yet. Create your first user account."
     }
+  },
+  "report": {
+    "title": "Report",
+    "summary": "Summary",
+    "total": "Total",
+    "passed": "Passed",
+    "failed": "Failed",
+    "blocked": "Blocked",
+    "skipped": "Skipped",
+    "pending": "Pending",
+    "untested": "Untested",
+    "passRate": "Pass Rate",
+    "testCase": "Test Case",
+    "latestResult": "Latest Result",
+    "fromRun": "From Run",
+    "resultDate": "Date",
+    "chart": "Status Distribution"
   },
   "common": {
     "save": "Save",

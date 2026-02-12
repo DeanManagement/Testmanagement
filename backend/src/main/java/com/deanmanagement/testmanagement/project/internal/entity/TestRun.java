@@ -49,6 +49,12 @@ public class TestRun extends BaseEntity {
     @JoinColumn(name = "executor_id")
     private User executor;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "completed_by_id")
+    private User completedBy;
+
+    private String reopenReason;
+
     @OneToMany(mappedBy = "testRun", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestResult> results = new ArrayList<>();
 }
