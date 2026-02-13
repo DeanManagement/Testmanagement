@@ -18,6 +18,7 @@ spring:
     locations: classpath:db/migration
 server:
   port: 8089
+  forward-headers-strategy: native
 
 app:
   cors:

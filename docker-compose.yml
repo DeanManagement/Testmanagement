@@ -23,7 +23,7 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-testmanagement}
       KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI:-http://keycloak:8180/realms/testmanagement}
       KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI:-http://keycloak:8180/realms/testmanagement/protocol/openid-connect/certs}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost,http://localhost:8012}
     ports:
       - "8089:8080"
     depends_on:
