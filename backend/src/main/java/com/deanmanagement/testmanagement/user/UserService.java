@@ -41,12 +41,13 @@ public class UserService {
 
     @Transactional
     public UserResponse create(CreateUserRequest request) {
-        if (userRepository.existsByEmail(request.email())) {
-            throw new DuplicateKeyException(request.email(), "email");
+        var email = request.email().toLowerCase();
+        if (userRepository.existsByEmail(email)) {
+            throw new DuplicateKeyException(email, "email");
         }
 
         User user = new User();
-        user.setEmail(request.email());
+        user.setEmail(email);
         user.setDisplayName(request.displayName());
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setSystemAdmin(request.systemAdmin());

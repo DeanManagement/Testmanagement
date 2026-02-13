@@ -40,8 +40,8 @@ class ExternalTestRunControllerTest {
     @MockitoBean
     private ExternalTestRunService externalTestRunService;
 
-    private static final UUID PROJECT_ID = UUID.randomUUID();
-    private static final UUID TEST_CASE_ID = UUID.randomUUID();
+    private static final String PROJECT_KEY = "TEST";
+    private static final String TEST_CASE_KEY = "TEST-1";
     private static final Instant NOW = Instant.now();
 
     private TestRunResponse sampleRunResponse() {
@@ -57,11 +57,11 @@ class ExternalTestRunControllerTest {
     @WithMockUser
     void create_returnsCreated() throws Exception {
         var request = new ExternalCreateTestRunRequest("CI Run", "staging", List.of(
-                new ExternalTestResultRequest(TEST_CASE_ID, TestResultStatus.PASSED, null, null, null)
+                new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
-        when(externalTestRunService.createExternalRun(eq(PROJECT_ID), any())).thenReturn(sampleRunResponse());
+        when(externalTestRunService.createExternalRun(eq(PROJECT_KEY), any())).thenReturn(sampleRunResponse());
 
-        mockMvc.perform(post("/api/external/projects/{projectId}/test-runs", PROJECT_ID)
+        mockMvc.perform(post("/api/external/projects/{projectKey}/test-runs", PROJECT_KEY)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -75,7 +75,7 @@ class ExternalTestRunControllerTest {
     void create_emptyResults_returns400() throws Exception {
         var request = new ExternalCreateTestRunRequest("CI Run", "staging", List.of());
 
-        mockMvc.perform(post("/api/external/projects/{projectId}/test-runs", PROJECT_ID)
+        mockMvc.perform(post("/api/external/projects/{projectKey}/test-runs", PROJECT_KEY)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -86,10 +86,10 @@ class ExternalTestRunControllerTest {
     @WithMockUser
     void create_blankName_returns400() throws Exception {
         var request = new ExternalCreateTestRunRequest("", "staging", List.of(
-                new ExternalTestResultRequest(TEST_CASE_ID, TestResultStatus.PASSED, null, null, null)
+                new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
 
-        mockMvc.perform(post("/api/external/projects/{projectId}/test-runs", PROJECT_ID)
+        mockMvc.perform(post("/api/external/projects/{projectKey}/test-runs", PROJECT_KEY)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -101,7 +101,7 @@ class ExternalTestRunControllerTest {
     void create_nullResults_returns400() throws Exception {
         String json = "{\"name\":\"CI Run\",\"environment\":\"staging\"}";
 
-        mockMvc.perform(post("/api/external/projects/{projectId}/test-runs", PROJECT_ID)
+        mockMvc.perform(post("/api/external/projects/{projectKey}/test-runs", PROJECT_KEY)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(json))
@@ -112,12 +112,12 @@ class ExternalTestRunControllerTest {
     @WithMockUser
     void create_projectNotFound_returns404() throws Exception {
         var request = new ExternalCreateTestRunRequest("CI Run", "staging", List.of(
-                new ExternalTestResultRequest(TEST_CASE_ID, TestResultStatus.PASSED, null, null, null)
+                new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
-        when(externalTestRunService.createExternalRun(eq(PROJECT_ID), any()))
-                .thenThrow(new ResourceNotFoundException("Project", PROJECT_ID));
+        when(externalTestRunService.createExternalRun(eq(PROJECT_KEY), any()))
+                .thenThrow(new ResourceNotFoundException("Project", PROJECT_KEY));
 
-        mockMvc.perform(post("/api/external/projects/{projectId}/test-runs", PROJECT_ID)
+        mockMvc.perform(post("/api/external/projects/{projectKey}/test-runs", PROJECT_KEY)
                         .with(csrf())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -127,10 +127,10 @@ class ExternalTestRunControllerTest {
     @Test
     void create_unauthenticated_returns401() throws Exception {
         var request = new ExternalCreateTestRunRequest("CI Run", "staging", List.of(
-                new ExternalTestResultRequest(TEST_CASE_ID, TestResultStatus.PASSED, null, null, null)
+                new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
 
-        mockMvc.perform(post("/api/external/projects/{projectId}/test-runs", PROJECT_ID)
+        mockMvc.perform(post("/api/external/projects/{projectKey}/test-runs", PROJECT_KEY)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());

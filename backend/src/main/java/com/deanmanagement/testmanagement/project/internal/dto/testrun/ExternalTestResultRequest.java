@@ -2,13 +2,13 @@ package com.deanmanagement.testmanagement.project.internal.dto.testrun;
 
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import java.util.List;
-import java.util.UUID;
 
 public record ExternalTestResultRequest(
-        @NotNull UUID testCaseId,
+        @NotBlank String testCaseKey,
         @NotNull TestResultStatus status,
         String comment,
         String defectLink,

@@ -16,14 +16,12 @@ import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundExcept
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
-import com.deanmanagement.testmanagement.project.internal.repository.TestStepRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Map;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -33,13 +31,12 @@ public class ExternalTestRunService {
     private final TestRunRepository testRunRepository;
     private final ProjectRepository projectRepository;
     private final TestCaseRepository testCaseRepository;
-    private final TestStepRepository testStepRepository;
     private final TestRunMapper testRunMapper;
 
     @Transactional
-    public TestRunResponse createExternalRun(UUID projectId, ExternalCreateTestRunRequest request) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+    public TestRunResponse createExternalRun(String projectKey, ExternalCreateTestRunRequest request) {
+        Project project = projectRepository.findByKey(projectKey)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectKey));
 
         Instant now = Instant.now();
 
@@ -52,8 +49,8 @@ public class ExternalTestRunService {
         run.setEndTime(now);
 
         for (ExternalTestResultRequest resultReq : request.results()) {
-            TestCase testCase = testCaseRepository.findById(resultReq.testCaseId())
-                    .orElseThrow(() -> new ResourceNotFoundException("TestCase", resultReq.testCaseId()));
+            TestCase testCase = testCaseRepository.findByKeyAndProjectId(resultReq.testCaseKey(), project.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("TestCase", resultReq.testCaseKey()));
 
             TestResult result = new TestResult();
             result.setTestRun(run);
@@ -64,13 +61,13 @@ public class ExternalTestRunService {
             run.getResults().add(result);
 
             if (resultReq.stepResults() != null && !resultReq.stepResults().isEmpty()) {
-                Map<UUID, TestStep> stepMap = testCase.getSteps().stream()
-                        .collect(Collectors.toMap(TestStep::getId, s -> s));
+                Map<Integer, TestStep> stepMap = testCase.getSteps().stream()
+                        .collect(Collectors.toMap(TestStep::getOrderIndex, s -> s));
 
                 for (ExternalStepResultRequest stepReq : resultReq.stepResults()) {
-                    TestStep step = stepMap.get(stepReq.testStepId());
+                    TestStep step = stepMap.get(stepReq.stepIndex() - 1);
                     if (step == null) {
-                        throw new ResourceNotFoundException("TestStep", stepReq.testStepId());
+                        throw new ResourceNotFoundException("TestStep", "index " + stepReq.stepIndex());
                     }
                     StepResult stepResult = new StepResult();
                     stepResult.setTestResult(result);

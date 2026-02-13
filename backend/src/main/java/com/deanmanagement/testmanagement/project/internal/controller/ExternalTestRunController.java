@@ -14,10 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.UUID;
-
 @RestController
-@RequestMapping("/api/external/projects/{projectId}/test-runs")
+@RequestMapping("/api/external/projects/{projectKey}/test-runs")
 @Tag(name = "External Test Runs", description = "External API for submitting completed test runs")
 @RequiredArgsConstructor
 public class ExternalTestRunController {
@@ -26,8 +24,8 @@ public class ExternalTestRunController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TestRunResponse create(@PathVariable UUID projectId,
+    public TestRunResponse create(@PathVariable String projectKey,
                                   @Valid @RequestBody ExternalCreateTestRunRequest request) {
-        return externalTestRunService.createExternalRun(projectId, request);
+        return externalTestRunService.createExternalRun(projectKey, request);
     }
 }

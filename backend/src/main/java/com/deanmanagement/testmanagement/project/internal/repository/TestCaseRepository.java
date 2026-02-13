@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface TestCaseRepository extends JpaRepository<TestCase, UUID> {
+
+    Optional<TestCase> findByKeyAndProjectId(String key, UUID projectId);
 
     List<TestCase> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
 

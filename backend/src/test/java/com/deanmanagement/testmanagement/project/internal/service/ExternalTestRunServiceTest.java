@@ -15,7 +15,6 @@ import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundExcept
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
-import com.deanmanagement.testmanagement.project.internal.repository.TestStepRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -47,16 +46,14 @@ class ExternalTestRunServiceTest {
     private TestCaseRepository testCaseRepository;
 
     @Mock
-    private TestStepRepository testStepRepository;
-
-    @Mock
     private TestRunMapper testRunMapper;
 
     @InjectMocks
     private ExternalTestRunService externalTestRunService;
 
+    private static final String PROJECT_KEY = "TEST";
     private static final UUID PROJECT_ID = UUID.randomUUID();
-    private static final UUID TEST_CASE_ID = UUID.randomUUID();
+    private static final String TEST_CASE_KEY = "TEST-1";
     private static final UUID STEP_ID_1 = UUID.randomUUID();
     private static final UUID STEP_ID_2 = UUID.randomUUID();
     private static final Instant NOW = Instant.now();
@@ -65,13 +62,14 @@ class ExternalTestRunServiceTest {
         Project project = new Project();
         project.setId(PROJECT_ID);
         project.setName("Test Project");
-        project.setKey("TEST");
+        project.setKey(PROJECT_KEY);
         return project;
     }
 
     private TestCase sampleTestCase() {
         TestCase tc = new TestCase();
-        tc.setId(TEST_CASE_ID);
+        tc.setId(UUID.randomUUID());
+        tc.setKey(TEST_CASE_KEY);
         tc.setTitle("Login Test");
 
         TestStep step1 = new TestStep();
@@ -107,20 +105,20 @@ class ExternalTestRunServiceTest {
         TestCase testCase = sampleTestCase();
 
         var stepResults = List.of(
-                new ExternalStepResultRequest(STEP_ID_1, TestResultStatus.PASSED, "Worked"),
-                new ExternalStepResultRequest(STEP_ID_2, TestResultStatus.FAILED, "Error occurred")
+                new ExternalStepResultRequest(1, TestResultStatus.PASSED, "Worked"),
+                new ExternalStepResultRequest(2, TestResultStatus.FAILED, "Error occurred")
         );
         var resultReq = new ExternalTestResultRequest(
-                TEST_CASE_ID, TestResultStatus.FAILED, "Login failed", "BUG-123", stepResults
+                TEST_CASE_KEY, TestResultStatus.FAILED, "Login failed", "BUG-123", stepResults
         );
         var request = new ExternalCreateTestRunRequest("CI Run", "staging", List.of(resultReq));
 
-        when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
-        when(testCaseRepository.findById(TEST_CASE_ID)).thenReturn(Optional.of(testCase));
+        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.of(project));
+        when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.of(testCase));
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));
         when(testRunMapper.toResponse(any(TestRun.class))).thenReturn(sampleRunResponse());
 
-        externalTestRunService.createExternalRun(PROJECT_ID, request);
+        externalTestRunService.createExternalRun(PROJECT_KEY, request);
 
         ArgumentCaptor<TestRun> captor = ArgumentCaptor.forClass(TestRun.class);
         verify(testRunRepository).save(captor.capture());
@@ -149,16 +147,16 @@ class ExternalTestRunServiceTest {
         TestCase testCase = sampleTestCase();
 
         var resultReq = new ExternalTestResultRequest(
-                TEST_CASE_ID, TestResultStatus.PASSED, null, null, null
+                TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null
         );
         var request = new ExternalCreateTestRunRequest("Auto Run", null, List.of(resultReq));
 
-        when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
-        when(testCaseRepository.findById(TEST_CASE_ID)).thenReturn(Optional.of(testCase));
+        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.of(project));
+        when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.of(testCase));
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));
         when(testRunMapper.toResponse(any(TestRun.class))).thenReturn(sampleRunResponse());
 
-        externalTestRunService.createExternalRun(PROJECT_ID, request);
+        externalTestRunService.createExternalRun(PROJECT_KEY, request);
 
         ArgumentCaptor<TestRun> captor = ArgumentCaptor.forClass(TestRun.class);
         verify(testRunRepository).save(captor.capture());
@@ -173,13 +171,13 @@ class ExternalTestRunServiceTest {
 
     @Test
     void createExternalRun_projectNotFound_throwsException() {
-        when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.empty());
+        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.empty());
 
         var request = new ExternalCreateTestRunRequest("Run", null, List.of(
-                new ExternalTestResultRequest(TEST_CASE_ID, TestResultStatus.PASSED, null, null, null)
+                new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
 
-        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_ID, request))
+        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_KEY, request))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Project");
     }
@@ -187,35 +185,34 @@ class ExternalTestRunServiceTest {
     @Test
     void createExternalRun_testCaseNotFound_throwsException() {
         Project project = sampleProject();
-        when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
-        when(testCaseRepository.findById(TEST_CASE_ID)).thenReturn(Optional.empty());
+        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.of(project));
+        when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.empty());
 
         var request = new ExternalCreateTestRunRequest("Run", null, List.of(
-                new ExternalTestResultRequest(TEST_CASE_ID, TestResultStatus.PASSED, null, null, null)
+                new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
 
-        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_ID, request))
+        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_KEY, request))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("TestCase");
     }
 
     @Test
-    void createExternalRun_invalidStepId_throwsException() {
+    void createExternalRun_invalidStepIndex_throwsException() {
         Project project = sampleProject();
         TestCase testCase = sampleTestCase();
-        UUID invalidStepId = UUID.randomUUID();
 
-        when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
-        when(testCaseRepository.findById(TEST_CASE_ID)).thenReturn(Optional.of(testCase));
+        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.of(project));
+        when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.of(testCase));
 
         var stepResults = List.of(
-                new ExternalStepResultRequest(invalidStepId, TestResultStatus.PASSED, null)
+                new ExternalStepResultRequest(99, TestResultStatus.PASSED, null)
         );
         var request = new ExternalCreateTestRunRequest("Run", null, List.of(
-                new ExternalTestResultRequest(TEST_CASE_ID, TestResultStatus.PASSED, null, null, stepResults)
+                new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, stepResults)
         ));
 
-        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_ID, request))
+        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_KEY, request))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("TestStep");
     }
@@ -225,23 +222,24 @@ class ExternalTestRunServiceTest {
         Project project = sampleProject();
         TestCase testCase = sampleTestCase();
 
-        UUID testCaseId2 = UUID.randomUUID();
+        String testCaseKey2 = "TEST-2";
         TestCase testCase2 = new TestCase();
-        testCase2.setId(testCaseId2);
+        testCase2.setId(UUID.randomUUID());
+        testCase2.setKey(testCaseKey2);
         testCase2.setTitle("Logout Test");
 
         var request = new ExternalCreateTestRunRequest("Multi Run", "prod", List.of(
-                new ExternalTestResultRequest(TEST_CASE_ID, TestResultStatus.PASSED, null, null, null),
-                new ExternalTestResultRequest(testCaseId2, TestResultStatus.SKIPPED, "Skipped", null, null)
+                new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null),
+                new ExternalTestResultRequest(testCaseKey2, TestResultStatus.SKIPPED, "Skipped", null, null)
         ));
 
-        when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
-        when(testCaseRepository.findById(TEST_CASE_ID)).thenReturn(Optional.of(testCase));
-        when(testCaseRepository.findById(testCaseId2)).thenReturn(Optional.of(testCase2));
+        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.of(project));
+        when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.of(testCase));
+        when(testCaseRepository.findByKeyAndProjectId(testCaseKey2, PROJECT_ID)).thenReturn(Optional.of(testCase2));
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));
         when(testRunMapper.toResponse(any(TestRun.class))).thenReturn(sampleRunResponse());
 
-        externalTestRunService.createExternalRun(PROJECT_ID, request);
+        externalTestRunService.createExternalRun(PROJECT_KEY, request);
 
         ArgumentCaptor<TestRun> captor = ArgumentCaptor.forClass(TestRun.class);
         verify(testRunRepository).save(captor.capture());
