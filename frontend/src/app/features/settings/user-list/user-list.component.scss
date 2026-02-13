@@ -1,0 +1,55 @@
+.user-list-container {
+  padding: 24px 0;
+}
+
+.page-description {
+  color: var(--tm-text-secondary);
+  margin-bottom: 24px;
+}
+
+.spinner-container {
+  display: flex;
+  justify-content: center;
+  padding: 64px;
+}
+
+.create-btn {
+  background: var(--tm-accent) !important;
+  color: #fff !important;
+}
+
+.user-table {
+  width: 100%;
+}
+
+.actions-cell {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.action-btn {
+  color: var(--tm-text-secondary);
+
+  &:hover {
+    color: var(--tm-text);
+  }
+
+  &--danger:hover {
+    color: var(--tm-danger);
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 64px;
+  color: var(--tm-text-secondary);
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+}

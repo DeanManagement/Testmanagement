@@ -1,0 +1,102 @@
+@if (report) {
+  <div class="report-container">
+    <div class="report-header">
+      <a mat-button [routerLink]="['/projects', projectId, 'test-runs', runId]" class="back-link">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <h1>{{ 'report.title' | translate }}: {{ report.name }}</h1>
+    </div>
+
+    <div class="report-hero tm-card">
+      <div class="hero-top">
+        <span class="badge badge--{{ report.status | lowercase }}">{{ 'testRun.status.' + report.status | translate }}</span>
+        @if (report.environment) {
+          <span class="report-env">
+            <mat-icon class="env-icon">dns</mat-icon>
+            {{ report.environment }}
+          </span>
+        }
+      </div>
+      <div class="run-meta">
+        @if (report.startTime) {
+          <span class="meta-item">Started: {{ report.startTime | date:'medium' }}</span>
+        }
+        @if (report.endTime) {
+          <span class="meta-item">Ended: {{ report.endTime | date:'medium' }}</span>
+        }
+      </div>
+    </div>
+
+    <div class="report-body">
+      <div class="stats-and-chart">
+        <div class="stat-cards">
+          <div class="stat-card">
+            <span class="stat-label">{{ 'report.total' | translate }}</span>
+            <span class="stat-value">{{ report.total }}</span>
+          </div>
+          <div class="stat-card stat-card--passed">
+            <span class="stat-label">{{ 'report.passed' | translate }}</span>
+            <span class="stat-value">{{ report.passed }}</span>
+          </div>
+          <div class="stat-card stat-card--failed">
+            <span class="stat-label">{{ 'report.failed' | translate }}</span>
+            <span class="stat-value">{{ report.failed }}</span>
+          </div>
+          <div class="stat-card stat-card--blocked">
+            <span class="stat-label">{{ 'report.blocked' | translate }}</span>
+            <span class="stat-value">{{ report.blocked }}</span>
+          </div>
+          <div class="stat-card stat-card--skipped">
+            <span class="stat-label">{{ 'report.skipped' | translate }}</span>
+            <span class="stat-value">{{ report.skipped }}</span>
+          </div>
+          <div class="stat-card stat-card--pending">
+            <span class="stat-label">{{ 'report.pending' | translate }}</span>
+            <span class="stat-value">{{ report.pending }}</span>
+          </div>
+          <div class="stat-card stat-card--rate">
+            <span class="stat-label">{{ 'report.passRate' | translate }}</span>
+            <span class="stat-value">{{ report.passRate | number:'1.1-1' }}%</span>
+          </div>
+        </div>
+
+        <div class="chart-container tm-card">
+          <h3>{{ 'report.chart' | translate }}</h3>
+          <div class="chart-wrapper">
+            <canvas #chartCanvas></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-table tm-card">
+        <h3>{{ 'stepResult.results' | translate }} ({{ report.total }})</h3>
+        <table mat-table [dataSource]="report.results" class="data-table">
+          <ng-container matColumnDef="testCase">
+            <th mat-header-cell *matHeaderCellDef>{{ 'report.testCase' | translate }}</th>
+            <td mat-cell *matCellDef="let result">
+              <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link">
+                {{ result.testCaseTitle }}
+              </a>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.status' | translate }}</th>
+            <td mat-cell *matCellDef="let result">
+              <span class="badge badge--{{ result.status | lowercase }}">{{ 'resultStatus.' + result.status | translate }}</span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="comment">
+            <th mat-header-cell *matHeaderCellDef>Comment</th>
+            <td mat-cell *matCellDef="let result" class="comment-cell">{{ result.comment || '-' }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="['testCase', 'status', 'comment']"></tr>
+          <tr mat-row *matRowDef="let row; columns: ['testCase', 'status', 'comment']"></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+}

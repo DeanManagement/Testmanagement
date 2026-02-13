@@ -1,0 +1,23 @@
+<div class="settings-layout">
+  <nav mat-tab-nav-bar [tabPanel]="tabPanel" data-test-id="settings-nav">
+    <a mat-tab-link
+       routerLink="api-keys"
+       routerLinkActive
+       #apiKeysActive="routerLinkActive"
+       [active]="apiKeysActive.isActive"
+       data-test-id="settings-nav-api-keys">
+      {{ 'settings.apiKeys.title' | translate }}
+    </a>
+    <a mat-tab-link
+       routerLink="users"
+       routerLinkActive
+       #usersActive="routerLinkActive"
+       [active]="usersActive.isActive"
+       data-test-id="settings-nav-users">
+      {{ 'settings.users.title' | translate }}
+    </a>
+  </nav>
+  <mat-tab-nav-panel #tabPanel>
+    <router-outlet />
+  </mat-tab-nav-panel>
+</div>

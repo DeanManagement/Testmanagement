@@ -1,0 +1,105 @@
+@if (report) {
+  <div class="report-container">
+    <div class="report-header">
+      <a mat-button [routerLink]="['/projects', projectId, 'test-suites', suiteId]" class="back-link">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <h1>{{ 'report.title' | translate }}: {{ report.name }}</h1>
+    </div>
+
+    @if (report.description) {
+      <p class="report-description">{{ report.description }}</p>
+    }
+
+    <div class="report-body">
+      <div class="stats-and-chart">
+        <div class="stat-cards">
+          <div class="stat-card">
+            <span class="stat-label">{{ 'report.total' | translate }}</span>
+            <span class="stat-value">{{ report.total }}</span>
+          </div>
+          <div class="stat-card stat-card--passed">
+            <span class="stat-label">{{ 'report.passed' | translate }}</span>
+            <span class="stat-value">{{ report.passed }}</span>
+          </div>
+          <div class="stat-card stat-card--failed">
+            <span class="stat-label">{{ 'report.failed' | translate }}</span>
+            <span class="stat-value">{{ report.failed }}</span>
+          </div>
+          <div class="stat-card stat-card--blocked">
+            <span class="stat-label">{{ 'report.blocked' | translate }}</span>
+            <span class="stat-value">{{ report.blocked }}</span>
+          </div>
+          <div class="stat-card stat-card--skipped">
+            <span class="stat-label">{{ 'report.skipped' | translate }}</span>
+            <span class="stat-value">{{ report.skipped }}</span>
+          </div>
+          <div class="stat-card stat-card--untested">
+            <span class="stat-label">{{ 'report.untested' | translate }}</span>
+            <span class="stat-value">{{ report.untested }}</span>
+          </div>
+          <div class="stat-card stat-card--rate">
+            <span class="stat-label">{{ 'report.passRate' | translate }}</span>
+            <span class="stat-value">{{ report.passRate | number:'1.1-1' }}%</span>
+          </div>
+        </div>
+
+        <div class="chart-container tm-card">
+          <h3>{{ 'report.chart' | translate }}</h3>
+          <div class="chart-wrapper">
+            <canvas #chartCanvas></canvas>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-table tm-card">
+        <h3>{{ 'report.latestResult' | translate }} ({{ report.total }})</h3>
+        <table mat-table [dataSource]="report.results" class="data-table">
+          <ng-container matColumnDef="testCase">
+            <th mat-header-cell *matHeaderCellDef>{{ 'report.testCase' | translate }}</th>
+            <td mat-cell *matCellDef="let result">
+              <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link">
+                {{ result.testCaseTitle }}
+              </a>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.status' | translate }}</th>
+            <td mat-cell *matCellDef="let result">
+              @if (result.status) {
+                <span class="badge badge--{{ result.status | lowercase }}">{{ 'resultStatus.' + result.status | translate }}</span>
+              } @else {
+                <span class="badge badge--untested">{{ 'report.untested' | translate }}</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="fromRun">
+            <th mat-header-cell *matHeaderCellDef>{{ 'report.fromRun' | translate }}</th>
+            <td mat-cell *matCellDef="let result">
+              @if (result.testRunId) {
+                <a [routerLink]="['/projects', projectId, 'test-runs', result.testRunId]" class="item-link">
+                  {{ result.testRunName }}
+                </a>
+              } @else {
+                -
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="date">
+            <th mat-header-cell *matHeaderCellDef>{{ 'report.resultDate' | translate }}</th>
+            <td mat-cell *matCellDef="let result">
+              {{ result.updatedAt ? (result.updatedAt | date:'medium') : '-' }}
+            </td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+}
