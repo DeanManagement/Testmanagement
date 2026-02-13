@@ -1,6 +1,6 @@
-import { Component, inject, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe, DecimalPipe, LowerCasePipe } from '@angular/common';
+import { DecimalPipe, KeyValuePipe, LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -34,8 +34,8 @@ Chart.register(
   selector: 'app-project-dashboard',
   standalone: true,
   imports: [
-    DatePipe,
     DecimalPipe,
+    KeyValuePipe,
     LowerCasePipe,
     RouterLink,
     MatCardModule,
@@ -48,12 +48,14 @@ Chart.register(
   templateUrl: './project-dashboard.component.html',
   styleUrl: './project-dashboard.component.scss',
 })
-export class ProjectDashboardComponent implements OnInit, AfterViewInit {
+export class ProjectDashboardComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly projectApi = inject(ProjectApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   @ViewChild('statusChart') statusChartCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('priorityChart') priorityChartCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('resultsChart') resultsChartCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('trendChart') trendChartCanvas!: ElementRef<HTMLCanvasElement>;
 
   projectId = '';
@@ -63,6 +65,7 @@ export class ProjectDashboardComponent implements OnInit, AfterViewInit {
 
   private statusChart: Chart | null = null;
   private priorityChart: Chart | null = null;
+  private resultsChart: Chart | null = null;
   private trendChart: Chart | null = null;
 
   ngOnInit(): void {
@@ -72,6 +75,7 @@ export class ProjectDashboardComponent implements OnInit, AfterViewInit {
         next: (data) => {
           this.dashboard = data;
           this.loading = false;
+          this.cdr.detectChanges();
           this.renderCharts();
         },
         error: () => {
@@ -81,15 +85,10 @@ export class ProjectDashboardComponent implements OnInit, AfterViewInit {
     }
   }
 
-  ngAfterViewInit(): void {
-    if (this.dashboard) {
-      this.renderCharts();
-    }
-  }
-
   private renderCharts(): void {
     this.renderStatusChart();
     this.renderPriorityChart();
+    this.renderResultsChart();
     this.renderTrendChart();
   }
 
@@ -149,6 +148,38 @@ export class ProjectDashboardComponent implements OnInit, AfterViewInit {
         scales: {
           y: { beginAtZero: true, ticks: { stepSize: 1 } },
         },
+      },
+    });
+  }
+
+  private renderResultsChart(): void {
+    if (!this.resultsChartCanvas || !this.dashboard) return;
+    this.resultsChart?.destroy();
+
+    const data = this.dashboard.latestResultsByStatus;
+    if (!data || Object.keys(data).length === 0) return;
+
+    const resultColors: Record<string, string> = {
+      PASSED: '#4caf50',
+      FAILED: '#f44336',
+      BLOCKED: '#ff9800',
+      SKIPPED: '#9e9e9e',
+      PENDING: '#2196f3',
+    };
+
+    this.resultsChart = new Chart(this.resultsChartCanvas.nativeElement, {
+      type: 'doughnut',
+      data: {
+        labels: Object.keys(data),
+        datasets: [{
+          data: Object.values(data),
+          backgroundColor: Object.keys(data).map(k => resultColors[k] || '#bdbdbd'),
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
       },
     });
   }

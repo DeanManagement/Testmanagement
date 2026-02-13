@@ -65,5 +65,32 @@
         </table>
       </div>
     }
+
+    <div class="comments-section tm-card" data-test-id="test-case-comments-section">
+      <h3>{{ 'comment.title' | translate }}</h3>
+      @if (commentsLoading$ | async) {
+        <p>{{ 'common.loading' | translate }}</p>
+      } @else {
+        <app-comment-list
+          [comments]="(comments$ | async) ?? []"
+          [currentUserId]="(authUser$ | async)?.id ?? null"
+          [isAdmin]="(isAdmin$ | async) ?? false"
+          (editComment)="startEditComment($event)"
+          (deleteComment)="onDeleteComment($event)"
+        ></app-comment-list>
+      }
+      @if (editingComment) {
+        <app-comment-form
+          [initialContent]="editingComment.content"
+          [isEditing]="true"
+          (submitComment)="saveEditComment($event)"
+          (cancelEdit)="cancelEditComment()"
+        ></app-comment-form>
+      } @else {
+        <app-comment-form
+          (submitComment)="addComment($event)"
+        ></app-comment-form>
+      }
+    </div>
   </div>
 }

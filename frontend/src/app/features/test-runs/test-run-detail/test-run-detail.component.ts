@@ -21,6 +21,12 @@ import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-test-run-dialog/clone-test-run-dialog.component';
 import { CompleteTestRunDialogComponent } from '../complete-test-run-dialog/complete-test-run-dialog.component';
 import { ReopenTestRunDialogComponent } from '../reopen-test-run-dialog/reopen-test-run-dialog.component';
+import { CommentActions } from '../../../store/comment/comment.actions';
+import { selectAllComments, selectCommentsLoading } from '../../../store/comment/comment.selectors';
+import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
+import { Comment } from '../../../shared/models/comment.model';
+import { CommentListComponent } from '../../../shared/components/comment-list/comment-list.component';
+import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
 
 @Component({
   selector: 'app-test-run-detail',
@@ -40,6 +46,8 @@ import { ReopenTestRunDialogComponent } from '../reopen-test-run-dialog/reopen-t
     MatInputModule,
     FormsModule,
     TranslateModule,
+    CommentListComponent,
+    CommentFormComponent,
   ],
   templateUrl: './test-run-detail.component.html',
   styleUrl: './test-run-detail.component.scss',
@@ -61,6 +69,12 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   activeResultId: string | null = null;
   executionSearchTerm = '';
 
+  comments$ = this.store.select(selectAllComments);
+  commentsLoading$ = this.store.select(selectCommentsLoading);
+  authUser$ = this.store.select(selectAuthUser);
+  isAdmin$ = this.store.select(selectIsSystemAdmin);
+  editingComment: Comment | null = null;
+
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.runId = this.route.snapshot.paramMap.get('runId') ?? '';
@@ -70,6 +84,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
       this.autoSelectSub = this.testRun$.subscribe(run => {
         if (run?.status === 'IN_PROGRESS' && !this.activeResultId && run.results.length > 0) {
           this.activeResultId = run.results[0].id;
+          this.loadCommentsForResult(run.results[0].id);
         }
       });
     }
@@ -174,6 +189,8 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
 
   setActiveResult(resultId: string): void {
     this.activeResultId = resultId;
+    this.editingComment = null;
+    this.loadCommentsForResult(resultId);
   }
 
   activeResultIndex(run: TestRun): number {
@@ -250,5 +267,53 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
 
   deleteTestRun(id: string): void {
     this.store.dispatch(TestRunActions.deleteTestRun({ projectId: this.projectId, id }));
+  }
+
+  addResultComment(content: string): void {
+    if (this.activeResultId) {
+      this.store.dispatch(CommentActions.createComment({
+        projectId: this.projectId,
+        entityType: 'TEST_RESULT',
+        entityId: this.activeResultId,
+        request: { content },
+        runId: this.runId,
+      }));
+    }
+  }
+
+  startEditComment(comment: Comment): void {
+    this.editingComment = comment;
+  }
+
+  saveEditComment(content: string): void {
+    if (this.editingComment) {
+      this.store.dispatch(CommentActions.updateComment({
+        projectId: this.projectId,
+        commentId: this.editingComment.id,
+        request: { content },
+      }));
+      this.editingComment = null;
+    }
+  }
+
+  cancelEditComment(): void {
+    this.editingComment = null;
+  }
+
+  onDeleteComment(comment: Comment): void {
+    this.store.dispatch(CommentActions.deleteComment({
+      projectId: this.projectId,
+      commentId: comment.id,
+    }));
+  }
+
+  private loadCommentsForResult(resultId: string): void {
+    this.store.dispatch(CommentActions.clearComments());
+    this.store.dispatch(CommentActions.loadComments({
+      projectId: this.projectId,
+      entityType: 'TEST_RESULT',
+      entityId: resultId,
+      runId: this.runId,
+    }));
   }
 }

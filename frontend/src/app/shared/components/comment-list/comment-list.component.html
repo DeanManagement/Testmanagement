@@ -1,0 +1,33 @@
+@if (comments.length === 0) {
+  <p class="comments-empty">{{ 'comment.empty' | translate }}</p>
+} @else {
+  <div class="comments">
+    @for (comment of comments; track comment.id) {
+      <div class="comment" [attr.data-test-id]="'comment-' + comment.id">
+        <div class="comment-header">
+          <div class="comment-author">
+            <mat-icon class="author-icon">person</mat-icon>
+            <span class="author-name">{{ comment.authorDisplayName }}</span>
+            <span class="comment-date">{{ comment.createdAt | date:'medium' }}</span>
+            @if (isEdited(comment)) {
+              <span class="comment-edited">({{ 'comment.edited' | translate }})</span>
+            }
+          </div>
+          <div class="comment-actions">
+            @if (canEdit(comment)) {
+              <button mat-icon-button (click)="editComment.emit(comment)" [attr.data-test-id]="'comment-edit-' + comment.id">
+                <mat-icon>edit</mat-icon>
+              </button>
+            }
+            @if (canDelete(comment)) {
+              <button mat-icon-button (click)="deleteComment.emit(comment)" class="delete-btn" [attr.data-test-id]="'comment-delete-' + comment.id">
+                <mat-icon>delete</mat-icon>
+              </button>
+            }
+          </div>
+        </div>
+        <div class="comment-content">{{ comment.content }}</div>
+      </div>
+    }
+  </div>
+}

@@ -9,6 +9,8 @@ public record DashboardResponse(
         DashboardTotals totals,
         Map<String, Long> testCasesByStatus,
         Map<String, Long> testCasesByPriority,
+        Map<String, Long> latestResultsByStatus,
+        double overallPassRate,
         List<RecentTestRunResponse> recentTestRuns,
         List<PassRateTrendEntry> passRateTrend
 ) {

@@ -2,6 +2,8 @@ export interface ProjectDashboard {
   totals: DashboardTotals;
   testCasesByStatus: Record<string, number>;
   testCasesByPriority: Record<string, number>;
+  latestResultsByStatus: Record<string, number>;
+  overallPassRate: number;
   recentTestRuns: RecentTestRun[];
   passRateTrend: PassRateTrendEntry[];
 }

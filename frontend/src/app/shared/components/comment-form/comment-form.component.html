@@ -1,0 +1,25 @@
+<div class="comment-form">
+  <mat-form-field appearance="outline" class="comment-input">
+    <mat-label>{{ (isEditing ? 'comment.edit' : 'comment.placeholder') | translate }}</mat-label>
+    <textarea matInput
+      [(ngModel)]="content"
+      [maxlength]="maxLength"
+      rows="3"
+      data-test-id="comment-textarea"></textarea>
+    <mat-hint align="end">{{ content.length }} / {{ maxLength }}</mat-hint>
+  </mat-form-field>
+  <div class="comment-form-actions">
+    @if (isEditing) {
+      <button mat-stroked-button (click)="onCancel()" data-test-id="comment-cancel-btn">
+        {{ 'comment.cancel' | translate }}
+      </button>
+    }
+    <button mat-flat-button
+      [disabled]="!content.trim()"
+      (click)="onSubmit()"
+      class="submit-btn"
+      data-test-id="comment-submit-btn">
+      {{ (isEditing ? 'comment.save' : 'comment.add') | translate }}
+    </button>
+  </div>
+</div>

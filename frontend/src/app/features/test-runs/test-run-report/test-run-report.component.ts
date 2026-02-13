@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { DatePipe, LowerCasePipe, DecimalPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -29,9 +29,10 @@ Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
   templateUrl: './test-run-report.component.html',
   styleUrl: './test-run-report.component.scss',
 })
-export class TestRunReportComponent implements OnInit, AfterViewInit {
+export class TestRunReportComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly testRunApi = inject(TestRunApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
@@ -47,14 +48,9 @@ export class TestRunReportComponent implements OnInit, AfterViewInit {
     if (this.projectId && this.runId) {
       this.testRunApi.getReport(this.projectId, this.runId).subscribe(report => {
         this.report = report;
+        this.cdr.detectChanges();
         this.renderChart();
       });
-    }
-  }
-
-  ngAfterViewInit(): void {
-    if (this.report) {
-      this.renderChart();
     }
   }
 

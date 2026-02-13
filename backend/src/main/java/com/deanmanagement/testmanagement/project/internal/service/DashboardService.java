@@ -60,8 +60,25 @@ public class DashboardService {
                 })
                 .toList();
 
+        // Compute latest run results breakdown
+        Map<String, Long> latestResultsByStatus = new LinkedHashMap<>();
+        double overallPassRate = 0.0;
         List<TestRun> completedRuns = testRunRepository
                 .findTop10ByProjectIdAndStatusOrderByEndTimeDesc(projectId, TestRunStatus.COMPLETED);
+        if (!completedRuns.isEmpty()) {
+            TestRun latestRun = completedRuns.getFirst();
+            List<TestResult> latestResults = latestRun.getResults();
+            for (TestResultStatus status : TestResultStatus.values()) {
+                long count = latestResults.stream().filter(r -> r.getStatus() == status).count();
+                if (count > 0) {
+                    latestResultsByStatus.put(status.name(), count);
+                }
+            }
+            int latestTotal = latestResults.size();
+            long latestPassed = latestResultsByStatus.getOrDefault("PASSED", 0L);
+            overallPassRate = latestTotal > 0 ? Math.round(latestPassed * 10000.0 / latestTotal) / 100.0 : 0.0;
+        }
+
         List<PassRateTrendEntry> passRateTrend = new ArrayList<>();
         for (TestRun run : completedRuns) {
             List<TestResult> results = run.getResults();
@@ -73,6 +90,6 @@ public class DashboardService {
         // Reverse to show oldest first for trend chart
         passRateTrend = passRateTrend.reversed();
 
-        return new DashboardResponse(totals, testCasesByStatus, testCasesByPriority, recentTestRuns, passRateTrend);
+        return new DashboardResponse(totals, testCasesByStatus, testCasesByPriority, latestResultsByStatus, overallPassRate, recentTestRuns, passRateTrend);
     }
 }

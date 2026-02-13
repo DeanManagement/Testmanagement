@@ -188,6 +188,33 @@
                   <mat-icon>chevron_right</mat-icon>
                 </button>
               </div>
+
+              <div class="result-comments-section" data-test-id="result-comments-section">
+                <h4>{{ 'comment.title' | translate }}</h4>
+                @if (commentsLoading$ | async) {
+                  <p>{{ 'common.loading' | translate }}</p>
+                } @else {
+                  <app-comment-list
+                    [comments]="(comments$ | async) ?? []"
+                    [currentUserId]="(authUser$ | async)?.id ?? null"
+                    [isAdmin]="(isAdmin$ | async) ?? false"
+                    (editComment)="startEditComment($event)"
+                    (deleteComment)="onDeleteComment($event)"
+                  ></app-comment-list>
+                }
+                @if (editingComment) {
+                  <app-comment-form
+                    [initialContent]="editingComment.content"
+                    [isEditing]="true"
+                    (submitComment)="saveEditComment($event)"
+                    (cancelEdit)="cancelEditComment()"
+                  ></app-comment-form>
+                } @else {
+                  <app-comment-form
+                    (submitComment)="addResultComment($event)"
+                  ></app-comment-form>
+                }
+              </div>
             } @else {
               <div class="no-selection">
                 <mat-icon>touch_app</mat-icon>

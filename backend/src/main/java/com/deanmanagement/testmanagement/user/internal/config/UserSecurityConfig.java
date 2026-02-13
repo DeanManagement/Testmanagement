@@ -34,6 +34,7 @@ public class UserSecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/screenshots/*").permitAll()
                         .requestMatchers("/api/external/**").hasRole("API_KEY")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll());

@@ -36,6 +36,15 @@
           <span class="summary-value">{{ dashboard.totals.completedTestRuns }}</span>
           <span class="summary-label">{{ 'projectDashboard.completedTestRuns' | translate }}</span>
         </div>
+        <div class="summary-card tm-card">
+          <mat-icon>percent</mat-icon>
+          @if (dashboard.overallPassRate > 0) {
+            <span class="summary-value">{{ dashboard.overallPassRate | number:'1.0-1' }}%</span>
+          } @else {
+            <span class="summary-value">—</span>
+          }
+          <span class="summary-label">{{ 'projectDashboard.overallPassRate' | translate }}</span>
+        </div>
       </div>
 
       <div class="charts-row">
@@ -51,6 +60,14 @@
             <canvas #priorityChart></canvas>
           </div>
         </div>
+        @if (dashboard.latestResultsByStatus && (dashboard.latestResultsByStatus | keyvalue).length > 0) {
+          <div class="chart-card tm-card">
+            <h3>{{ 'projectDashboard.latestResults' | translate }}</h3>
+            <div class="chart-wrapper">
+              <canvas #resultsChart></canvas>
+            </div>
+          </div>
+        }
       </div>
 
       @if (dashboard.passRateTrend.length > 0) {

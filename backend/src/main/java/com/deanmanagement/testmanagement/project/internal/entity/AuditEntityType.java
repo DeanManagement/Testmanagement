@@ -5,5 +5,6 @@ public enum AuditEntityType {
     TEST_CASE,
     TEST_SUITE,
     TEST_RUN,
-    TEST_RESULT
+    TEST_RESULT,
+    COMMENT
 }

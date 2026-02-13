@@ -23,6 +23,8 @@ import { apiKeyReducer } from './store/api-key/api-key.reducer';
 import { ApiKeyEffects } from './store/api-key/api-key.effects';
 import { userReducer } from './store/user/user.reducer';
 import { UserEffects } from './store/user/user.effects';
+import { commentReducer } from './store/comment/comment.reducer';
+import { CommentEffects } from './store/comment/comment.effects';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -38,8 +40,9 @@ export const appConfig: ApplicationConfig = {
       testRuns: testRunReducer,
       apiKeys: apiKeyReducer,
       users: userReducer,
+      comments: commentReducer,
     }),
-    provideEffects(ProjectEffects, TestCaseEffects, TestSuiteEffects, TestRunEffects, ApiKeyEffects, UserEffects),
+    provideEffects(ProjectEffects, TestCaseEffects, TestSuiteEffects, TestRunEffects, ApiKeyEffects, UserEffects, CommentEffects),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
     provideTranslateService({
       defaultLanguage: 'en',

@@ -264,7 +264,8 @@
       "TEST_CASE": "test case",
       "TEST_SUITE": "test suite",
       "TEST_RUN": "test run",
-      "TEST_RESULT": "test result"
+      "TEST_RESULT": "test result",
+      "COMMENT": "comment"
     }
   },
   "projectDashboard": {
@@ -275,6 +276,9 @@
     "completedTestRuns": "Completed Runs",
     "testCasesByStatus": "Test Cases by Status",
     "testCasesByPriority": "Test Cases by Priority",
+    "latestResults": "Latest Run Results",
+    "overallPassRate": "Pass Rate",
+    "noCompletedRuns": "No completed runs yet",
     "passRateTrend": "Pass Rate Trend",
     "recentTestRuns": "Recent Test Runs",
     "noData": "No data available yet."
@@ -311,6 +315,18 @@
     "resultDate": "Date",
     "chart": "Status Distribution",
     "downloadPdf": "Download PDF"
+  },
+  "comment": {
+    "title": "Comments",
+    "empty": "No comments yet.",
+    "placeholder": "Write a comment...",
+    "add": "Post Comment",
+    "edit": "Edit Comment",
+    "delete": "Delete Comment",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edited": "edited",
+    "charCount": "{{count}} / {{max}}"
   },
   "common": {
     "save": "Save",
