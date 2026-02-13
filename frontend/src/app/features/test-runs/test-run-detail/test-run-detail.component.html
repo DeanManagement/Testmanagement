@@ -13,10 +13,6 @@
           </button>
         }
         @if (run.status === 'IN_PROGRESS') {
-          <button mat-flat-button (click)="saveAll(run)" [disabled]="!hasUnsavedChanges" class="save-btn" data-test-id="test-run-save-btn">
-            <mat-icon>save</mat-icon>
-            {{ 'common.save' | translate }}
-          </button>
           <button mat-flat-button (click)="completeRun(run)" class="complete-btn" data-test-id="test-run-complete-btn">
             <mat-icon>check</mat-icon>
             Complete
@@ -98,7 +94,7 @@
               @for (result of filteredResults(run); track result.id) {
                 <div class="result-item" [class.result-item--active]="result.id === activeResultId" (click)="setActiveResult(result.id)" [attr.data-test-id]="'execution-sidebar-item-' + result.id">
                   <span class="result-item-title">{{ result.testCaseTitle }}</span>
-                  <span class="badge badge--{{ getResultStatus(result) | lowercase }} badge--small">{{ 'resultStatus.' + getResultStatus(result) | translate }}</span>
+                  <span class="badge badge--{{ result.status | lowercase }} badge--small">{{ 'resultStatus.' + result.status | translate }}</span>
                 </div>
               }
             </div>
@@ -113,7 +109,7 @@
                   </a>
                 </h3>
                 <mat-form-field appearance="outline" class="status-select">
-                  <mat-select [value]="getResultStatus(result)" (selectionChange)="onResultStatusChange(result.id, $event.value)" [attr.data-test-id]="'execution-result-status-' + result.id">
+                  <mat-select [value]="result.status" (selectionChange)="onResultStatusChange(result.id, $event.value)" [attr.data-test-id]="'execution-result-status-' + result.id">
                     @for (s of resultStatuses; track s) {
                       <mat-option [value]="s">{{ 'resultStatus.' + s | translate }}</mat-option>
                     }
@@ -127,7 +123,7 @@
                     <div class="step-row" [attr.data-test-id]="'step-result-row-' + step.id">
                       <div class="step-header">
                         <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
-                        <span class="badge badge--{{ getStepStatus(step) | lowercase }} badge--small">{{ 'resultStatus.' + getStepStatus(step) | translate }}</span>
+                        <span class="badge badge--{{ step.status | lowercase }} badge--small">{{ 'resultStatus.' + step.status | translate }}</span>
                       </div>
                       <div class="step-spec">
                         <div class="spec-item">
@@ -144,7 +140,7 @@
                       <div class="step-inputs">
                         <mat-form-field appearance="outline" class="step-status-select">
                           <mat-label>{{ 'testCase.form.status' | translate }}</mat-label>
-                          <mat-select [value]="getStepStatus(step)" (selectionChange)="onStepStatusChange(step.id, $event.value)">
+                          <mat-select [value]="step.status" (selectionChange)="onStepStatusChange(result.id, step, $event.value)">
                             @for (s of resultStatuses; track s) {
                               <mat-option [value]="s">{{ 'resultStatus.' + s | translate }}</mat-option>
                             }
@@ -153,8 +149,8 @@
                         <mat-form-field appearance="outline" class="step-actual-input">
                           <mat-label>{{ 'stepResult.actualResult' | translate }}</mat-label>
                           <textarea matInput
-                            [ngModel]="getStepActualResult(step)"
-                            (ngModelChange)="onStepActualChange(step.id, $event)"
+                            [ngModel]="step.actualResult"
+                            (ngModelChange)="onStepActualChange(result.id, step, $event)"
                             rows="2"></textarea>
                         </mat-form-field>
                       </div>
@@ -213,7 +209,7 @@
                     </a>
                   </mat-panel-title>
                   <mat-panel-description class="panel-description">
-                    <span class="badge badge--{{ getResultStatus(result) | lowercase }}" data-test-id="test-result-status-badge">{{ 'resultStatus.' + getResultStatus(result) | translate }}</span>
+                    <span class="badge badge--{{ result.status | lowercase }}" data-test-id="test-result-status-badge">{{ 'resultStatus.' + result.status | translate }}</span>
                   </mat-panel-description>
                 </mat-expansion-panel-header>
 
@@ -223,7 +219,7 @@
                       <div class="step-row" [attr.data-test-id]="'step-result-row-' + step.id">
                         <div class="step-header">
                           <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
-                          <span class="badge badge--{{ getStepStatus(step) | lowercase }} badge--small">{{ 'resultStatus.' + getStepStatus(step) | translate }}</span>
+                          <span class="badge badge--{{ step.status | lowercase }} badge--small">{{ 'resultStatus.' + step.status | translate }}</span>
                         </div>
                         <div class="step-spec">
                           <div class="spec-item">

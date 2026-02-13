@@ -12,7 +12,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
-import { Observable, of, Subscription } from 'rxjs';
+import { Observable, of, Subject, Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
 import { TestRun, TestResult, StepResult, TestResultStatus } from '../../../shared/models/test-run.model';
@@ -20,11 +21,6 @@ import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-test-run-dialog/clone-test-run-dialog.component';
 import { CompleteTestRunDialogComponent } from '../complete-test-run-dialog/complete-test-run-dialog.component';
 import { ReopenTestRunDialogComponent } from '../reopen-test-run-dialog/reopen-test-run-dialog.component';
-
-interface StepChange {
-  status?: TestResultStatus;
-  actualResult?: string;
-}
 
 @Component({
   selector: 'app-test-run-detail',
@@ -54,14 +50,13 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly testRunApi = inject(TestRunApiService);
   private autoSelectSub?: Subscription;
+  private actualResultSub?: Subscription;
+  private actualResultSubject = new Subject<{ resultId: string; step: StepResult; actualResult: string }>();
 
   projectId = '';
   runId = '';
   testRun$: Observable<TestRun | undefined> = of(undefined);
   resultStatuses: TestResultStatus[] = ['PENDING', 'PASSED', 'FAILED', 'BLOCKED', 'SKIPPED'];
-
-  stepChanges = new Map<string, StepChange>();
-  resultChanges = new Map<string, TestResultStatus>();
 
   activeResultId: string | null = null;
   executionSearchTerm = '';
@@ -78,14 +73,23 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
         }
       });
     }
+
+    this.actualResultSub = this.actualResultSubject.pipe(debounceTime(500)).subscribe(({ resultId, step, actualResult }) => {
+      this.store.dispatch(
+        TestRunActions.updateStepResult({
+          projectId: this.projectId,
+          runId: this.runId,
+          resultId,
+          stepResultId: step.id,
+          request: { status: step.status, actualResult },
+        })
+      );
+    });
   }
 
   ngOnDestroy(): void {
     this.autoSelectSub?.unsubscribe();
-  }
-
-  get hasUnsavedChanges(): boolean {
-    return this.stepChanges.size > 0 || this.resultChanges.size > 0;
+    this.actualResultSub?.unsubscribe();
   }
 
   updateStatus(run: TestRun, status: 'IN_PROGRESS' | 'COMPLETED' | 'ABORTED'): void {
@@ -98,67 +102,31 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
     );
   }
 
-  getResultStatus(result: TestResult): TestResultStatus {
-    return this.resultChanges.get(result.id) ?? result.status;
-  }
-
   onResultStatusChange(resultId: string, status: TestResultStatus): void {
-    this.resultChanges.set(resultId, status);
+    this.store.dispatch(
+      TestRunActions.updateTestResult({
+        projectId: this.projectId,
+        runId: this.runId,
+        resultId,
+        request: { status },
+      })
+    );
   }
 
-  getStepStatus(step: StepResult): TestResultStatus {
-    return this.stepChanges.get(step.id)?.status ?? step.status;
+  onStepStatusChange(resultId: string, step: StepResult, status: TestResultStatus): void {
+    this.store.dispatch(
+      TestRunActions.updateStepResult({
+        projectId: this.projectId,
+        runId: this.runId,
+        resultId,
+        stepResultId: step.id,
+        request: { status, actualResult: step.actualResult || undefined },
+      })
+    );
   }
 
-  getStepActualResult(step: StepResult): string {
-    const change = this.stepChanges.get(step.id);
-    return change?.actualResult !== undefined ? change.actualResult : (step.actualResult ?? '');
-  }
-
-  onStepStatusChange(stepId: string, status: TestResultStatus): void {
-    const existing = this.stepChanges.get(stepId) ?? {};
-    this.stepChanges.set(stepId, { ...existing, status });
-  }
-
-  onStepActualChange(stepId: string, actualResult: string): void {
-    const existing = this.stepChanges.get(stepId) ?? {};
-    this.stepChanges.set(stepId, { ...existing, actualResult });
-  }
-
-  saveAll(run: TestRun): void {
-    for (const [resultId, status] of this.resultChanges) {
-      this.store.dispatch(
-        TestRunActions.updateTestResult({
-          projectId: this.projectId,
-          runId: this.runId,
-          resultId,
-          request: { status },
-        })
-      );
-    }
-
-    for (const result of run.results) {
-      for (const step of result.stepResults) {
-        const change = this.stepChanges.get(step.id);
-        if (change) {
-          this.store.dispatch(
-            TestRunActions.updateStepResult({
-              projectId: this.projectId,
-              runId: this.runId,
-              resultId: result.id,
-              stepResultId: step.id,
-              request: {
-                status: change.status ?? step.status,
-                actualResult: change.actualResult !== undefined ? change.actualResult : (step.actualResult || undefined),
-              },
-            })
-          );
-        }
-      }
-    }
-
-    this.resultChanges.clear();
-    this.stepChanges.clear();
+  onStepActualChange(resultId: string, step: StepResult, actualResult: string): void {
+    this.actualResultSubject.next({ resultId, step, actualResult });
   }
 
   onScreenshotUpload(resultId: string, stepResultId: string, event: Event): void {

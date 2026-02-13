@@ -298,6 +298,14 @@ public class TestRunService {
         stepResult.setActualResult(request.actualResult());
 
         stepResult = stepResultRepository.save(stepResult);
+
+        // Auto-compute worst status from all sibling step results and update parent
+        TestResultStatus worstStatus = computeWorstStepStatus(testResult.getStepResults());
+        if (testResult.getStatus() != worstStatus) {
+            testResult.setStatus(worstStatus);
+            testResultRepository.save(testResult);
+        }
+
         return testRunMapper.toStepResultResponse(stepResult);
     }
 
@@ -313,6 +321,18 @@ public class TestRunService {
 
         run = testRunRepository.save(run);
         return testRunMapper.toResponse(run);
+    }
+
+    private TestResultStatus computeWorstStepStatus(List<StepResult> stepResults) {
+        if (stepResults.isEmpty()) {
+            return TestResultStatus.PENDING;
+        }
+        for (TestResultStatus severity : SEVERITY_ORDER) {
+            if (stepResults.stream().anyMatch(sr -> sr.getStatus() == severity)) {
+                return severity;
+            }
+        }
+        return TestResultStatus.PASSED;
     }
 
     private String computeWorstStatus(List<TestResult> results) {

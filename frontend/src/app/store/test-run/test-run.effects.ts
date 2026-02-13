@@ -137,6 +137,16 @@ export class TestRunEffects {
     )
   );
 
+  refreshAfterStepUpdate$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestRunActions.updateStepResultSuccess),
+      withLatestFrom(this.store.select(selectTestRunProjectId)),
+      map(([{ runId }, projectId]) =>
+        TestRunActions.loadTestRun({ projectId: projectId!, id: runId })
+      )
+    )
+  );
+
   uploadScreenshot$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TestRunActions.uploadScreenshot),
