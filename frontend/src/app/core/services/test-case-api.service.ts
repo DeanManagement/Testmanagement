@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateTestCaseRequest, TestCase, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
+import { BulkOperationResponse, CreateTestCaseRequest, TestCase, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 
 @Injectable({ providedIn: 'root' })
 export class TestCaseApiService {
@@ -29,5 +29,13 @@ export class TestCaseApiService {
 
   delete(projectId: string, id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl(projectId)}/${id}`);
+  }
+
+  bulkUpdateStatus(projectId: string, testCaseIds: string[], status: TestCaseStatus): Observable<BulkOperationResponse> {
+    return this.http.post<BulkOperationResponse>(`${this.baseUrl(projectId)}/bulk-status`, { testCaseIds, status });
+  }
+
+  bulkDelete(projectId: string, testCaseIds: string[]): Observable<BulkOperationResponse> {
+    return this.http.post<BulkOperationResponse>(`${this.baseUrl(projectId)}/bulk-delete`, { testCaseIds });
   }
 }

@@ -94,4 +94,46 @@ export class TestCaseEffects {
       ),
     { dispatch: false }
   );
+
+  bulkUpdateStatus$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestCaseActions.bulkUpdateStatus),
+      mergeMap(({ projectId, testCaseIds, status }) =>
+        this.testCaseApi.bulkUpdateStatus(projectId, testCaseIds, status).pipe(
+          map(() => TestCaseActions.bulkUpdateStatusSuccess({ projectId })),
+          catchError((error) =>
+            of(TestCaseActions.bulkUpdateStatusFailure({ error: error.error?.message || error.message }))
+          )
+        )
+      )
+    )
+  );
+
+  bulkUpdateStatusSuccess$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestCaseActions.bulkUpdateStatusSuccess),
+      map(({ projectId }) => TestCaseActions.loadTestCases({ projectId }))
+    )
+  );
+
+  bulkDelete$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestCaseActions.bulkDelete),
+      mergeMap(({ projectId, testCaseIds }) =>
+        this.testCaseApi.bulkDelete(projectId, testCaseIds).pipe(
+          map(() => TestCaseActions.bulkDeleteSuccess({ projectId })),
+          catchError((error) =>
+            of(TestCaseActions.bulkDeleteFailure({ error: error.error?.message || error.message }))
+          )
+        )
+      )
+    )
+  );
+
+  bulkDeleteSuccess$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestCaseActions.bulkDeleteSuccess),
+      map(({ projectId }) => TestCaseActions.loadTestCases({ projectId }))
+    )
+  );
 }

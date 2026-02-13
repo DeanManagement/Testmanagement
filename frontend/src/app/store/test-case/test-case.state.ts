@@ -7,10 +7,12 @@ export interface TestCaseState extends EntityState<TestCase> {
   loading: boolean;
   error: string | null;
   projectId: string | null;
+  selectedIds: string[];
 }
 
 export const initialTestCaseState: TestCaseState = testCaseAdapter.getInitialState({
   loading: false,
   error: null,
   projectId: null,
+  selectedIds: [],
 });

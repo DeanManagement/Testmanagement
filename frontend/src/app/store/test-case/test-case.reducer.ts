@@ -52,5 +52,42 @@ export const testCaseReducer = createReducer(
   on(TestCaseActions.deleteTestCaseFailure, (state, { error }) => ({
     ...state,
     error,
+  })),
+
+  on(TestCaseActions.toggleSelectTestCase, (state, { id }) => ({
+    ...state,
+    selectedIds: state.selectedIds.includes(id)
+      ? state.selectedIds.filter(sid => sid !== id)
+      : [...state.selectedIds, id],
+  })),
+
+  on(TestCaseActions.selectAllTestCases, (state, { ids }) => ({
+    ...state,
+    selectedIds: ids,
+  })),
+
+  on(TestCaseActions.deselectAllTestCases, (state) => ({
+    ...state,
+    selectedIds: [],
+  })),
+
+  on(TestCaseActions.bulkUpdateStatusSuccess, (state) => ({
+    ...state,
+    selectedIds: [],
+  })),
+
+  on(TestCaseActions.bulkUpdateStatusFailure, (state, { error }) => ({
+    ...state,
+    error,
+  })),
+
+  on(TestCaseActions.bulkDeleteSuccess, (state) => ({
+    ...state,
+    selectedIds: [],
+  })),
+
+  on(TestCaseActions.bulkDeleteFailure, (state, { error }) => ({
+    ...state,
+    error,
   }))
 );

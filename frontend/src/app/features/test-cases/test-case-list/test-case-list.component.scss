@@ -52,3 +52,33 @@
   &:hover { color: var(--tm-text); }
   &--danger:hover { color: var(--tm-danger); }
 }
+
+.bulk-action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 20px;
+  margin-bottom: 16px;
+}
+
+.bulk-count {
+  font-weight: 500;
+  color: var(--tm-primary-light);
+}
+
+.bulk-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .delete-btn {
+    color: var(--tm-danger);
+    border-color: var(--tm-danger);
+  }
+}
+
+.test-case-key {
+  font-family: monospace;
+  font-size: 12px;
+  color: var(--tm-text-secondary);
+}

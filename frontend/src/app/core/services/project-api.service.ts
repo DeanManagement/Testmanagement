@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateProjectRequest, Project, UpdateProjectRequest } from '../../shared/models/project.model';
+import { ProjectDashboard } from '../../shared/models/dashboard.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectApiService {
@@ -30,5 +31,9 @@ export class ProjectApiService {
 
   searchByKey(key: string): Observable<Project[]> {
     return this.http.get<Project[]>(`${this.baseUrl}/search`, { params: { key } });
+  }
+
+  getDashboard(projectId: string): Observable<ProjectDashboard> {
+    return this.http.get<ProjectDashboard>(`${this.baseUrl}/${projectId}/dashboard`);
   }
 }

@@ -77,6 +77,10 @@ export class TestRunApiService {
     return this.http.delete<void>(`/api/screenshots/${screenshotId}`);
   }
 
+  downloadReportPdf(projectId: string, id: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl(projectId)}/${id}/report/pdf`, { responseType: 'blob' });
+  }
+
   getScreenshotUrl(screenshotId: string): string {
     return `/api/screenshots/${screenshotId}`;
   }

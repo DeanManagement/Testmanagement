@@ -46,3 +46,8 @@ export interface UpdateTestCaseRequest {
   labels?: string[];
   steps?: TestStepRequest[];
 }
+
+export interface BulkOperationResponse {
+  affected: number;
+  message: string;
+}

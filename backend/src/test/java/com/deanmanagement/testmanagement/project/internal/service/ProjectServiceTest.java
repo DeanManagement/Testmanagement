@@ -33,6 +33,9 @@ class ProjectServiceTest {
     @Mock
     private ProjectMapper projectMapper;
 
+    @Mock
+    private AuditService auditService;
+
     @InjectMocks
     private ProjectService projectService;
 
@@ -106,7 +109,7 @@ class ProjectServiceTest {
         when(projectRepository.save(project)).thenReturn(project);
         when(projectMapper.toResponse(project)).thenReturn(sampleResponse());
 
-        ProjectResponse result = projectService.create(request);
+        ProjectResponse result = projectService.create(request, null);
 
         assertThat(result).isNotNull();
         verify(projectRepository).save(any(Project.class));
@@ -123,7 +126,7 @@ class ProjectServiceTest {
         when(projectRepository.save(project)).thenReturn(project);
         when(projectMapper.toResponse(project)).thenReturn(sampleResponse());
 
-        ProjectResponse result = projectService.create(request);
+        ProjectResponse result = projectService.create(request, null);
 
         assertThat(result).isNotNull();
         assertThat(project.getKey()).isEqualTo("NP2");
@@ -138,7 +141,7 @@ class ProjectServiceTest {
         when(projectRepository.save(project)).thenReturn(project);
         when(projectMapper.toResponse(project)).thenReturn(sampleResponse());
 
-        ProjectResponse result = projectService.update(PROJECT_ID, request);
+        ProjectResponse result = projectService.update(PROJECT_ID, request, null);
 
         assertThat(result).isNotNull();
         verify(projectMapper).updateEntity(request, project);
@@ -146,18 +149,19 @@ class ProjectServiceTest {
 
     @Test
     void delete_removesProject() {
-        when(projectRepository.existsById(PROJECT_ID)).thenReturn(true);
+        Project project = sampleProject();
+        when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
 
-        projectService.delete(PROJECT_ID);
+        projectService.delete(PROJECT_ID, null);
 
-        verify(projectRepository).deleteById(PROJECT_ID);
+        verify(projectRepository).delete(project);
     }
 
     @Test
     void delete_notFound_throwsException() {
-        when(projectRepository.existsById(PROJECT_ID)).thenReturn(false);
+        when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> projectService.delete(PROJECT_ID))
+        assertThatThrownBy(() -> projectService.delete(PROJECT_ID, null))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 }

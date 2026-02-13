@@ -49,6 +49,20 @@
         </div>
         <p class="section-hint">{{ 'project.detail.testRunsHint' | translate }}</p>
       </a>
+      <a class="section-card tm-card" [routerLink]="['/projects', project.id, 'dashboard']" data-test-id="section-dashboard">
+        <div class="section-header">
+          <mat-icon>dashboard</mat-icon>
+          <h3>{{ 'projectDashboard.title' | translate }}</h3>
+        </div>
+        <p class="section-hint">{{ 'project.detail.dashboardHint' | translate }}</p>
+      </a>
+      <a class="section-card tm-card" [routerLink]="['/projects', project.id, 'activity']" data-test-id="section-activity">
+        <div class="section-header">
+          <mat-icon>history</mat-icon>
+          <h3>{{ 'activity.title' | translate }}</h3>
+        </div>
+        <p class="section-hint">{{ 'project.detail.activityHint' | translate }}</p>
+      </a>
     </div>
 
     <div class="members-section tm-card" data-test-id="members-section">

@@ -4,6 +4,8 @@ import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProj
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
+import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
@@ -21,6 +23,7 @@ public class ProjectService {
 
     private final ProjectRepository projectRepository;
     private final ProjectMapper projectMapper;
+    private final AuditService auditService;
 
     public List<ProjectResponse> findAll(UUID userId, boolean isSystemAdmin) {
         if (isSystemAdmin) {
@@ -40,28 +43,33 @@ public class ProjectService {
     }
 
     @Transactional
-    public ProjectResponse create(CreateProjectRequest request) {
+    public ProjectResponse create(CreateProjectRequest request, UUID userId) {
         Project project = projectMapper.toEntity(request);
         project.setKey(generateKey(request.name()));
         project = projectRepository.save(project);
+        auditService.log(project.getId(), userId, AuditAction.CREATED,
+                AuditEntityType.PROJECT, project.getId(), project.getName(), null);
         return projectMapper.toResponse(project);
     }
 
     @Transactional
-    public ProjectResponse update(UUID id, UpdateProjectRequest request) {
+    public ProjectResponse update(UUID id, UpdateProjectRequest request, UUID userId) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", id));
         projectMapper.updateEntity(request, project);
         project = projectRepository.save(project);
+        auditService.log(project.getId(), userId, AuditAction.UPDATED,
+                AuditEntityType.PROJECT, project.getId(), project.getName(), null);
         return projectMapper.toResponse(project);
     }
 
     @Transactional
-    public void delete(UUID id) {
-        if (!projectRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Project", id);
-        }
-        projectRepository.deleteById(id);
+    public void delete(UUID id, UUID userId) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+        auditService.log(project.getId(), userId, AuditAction.DELETED,
+                AuditEntityType.PROJECT, project.getId(), project.getName(), null);
+        projectRepository.delete(project);
     }
 
     public List<ProjectResponse> searchByKey(String key) {

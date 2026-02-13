@@ -34,4 +34,16 @@ export class TestSuiteApiService {
   delete(projectId: string, id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl(projectId)}/${id}`);
   }
+
+  bulkAddTestCases(projectId: string, suiteId: string, testCaseIds: string[]): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl(projectId)}/${suiteId}/bulk-add`, { testCaseIds });
+  }
+
+  bulkRemoveTestCases(projectId: string, suiteId: string, testCaseIds: string[]): Observable<void> {
+    return this.http.post<void>(`${this.baseUrl(projectId)}/${suiteId}/bulk-remove`, { testCaseIds });
+  }
+
+  downloadReportPdf(projectId: string, id: string): Observable<Blob> {
+    return this.http.get(`${this.baseUrl(projectId)}/${id}/report/pdf`, { responseType: 'blob' });
+  }
 }

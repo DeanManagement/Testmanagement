@@ -16,6 +16,8 @@ import com.deanmanagement.testmanagement.project.internal.entity.StepResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
+import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
@@ -51,6 +53,7 @@ public class TestRunService {
     private final TestCaseRepository testCaseRepository;
     private final TestRunMapper testRunMapper;
     private final UserService userService;
+    private final AuditService auditService;
 
     private static final List<TestResultStatus> SEVERITY_ORDER = List.of(
             TestResultStatus.FAILED, TestResultStatus.BLOCKED, TestResultStatus.SKIPPED,
@@ -115,7 +118,7 @@ public class TestRunService {
     }
 
     @Transactional
-    public TestRunResponse create(UUID projectId, CreateTestRunRequest request) {
+    public TestRunResponse create(UUID projectId, CreateTestRunRequest request, UUID userId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
@@ -145,11 +148,13 @@ public class TestRunService {
         }
 
         run = testRunRepository.save(run);
+        auditService.log(projectId, userId, AuditAction.CREATED,
+                AuditEntityType.TEST_RUN, run.getId(), run.getName(), null);
         return testRunMapper.toResponse(run);
     }
 
     @Transactional
-    public TestRunResponse cloneRun(UUID projectId, UUID runId, CloneTestRunRequest request) {
+    public TestRunResponse cloneRun(UUID projectId, UUID runId, CloneTestRunRequest request, UUID userId) {
         TestRun source = testRunRepository.findById(runId)
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", runId));
@@ -163,7 +168,11 @@ public class TestRunService {
                 request.environment(),
                 testCaseIds
         );
-        return create(projectId, createRequest);
+        TestRunResponse response = create(projectId, createRequest, userId);
+        auditService.log(projectId, userId, AuditAction.CLONED,
+                AuditEntityType.TEST_RUN, response.id(), response.name(),
+                "Cloned from: " + source.getName());
+        return response;
     }
 
     @Transactional
@@ -175,8 +184,8 @@ public class TestRunService {
         run.setName(request.name());
         run.setEnvironment(request.environment());
 
+        TestRunStatus oldStatus = run.getStatus();
         if (request.status() != null) {
-            TestRunStatus oldStatus = run.getStatus();
             run.setStatus(request.status());
 
             if (request.status() == TestRunStatus.IN_PROGRESS && oldStatus == TestRunStatus.PLANNED) {
@@ -204,15 +213,30 @@ public class TestRunService {
             }
         }
 
+        AuditAction auditAction = AuditAction.UPDATED;
+        if (request.status() != null) {
+            if (request.status() == TestRunStatus.COMPLETED) {
+                auditAction = AuditAction.COMPLETED;
+            } else if (request.status() == TestRunStatus.IN_PROGRESS && oldStatus == TestRunStatus.COMPLETED) {
+                auditAction = AuditAction.REOPENED;
+            } else {
+                auditAction = AuditAction.STATUS_CHANGED;
+            }
+        }
+
         run = testRunRepository.save(run);
+        auditService.log(projectId, currentUserId, auditAction,
+                AuditEntityType.TEST_RUN, run.getId(), run.getName(), null);
         return testRunMapper.toResponse(run);
     }
 
     @Transactional
-    public void delete(UUID projectId, UUID id) {
+    public void delete(UUID projectId, UUID id, UUID userId) {
         TestRun run = testRunRepository.findById(id)
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", id));
+        auditService.log(projectId, userId, AuditAction.DELETED,
+                AuditEntityType.TEST_RUN, run.getId(), run.getName(), null);
         testRunRepository.delete(run);
     }
 

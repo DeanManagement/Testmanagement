@@ -105,6 +105,13 @@
             <version>${mapstruct.version}</version>
         </dependency>
 
+        <!-- PDF generation -->
+        <dependency>
+            <groupId>io.github.openhtmltopdf</groupId>
+            <artifactId>openhtmltopdf-pdfbox</artifactId>
+            <version>1.1.37</version>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

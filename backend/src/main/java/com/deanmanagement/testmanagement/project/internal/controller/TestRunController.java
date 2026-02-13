@@ -11,11 +11,15 @@ import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateStepResultRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestResultRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestRunRequest;
+import com.deanmanagement.testmanagement.project.internal.service.PdfReportService;
 import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -38,6 +42,7 @@ import java.util.UUID;
 public class TestRunController {
 
     private final TestRunService testRunService;
+    private final PdfReportService pdfReportService;
 
     @GetMapping
     public List<TestRunResponse> findAll(@PathVariable UUID projectId) {
@@ -54,6 +59,15 @@ public class TestRunController {
         return testRunService.getReport(projectId, id);
     }
 
+    @GetMapping("/{id}/report/pdf")
+    public ResponseEntity<byte[]> getReportPdf(@PathVariable UUID projectId, @PathVariable UUID id) {
+        byte[] pdf = pdfReportService.generateTestRunReport(projectId, id);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_PDF);
+        headers.setContentDispositionFormData("attachment", "test-run-report.pdf");
+        return new ResponseEntity<>(pdf, headers, HttpStatus.OK);
+    }
+
     @GetMapping("/{id}/completion-info")
     public CompletionInfoResponse getCompletionInfo(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testRunService.getCompletionInfo(projectId, id);
@@ -62,8 +76,10 @@ public class TestRunController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TestRunResponse create(@PathVariable UUID projectId,
-                                  @Valid @RequestBody CreateTestRunRequest request) {
-        return testRunService.create(projectId, request);
+                                  @Valid @RequestBody CreateTestRunRequest request,
+                                  Authentication authentication) {
+        UUID currentUserId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return testRunService.create(projectId, request, currentUserId);
     }
 
     @PutMapping("/{id}")
@@ -85,14 +101,18 @@ public class TestRunController {
     @PostMapping("/{runId}/clone")
     @ResponseStatus(HttpStatus.CREATED)
     public TestRunResponse clone(@PathVariable UUID projectId, @PathVariable UUID runId,
-                                 @Valid @RequestBody CloneTestRunRequest request) {
-        return testRunService.cloneRun(projectId, runId, request);
+                                 @Valid @RequestBody CloneTestRunRequest request,
+                                 Authentication authentication) {
+        UUID currentUserId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return testRunService.cloneRun(projectId, runId, request, currentUserId);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable UUID projectId, @PathVariable UUID id) {
-        testRunService.delete(projectId, id);
+    public void delete(@PathVariable UUID projectId, @PathVariable UUID id,
+                       Authentication authentication) {
+        UUID currentUserId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        testRunService.delete(projectId, id, currentUserId);
     }
 
     @PostMapping("/{runId}/results")

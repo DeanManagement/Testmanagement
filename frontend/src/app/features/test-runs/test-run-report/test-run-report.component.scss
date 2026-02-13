@@ -15,7 +15,12 @@
     font-size: 24px;
     font-weight: 700;
     color: var(--tm-text);
+    flex: 1;
   }
+}
+
+.download-pdf-btn {
+  flex-shrink: 0;
 }
 
 .back-link {

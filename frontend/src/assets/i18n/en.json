@@ -78,7 +78,9 @@
     "detail": {
       "testCasesHint": "Define and manage your test cases with steps and expected results.",
       "testSuitesHint": "Group test cases into suites for organised execution.",
-      "testRunsHint": "Execute test suites and track results across environments."
+      "testRunsHint": "Execute test suites and track results across environments.",
+      "dashboardHint": "View project metrics, charts, and test run trends.",
+      "activityHint": "Track recent changes and audit history."
     },
     "members": {
       "title": "Members",
@@ -243,6 +245,55 @@
       "empty": "No users yet. Create your first user account."
     }
   },
+  "activity": {
+    "title": "Activity",
+    "empty": "No activity yet.",
+    "loadMore": "Load More",
+    "system": "System",
+    "actions": {
+      "CREATED": "created",
+      "UPDATED": "updated",
+      "DELETED": "deleted",
+      "STATUS_CHANGED": "changed status of",
+      "COMPLETED": "completed",
+      "REOPENED": "reopened",
+      "CLONED": "cloned"
+    },
+    "entityTypes": {
+      "PROJECT": "project",
+      "TEST_CASE": "test case",
+      "TEST_SUITE": "test suite",
+      "TEST_RUN": "test run",
+      "TEST_RESULT": "test result"
+    }
+  },
+  "projectDashboard": {
+    "title": "Dashboard",
+    "totalTestCases": "Test Cases",
+    "totalTestSuites": "Test Suites",
+    "totalTestRuns": "Test Runs",
+    "completedTestRuns": "Completed Runs",
+    "testCasesByStatus": "Test Cases by Status",
+    "testCasesByPriority": "Test Cases by Priority",
+    "passRateTrend": "Pass Rate Trend",
+    "recentTestRuns": "Recent Test Runs",
+    "noData": "No data available yet."
+  },
+  "bulk": {
+    "selected": "{{count}} selected",
+    "updateStatus": "Update Status",
+    "delete": "Delete",
+    "addToSuite": "Add to Suite",
+    "selectStatus": "Select Status",
+    "selectSuite": "Select Suite",
+    "confirmDelete": "Are you sure you want to delete {{count}} test cases?",
+    "deleteWarning": "This action cannot be undone.",
+    "statusUpdated": "Status updated for {{count}} test cases.",
+    "deleted": "{{count}} test cases deleted.",
+    "addedToSuite": "Test cases added to suite.",
+    "removedFromSuite": "Test cases removed from suite.",
+    "hasResults": "Cannot delete test cases that have test results."
+  },
   "report": {
     "title": "Report",
     "summary": "Summary",
@@ -258,7 +309,8 @@
     "latestResult": "Latest Result",
     "fromRun": "From Run",
     "resultDate": "Date",
-    "chart": "Status Distribution"
+    "chart": "Status Distribution",
+    "downloadPdf": "Download PDF"
   },
   "common": {
     "save": "Save",

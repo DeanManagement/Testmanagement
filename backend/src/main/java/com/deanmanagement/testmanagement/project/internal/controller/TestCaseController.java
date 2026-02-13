@@ -1,5 +1,8 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkDeleteRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkOperationResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkStatusRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.CreateTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestCaseRequest;
@@ -8,6 +11,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,20 +46,42 @@ public class TestCaseController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TestCaseResponse create(@PathVariable UUID projectId,
-                                   @Valid @RequestBody CreateTestCaseRequest request) {
-        return testCaseService.create(projectId, request);
+                                   @Valid @RequestBody CreateTestCaseRequest request,
+                                   Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return testCaseService.create(projectId, request, userId);
     }
 
     @PutMapping("/{id}")
     public TestCaseResponse update(@PathVariable UUID projectId,
                                    @PathVariable UUID id,
-                                   @Valid @RequestBody UpdateTestCaseRequest request) {
-        return testCaseService.update(projectId, id, request);
+                                   @Valid @RequestBody UpdateTestCaseRequest request,
+                                   Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return testCaseService.update(projectId, id, request, userId);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable UUID projectId, @PathVariable UUID id) {
-        testCaseService.delete(projectId, id);
+    public void delete(@PathVariable UUID projectId, @PathVariable UUID id,
+                       Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        testCaseService.delete(projectId, id, userId);
+    }
+
+    @PostMapping("/bulk-status")
+    public BulkOperationResponse bulkUpdateStatus(@PathVariable UUID projectId,
+                                                   @Valid @RequestBody BulkStatusRequest request,
+                                                   Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return testCaseService.bulkUpdateStatus(projectId, request, userId);
+    }
+
+    @PostMapping("/bulk-delete")
+    public BulkOperationResponse bulkDelete(@PathVariable UUID projectId,
+                                             @Valid @RequestBody BulkDeleteRequest request,
+                                             Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return testCaseService.bulkDelete(projectId, request, userId);
     }
 }

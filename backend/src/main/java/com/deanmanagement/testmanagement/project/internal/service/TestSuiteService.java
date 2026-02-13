@@ -5,6 +5,8 @@ import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuit
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuiteReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestSuiteResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestSuiteRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
+import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
@@ -38,6 +40,7 @@ public class TestSuiteService {
     private final TestCaseRepository testCaseRepository;
     private final TestResultRepository testResultRepository;
     private final TestSuiteMapper testSuiteMapper;
+    private final AuditService auditService;
 
     public List<TestSuiteResponse> findByProject(UUID projectId) {
         return testSuiteRepository.findByProjectIdOrderByCreatedAtDesc(projectId).stream()
@@ -53,7 +56,7 @@ public class TestSuiteService {
     }
 
     @Transactional
-    public TestSuiteResponse create(UUID projectId, CreateTestSuiteRequest request) {
+    public TestSuiteResponse create(UUID projectId, CreateTestSuiteRequest request, UUID userId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
@@ -62,11 +65,13 @@ public class TestSuiteService {
         suite.setTestCases(resolveTestCases(request.testCaseIds()));
 
         suite = testSuiteRepository.save(suite);
+        auditService.log(projectId, userId, AuditAction.CREATED,
+                AuditEntityType.TEST_SUITE, suite.getId(), suite.getName(), null);
         return testSuiteMapper.toResponse(suite);
     }
 
     @Transactional
-    public TestSuiteResponse update(UUID projectId, UUID id, UpdateTestSuiteRequest request) {
+    public TestSuiteResponse update(UUID projectId, UUID id, UpdateTestSuiteRequest request, UUID userId) {
         TestSuite suite = testSuiteRepository.findById(id)
                 .filter(s -> s.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestSuite", id));
@@ -78,14 +83,18 @@ public class TestSuiteService {
         }
 
         suite = testSuiteRepository.save(suite);
+        auditService.log(projectId, userId, AuditAction.UPDATED,
+                AuditEntityType.TEST_SUITE, suite.getId(), suite.getName(), null);
         return testSuiteMapper.toResponse(suite);
     }
 
     @Transactional
-    public void delete(UUID projectId, UUID id) {
+    public void delete(UUID projectId, UUID id, UUID userId) {
         TestSuite suite = testSuiteRepository.findById(id)
                 .filter(s -> s.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestSuite", id));
+        auditService.log(projectId, userId, AuditAction.DELETED,
+                AuditEntityType.TEST_SUITE, suite.getId(), suite.getName(), null);
         testSuiteRepository.delete(suite);
     }
 
@@ -138,6 +147,35 @@ public class TestSuiteService {
         return new TestSuiteReportResponse(
                 suite.getId(), suite.getName(), suite.getDescription(),
                 total, passed, failed, blocked, skipped, untested, passRate, results);
+    }
+
+    @Transactional
+    public void bulkAddTestCases(UUID projectId, UUID suiteId, Set<UUID> testCaseIds, UUID userId) {
+        TestSuite suite = testSuiteRepository.findById(suiteId)
+                .filter(s -> s.getProject().getId().equals(projectId))
+                .orElseThrow(() -> new ResourceNotFoundException("TestSuite", suiteId));
+
+        Set<TestCase> toAdd = resolveTestCases(testCaseIds);
+        suite.getTestCases().addAll(toAdd);
+        testSuiteRepository.save(suite);
+
+        auditService.log(projectId, userId, AuditAction.UPDATED,
+                AuditEntityType.TEST_SUITE, suite.getId(), suite.getName(),
+                "Added " + toAdd.size() + " test cases");
+    }
+
+    @Transactional
+    public void bulkRemoveTestCases(UUID projectId, UUID suiteId, Set<UUID> testCaseIds, UUID userId) {
+        TestSuite suite = testSuiteRepository.findById(suiteId)
+                .filter(s -> s.getProject().getId().equals(projectId))
+                .orElseThrow(() -> new ResourceNotFoundException("TestSuite", suiteId));
+
+        suite.getTestCases().removeIf(tc -> testCaseIds.contains(tc.getId()));
+        testSuiteRepository.save(suite);
+
+        auditService.log(projectId, userId, AuditAction.UPDATED,
+                AuditEntityType.TEST_SUITE, suite.getId(), suite.getName(),
+                "Removed " + testCaseIds.size() + " test cases");
     }
 
     private Set<TestCase> resolveTestCases(Set<UUID> testCaseIds) {

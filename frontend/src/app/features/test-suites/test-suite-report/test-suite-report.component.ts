@@ -39,6 +39,7 @@ export class TestSuiteReportComponent implements OnInit, AfterViewInit {
   suiteId = '';
   report: TestSuiteReport | null = null;
   displayedColumns = ['testCase', 'status', 'fromRun', 'date'];
+  downloading = false;
   private chart: Chart | null = null;
 
   ngOnInit(): void {
@@ -56,6 +57,24 @@ export class TestSuiteReportComponent implements OnInit, AfterViewInit {
     if (this.report) {
       this.renderChart();
     }
+  }
+
+  downloadPdf(): void {
+    this.downloading = true;
+    this.testSuiteApi.downloadReportPdf(this.projectId, this.suiteId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `test-suite-report-${this.report?.name ?? this.suiteId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.downloading = false;
+      },
+      error: () => {
+        this.downloading = false;
+      },
+    });
   }
 
   private renderChart(): void {

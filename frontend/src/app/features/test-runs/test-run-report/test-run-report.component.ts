@@ -38,6 +38,7 @@ export class TestRunReportComponent implements OnInit, AfterViewInit {
   projectId = '';
   runId = '';
   report: TestRunReport | null = null;
+  downloading = false;
   private chart: Chart | null = null;
 
   ngOnInit(): void {
@@ -55,6 +56,24 @@ export class TestRunReportComponent implements OnInit, AfterViewInit {
     if (this.report) {
       this.renderChart();
     }
+  }
+
+  downloadPdf(): void {
+    this.downloading = true;
+    this.testRunApi.downloadReportPdf(this.projectId, this.runId).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `test-run-report-${this.report?.name ?? this.runId}.pdf`;
+        a.click();
+        URL.revokeObjectURL(url);
+        this.downloading = false;
+      },
+      error: () => {
+        this.downloading = false;
+      },
+    });
   }
 
   private renderChart(): void {

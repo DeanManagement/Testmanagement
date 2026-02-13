@@ -1,8 +1,10 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
+import com.deanmanagement.testmanagement.project.internal.dto.dashboard.DashboardResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectRequest;
+import com.deanmanagement.testmanagement.project.internal.service.DashboardService;
 import com.deanmanagement.testmanagement.project.internal.service.ProjectService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,6 +34,7 @@ import java.util.UUID;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final DashboardService dashboardService;
 
     @GetMapping
     public List<ProjectResponse> findAll(Authentication authentication) {
@@ -52,20 +55,31 @@ public class ProjectController {
         return projectService.findById(id);
     }
 
+    @GetMapping("/{id}/dashboard")
+    public DashboardResponse getDashboard(@PathVariable UUID id) {
+        return dashboardService.getDashboard(id);
+    }
+
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public ProjectResponse create(@Valid @RequestBody CreateProjectRequest request) {
-        return projectService.create(request);
+    public ProjectResponse create(@Valid @RequestBody CreateProjectRequest request,
+                                  Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return projectService.create(request, userId);
     }
 
     @PutMapping("/{id}")
-    public ProjectResponse update(@PathVariable UUID id, @Valid @RequestBody UpdateProjectRequest request) {
-        return projectService.update(id, request);
+    public ProjectResponse update(@PathVariable UUID id,
+                                  @Valid @RequestBody UpdateProjectRequest request,
+                                  Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return projectService.update(id, request, userId);
     }
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable UUID id) {
-        projectService.delete(id);
+    public void delete(@PathVariable UUID id, Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        projectService.delete(id, userId);
     }
 }

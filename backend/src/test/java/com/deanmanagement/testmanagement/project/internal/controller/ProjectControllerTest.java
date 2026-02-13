@@ -4,6 +4,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProj
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectRequest;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.project.internal.service.DashboardService;
 import com.deanmanagement.testmanagement.project.internal.service.ProjectService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,9 @@ class ProjectControllerTest {
 
     @MockitoBean
     private ProjectService projectService;
+
+    @MockitoBean
+    private DashboardService dashboardService;
 
     private static final UUID PROJECT_ID = UUID.randomUUID();
     private static final Instant NOW = Instant.now();
@@ -84,10 +88,10 @@ class ProjectControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
     void create_returnsCreated() throws Exception {
         var request = new CreateProjectRequest("New Project", "Description");
-        when(projectService.create(any())).thenReturn(sampleResponse());
+        when(projectService.create(any(), any())).thenReturn(sampleResponse());
 
         mockMvc.perform(post("/api/projects")
                         .with(csrf())
@@ -110,10 +114,10 @@ class ProjectControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
     void update_returnsUpdated() throws Exception {
         var request = new UpdateProjectRequest("Updated Name", "Updated desc");
-        when(projectService.update(eq(PROJECT_ID), any())).thenReturn(sampleResponse());
+        when(projectService.update(eq(PROJECT_ID), any(), any())).thenReturn(sampleResponse());
 
         mockMvc.perform(put("/api/projects/{id}", PROJECT_ID)
                         .with(csrf())
@@ -123,9 +127,9 @@ class ProjectControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
     void delete_returnsNoContent() throws Exception {
-        doNothing().when(projectService).delete(PROJECT_ID);
+        doNothing().when(projectService).delete(eq(PROJECT_ID), any());
 
         mockMvc.perform(delete("/api/projects/{id}", PROJECT_ID)
                         .with(csrf()))
@@ -133,10 +137,10 @@ class ProjectControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
     void delete_notFound_returns404() throws Exception {
         doThrow(new ResourceNotFoundException("Project", PROJECT_ID))
-                .when(projectService).delete(PROJECT_ID);
+                .when(projectService).delete(eq(PROJECT_ID), any());
 
         mockMvc.perform(delete("/api/projects/{id}", PROJECT_ID)
                         .with(csrf()))

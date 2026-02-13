@@ -9,4 +9,6 @@ import java.util.UUID;
 public interface TestSuiteRepository extends JpaRepository<TestSuite, UUID> {
 
     List<TestSuite> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
+
+    long countByProjectId(UUID projectId);
 }

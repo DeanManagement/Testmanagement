@@ -78,7 +78,9 @@
     "detail": {
       "testCasesHint": "Definieren und verwalten Sie Testfälle mit Schritten und erwarteten Ergebnissen.",
       "testSuitesHint": "Gruppieren Sie Testfälle in Suiten für organisierte Ausführung.",
-      "testRunsHint": "Führen Sie Testsuiten aus und verfolgen Sie Ergebnisse über Umgebungen hinweg."
+      "testRunsHint": "Führen Sie Testsuiten aus und verfolgen Sie Ergebnisse über Umgebungen hinweg.",
+      "dashboardHint": "Projektmetriken, Diagramme und Testlauf-Trends anzeigen.",
+      "activityHint": "Letzte Änderungen und Audit-Verlauf verfolgen."
     },
     "members": {
       "title": "Mitglieder",
@@ -243,6 +245,55 @@
       "empty": "Noch keine Benutzer. Erstellen Sie Ihr erstes Benutzerkonto."
     }
   },
+  "activity": {
+    "title": "Aktivität",
+    "empty": "Noch keine Aktivitäten.",
+    "loadMore": "Mehr laden",
+    "system": "System",
+    "actions": {
+      "CREATED": "hat erstellt",
+      "UPDATED": "hat aktualisiert",
+      "DELETED": "hat gelöscht",
+      "STATUS_CHANGED": "hat den Status geändert von",
+      "COMPLETED": "hat abgeschlossen",
+      "REOPENED": "hat wiedereröffnet",
+      "CLONED": "hat geklont"
+    },
+    "entityTypes": {
+      "PROJECT": "Projekt",
+      "TEST_CASE": "Testfall",
+      "TEST_SUITE": "Testsuite",
+      "TEST_RUN": "Testlauf",
+      "TEST_RESULT": "Testergebnis"
+    }
+  },
+  "projectDashboard": {
+    "title": "Dashboard",
+    "totalTestCases": "Testfälle",
+    "totalTestSuites": "Testsuiten",
+    "totalTestRuns": "Testläufe",
+    "completedTestRuns": "Abgeschlossene Läufe",
+    "testCasesByStatus": "Testfälle nach Status",
+    "testCasesByPriority": "Testfälle nach Priorität",
+    "passRateTrend": "Erfolgsraten-Trend",
+    "recentTestRuns": "Letzte Testläufe",
+    "noData": "Noch keine Daten verfügbar."
+  },
+  "bulk": {
+    "selected": "{{count}} ausgewählt",
+    "updateStatus": "Status ändern",
+    "delete": "Löschen",
+    "addToSuite": "Zu Suite hinzufügen",
+    "selectStatus": "Status auswählen",
+    "selectSuite": "Suite auswählen",
+    "confirmDelete": "Möchten Sie {{count}} Testfälle wirklich löschen?",
+    "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "statusUpdated": "Status für {{count}} Testfälle aktualisiert.",
+    "deleted": "{{count}} Testfälle gelöscht.",
+    "addedToSuite": "Testfälle zur Suite hinzugefügt.",
+    "removedFromSuite": "Testfälle aus Suite entfernt.",
+    "hasResults": "Testfälle mit Testergebnissen können nicht gelöscht werden."
+  },
   "report": {
     "title": "Bericht",
     "summary": "Zusammenfassung",
@@ -258,7 +309,8 @@
     "latestResult": "Letztes Ergebnis",
     "fromRun": "Aus Testlauf",
     "resultDate": "Datum",
-    "chart": "Statusverteilung"
+    "chart": "Statusverteilung",
+    "downloadPdf": "PDF herunterladen"
   },
   "common": {
     "save": "Speichern",

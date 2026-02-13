@@ -1,0 +1,74 @@
+.dashboard-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.summary-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 16px;
+  text-align: center;
+
+  mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+    margin-bottom: 8px;
+    opacity: 0.6;
+  }
+}
+
+.summary-value {
+  font-size: 2rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.summary-label {
+  font-size: 0.875rem;
+  color: rgba(0, 0, 0, 0.6);
+  margin-top: 4px;
+}
+
+.charts-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.chart-card,
+.trend-card,
+.recent-runs {
+  padding: 24px;
+
+  h3 {
+    margin: 0 0 16px;
+  }
+}
+
+.chart-wrapper {
+  height: 250px;
+  position: relative;
+}
+
+.chart-wrapper--wide {
+  height: 200px;
+}
+
+.result-passed {
+  color: #4caf50;
+  font-weight: 500;
+}
+
+.result-failed {
+  color: #f44336;
+  font-weight: 500;
+}

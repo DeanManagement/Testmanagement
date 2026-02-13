@@ -26,3 +26,13 @@ export const selectTestCaseProjectId = createSelector(
 
 export const selectTestCaseById = (id: string) =>
   createSelector(selectTestCaseEntities, (entities) => entities[id]);
+
+export const selectSelectedTestCaseIds = createSelector(
+  selectTestCaseState,
+  (state) => state.selectedIds
+);
+
+export const selectHasSelection = createSelector(
+  selectSelectedTestCaseIds,
+  (ids) => ids.length > 0
+);

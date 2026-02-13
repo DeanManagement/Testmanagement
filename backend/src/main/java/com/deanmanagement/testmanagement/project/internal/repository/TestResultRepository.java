@@ -17,4 +17,7 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
     List<TestResult> findByTestCaseIdsAndCompletedRuns(
             @Param("testCaseIds") Set<UUID> testCaseIds,
             @Param("projectId") UUID projectId);
+
+    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM TestResult r WHERE r.testCase.id IN :testCaseIds")
+    boolean existsByTestCaseIdIn(@Param("testCaseIds") Set<UUID> testCaseIds);
 }

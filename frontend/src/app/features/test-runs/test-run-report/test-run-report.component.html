@@ -6,6 +6,10 @@
         {{ 'common.back' | translate }}
       </a>
       <h1>{{ 'report.title' | translate }}: {{ report.name }}</h1>
+      <button mat-stroked-button (click)="downloadPdf()" [disabled]="downloading" class="download-pdf-btn" data-test-id="download-pdf-btn">
+        <mat-icon>picture_as_pdf</mat-icon>
+        {{ 'report.downloadPdf' | translate }}
+      </button>
     </div>
 
     <div class="report-hero tm-card">

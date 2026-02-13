@@ -1,0 +1,58 @@
+<div class="list-container">
+  <div class="page-header">
+    <div class="page-header-left">
+      <a mat-button [routerLink]="['/projects', projectId]" class="back-link">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <h1>{{ 'activity.title' | translate }}</h1>
+    </div>
+  </div>
+
+  @if (entries.length === 0 && !loading) {
+    <div class="empty-state">
+      <mat-icon>history</mat-icon>
+      <p>{{ 'activity.empty' | translate }}</p>
+    </div>
+  }
+
+  @if (entries.length > 0) {
+    <div class="activity-list">
+      @for (entry of entries; track entry.id) {
+        <div class="activity-item tm-card">
+          <div class="activity-icon">
+            <mat-icon>{{ actionIcon(entry.action) }}</mat-icon>
+          </div>
+          <div class="activity-content">
+            <div class="activity-summary">
+              <span class="activity-user">{{ entry.userDisplayName || ('activity.system' | translate) }}</span>
+              <span class="activity-action">{{ 'activity.actions.' + entry.action | translate }}</span>
+              <span class="activity-entity-type">{{ 'activity.entityTypes.' + entry.entityType | translate }}</span>
+              @if (entry.entityName) {
+                <span class="activity-entity-name">"{{ entry.entityName }}"</span>
+              }
+            </div>
+            @if (entry.details) {
+              <p class="activity-details">{{ entry.details }}</p>
+            }
+            <span class="activity-time">{{ entry.createdAt | date:'medium' }}</span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  @if (loading) {
+    <div class="spinner-container">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  }
+
+  @if (hasMore && !loading && entries.length > 0) {
+    <div class="load-more">
+      <button mat-stroked-button (click)="loadMore()">
+        {{ 'activity.loadMore' | translate }}
+      </button>
+    </div>
+  }
+</div>

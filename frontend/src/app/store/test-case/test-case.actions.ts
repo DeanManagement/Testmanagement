@@ -1,5 +1,5 @@
-import { createActionGroup, props } from '@ngrx/store';
-import { CreateTestCaseRequest, TestCase, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
+import { createActionGroup, emptyProps, props } from '@ngrx/store';
+import { CreateTestCaseRequest, TestCase, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 
 export const TestCaseActions = createActionGroup({
   source: 'TestCases',
@@ -16,5 +16,14 @@ export const TestCaseActions = createActionGroup({
     'Delete Test Case': props<{ projectId: string; id: string }>(),
     'Delete Test Case Success': props<{ id: string }>(),
     'Delete Test Case Failure': props<{ error: string }>(),
+    'Toggle Select Test Case': props<{ id: string }>(),
+    'Select All Test Cases': props<{ ids: string[] }>(),
+    'Deselect All Test Cases': emptyProps(),
+    'Bulk Update Status': props<{ projectId: string; testCaseIds: string[]; status: TestCaseStatus }>(),
+    'Bulk Update Status Success': props<{ projectId: string }>(),
+    'Bulk Update Status Failure': props<{ error: string }>(),
+    'Bulk Delete': props<{ projectId: string; testCaseIds: string[] }>(),
+    'Bulk Delete Success': props<{ projectId: string }>(),
+    'Bulk Delete Failure': props<{ error: string }>(),
   },
 });
