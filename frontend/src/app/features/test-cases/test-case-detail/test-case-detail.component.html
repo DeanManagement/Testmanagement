@@ -47,42 +47,21 @@
     @if (tc.steps.length) {
       <div class="steps-section tm-card" data-test-id="test-case-steps-section">
         <h3>{{ 'testCase.form.steps' | translate }}</h3>
-        <table mat-table [dataSource]="tc.steps" class="steps-table" data-test-id="test-case-steps-table">
-          <ng-container matColumnDef="index">
-            <th mat-header-cell *matHeaderCellDef>#</th>
-            <td mat-cell *matCellDef="let step">{{ step.orderIndex + 1 }}</td>
-          </ng-container>
-          <ng-container matColumnDef="action">
-            <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.action' | translate }}</th>
-            <td mat-cell *matCellDef="let step">
-              <div>
-                {{ step.action }}
+        <div class="steps-list" data-test-id="test-case-steps-list">
+          @for (step of tc.steps; track step.id; let i = $index) {
+            <div class="step-row">
+              <div class="step-header">
+                <span class="step-number">{{ i + 1 }}</span>
               </div>
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="expectedResult">
-            <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.expectedResult' | translate }}</th>
-            <td mat-cell *matCellDef="let step">{{ step.expectedResult }}</td>
-          </ng-container>
-          <ng-container matColumnDef="testData">
-            <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.testData' | translate }}</th>
-            <td mat-cell *matCellDef="let step">
-              <div>
-                {{ step.testData }}
-              </div>
-            </td>
-          </ng-container>
-          <ng-container matColumnDef="image">
-            <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.image' | translate }}</th>
-            <td mat-cell *matCellDef="let step">
-              @if (step.imageId) {
-                <img [src]="getStepImageUrl(step.imageId) | authImage" alt="Step image" class="step-image-thumb" />
-              }
-            </td>
-          </ng-container>
-          <tr mat-header-row *matHeaderRowDef="stepColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: stepColumns"></tr>
-        </table>
+              <app-step-spec-card
+                [action]="step.action"
+                [expectedResult]="step.expectedResult"
+                [testData]="step.testData"
+                [imageUrl]="step.imageId ? getStepImageUrl(step.imageId) : null">
+              </app-step-spec-card>
+            </div>
+          }
+        </div>
       </div>
     }
 

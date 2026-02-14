@@ -1,0 +1,23 @@
+<div class="step-spec-grid">
+  <div class="spec-tile">
+    <span class="spec-label">{{ 'testCase.form.action' | translate }}</span>
+    <span class="spec-text">{{ action }}</span>
+  </div>
+  <div class="spec-tile">
+    <span class="spec-label">{{ 'stepResult.expected' | translate }}</span>
+    <span class="spec-text">{{ expectedResult }}</span>
+  </div>
+  @if (testData || imageUrl) {
+    <div class="spec-tile">
+      @if (testData) {
+        <span class="spec-label">{{ 'testCase.form.testData' | translate }}</span>
+        <span class="spec-text">{{ testData }}</span>
+      }
+    </div>
+    <div class="spec-tile spec-tile--image">
+      @if (imageUrl) {
+        <img [src]="imageUrl | authImage" alt="Reference image" class="ref-image-thumb" />
+      }
+    </div>
+  }
+</div>

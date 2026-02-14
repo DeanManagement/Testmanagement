@@ -125,29 +125,12 @@
                         <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
                         <span class="badge badge--{{ step.status | lowercase }} badge--small">{{ 'resultStatus.' + step.status | translate }}</span>
                       </div>
-                      <div class="step-spec-grid">
-                        <div class="spec-tile">
-                          <span class="spec-label">{{ 'testCase.form.action' | translate }}</span>
-                          <span class="spec-text">{{ step.action }}</span>
-                        </div>
-                        <div class="spec-tile">
-                          <span class="spec-label">{{ 'stepResult.expected' | translate }}</span>
-                          <span class="spec-text">{{ step.expectedResult }}</span>
-                        </div>
-                        @if (step.testData || step.stepImageId) {
-                          <div class="spec-tile">
-                            @if (step.testData) {
-                              <span class="spec-label">{{ 'testCase.form.testData' | translate }}</span>
-                              <span class="spec-text">{{ step.testData }}</span>
-                            }
-                          </div>
-                          <div class="spec-tile spec-tile--image">
-                            @if (step.stepImageId) {
-                              <img [src]="getStepImageUrl(step.stepImageId) | authImage" alt="Reference image" class="ref-image-thumb" />
-                            }
-                          </div>
-                        }
-                      </div>
+                      <app-step-spec-card
+                        [action]="step.action"
+                        [expectedResult]="step.expectedResult"
+                        [testData]="step.testData"
+                        [imageUrl]="step.stepImageId ? getStepImageUrl(step.stepImageId) : null">
+                      </app-step-spec-card>
                       <div class="step-inputs">
                         <mat-form-field appearance="outline" class="step-status-select">
                           <mat-label>{{ 'testCase.form.status' | translate }}</mat-label>
@@ -259,29 +242,12 @@
                           <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
                           <span class="badge badge--{{ step.status | lowercase }} badge--small">{{ 'resultStatus.' + step.status | translate }}</span>
                         </div>
-                        <div class="step-spec-grid">
-                          <div class="spec-tile">
-                            <span class="spec-label">{{ 'testCase.form.action' | translate }}</span>
-                            <span class="spec-text">{{ step.action }}</span>
-                          </div>
-                          <div class="spec-tile">
-                            <span class="spec-label">{{ 'stepResult.expected' | translate }}</span>
-                            <span class="spec-text">{{ step.expectedResult }}</span>
-                          </div>
-                          @if (step.testData || step.stepImageId) {
-                            <div class="spec-tile">
-                              @if (step.testData) {
-                                <span class="spec-label">{{ 'testCase.form.testData' | translate }}</span>
-                                <span class="spec-text">{{ step.testData }}</span>
-                              }
-                            </div>
-                            <div class="spec-tile spec-tile--image">
-                              @if (step.stepImageId) {
-                                <img [src]="getStepImageUrl(step.stepImageId) | authImage" alt="Reference image" class="ref-image-thumb" />
-                              }
-                            </div>
-                          }
-                        </div>
+                        <app-step-spec-card
+                          [action]="step.action"
+                          [expectedResult]="step.expectedResult"
+                          [testData]="step.testData"
+                          [imageUrl]="step.stepImageId ? getStepImageUrl(step.stepImageId) : null">
+                        </app-step-spec-card>
                         @if (step.actualResult) {
                           <div class="step-actual-readonly">
                             <span class="spec-label">{{ 'stepResult.actualResult' | translate }}</span>

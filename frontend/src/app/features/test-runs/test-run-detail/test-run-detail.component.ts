@@ -29,6 +29,7 @@ import { Comment } from '../../../shared/models/comment.model';
 import { CommentListComponent } from '../../../shared/components/comment-list/comment-list.component';
 import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
+import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
 
 @Component({
   selector: 'app-test-run-detail',
@@ -51,6 +52,7 @@ import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
     CommentListComponent,
     CommentFormComponent,
     AuthImagePipe,
+    StepSpecCardComponent,
   ],
   templateUrl: './test-run-detail.component.html',
   styleUrl: './test-run-detail.component.scss',

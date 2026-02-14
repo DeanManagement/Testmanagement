@@ -6,7 +6,6 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatTableModule } from '@angular/material/table';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
@@ -19,7 +18,7 @@ import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.se
 import { Comment } from '../../../shared/models/comment.model';
 import { CommentListComponent } from '../../../shared/components/comment-list/comment-list.component';
 import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
-import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
+import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
 
 @Component({
   selector: 'app-test-case-detail',
@@ -32,11 +31,10 @@ import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
     MatButtonModule,
     MatIconModule,
     MatChipsModule,
-    MatTableModule,
     TranslateModule,
     CommentListComponent,
     CommentFormComponent,
-    AuthImagePipe,
+    StepSpecCardComponent,
   ],
   templateUrl: './test-case-detail.component.html',
   styleUrl: './test-case-detail.component.scss',
@@ -49,8 +47,6 @@ export class TestCaseDetailComponent implements OnInit {
   projectId = '';
   testCaseId = '';
   testCase$: Observable<TestCase | undefined> = of(undefined);
-  stepColumns = ['index', 'action', 'expectedResult', 'testData', 'image'];
-
   getStepImageUrl(imageId: string): string {
     return this.testCaseApi.getStepImageUrl(imageId);
   }
