@@ -6,10 +6,12 @@ export interface StepResult {
   testStepId: string;
   action: string;
   expectedResult: string;
+  testData: string;
   orderIndex: number;
   status: TestResultStatus;
   actualResult: string;
   screenshotId: string | null;
+  stepImageId: string | null;
 }
 
 export interface TestResult {
@@ -34,6 +36,8 @@ export interface TestRun {
   executorName: string | null;
   completedByName: string | null;
   reopenReason: string | null;
+  testPlanId: string | null;
+  testPlanName: string | null;
   results: TestResult[];
   createdAt: string;
   updatedAt: string;
@@ -43,6 +47,7 @@ export interface CreateTestRunRequest {
   name: string;
   environment?: string;
   testCaseIds?: string[];
+  testPlanId?: string;
 }
 
 export interface UpdateTestRunRequest {

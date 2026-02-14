@@ -7,11 +7,12 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
-public interface TestCaseMapper {
+public abstract class TestCaseMapper {
 
-    TestCaseResponse toResponse(TestCase testCase);
+    public abstract TestCaseResponse toResponse(TestCase testCase);
 
-    TestStepResponse toStepResponse(TestStep step);
+    @Mapping(target = "imageId", expression = "java(step.getImage() != null ? step.getImage().getId() : null)")
+    public abstract TestStepResponse toStepResponse(TestStep step);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "key", ignore = true)
@@ -20,5 +21,5 @@ public interface TestCaseMapper {
     @Mapping(target = "testSuites", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    TestCase toEntity(CreateTestCaseRequest request);
+    public abstract TestCase toEntity(CreateTestCaseRequest request);
 }

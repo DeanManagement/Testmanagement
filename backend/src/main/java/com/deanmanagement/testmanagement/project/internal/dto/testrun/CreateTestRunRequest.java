@@ -9,6 +9,7 @@ import java.util.UUID;
 public record CreateTestRunRequest(
         @NotBlank @Size(max = 255) String name,
         String environment,
-        Set<UUID> testCaseIds
+        Set<UUID> testCaseIds,
+        UUID testPlanId
 ) {
 }

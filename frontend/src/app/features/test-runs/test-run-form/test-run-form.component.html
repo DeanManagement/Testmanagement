@@ -15,6 +15,20 @@
           <input matInput formControlName="environment" placeholder="e.g. staging, production" data-test-id="test-run-environment-input" />
         </mat-form-field>
 
+        @if (testPlans$ | async; as testPlans) {
+          @if (testPlans.length > 0) {
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>{{ 'testRun.form.testPlan' | translate }}</mat-label>
+              <mat-select formControlName="testPlanId" data-test-id="test-run-test-plan-select">
+                <mat-option value="">-</mat-option>
+                @for (plan of testPlans; track plan.id) {
+                  <mat-option [value]="plan.id">{{ plan.name }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          }
+        }
+
         <div class="test-cases-picker" data-test-id="test-run-tc-picker">
           <h3>{{ 'testSuite.form.testCases' | translate }}</h3>
           <p class="picker-hint">Select test cases to include in this run. A pending result will be created for each selected case.</p>

@@ -10,10 +10,12 @@ public record StepResultResponse(
         UUID testStepId,
         String action,
         String expectedResult,
+        String testData,
         int orderIndex,
         TestResultStatus status,
         String actualResult,
         UUID screenshotId,
+        UUID stepImageId,
         Instant createdAt,
         Instant updatedAt
 ) {

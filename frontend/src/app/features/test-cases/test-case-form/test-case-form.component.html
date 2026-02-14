@@ -77,19 +77,44 @@
 
                 @for (step of steps.controls; track $index; let i = $index) {
                   <div class="step-row" [formGroupName]="'steps'">
-                    <div [formGroupName]="i" class="step-fields">
-                      <span class="step-number">{{ i + 1 }}</span>
-                      <mat-form-field appearance="outline" class="step-action">
-                        <mat-label>{{ 'testCase.form.action' | translate }}</mat-label>
-                        <input matInput formControlName="action" [attr.data-test-id]="'test-case-step-action-' + i" />
-                      </mat-form-field>
-                      <mat-form-field appearance="outline" class="step-expected">
-                        <mat-label>{{ 'testCase.form.expectedResult' | translate }}</mat-label>
-                        <input matInput formControlName="expectedResult" [attr.data-test-id]="'test-case-step-expected-' + i" />
-                      </mat-form-field>
-                      <button mat-icon-button type="button" (click)="removeStep(i)" class="remove-step" [attr.data-test-id]="'test-case-remove-step-' + i">
-                        <mat-icon>close</mat-icon>
-                      </button>
+                    <div [formGroupName]="i" class="step-content">
+                      <div class="step-fields">
+                        <span class="step-number">{{ i + 1 }}</span>
+                        <mat-form-field appearance="outline" class="step-action">
+                          <mat-label>{{ 'testCase.form.action' | translate }}</mat-label>
+                          <input matInput formControlName="action" [attr.data-test-id]="'test-case-step-action-' + i" />
+                        </mat-form-field>
+                        <mat-form-field appearance="outline" class="step-expected">
+                          <mat-label>{{ 'testCase.form.expectedResult' | translate }}</mat-label>
+                          <input matInput formControlName="expectedResult" [attr.data-test-id]="'test-case-step-expected-' + i" />
+                        </mat-form-field>
+                        <button mat-icon-button type="button" (click)="removeStep(i)" class="remove-step" [attr.data-test-id]="'test-case-remove-step-' + i">
+                          <mat-icon>close</mat-icon>
+                        </button>
+                      </div>
+                      <div class="step-extras">
+                        <mat-form-field appearance="outline" class="step-test-data">
+                          <mat-label>{{ 'testCase.form.testData' | translate }}</mat-label>
+                          <textarea matInput formControlName="testData" rows="2" [attr.data-test-id]="'test-case-step-testdata-' + i"></textarea>
+                          <mat-hint>{{ 'testCase.form.testDataHint' | translate }}</mat-hint>
+                        </mat-form-field>
+                        <div class="step-image-section">
+                          <input type="file" accept="image/*" hidden #imageInput (change)="onImageSelected(i, $event)" />
+                          @if (hasImage(i)) {
+                            <div class="step-image-preview">
+                              <img [src]="getImagePreview(i) | authImage" alt="Step image" />
+                              <button mat-icon-button type="button" (click)="removeImage(i)" class="remove-image" [attr.data-test-id]="'test-case-remove-image-' + i">
+                                <mat-icon>close</mat-icon>
+                              </button>
+                            </div>
+                          } @else {
+                            <button mat-stroked-button type="button" (click)="imageInput.click()" class="add-image-btn" [attr.data-test-id]="'test-case-add-image-' + i">
+                              <mat-icon>photo_camera</mat-icon>
+                              {{ 'testCase.form.addImage' | translate }}
+                            </button>
+                          }
+                        </div>
+                      </div>
                     </div>
                   </div>
                 }
@@ -100,7 +125,7 @@
 
         <div class="actions">
           <a mat-button [routerLink]="['/projects', projectId, 'test-cases']" data-test-id="test-case-form-cancel">{{ 'common.cancel' | translate }}</a>
-          <button mat-flat-button type="submit" [disabled]="form.invalid" data-test-id="test-case-form-submit">
+          <button mat-flat-button type="submit" [disabled]="form.invalid || saving" data-test-id="test-case-form-submit">
             {{ 'common.save' | translate }}
           </button>
         </div>

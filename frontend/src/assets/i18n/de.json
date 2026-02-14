@@ -8,6 +8,7 @@
     "testCases": "Testfälle",
     "testSuites": "Testsuiten",
     "testRuns": "Testläufe",
+    "testPlans": "Testpläne",
     "settings": "Einstellungen"
   },
   "landing": {
@@ -79,6 +80,7 @@
       "testCasesHint": "Definieren und verwalten Sie Testfälle mit Schritten und erwarteten Ergebnissen.",
       "testSuitesHint": "Gruppieren Sie Testfälle in Suiten für organisierte Ausführung.",
       "testRunsHint": "Führen Sie Testsuiten aus und verfolgen Sie Ergebnisse über Umgebungen hinweg.",
+      "testPlansHint": "Testläufe unter Meilensteinen gruppieren und Release-Fortschritt verfolgen.",
       "dashboardHint": "Projektmetriken, Diagramme und Testlauf-Trends anzeigen.",
       "activityHint": "Letzte Änderungen und Audit-Verlauf verfolgen."
     },
@@ -119,7 +121,12 @@
       "stepsEmpty": "Noch keine Schritte. Fügen Sie den ersten Schritt hinzu, um das Testskript zu definieren.",
       "addStep": "Schritt hinzufügen",
       "action": "Aktion",
-      "expectedResult": "Erwartetes Ergebnis"
+      "expectedResult": "Erwartetes Ergebnis",
+      "testData": "Testdaten",
+      "testDataHint": "Eingabewerte, Konfigurationen oder Datensätze für diesen Schritt",
+      "image": "Bild",
+      "addImage": "Bild hinzufügen",
+      "removeImage": "Bild entfernen"
     }
   },
   "testSuite": {
@@ -145,7 +152,8 @@
     "form": {
       "createTitle": "Testlauf starten",
       "name": "Name",
-      "environment": "Umgebung"
+      "environment": "Umgebung",
+      "testPlan": "Testplan (optional)"
     },
     "status": {
       "PLANNED": "Geplant",
@@ -183,6 +191,35 @@
       "prev": "Zurück",
       "next": "Weiter",
       "noSelection": "Wählen Sie einen Testfall aus der Seitenleiste aus."
+    }
+  },
+  "testPlan": {
+    "list": {
+      "title": "Testpläne",
+      "create": "Testplan erstellen",
+      "empty": "Noch keine Testpläne."
+    },
+    "form": {
+      "createTitle": "Testplan erstellen",
+      "editTitle": "Testplan bearbeiten",
+      "name": "Name",
+      "description": "Beschreibung",
+      "targetDate": "Zieldatum",
+      "status": "Status"
+    },
+    "status": {
+      "OPEN": "Offen",
+      "IN_PROGRESS": "Laufend",
+      "COMPLETED": "Abgeschlossen",
+      "CANCELLED": "Abgebrochen"
+    },
+    "detail": {
+      "summary": "Zusammenfassung",
+      "totalRuns": "Testläufe gesamt",
+      "completedRuns": "Abgeschlossene Läufe",
+      "passRate": "Erfolgsrate",
+      "testRuns": "Testläufe",
+      "noRuns": "Diesem Plan sind noch keine Testläufe zugewiesen."
     }
   },
   "priority": {
@@ -265,7 +302,8 @@
       "TEST_SUITE": "Testsuite",
       "TEST_RUN": "Testlauf",
       "TEST_RESULT": "Testergebnis",
-      "COMMENT": "Kommentar"
+      "COMMENT": "Kommentar",
+      "TEST_PLAN": "Testplan"
     }
   },
   "projectDashboard": {

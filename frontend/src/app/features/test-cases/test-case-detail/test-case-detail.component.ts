@@ -12,12 +12,14 @@ import { Observable, of } from 'rxjs';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectTestCaseById } from '../../../store/test-case/test-case.selectors';
 import { TestCase } from '../../../shared/models/test-case.model';
+import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { CommentActions } from '../../../store/comment/comment.actions';
 import { selectAllComments, selectCommentsLoading } from '../../../store/comment/comment.selectors';
 import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
 import { Comment } from '../../../shared/models/comment.model';
 import { CommentListComponent } from '../../../shared/components/comment-list/comment-list.component';
 import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
+import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
 
 @Component({
   selector: 'app-test-case-detail',
@@ -34,6 +36,7 @@ import { CommentFormComponent } from '../../../shared/components/comment-form/co
     TranslateModule,
     CommentListComponent,
     CommentFormComponent,
+    AuthImagePipe,
   ],
   templateUrl: './test-case-detail.component.html',
   styleUrl: './test-case-detail.component.scss',
@@ -41,11 +44,16 @@ import { CommentFormComponent } from '../../../shared/components/comment-form/co
 export class TestCaseDetailComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
+  private readonly testCaseApi = inject(TestCaseApiService);
 
   projectId = '';
   testCaseId = '';
   testCase$: Observable<TestCase | undefined> = of(undefined);
-  stepColumns = ['index', 'action', 'expectedResult'];
+  stepColumns = ['index', 'action', 'expectedResult', 'testData', 'image'];
+
+  getStepImageUrl(imageId: string): string {
+    return this.testCaseApi.getStepImageUrl(imageId);
+  }
 
   comments$ = this.store.select(selectAllComments);
   commentsLoading$ = this.store.select(selectCommentsLoading);

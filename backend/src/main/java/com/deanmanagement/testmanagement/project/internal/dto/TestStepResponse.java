@@ -6,6 +6,8 @@ public record TestStepResponse(
         UUID id,
         String action,
         String expectedResult,
-        int orderIndex
+        String testData,
+        int orderIndex,
+        UUID imageId
 ) {
 }

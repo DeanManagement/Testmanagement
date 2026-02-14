@@ -7,12 +7,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 import { AsyncPipe } from '@angular/common';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectAllTestCases } from '../../../store/test-case/test-case.selectors';
+import { TestPlanActions } from '../../../store/test-plan/test-plan.actions';
+import { selectAllTestPlans } from '../../../store/test-plan/test-plan.selectors';
 
 @Component({
   selector: 'app-test-run-form',
@@ -26,6 +29,7 @@ import { selectAllTestCases } from '../../../store/test-case/test-case.selectors
     MatButtonModule,
     MatCardModule,
     MatCheckboxModule,
+    MatSelectModule,
     MatIconModule,
     TranslateModule,
   ],
@@ -41,16 +45,19 @@ export class TestRunFormComponent implements OnInit {
   selectedTestCaseIds = new Set<string>();
 
   testCases$ = this.store.select(selectAllTestCases);
+  testPlans$ = this.store.select(selectAllTestPlans);
 
   form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
     environment: [''],
+    testPlanId: [''],
   });
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     if (this.projectId) {
       this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
+      this.store.dispatch(TestPlanActions.loadTestPlans({ projectId: this.projectId }));
     }
   }
 
@@ -72,6 +79,7 @@ export class TestRunFormComponent implements OnInit {
           name: this.form.value.name!,
           environment: this.form.value.environment || undefined,
           testCaseIds: [...this.selectedTestCaseIds],
+          testPlanId: this.form.value.testPlanId || undefined,
         },
       })
     );

@@ -38,4 +38,19 @@ export class TestCaseApiService {
   bulkDelete(projectId: string, testCaseIds: string[]): Observable<BulkOperationResponse> {
     return this.http.post<BulkOperationResponse>(`${this.baseUrl(projectId)}/bulk-delete`, { testCaseIds });
   }
+
+  uploadStepImage(testStepId: string, file: File): Observable<{ id: string }> {
+    const formData = new FormData();
+    formData.append('testStepId', testStepId);
+    formData.append('file', file);
+    return this.http.post<{ id: string }>('/api/step-images', formData);
+  }
+
+  getStepImageUrl(imageId: string): string {
+    return `/api/step-images/${imageId}`;
+  }
+
+  deleteStepImage(imageId: string): Observable<void> {
+    return this.http.delete<void>(`/api/step-images/${imageId}`);
+  }
 }

@@ -10,22 +10,26 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
 @Mapper(componentModel = "spring")
-public interface TestRunMapper {
+public abstract class TestRunMapper {
 
     @Mapping(target = "executorName", source = "executor.displayName")
     @Mapping(target = "completedByName", source = "completedBy.displayName")
-    TestRunResponse toResponse(TestRun testRun);
+    @Mapping(target = "testPlanId", source = "testPlan.id")
+    @Mapping(target = "testPlanName", source = "testPlan.name")
+    public abstract TestRunResponse toResponse(TestRun testRun);
 
     @Mapping(target = "testCaseId", source = "testCase.id")
     @Mapping(target = "testCaseTitle", source = "testCase.title")
-    TestResultResponse toResultResponse(TestResult testResult);
+    public abstract TestResultResponse toResultResponse(TestResult testResult);
 
     @Mapping(target = "testStepId", source = "testStep.id")
     @Mapping(target = "action", source = "testStep.action")
     @Mapping(target = "expectedResult", source = "testStep.expectedResult")
+    @Mapping(target = "testData", source = "testStep.testData")
     @Mapping(target = "orderIndex", source = "testStep.orderIndex")
     @Mapping(target = "screenshotId", source = "screenshot.id")
-    StepResultResponse toStepResultResponse(StepResult stepResult);
+    @Mapping(target = "stepImageId", expression = "java(stepResult.getTestStep().getImage() != null ? stepResult.getTestStep().getImage().getId() : null)")
+    public abstract StepResultResponse toStepResultResponse(StepResult stepResult);
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "project", ignore = true)
@@ -38,5 +42,6 @@ public interface TestRunMapper {
     @Mapping(target = "results", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
-    TestRun toEntity(CreateTestRunRequest request);
+    @Mapping(target = "testPlan", ignore = true)
+    public abstract TestRun toEntity(CreateTestRunRequest request);
 }

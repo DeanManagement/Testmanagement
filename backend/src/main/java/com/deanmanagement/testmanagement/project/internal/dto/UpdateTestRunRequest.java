@@ -4,10 +4,13 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
+import java.util.UUID;
+
 public record UpdateTestRunRequest(
         @NotBlank @Size(max = 255) String name,
         String environment,
         TestRunStatus status,
-        String reopenReason
+        String reopenReason,
+        UUID testPlanId
 ) {
 }

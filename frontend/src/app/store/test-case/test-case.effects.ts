@@ -43,17 +43,8 @@ export class TestCaseEffects {
     )
   );
 
-  createTestCaseSuccess$ = createEffect(
-    () =>
-      this.actions$.pipe(
-        ofType(TestCaseActions.createTestCaseSuccess),
-        withLatestFrom(this.store.select(selectTestCaseProjectId)),
-        tap(([{ testCase }, projectId]) =>
-          this.router.navigate(['/projects', projectId, 'test-cases', testCase.id])
-        )
-      ),
-    { dispatch: false }
-  );
+  // Navigation after create is handled by TestCaseFormComponent
+  // to allow image uploads before navigating.
 
   updateTestCase$ = createEffect(() =>
     this.actions$.pipe(

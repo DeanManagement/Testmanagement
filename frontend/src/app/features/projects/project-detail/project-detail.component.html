@@ -49,6 +49,13 @@
         </div>
         <p class="section-hint">{{ 'project.detail.testRunsHint' | translate }}</p>
       </a>
+      <a class="section-card tm-card" [routerLink]="['/projects', project.id, 'test-plans']" data-test-id="section-test-plans">
+        <div class="section-header">
+          <mat-icon>flag</mat-icon>
+          <h3>{{ 'nav.testPlans' | translate }}</h3>
+        </div>
+        <p class="section-hint">{{ 'project.detail.testPlansHint' | translate }}</p>
+      </a>
       <a class="section-card tm-card" [routerLink]="['/projects', project.id, 'dashboard']" data-test-id="section-dashboard">
         <div class="section-header">
           <mat-icon>dashboard</mat-icon>

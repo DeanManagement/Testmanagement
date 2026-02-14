@@ -1,0 +1,154 @@
+.detail-container {
+  padding: 32px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.detail-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.back-link { color: var(--tm-text-secondary) !important; }
+
+.detail-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.delete-btn {
+  color: var(--tm-danger) !important;
+  border-color: var(--tm-danger) !important;
+}
+
+.plan-hero {
+  padding: 32px;
+  margin-bottom: 24px;
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--tm-text);
+  }
+}
+
+.hero-top {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 600;
+
+  &--open {
+    background: var(--tm-primary-lighter);
+    color: var(--tm-primary);
+  }
+  &--in_progress {
+    background: #fff3cd;
+    color: #856404;
+  }
+  &--completed {
+    background: #d4edda;
+    color: #155724;
+  }
+  &--cancelled {
+    background: #f8d7da;
+    color: #721c24;
+  }
+}
+
+.plan-description {
+  color: var(--tm-text-secondary);
+  font-size: 15px;
+  line-height: 1.6;
+  margin: 0 0 8px;
+}
+
+.plan-target-date {
+  color: var(--tm-text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  padding: 20px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--tm-text);
+
+  &--passed { color: #155724; }
+  &--failed { color: #721c24; }
+}
+
+.stat-label {
+  font-size: 13px;
+  color: var(--tm-text-secondary);
+  font-weight: 500;
+}
+
+.runs-section {
+  padding: 24px;
+}
+
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  mat-icon {
+    color: var(--tm-accent);
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tm-text);
+  }
+}
+
+.data-table { width: 100%; }
+
+.item-link {
+  font-weight: 500;
+  color: var(--tm-primary-light) !important;
+  &:hover { text-decoration: underline !important; }
+}
+
+.secondary-cell { color: var(--tm-text-secondary); }
+.passed-cell { color: #155724; font-weight: 600; }
+.failed-cell { color: #721c24; font-weight: 600; }
+
+.empty-hint {
+  color: var(--tm-text-secondary);
+  font-size: 14px;
+  margin: 0;
+}

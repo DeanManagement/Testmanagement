@@ -2,12 +2,15 @@ export interface TestStep {
   id: string;
   action: string;
   expectedResult: string;
+  testData: string;
   orderIndex: number;
+  imageId: string | null;
 }
 
 export interface TestStepRequest {
   action: string;
   expectedResult: string;
+  testData?: string;
 }
 
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';

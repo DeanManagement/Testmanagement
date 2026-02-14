@@ -18,6 +18,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
+import com.deanmanagement.testmanagement.project.internal.entity.TestPlan;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
@@ -25,6 +26,7 @@ import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundExcept
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.StepResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.user.User;
@@ -51,6 +53,7 @@ public class TestRunService {
     private final StepResultRepository stepResultRepository;
     private final ProjectRepository projectRepository;
     private final TestCaseRepository testCaseRepository;
+    private final TestPlanRepository testPlanRepository;
     private final TestRunMapper testRunMapper;
     private final UserService userService;
     private final AuditService auditService;
@@ -126,6 +129,12 @@ public class TestRunService {
         run.setProject(project);
         run.setStatus(TestRunStatus.PLANNED);
 
+        if (request.testPlanId() != null) {
+            TestPlan testPlan = testPlanRepository.findById(request.testPlanId())
+                    .orElseThrow(() -> new ResourceNotFoundException("TestPlan", request.testPlanId()));
+            run.setTestPlan(testPlan);
+        }
+
         // If test case IDs provided, create pending results for each
         if (request.testCaseIds() != null && !request.testCaseIds().isEmpty()) {
             List<TestCase> testCases = testCaseRepository.findAllById(request.testCaseIds());
@@ -166,7 +175,8 @@ public class TestRunService {
         CreateTestRunRequest createRequest = new CreateTestRunRequest(
                 request.name(),
                 request.environment(),
-                testCaseIds
+                testCaseIds,
+                null
         );
         TestRunResponse response = create(projectId, createRequest, userId);
         auditService.log(projectId, userId, AuditAction.CLONED,
@@ -183,6 +193,12 @@ public class TestRunService {
 
         run.setName(request.name());
         run.setEnvironment(request.environment());
+
+        if (request.testPlanId() != null) {
+            TestPlan testPlan = testPlanRepository.findById(request.testPlanId())
+                    .orElseThrow(() -> new ResourceNotFoundException("TestPlan", request.testPlanId()));
+            run.setTestPlan(testPlan);
+        }
 
         TestRunStatus oldStatus = run.getStatus();
         if (request.status() != null) {

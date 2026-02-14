@@ -18,6 +18,7 @@ import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
 import { TestRun, TestResult, StepResult, TestResultStatus } from '../../../shared/models/test-run.model';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
+import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-test-run-dialog/clone-test-run-dialog.component';
 import { CompleteTestRunDialogComponent } from '../complete-test-run-dialog/complete-test-run-dialog.component';
 import { ReopenTestRunDialogComponent } from '../reopen-test-run-dialog/reopen-test-run-dialog.component';
@@ -27,6 +28,7 @@ import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.se
 import { Comment } from '../../../shared/models/comment.model';
 import { CommentListComponent } from '../../../shared/components/comment-list/comment-list.component';
 import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
+import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
 
 @Component({
   selector: 'app-test-run-detail',
@@ -48,6 +50,7 @@ import { CommentFormComponent } from '../../../shared/components/comment-form/co
     TranslateModule,
     CommentListComponent,
     CommentFormComponent,
+    AuthImagePipe,
   ],
   templateUrl: './test-run-detail.component.html',
   styleUrl: './test-run-detail.component.scss',
@@ -57,6 +60,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly testRunApi = inject(TestRunApiService);
+  private readonly testCaseApi = inject(TestCaseApiService);
   private autoSelectSub?: Subscription;
   private actualResultSub?: Subscription;
   private actualResultSubject = new Subject<{ resultId: string; step: StepResult; actualResult: string }>();
@@ -175,6 +179,10 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
 
   getScreenshotUrl(screenshotId: string): string {
     return this.testRunApi.getScreenshotUrl(screenshotId);
+  }
+
+  getStepImageUrl(imageId: string): string {
+    return this.testCaseApi.getStepImageUrl(imageId);
   }
 
   filteredResults(run: TestRun): TestResult[] {

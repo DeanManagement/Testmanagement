@@ -8,6 +8,7 @@
     "testCases": "Test Cases",
     "testSuites": "Test Suites",
     "testRuns": "Test Runs",
+    "testPlans": "Test Plans",
     "settings": "Settings"
   },
   "landing": {
@@ -79,6 +80,7 @@
       "testCasesHint": "Define and manage your test cases with steps and expected results.",
       "testSuitesHint": "Group test cases into suites for organised execution.",
       "testRunsHint": "Execute test suites and track results across environments.",
+      "testPlansHint": "Group test runs under milestones and track release progress.",
       "dashboardHint": "View project metrics, charts, and test run trends.",
       "activityHint": "Track recent changes and audit history."
     },
@@ -119,7 +121,12 @@
       "stepsEmpty": "No steps yet. Add your first step to define the test script.",
       "addStep": "Add Step",
       "action": "Action",
-      "expectedResult": "Expected Result"
+      "expectedResult": "Expected Result",
+      "testData": "Test Data",
+      "testDataHint": "Input values, configurations, or datasets for this step",
+      "image": "Image",
+      "addImage": "Add Image",
+      "removeImage": "Remove Image"
     }
   },
   "testSuite": {
@@ -145,7 +152,8 @@
     "form": {
       "createTitle": "Start Test Run",
       "name": "Name",
-      "environment": "Environment"
+      "environment": "Environment",
+      "testPlan": "Test Plan (optional)"
     },
     "status": {
       "PLANNED": "Planned",
@@ -183,6 +191,35 @@
       "prev": "Previous",
       "next": "Next",
       "noSelection": "Select a test case from the sidebar to begin."
+    }
+  },
+  "testPlan": {
+    "list": {
+      "title": "Test Plans",
+      "create": "Create Test Plan",
+      "empty": "No test plans yet."
+    },
+    "form": {
+      "createTitle": "Create Test Plan",
+      "editTitle": "Edit Test Plan",
+      "name": "Name",
+      "description": "Description",
+      "targetDate": "Target Date",
+      "status": "Status"
+    },
+    "status": {
+      "OPEN": "Open",
+      "IN_PROGRESS": "In Progress",
+      "COMPLETED": "Completed",
+      "CANCELLED": "Cancelled"
+    },
+    "detail": {
+      "summary": "Summary",
+      "totalRuns": "Total Runs",
+      "completedRuns": "Completed Runs",
+      "passRate": "Pass Rate",
+      "testRuns": "Test Runs",
+      "noRuns": "No test runs assigned to this plan yet."
     }
   },
   "priority": {
@@ -265,7 +302,8 @@
       "TEST_SUITE": "test suite",
       "TEST_RUN": "test run",
       "TEST_RESULT": "test result",
-      "COMMENT": "comment"
+      "COMMENT": "comment",
+      "TEST_PLAN": "test plan"
     }
   },
   "projectDashboard": {

@@ -25,6 +25,8 @@ import { userReducer } from './store/user/user.reducer';
 import { UserEffects } from './store/user/user.effects';
 import { commentReducer } from './store/comment/comment.reducer';
 import { CommentEffects } from './store/comment/comment.effects';
+import { testPlanReducer } from './store/test-plan/test-plan.reducer';
+import { TestPlanEffects } from './store/test-plan/test-plan.effects';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -41,8 +43,9 @@ export const appConfig: ApplicationConfig = {
       apiKeys: apiKeyReducer,
       users: userReducer,
       comments: commentReducer,
+      testPlans: testPlanReducer,
     }),
-    provideEffects(ProjectEffects, TestCaseEffects, TestSuiteEffects, TestRunEffects, ApiKeyEffects, UserEffects, CommentEffects),
+    provideEffects(ProjectEffects, TestCaseEffects, TestSuiteEffects, TestRunEffects, ApiKeyEffects, UserEffects, CommentEffects, TestPlanEffects),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
     provideTranslateService({
       defaultLanguage: 'en',

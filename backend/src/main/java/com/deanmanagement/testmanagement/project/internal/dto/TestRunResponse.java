@@ -16,6 +16,8 @@ public record TestRunResponse(
         String executorName,
         String completedByName,
         String reopenReason,
+        UUID testPlanId,
+        String testPlanName,
         List<TestResultResponse> results,
         Instant createdAt,
         Instant updatedAt

@@ -95,6 +95,7 @@ class ExternalTestRunServiceTest {
                 UUID.randomUUID(), "CI Run", "staging",
                 TestRunStatus.COMPLETED, NOW, NOW,
                 null, null, null,
+                null, null,
                 List.of(), NOW, NOW
         );
     }
@@ -131,7 +132,7 @@ class ExternalTestRunServiceTest {
         assertThat(saved.getEndTime()).isNotNull();
         assertThat(saved.getResults()).hasSize(1);
 
-        var result = saved.getResults().get(0);
+        var result = saved.getResults().getFirst();
         assertThat(result.getStatus()).isEqualTo(TestResultStatus.FAILED);
         assertThat(result.getComment()).isEqualTo("Login failed");
         assertThat(result.getDefectLink()).isEqualTo("BUG-123");
@@ -163,7 +164,7 @@ class ExternalTestRunServiceTest {
         TestRun saved = captor.getValue();
 
         assertThat(saved.getResults()).hasSize(1);
-        var result = saved.getResults().get(0);
+        var result = saved.getResults().getFirst();
         assertThat(result.getStepResults()).hasSize(2);
         assertThat(result.getStepResults().get(0).getStatus()).isEqualTo(TestResultStatus.PASSED);
         assertThat(result.getStepResults().get(1).getStatus()).isEqualTo(TestResultStatus.PASSED);

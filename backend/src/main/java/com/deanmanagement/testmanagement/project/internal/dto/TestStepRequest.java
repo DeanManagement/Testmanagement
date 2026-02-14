@@ -4,6 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record TestStepRequest(
         @NotBlank String action,
-        String expectedResult
+        String expectedResult,
+        String testData
 ) {
 }

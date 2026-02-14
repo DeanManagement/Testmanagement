@@ -55,6 +55,10 @@ public class TestRun extends BaseEntity {
 
     private String reopenReason;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "test_plan_id")
+    private TestPlan testPlan;
+
     @OneToMany(mappedBy = "testRun", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestResult> results = new ArrayList<>();
 }

@@ -12,6 +12,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
+import com.deanmanagement.testmanagement.project.internal.entity.StepImage;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
@@ -22,8 +23,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -84,8 +87,25 @@ public class TestCaseService {
         if (request.status() != null) tc.setStatus(request.status());
         if (request.labels() != null) tc.setLabels(request.labels());
         if (request.steps() != null) {
+            Map<Integer, StepImage> existingImages = new HashMap<>();
+            for (TestStep oldStep : tc.getSteps()) {
+                if (oldStep.getImage() != null) {
+                    StepImage img = oldStep.getImage();
+                    oldStep.setImage(null);
+                    img.setTestStep(null);
+                    existingImages.put(oldStep.getOrderIndex(), img);
+                }
+            }
             tc.getSteps().clear();
-            tc.getSteps().addAll(buildSteps(request.steps(), tc));
+            List<TestStep> newSteps = buildSteps(request.steps(), tc);
+            for (TestStep newStep : newSteps) {
+                StepImage img = existingImages.remove(newStep.getOrderIndex());
+                if (img != null) {
+                    img.setTestStep(newStep);
+                    newStep.setImage(img);
+                }
+            }
+            tc.getSteps().addAll(newSteps);
         }
 
         tc = testCaseRepository.save(tc);
@@ -161,6 +181,7 @@ public class TestCaseService {
             TestStep step = new TestStep();
             step.setAction(sr.action());
             step.setExpectedResult(sr.expectedResult());
+            step.setTestData(sr.testData());
             step.setOrderIndex(i);
             step.setTestCase(testCase);
             steps.add(step);
