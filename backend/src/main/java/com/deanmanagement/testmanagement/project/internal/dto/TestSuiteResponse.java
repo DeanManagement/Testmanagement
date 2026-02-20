@@ -10,7 +10,9 @@ public record TestSuiteResponse(
         String description,
         Set<TestCaseSummary> testCases,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID createdBy,
+        UUID updatedBy
 ) {
     public record TestCaseSummary(UUID id, String title) {}
 }

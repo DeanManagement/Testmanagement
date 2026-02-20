@@ -9,6 +9,8 @@ public record ProjectResponse(
         String description,
         String key,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID createdBy,
+        UUID updatedBy
 ) {
 }

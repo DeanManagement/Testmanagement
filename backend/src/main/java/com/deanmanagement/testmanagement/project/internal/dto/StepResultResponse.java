@@ -17,6 +17,8 @@ public record StepResultResponse(
         UUID screenshotId,
         UUID stepImageId,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID createdBy,
+        UUID updatedBy
 ) {
 }

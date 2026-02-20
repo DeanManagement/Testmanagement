@@ -9,6 +9,8 @@ public record CommentResponse(
         UUID authorId,
         String authorDisplayName,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID createdBy,
+        UUID updatedBy
 ) {
 }

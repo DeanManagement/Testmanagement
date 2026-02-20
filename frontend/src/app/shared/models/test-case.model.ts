@@ -28,6 +28,8 @@ export interface TestCase {
   steps: TestStep[];
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface CreateTestCaseRequest {

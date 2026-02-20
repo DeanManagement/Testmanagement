@@ -24,6 +24,8 @@ export interface TestResult {
   stepResults: StepResult[];
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface TestRun {
@@ -41,6 +43,8 @@ export interface TestRun {
   results: TestResult[];
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface CreateTestRunRequest {

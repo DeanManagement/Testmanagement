@@ -7,6 +7,8 @@ export interface Comment {
   authorDisplayName: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface CreateCommentRequest {

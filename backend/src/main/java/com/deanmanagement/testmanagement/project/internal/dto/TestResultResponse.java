@@ -15,6 +15,8 @@ public record TestResultResponse(
         String defectLink,
         List<StepResultResponse> stepResults,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID createdBy,
+        UUID updatedBy
 ) {
 }

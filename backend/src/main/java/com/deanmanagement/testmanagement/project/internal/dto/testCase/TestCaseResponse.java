@@ -20,6 +20,8 @@ public record TestCaseResponse(
         Set<String> labels,
         List<TestStepResponse> steps,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID createdBy,
+        UUID updatedBy
 ) {
 }

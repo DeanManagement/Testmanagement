@@ -10,6 +10,8 @@ export interface TestSuite {
   testCases: TestCaseSummary[];
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface CreateTestSuiteRequest {

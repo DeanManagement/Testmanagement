@@ -78,7 +78,7 @@ class TestPlanServiceTest {
         return new TestPlanResponse(
                 PLAN_ID, "Release 2.3", "All tests for v2.3",
                 TestPlanStatus.OPEN, LocalDate.of(2026, 3, 15),
-                0, NOW, NOW
+                0, NOW, NOW, null, null
         );
     }
 

@@ -55,7 +55,7 @@ class TestPlanControllerTest {
         return new TestPlanResponse(
                 PLAN_ID, "Release 2.3", "Description",
                 TestPlanStatus.OPEN, LocalDate.of(2026, 3, 15),
-                2, NOW, NOW
+                2, NOW, NOW, null, null
         );
     }
 

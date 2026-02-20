@@ -5,6 +5,8 @@ export interface Project {
   key: string;
   createdAt: string;
   updatedAt: string;
+  createdBy?: string;
+  updatedBy?: string;
 }
 
 export interface CreateProjectRequest {

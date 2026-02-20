@@ -52,7 +52,7 @@ class ProjectServiceTest {
     }
 
     private ProjectResponse sampleResponse() {
-        return new ProjectResponse(PROJECT_ID, "Test Project", "A test project", "TEST", NOW, NOW);
+        return new ProjectResponse(PROJECT_ID, "Test Project", "A test project", "TEST", NOW, NOW, null, null);
     }
 
     @Test

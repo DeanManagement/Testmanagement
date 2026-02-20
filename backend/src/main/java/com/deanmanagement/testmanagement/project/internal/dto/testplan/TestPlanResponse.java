@@ -14,6 +14,8 @@ public record TestPlanResponse(
         LocalDate targetDate,
         int testRunCount,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID createdBy,
+        UUID updatedBy
 ) {
 }

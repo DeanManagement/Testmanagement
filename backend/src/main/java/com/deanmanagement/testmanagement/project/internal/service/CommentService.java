@@ -105,7 +105,9 @@ public class CommentService {
                 comment.getAuthorId(),
                 displayName,
                 comment.getCreatedAt(),
-                comment.getUpdatedAt()
+                comment.getUpdatedAt(),
+                comment.getCreatedBy(),
+                comment.getUpdatedBy()
         );
     }
 

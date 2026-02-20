@@ -20,6 +20,8 @@ public record TestRunResponse(
         String testPlanName,
         List<TestResultResponse> results,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        UUID createdBy,
+        UUID updatedBy
 ) {
 }
