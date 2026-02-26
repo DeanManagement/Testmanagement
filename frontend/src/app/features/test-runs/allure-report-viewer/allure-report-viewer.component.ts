@@ -5,8 +5,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslateModule } from '@ngx-translate/core';
+import { Store } from '@ngrx/store';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
+import { TestRunActions } from '../../../store/test-run/test-run.actions';
+import { first } from 'rxjs/operators';
 
 @Component({
   selector: 'app-allure-report-viewer',
@@ -26,6 +30,7 @@ export class AllureReportViewerComponent implements OnInit {
   private readonly sanitizer = inject(DomSanitizer);
   private readonly testRunApi = inject(TestRunApiService);
   private readonly authService = inject(AuthService);
+  private readonly store = inject(Store);
 
   iframeSrc: SafeResourceUrl | null = null;
   projectId = '';
@@ -35,10 +40,17 @@ export class AllureReportViewerComponent implements OnInit {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.runId = this.route.snapshot.paramMap.get('runId') ?? '';
 
-    const baseUrl = this.testRunApi.getAllureReportViewUrl(this.projectId, this.runId);
-    const token = this.authService.getAccessToken();
-    const url = token ? `${baseUrl}?token=${token}` : baseUrl;
-    this.iframeSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+    this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: this.runId }));
+    this.store.select(selectTestRunById(this.runId)).pipe(
+      first(run => !!run),
+    ).subscribe(run => {
+      if (run) {
+        const baseUrl = this.testRunApi.getAllureReportViewUrl(this.projectId, run.key);
+        const token = this.authService.getAccessToken();
+        const url = token ? `${baseUrl}?token=${token}` : baseUrl;
+        this.iframeSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      }
+    });
   }
 
   goBack(): void {

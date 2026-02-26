@@ -47,6 +47,8 @@ public class ExternalTestRunService {
         run.setStatus(TestRunStatus.COMPLETED);
         run.setStartTime(now);
         run.setEndTime(now);
+        run.setKey(project.getKey() + "-Run-" + project.getNextTestRunNumber());
+        project.setNextTestRunNumber(project.getNextTestRunNumber() + 1);
 
         for (ExternalTestResultRequest resultReq : request.results()) {
             TestCase testCase = testCaseRepository.findByKeyAndProjectId(resultReq.testCaseKey(), project.getId())

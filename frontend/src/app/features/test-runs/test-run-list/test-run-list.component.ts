@@ -38,7 +38,7 @@ export class TestRunListComponent implements OnInit {
   projectId = '';
   testRuns$ = this.store.select(selectAllTestRuns);
   loading$ = this.store.select(selectTestRunsLoading);
-  displayedColumns = ['name', 'environment', 'status', 'results', 'actions'];
+  displayedColumns = ['key', 'name', 'environment', 'status', 'results', 'actions'];
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';

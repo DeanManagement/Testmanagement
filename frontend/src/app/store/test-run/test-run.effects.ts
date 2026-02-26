@@ -204,8 +204,8 @@ export class TestRunEffects {
   uploadAllureReport$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TestRunActions.uploadAllureReport),
-      mergeMap(({ projectId, testRunId, file }) =>
-        this.testRunApi.uploadAllureReport(projectId, testRunId, file).pipe(
+      mergeMap(({ projectId, testRunId, testRunKey, file }) =>
+        this.testRunApi.uploadAllureReport(projectId, testRunKey, file).pipe(
           map(() => TestRunActions.uploadAllureReportSuccess({ projectId, testRunId })),
           catchError((error) =>
             of(TestRunActions.uploadAllureReportFailure({ error: error.message }))
@@ -227,8 +227,8 @@ export class TestRunEffects {
   deleteAllureReport$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TestRunActions.deleteAllureReport),
-      mergeMap(({ projectId, testRunId }) =>
-        this.testRunApi.deleteAllureReport(projectId, testRunId).pipe(
+      mergeMap(({ projectId, testRunId, testRunKey }) =>
+        this.testRunApi.deleteAllureReport(projectId, testRunKey).pipe(
           map(() => TestRunActions.deleteAllureReportSuccess({ projectId, testRunId })),
           catchError((error) =>
             of(TestRunActions.deleteAllureReportFailure({ error: error.message }))

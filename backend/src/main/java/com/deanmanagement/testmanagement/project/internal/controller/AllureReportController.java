@@ -1,9 +1,12 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
 import com.deanmanagement.testmanagement.project.internal.entity.AllureReport;
+import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.project.internal.service.AllureReportService;
 import com.deanmanagement.testmanagement.project.internal.service.AllureReportService.AllureReportFile;
+import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,21 +32,24 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/projects/{projectId}/test-runs/{testRunId}/allure-report")
+@RequestMapping("/api/projects/{projectId}/test-runs/{testRunKey}/allure-report")
 @Tag(name = "Allure Reports", description = "Upload and serve Allure HTML reports for test runs")
 @RequiredArgsConstructor
 public class AllureReportController {
 
     private final AllureReportService allureReportService;
     private final ProjectMemberRepository projectMemberRepository;
+    private final TestRunRepository testRunRepository;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, UUID> upload(@PathVariable UUID projectId,
-                                    @PathVariable UUID testRunId,
+                                    @PathVariable String testRunKey,
                                     @RequestParam MultipartFile file) throws IOException {
+        TestRun testRun = testRunRepository.findByKey(testRunKey)
+                .orElseThrow(() -> new ResourceNotFoundException("TestRun", testRunKey));
         AllureReport report = allureReportService.upload(
-                testRunId,
+                testRun.getId(),
                 file.getOriginalFilename(),
                 file.getBytes()
         );
@@ -52,13 +58,13 @@ public class AllureReportController {
 
     @GetMapping("/view/**")
     public ResponseEntity<byte[]> viewFile(@PathVariable UUID projectId,
-                                           @PathVariable UUID testRunId,
+                                           @PathVariable String testRunKey,
                                            HttpServletRequest request,
                                            HttpServletResponse response,
                                            Authentication authentication) {
         requireProjectAccess(projectId, authentication);
 
-        String prefix = "/api/projects/" + projectId + "/test-runs/" + testRunId + "/allure-report/view/";
+        String prefix = "/api/projects/" + projectId + "/test-runs/" + testRunKey + "/allure-report/view/";
         String filePath = request.getRequestURI().substring(prefix.length());
 
         if (filePath.isEmpty()) {
@@ -66,7 +72,7 @@ public class AllureReportController {
         }
 
         if (request.getParameter("token") != null) {
-            String cookiePath = "/api/projects/" + projectId + "/test-runs/" + testRunId + "/allure-report/view/";
+            String cookiePath = "/api/projects/" + projectId + "/test-runs/" + testRunKey + "/allure-report/view/";
             Cookie cookie = new Cookie("allure_session", request.getParameter("token"));
             cookie.setPath(cookiePath);
             cookie.setHttpOnly(true);
@@ -74,7 +80,7 @@ public class AllureReportController {
             response.addCookie(cookie);
         }
 
-        AllureReportFile reportFile = allureReportService.getFileFromReport(testRunId, filePath);
+        AllureReportFile reportFile = allureReportService.getFileFromReport(testRunKey, filePath);
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(reportFile.contentType()))
@@ -84,8 +90,10 @@ public class AllureReportController {
     @DeleteMapping
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID projectId,
-                       @PathVariable UUID testRunId) {
-        allureReportService.deleteByTestRunId(testRunId);
+                       @PathVariable String testRunKey) {
+        TestRun testRun = testRunRepository.findByKey(testRunKey)
+                .orElseThrow(() -> new ResourceNotFoundException("TestRun", testRunKey));
+        allureReportService.deleteByTestRunId(testRun.getId());
     }
 
     private void requireProjectAccess(UUID projectId, Authentication authentication) {

@@ -33,6 +33,7 @@ public abstract class TestRunMapper {
     public abstract StepResultResponse toStepResultResponse(StepResult stepResult);
 
     @Mapping(target = "id", ignore = true)
+    @Mapping(target = "key", ignore = true)
     @Mapping(target = "project", ignore = true)
     @Mapping(target = "executor", ignore = true)
     @Mapping(target = "completedBy", ignore = true)

@@ -144,6 +144,7 @@
     }
   },
   "testRun": {
+    "key": "Key",
     "list": {
       "title": "Test Runs",
       "create": "Start Test Run",

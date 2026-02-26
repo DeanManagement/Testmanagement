@@ -3,8 +3,11 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.ExternalCreateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.AllureReport;
+import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
+import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.project.internal.service.AllureReportService;
 import com.deanmanagement.testmanagement.project.internal.service.ExternalTestRunService;
+import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -31,6 +34,7 @@ public class ExternalTestRunController {
 
     private final ExternalTestRunService externalTestRunService;
     private final AllureReportService allureReportService;
+    private final TestRunRepository testRunRepository;
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -39,13 +43,15 @@ public class ExternalTestRunController {
         return externalTestRunService.createExternalRun(projectKey, request);
     }
 
-    @PostMapping(value = "/{testRunId}/allure-report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/{testRunKey}/allure-report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
     public Map<String, UUID> uploadAllureReport(@PathVariable String projectKey,
-                                                @PathVariable UUID testRunId,
+                                                @PathVariable String testRunKey,
                                                 @RequestParam MultipartFile file) throws IOException {
+        TestRun testRun = testRunRepository.findByKey(testRunKey)
+                .orElseThrow(() -> new ResourceNotFoundException("TestRun", testRunKey));
         AllureReport report = allureReportService.upload(
-                testRunId,
+                testRun.getId(),
                 file.getOriginalFilename(),
                 file.getBytes()
         );

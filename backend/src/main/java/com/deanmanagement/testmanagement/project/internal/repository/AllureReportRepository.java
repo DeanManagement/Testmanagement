@@ -9,6 +9,8 @@ import java.util.UUID;
 public interface AllureReportRepository extends JpaRepository<AllureReport, UUID> {
     Optional<AllureReport> findByTestRunId(UUID testRunId);
 
+    Optional<AllureReport> findByTestRunKey(String testRunKey);
+
     boolean existsByTestRunId(UUID testRunId);
 
     void deleteByTestRunId(UUID testRunId);

@@ -92,7 +92,7 @@ class ExternalTestRunServiceTest {
 
     private TestRunResponse sampleRunResponse() {
         return new TestRunResponse(
-                UUID.randomUUID(), "CI Run", "staging",
+                UUID.randomUUID(), "TEST-Run-1", "CI Run", "staging",
                 TestRunStatus.COMPLETED, NOW, NOW,
                 null, null, null,
                 null, null, null,

@@ -29,6 +29,9 @@ import java.util.List;
 @NoArgsConstructor
 public class TestRun extends BaseEntity {
 
+    @Column(name = "test_run_key", nullable = false, unique = true, length = 30)
+    private String key;
+
     @Column(nullable = false)
     private String name;
 

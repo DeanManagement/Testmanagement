@@ -128,6 +128,8 @@ public class TestRunService {
         TestRun run = testRunMapper.toEntity(request);
         run.setProject(project);
         run.setStatus(TestRunStatus.PLANNED);
+        run.setKey(project.getKey() + "-Run-" + project.getNextTestRunNumber());
+        project.setNextTestRunNumber(project.getNextTestRunNumber() + 1);
 
         if (request.testPlanId() != null) {
             TestPlan testPlan = testPlanRepository.findById(request.testPlanId())

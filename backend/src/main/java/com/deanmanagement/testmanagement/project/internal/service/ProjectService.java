@@ -79,7 +79,12 @@ public class ProjectService {
     }
 
     String generateKey(String name) {
-        String[] words = name.trim().split("\\s+");
+        String sanitized = name.replaceAll("[^a-zA-Z0-9\\s]", "").trim();
+        if (sanitized.isEmpty()) {
+            sanitized = "PRJ";
+        }
+
+        String[] words = sanitized.split("\\s+");
         String baseKey;
         if (words.length > 1) {
             StringBuilder sb = new StringBuilder();

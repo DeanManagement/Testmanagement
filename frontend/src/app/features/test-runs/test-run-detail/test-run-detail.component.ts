@@ -74,6 +74,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
 
   projectId = '';
   runId = '';
+  runKey = '';
   testRun$: Observable<TestRun | undefined> = of(undefined);
   resultStatuses: TestResultStatus[] = ['PENDING', 'PASSED', 'FAILED', 'BLOCKED', 'SKIPPED'];
 
@@ -93,6 +94,9 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
       this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: this.runId }));
       this.testRun$ = this.store.select(selectTestRunById(this.runId));
       this.autoSelectSub = this.testRun$.subscribe(run => {
+        if (run) {
+          this.runKey = run.key;
+        }
         if (run?.status === 'IN_PROGRESS' && !this.activeResultId && run.results.length > 0) {
           this.activeResultId = run.results[0].id;
           this.loadCommentsForResult(run.results[0].id);
@@ -334,6 +338,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
         TestRunActions.uploadAllureReport({
           projectId: this.projectId,
           testRunId: this.runId,
+          testRunKey: this.runKey,
           file,
         })
       );
@@ -346,6 +351,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
       TestRunActions.deleteAllureReport({
         projectId: this.projectId,
         testRunId: this.runId,
+        testRunKey: this.runKey,
       })
     );
   }

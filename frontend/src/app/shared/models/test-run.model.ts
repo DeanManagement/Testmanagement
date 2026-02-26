@@ -30,6 +30,7 @@ export interface TestResult {
 
 export interface TestRun {
   id: string;
+  key: string;
   name: string;
   environment: string;
   status: TestRunStatus;

@@ -8,6 +8,7 @@ import java.util.UUID;
 
 public record TestRunResponse(
         UUID id,
+        String key,
         String name,
         String environment,
         TestRunStatus status,

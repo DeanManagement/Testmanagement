@@ -28,6 +28,13 @@
     </div>
   } @else {
     <table mat-table [dataSource]="(testRuns$ | async) ?? []" class="data-table" data-test-id="test-run-table">
+      <ng-container matColumnDef="key">
+        <th mat-header-cell *matHeaderCellDef>{{ 'testRun.key' | translate }}</th>
+        <td mat-cell *matCellDef="let run" class="key-cell">
+          <a [routerLink]="[run.id]" class="item-link" data-test-id="test-run-key-link">{{ run.key }}</a>
+        </td>
+      </ng-container>
+
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>
           {{ 'testRun.form.name' | translate }}</th>

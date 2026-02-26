@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.project.internal.service.AllureReportService;
 import com.deanmanagement.testmanagement.project.internal.service.ExternalTestRunService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -44,13 +45,16 @@ class ExternalTestRunControllerTest {
     @MockitoBean
     private AllureReportService allureReportService;
 
+    @MockitoBean
+    private TestRunRepository testRunRepository;
+
     private static final String PROJECT_KEY = "TEST";
     private static final String TEST_CASE_KEY = "TEST-1";
     private static final Instant NOW = Instant.now();
 
     private TestRunResponse sampleRunResponse() {
         return new TestRunResponse(
-                UUID.randomUUID(), "CI Run", "staging",
+                UUID.randomUUID(), "TEST-Run-1", "CI Run", "staging",
                 TestRunStatus.COMPLETED, NOW, NOW,
                 null, null, null,
                 null, null, null,

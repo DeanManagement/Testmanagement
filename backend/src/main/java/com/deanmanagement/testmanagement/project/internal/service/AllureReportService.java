@@ -65,9 +65,9 @@ public class AllureReportService {
         return allureReportRepository.save(report);
     }
 
-    public AllureReportFile getFileFromReport(UUID testRunId, String filePath) {
-        AllureReport report = allureReportRepository.findByTestRunId(testRunId)
-                .orElseThrow(() -> new ResourceNotFoundException("AllureReport", testRunId));
+    public AllureReportFile getFileFromReport(String testRunKey, String filePath) {
+        AllureReport report = allureReportRepository.findByTestRunKey(testRunKey)
+                .orElseThrow(() -> new ResourceNotFoundException("AllureReport", testRunKey));
 
         String normalizedPath = normalizeFilePath(filePath);
         Path tempFile = writeTempZip(report.getData());
