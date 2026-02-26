@@ -1,6 +1,6 @@
 services:
   testmanagement-db:
-    image: postgres:18-alpine
+    image: postgres:16-alpine
     environment:
       POSTGRES_DB: testmanagement
       POSTGRES_USER: testmanagement
