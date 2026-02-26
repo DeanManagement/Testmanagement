@@ -6,6 +6,23 @@
 
 .allure-toolbar {
   flex-shrink: 0;
+  background: var(--tm-primary);
+  color: #ffffff;
+  box-shadow: var(--tm-shadow-md);
+
+  span {
+    font-weight: 600;
+    font-size: 15px;
+    letter-spacing: 0.02em;
+  }
+
+  button {
+    color: #ffffff;
+
+    &:hover {
+      background: var(--tm-primary-light);
+    }
+  }
 }
 
 .spacer {

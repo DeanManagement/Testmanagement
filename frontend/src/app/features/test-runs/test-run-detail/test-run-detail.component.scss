@@ -24,7 +24,7 @@
 }
 
 .save-btn {
-  background: var(--tm-primary, #1976d2) !important;
+  background: var(--tm-primary, #32373c) !important;
   color: #fff !important;
 }
 
@@ -39,8 +39,8 @@
 }
 
 .clone-btn {
-  color: var(--tm-primary, #1976d2) !important;
-  border-color: var(--tm-primary, #1976d2) !important;
+  color: var(--tm-primary, #32373c) !important;
+  border-color: var(--tm-primary, #32373c) !important;
 }
 
 .delete-btn {
@@ -115,8 +115,8 @@
 }
 
 .reopen-btn {
-  color: var(--tm-accent, #ff9800) !important;
-  border-color: var(--tm-accent, #ff9800) !important;
+  color: var(--tm-accent, #e33244) !important;
+  border-color: var(--tm-accent, #e33244) !important;
 }
 
 .results-section {
@@ -332,8 +332,8 @@ app-step-spec-card {
   }
 
   &--active {
-    background: var(--tm-primary-bg, rgba(25, 118, 210, 0.08));
-    border-left: 3px solid var(--tm-primary, #1976d2);
+    background: var(--tm-primary-bg, rgba(50, 55, 60, 0.08));
+    border-left: 3px solid var(--tm-primary, #32373c);
   }
 }
 

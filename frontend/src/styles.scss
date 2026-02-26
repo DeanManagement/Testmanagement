@@ -1,20 +1,20 @@
 @use '@angular/material' as mat;
 
-// -- Brand tokens --
+// -- Brand tokens (Akros-inspired: red #E33244 + charcoal #32373c) --
 :root {
-  --tm-primary: #1a3a4a;
-  --tm-primary-light: #24536a;
-  --tm-primary-lighter: #e8f0f4;
-  --tm-accent: #e8913a;
-  --tm-accent-light: #fdf0e2;
+  --tm-primary: #32373c;
+  --tm-primary-light: #474d54;
+  --tm-primary-lighter: #eef0f1;
+  --tm-accent: #e33244;
+  --tm-accent-light: #fde8ea;
   --tm-success: #2e7d32;
   --tm-danger: #c62828;
   --tm-warn: #ef6c00;
-  --tm-bg: #f5f7f9;
+  --tm-bg: #f5f6f7;
   --tm-surface: #ffffff;
-  --tm-text: #1e293b;
-  --tm-text-secondary: #64748b;
-  --tm-border: #e2e8f0;
+  --tm-text: #1e2328;
+  --tm-text-secondary: #5f6b7a;
+  --tm-border: #dfe3e8;
   --tm-radius: 8px;
   --tm-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
   --tm-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
@@ -34,8 +34,8 @@ html, body {
 $theme: mat.define-theme((
   color: (
     theme-type: light,
-    primary: mat.$cyan-palette,
-    tertiary: mat.$orange-palette,
+    primary: mat.$red-palette,
+    tertiary: mat.$violet-palette,
   ),
   density: (
     scale: -1,
