@@ -9,7 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { ProjectCardComponent } from './project-card/project-card.component';
 import { ProjectActions } from '../../store/project/project.actions';
 import { selectAllProjects, selectProjectsLoading } from '../../store/project/project.selectors';
-import { selectAuthUser } from '../../store/auth/auth.selectors';
+import { selectAuthUser, selectIsSystemAdmin } from '../../store/auth/auth.selectors';
 
 @Component({
   selector: 'app-dashboard',
@@ -32,6 +32,7 @@ export class DashboardComponent implements OnInit {
   user$ = this.store.select(selectAuthUser);
   projects$ = this.store.select(selectAllProjects);
   loading$ = this.store.select(selectProjectsLoading);
+  isAdmin$ = this.store.select(selectIsSystemAdmin);
 
   ngOnInit(): void {
     this.store.dispatch(ProjectActions.loadProjects());

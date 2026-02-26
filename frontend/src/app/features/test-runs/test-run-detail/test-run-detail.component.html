@@ -32,6 +32,21 @@
           <mat-icon>assessment</mat-icon>
           {{ 'report.title' | translate }}
         </a>
+        @if (run.allureReportId) {
+          <button mat-stroked-button (click)="openAllureReport(run)" class="allure-btn" [matTooltip]="'testRun.allureReport.view' | translate" data-test-id="test-run-allure-view-btn">
+            <mat-icon>open_in_new</mat-icon>
+            {{ 'testRun.allureReport.view' | translate }}
+          </button>
+          <button mat-icon-button (click)="deleteAllureReport()" [matTooltip]="'testRun.allureReport.delete' | translate" class="allure-delete-btn" data-test-id="test-run-allure-delete-btn">
+            <mat-icon>delete_outline</mat-icon>
+          </button>
+        } @else {
+          <button mat-stroked-button (click)="allureFileInput.click()" class="allure-upload-btn" data-test-id="test-run-allure-upload-btn">
+            <mat-icon>upload_file</mat-icon>
+            {{ 'testRun.allureReport.upload' | translate }}
+          </button>
+          <input #allureFileInput type="file" accept=".zip" hidden (change)="onAllureReportUpload($event)" />
+        }
         <button mat-stroked-button (click)="cloneTestRun(run)" class="clone-btn" data-test-id="test-run-clone-btn">
           <mat-icon>content_copy</mat-icon>
           {{ 'testRun.clone' | translate }}

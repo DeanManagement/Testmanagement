@@ -1,0 +1,17 @@
+<div class="allure-viewer">
+  <mat-toolbar class="allure-toolbar">
+    <button mat-icon-button (click)="goBack()" data-test-id="allure-back-btn">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+    <span>{{ 'testRun.allureReport.view' | translate }}</span>
+    <span class="spacer"></span>
+  </mat-toolbar>
+
+  @if (iframeSrc) {
+    <iframe
+      [src]="iframeSrc"
+      class="allure-iframe"
+      data-test-id="allure-report-iframe"
+    ></iframe>
+  }
+</div>

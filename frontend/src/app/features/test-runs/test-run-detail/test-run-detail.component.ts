@@ -1,5 +1,5 @@
 import { Component, inject, OnDestroy, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatInputModule } from '@angular/material/input';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -18,6 +19,7 @@ import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
 import { TestRun, TestResult, StepResult, TestResultStatus } from '../../../shared/models/test-run.model';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
+import { AuthService } from '../../../core/services/auth.service';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-test-run-dialog/clone-test-run-dialog.component';
 import { CompleteTestRunDialogComponent } from '../complete-test-run-dialog/complete-test-run-dialog.component';
@@ -49,6 +51,7 @@ import { StepSpecCardComponent } from '../../../shared/components/step-spec-card
     MatInputModule,
     FormsModule,
     TranslateModule,
+    MatTooltipModule,
     CommentListComponent,
     CommentFormComponent,
     AuthImagePipe,
@@ -63,6 +66,8 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
   private readonly testRunApi = inject(TestRunApiService);
   private readonly testCaseApi = inject(TestCaseApiService);
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   private autoSelectSub?: Subscription;
   private actualResultSub?: Subscription;
   private actualResultSubject = new Subject<{ resultId: string; step: StepResult; actualResult: string }>();
@@ -315,6 +320,34 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
       projectId: this.projectId,
       commentId: comment.id,
     }));
+  }
+
+  openAllureReport(run: TestRun): void {
+    this.router.navigate(['/projects', this.projectId, 'test-runs', run.id, 'allure-report']);
+  }
+
+  onAllureReportUpload(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (file) {
+      this.store.dispatch(
+        TestRunActions.uploadAllureReport({
+          projectId: this.projectId,
+          testRunId: this.runId,
+          file,
+        })
+      );
+    }
+    input.value = '';
+  }
+
+  deleteAllureReport(): void {
+    this.store.dispatch(
+      TestRunActions.deleteAllureReport({
+        projectId: this.projectId,
+        testRunId: this.runId,
+      })
+    );
   }
 
   private loadCommentsForResult(resultId: string): void {

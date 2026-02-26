@@ -191,6 +191,11 @@
       "prev": "Zurück",
       "next": "Weiter",
       "noSelection": "Wählen Sie einen Testfall aus der Seitenleiste aus."
+    },
+    "allureReport": {
+      "view": "Allure-Bericht",
+      "upload": "Allure-Bericht hochladen",
+      "delete": "Allure-Bericht entfernen"
     }
   },
   "testPlan": {

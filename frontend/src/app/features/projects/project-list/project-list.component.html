@@ -1,10 +1,12 @@
 <div class="project-list-container">
   <div class="page-header">
     <h1 data-test-id="project-list-title">{{ 'project.list.title' | translate }}</h1>
-    <a mat-flat-button routerLink="/projects/new" class="create-btn" data-test-id="project-create-btn">
-      <mat-icon>add</mat-icon>
-      {{ 'project.list.create' | translate }}
-    </a>
+    @if (isAdmin$ | async) {
+      <a mat-flat-button routerLink="/projects/new" class="create-btn" data-test-id="project-create-btn">
+        <mat-icon>add</mat-icon>
+        {{ 'project.list.create' | translate }}
+      </a>
+    }
   </div>
 
   <mat-form-field appearance="outline" class="search-field" data-test-id="project-search">
@@ -21,7 +23,7 @@
     <div class="empty-state" data-test-id="project-list-empty">
       <mat-icon>folder_open</mat-icon>
       <p>{{ (searchTerm ? 'common.noResults' : 'project.list.empty') | translate }}</p>
-      @if (!searchTerm) {
+      @if (!searchTerm && (isAdmin$ | async)) {
         <a mat-flat-button routerLink="/projects/new" class="create-btn" data-test-id="project-create-empty-btn">
           <mat-icon>add</mat-icon>
           {{ 'project.list.create' | translate }}

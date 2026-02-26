@@ -191,6 +191,11 @@
       "prev": "Previous",
       "next": "Next",
       "noSelection": "Select a test case from the sidebar to begin."
+    },
+    "allureReport": {
+      "view": "Allure Report",
+      "upload": "Upload Allure Report",
+      "delete": "Remove Allure Report"
     }
   },
   "testPlan": {

@@ -40,6 +40,7 @@ export interface TestRun {
   reopenReason: string | null;
   testPlanId: string | null;
   testPlanName: string | null;
+  allureReportId: string | null;
   results: TestResult[];
   createdAt: string;
   updatedAt: string;

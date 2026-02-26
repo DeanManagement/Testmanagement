@@ -9,10 +9,12 @@
 
   <!-- Quick Actions -->
   <div class="quick-actions" data-test-id="dashboard-quick-actions">
-    <a mat-flat-button routerLink="/projects/new" class="action-btn" data-test-id="dashboard-create-project">
-      <mat-icon>add</mat-icon>
-      {{ 'dashboard.actions.createProject' | translate }}
-    </a>
+    @if (isAdmin$ | async) {
+      <a mat-flat-button routerLink="/projects/new" class="action-btn" data-test-id="dashboard-create-project">
+        <mat-icon>add</mat-icon>
+        {{ 'dashboard.actions.createProject' | translate }}
+      </a>
+    }
     <a mat-stroked-button routerLink="/projects" data-test-id="dashboard-view-all">
       <mat-icon>list</mat-icon>
       {{ 'dashboard.actions.viewAll' | translate }}
@@ -38,9 +40,11 @@
         <div class="empty-state" data-test-id="dashboard-empty">
           <mat-icon>folder_open</mat-icon>
           <p>{{ 'dashboard.projects.empty' | translate }}</p>
-          <a mat-flat-button routerLink="/projects/new" data-test-id="dashboard-empty-create">
-            {{ 'project.list.create' | translate }}
-          </a>
+          @if (isAdmin$ | async) {
+            <a mat-flat-button routerLink="/projects/new" data-test-id="dashboard-empty-create">
+              {{ 'project.list.create' | translate }}
+            </a>
+          }
         </div>
       }
     }

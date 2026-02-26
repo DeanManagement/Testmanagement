@@ -84,4 +84,18 @@ export class TestRunApiService {
   getScreenshotUrl(screenshotId: string): string {
     return `/api/screenshots/${screenshotId}`;
   }
+
+  uploadAllureReport(projectId: string, testRunId: string, file: File): Observable<{ id: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ id: string }>(`${this.baseUrl(projectId)}/${testRunId}/allure-report`, formData);
+  }
+
+  deleteAllureReport(projectId: string, testRunId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl(projectId)}/${testRunId}/allure-report`);
+  }
+
+  getAllureReportViewUrl(projectId: string, testRunId: string): string {
+    return `${this.baseUrl(projectId)}/${testRunId}/allure-report/view/index.html`;
+  }
 }

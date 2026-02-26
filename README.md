@@ -11,6 +11,7 @@ A self-hosted test management tool for simple organisations. Manage test cases, 
 - **Test Suites** — group test cases into suites for organised execution
 - **Test Runs** — execute test suites across environments, track pass/fail per step
 - **Screenshots** — attach screenshots to individual step results
+- **Allure Reports** — upload Allure HTML report ZIPs to test runs and view them in the browser
 - **External API** — accept completed test runs from CI/CD pipelines via API key authentication
 - **Settings** — manage API keys for external integrations from the UI
 - **i18n** — English and German language support with runtime switching
@@ -217,6 +218,38 @@ The endpoint returns a `201 Created` with the full test run object (same format 
 
 Click the **Revoke** button next to any key in the Settings page. Revoked keys immediately stop working. The key remains visible in the list with a "Revoked" badge for audit purposes.
 
+## Allure Report Integration
+
+Attach [Allure](https://allurereport.org/) HTML reports to test runs. Reports can be uploaded from the UI or via the external API, and viewed directly in the browser.
+
+### Uploading from CI/CD
+
+After generating an Allure report, zip the `allure-report` directory and upload it:
+
+```bash
+# Generate the report (example with allure CLI)
+allure generate allure-results -o allure-report
+
+# Zip the report directory
+zip -r allure-report.zip allure-report/
+
+# Upload to a test run (use the test run ID from the creation response)
+curl -X POST \
+  http://localhost:8089/api/external/projects/{projectKey}/test-runs/{testRunId}/allure-report \
+  -H "X-API-Key: tm_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2" \
+  -F "file=@allure-report.zip"
+```
+
+The ZIP must contain an `index.html` file. A common root directory (e.g. `allure-report/`) is automatically detected and stripped when serving files.
+
+### Uploading from the UI
+
+On the test run detail page, click **Upload Allure Report** and select a `.zip` file. Once uploaded, the button changes to **Allure Report** which opens the report in a new browser tab.
+
+### Viewing
+
+The backend serves individual files from the stored ZIP with correct MIME types, so all relative paths (CSS, JS, JSON, images, fonts) work as expected. The report opens in a new tab via a token query parameter for authentication.
+
 ## API Overview
 
 ### Standard Endpoints (OIDC-authenticated)
@@ -229,13 +262,15 @@ Click the **Revoke** button next to any key in the Settings page. Revoked keys i
 | CRUD | `/api/projects/{id}/test-runs` | Manage test runs |
 | PUT | `/api/projects/{id}/test-runs/{runId}/results/{resultId}` | Update a test result |
 | PUT | `/api/.../results/{resultId}/steps/{stepId}` | Update a step result |
+| POST/GET/DELETE | `/api/projects/{id}/test-runs/{runId}/allure-report` | Upload, view, or delete Allure reports |
 | GET/POST/DELETE | `/api/api-keys` | Manage API keys |
 
 ### External Endpoints (API-key-authenticated)
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/external/projects/{id}/test-runs` | Submit a completed test run |
+| POST | `/api/external/projects/{key}/test-runs` | Submit a completed test run |
+| POST | `/api/external/projects/{key}/test-runs/{runId}/allure-report` | Upload an Allure report ZIP |
 
 ## Tech Stack
 

@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectRes
 import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.service.DashboardService;
 import com.deanmanagement.testmanagement.project.internal.service.ProjectService;
+import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -64,7 +65,8 @@ public class ProjectController {
     @ResponseStatus(HttpStatus.CREATED)
     public ProjectResponse create(@Valid @RequestBody CreateProjectRequest request,
                                   Authentication authentication) {
-        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        requireAdmin(authentication);
+        UUID userId = UUID.fromString(authentication.getName());
         return projectService.create(request, userId);
     }
 
@@ -81,5 +83,14 @@ public class ProjectController {
     public void delete(@PathVariable UUID id, Authentication authentication) {
         UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         projectService.delete(id, userId);
+    }
+
+    private void requireAdmin(Authentication authentication) {
+        boolean isAdmin = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        if (!isAdmin) {
+            throw new ForbiddenException("Only system administrators can create projects");
+        }
     }
 }

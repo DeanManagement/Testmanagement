@@ -153,5 +153,15 @@ export const testRunReducer = createReducer(
   on(TestRunActions.cloneTestRunFailure, (state, { error }) => ({
     ...state,
     error,
+  })),
+
+  on(TestRunActions.uploadAllureReportFailure, (state, { error }) => ({
+    ...state,
+    error,
+  })),
+
+  on(TestRunActions.deleteAllureReportFailure, (state, { error }) => ({
+    ...state,
+    error,
   }))
 );

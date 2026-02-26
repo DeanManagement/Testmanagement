@@ -13,6 +13,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { map, Observable } from 'rxjs';
 import { ProjectActions } from '../../../store/project/project.actions';
 import { selectAllProjects, selectProjectsLoading } from '../../../store/project/project.selectors';
+import { selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
 import { Project } from '../../../shared/models/project.model';
 
 @Component({
@@ -38,6 +39,7 @@ export class ProjectListComponent implements OnInit {
 
   projects$ = this.store.select(selectAllProjects);
   loading$ = this.store.select(selectProjectsLoading);
+  isAdmin$ = this.store.select(selectIsSystemAdmin);
   displayedColumns = ['key', 'name', 'description', 'actions'];
   searchTerm = '';
 

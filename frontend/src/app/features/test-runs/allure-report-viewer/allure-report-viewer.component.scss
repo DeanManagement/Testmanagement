@@ -1,0 +1,19 @@
+.allure-viewer {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.allure-toolbar {
+  flex-shrink: 0;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.allure-iframe {
+  flex: 1;
+  border: none;
+  width: 100%;
+}

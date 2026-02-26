@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.project.internal.service.AllureReportService;
 import com.deanmanagement.testmanagement.project.internal.service.ExternalTestRunService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,9 @@ class ExternalTestRunControllerTest {
     @MockitoBean
     private ExternalTestRunService externalTestRunService;
 
+    @MockitoBean
+    private AllureReportService allureReportService;
+
     private static final String PROJECT_KEY = "TEST";
     private static final String TEST_CASE_KEY = "TEST-1";
     private static final Instant NOW = Instant.now();
@@ -49,7 +53,7 @@ class ExternalTestRunControllerTest {
                 UUID.randomUUID(), "CI Run", "staging",
                 TestRunStatus.COMPLETED, NOW, NOW,
                 null, null, null,
-                null, null,
+                null, null, null,
                 List.of(), NOW, NOW, null, null
         );
     }

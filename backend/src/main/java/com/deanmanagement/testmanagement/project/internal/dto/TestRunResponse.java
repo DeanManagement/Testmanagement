@@ -18,6 +18,7 @@ public record TestRunResponse(
         String reopenReason,
         UUID testPlanId,
         String testPlanName,
+        UUID allureReportId,
         List<TestResultResponse> results,
         Instant createdAt,
         Instant updatedAt,

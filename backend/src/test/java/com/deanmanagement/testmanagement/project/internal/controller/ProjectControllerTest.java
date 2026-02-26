@@ -88,7 +88,7 @@ class ProjectControllerTest {
     }
 
     @Test
-    @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000001", roles = "ADMIN")
     void create_returnsCreated() throws Exception {
         var request = new CreateProjectRequest("New Project", "Description");
         when(projectService.create(any(), any())).thenReturn(sampleResponse());
@@ -102,7 +102,19 @@ class ProjectControllerTest {
     }
 
     @Test
-    @WithMockUser
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
+    void create_nonAdmin_returns403() throws Exception {
+        var request = new CreateProjectRequest("New Project", "Description");
+
+        mockMvc.perform(post("/api/projects")
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = "ADMIN")
     void create_invalidRequest_returns400() throws Exception {
         var request = new CreateProjectRequest("", null);
 

@@ -16,6 +16,7 @@ public abstract class TestRunMapper {
     @Mapping(target = "completedByName", source = "completedBy.displayName")
     @Mapping(target = "testPlanId", source = "testPlan.id")
     @Mapping(target = "testPlanName", source = "testPlan.name")
+    @Mapping(target = "allureReportId", source = "allureReport.id")
     public abstract TestRunResponse toResponse(TestRun testRun);
 
     @Mapping(target = "testCaseId", source = "testCase.id")
@@ -43,5 +44,6 @@ public abstract class TestRunMapper {
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "testPlan", ignore = true)
+    @Mapping(target = "allureReport", ignore = true)
     public abstract TestRun toEntity(CreateTestRunRequest request);
 }

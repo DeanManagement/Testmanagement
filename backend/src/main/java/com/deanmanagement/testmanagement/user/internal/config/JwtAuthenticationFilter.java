@@ -2,6 +2,7 @@ package com.deanmanagement.testmanagement.user.internal.config;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
+import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -27,7 +28,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
-        return path.equals("/api/auth/login") || path.startsWith("/api/external/");
+        return path.equals("/api/auth/login")
+                || path.startsWith("/api/external/");
     }
 
     @Override
@@ -35,12 +37,19 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String token;
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            token = authHeader.substring(7);
+        } else if (request.getRequestURI().contains("/allure-report/view/")) {
+            token = resolveAllureToken(request);
+            if (token == null) {
+                filterChain.doFilter(request, response);
+                return;
+            }
+        } else {
             filterChain.doFilter(request, response);
             return;
         }
-
-        String token = authHeader.substring(7);
 
         try {
             Jwt jwt = jwtDecoder.decode(token);
@@ -61,5 +70,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         filterChain.doFilter(request, response);
+    }
+
+    private String resolveAllureToken(HttpServletRequest request) {
+        String queryToken = request.getParameter("token");
+        if (queryToken != null) {
+            return queryToken;
+        }
+        Cookie[] cookies = request.getCookies();
+        if (cookies != null) {
+            for (Cookie cookie : cookies) {
+                if ("allure_session".equals(cookie.getName())) {
+                    return cookie.getValue();
+                }
+            }
+        }
+        return null;
     }
 }

@@ -200,4 +200,50 @@ export class TestRunEffects {
       ),
     { dispatch: false }
   );
+
+  uploadAllureReport$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestRunActions.uploadAllureReport),
+      mergeMap(({ projectId, testRunId, file }) =>
+        this.testRunApi.uploadAllureReport(projectId, testRunId, file).pipe(
+          map(() => TestRunActions.uploadAllureReportSuccess({ projectId, testRunId })),
+          catchError((error) =>
+            of(TestRunActions.uploadAllureReportFailure({ error: error.message }))
+          )
+        )
+      )
+    )
+  );
+
+  refreshAfterAllureUpload$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestRunActions.uploadAllureReportSuccess),
+      map(({ projectId, testRunId }) =>
+        TestRunActions.loadTestRun({ projectId, id: testRunId })
+      )
+    )
+  );
+
+  deleteAllureReport$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestRunActions.deleteAllureReport),
+      mergeMap(({ projectId, testRunId }) =>
+        this.testRunApi.deleteAllureReport(projectId, testRunId).pipe(
+          map(() => TestRunActions.deleteAllureReportSuccess({ projectId, testRunId })),
+          catchError((error) =>
+            of(TestRunActions.deleteAllureReportFailure({ error: error.message }))
+          )
+        )
+      )
+    )
+  );
+
+  refreshAfterAllureDelete$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestRunActions.deleteAllureReportSuccess),
+      map(({ projectId, testRunId }) =>
+        TestRunActions.loadTestRun({ projectId, id: testRunId })
+      )
+    )
+  );
 }
