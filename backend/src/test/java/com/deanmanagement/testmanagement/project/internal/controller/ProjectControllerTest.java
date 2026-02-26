@@ -3,9 +3,14 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.service.DashboardService;
 import com.deanmanagement.testmanagement.project.internal.service.ProjectService;
+import com.deanmanagement.testmanagement.user.User;
+import com.deanmanagement.testmanagement.user.UserService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,7 +22,10 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+
+import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
@@ -48,11 +56,17 @@ class ProjectControllerTest {
     @MockitoBean
     private DashboardService dashboardService;
 
+    @MockitoBean
+    private ProjectMemberRepository projectMemberRepository;
+
+    @MockitoBean
+    private UserService userService;
+
     private static final UUID PROJECT_ID = UUID.randomUUID();
     private static final Instant NOW = Instant.now();
 
     private ProjectResponse sampleResponse() {
-        return new ProjectResponse(PROJECT_ID, "My Project", "A test project", "MYPRJ", NOW, NOW, null, null);
+        return new ProjectResponse(PROJECT_ID, "My Project", "A test project", "MYPRJ", false, NOW, NOW, null, null);
     }
 
     @Test
@@ -157,5 +171,64 @@ class ProjectControllerTest {
         mockMvc.perform(delete("/api/projects/{id}", PROJECT_ID)
                         .with(csrf()))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
+    void toggleBugReports_asProjectAdmin_returnsOk() throws Exception {
+        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        ProjectMember member = new ProjectMember();
+        member.setRole(ProjectRole.ADMIN);
+        when(projectMemberRepository.findByUserIdAndProjectId(userId, PROJECT_ID))
+                .thenReturn(Optional.of(member));
+        when(projectService.toggleBugReports(eq(PROJECT_ID), eq(true), eq(userId)))
+                .thenReturn(sampleResponse());
+
+        mockMvc.perform(put("/api/projects/{id}/settings/bug-reports", PROJECT_ID)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("enabled", true))))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
+    void toggleBugReports_asNonAdmin_returns403() throws Exception {
+        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        when(projectMemberRepository.findByUserIdAndProjectId(userId, PROJECT_ID))
+                .thenReturn(Optional.empty());
+        when(userService.findEntityById(userId))
+                .thenReturn(Optional.of(createNonAdminUser()));
+
+        mockMvc.perform(put("/api/projects/{id}/settings/bug-reports", PROJECT_ID)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("enabled", true))))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
+    void toggleBugReports_asSystemAdmin_returnsOk() throws Exception {
+        UUID userId = UUID.fromString("00000000-0000-0000-0000-000000000001");
+        when(projectMemberRepository.findByUserIdAndProjectId(userId, PROJECT_ID))
+                .thenReturn(Optional.empty());
+        User systemAdmin = new User();
+        systemAdmin.setSystemAdmin(true);
+        when(userService.findEntityById(userId)).thenReturn(Optional.of(systemAdmin));
+        when(projectService.toggleBugReports(eq(PROJECT_ID), eq(true), eq(userId)))
+                .thenReturn(sampleResponse());
+
+        mockMvc.perform(put("/api/projects/{id}/settings/bug-reports", PROJECT_ID)
+                        .with(csrf())
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(Map.of("enabled", true))))
+                .andExpect(status().isOk());
+    }
+
+    private User createNonAdminUser() {
+        User user = new User();
+        user.setSystemAdmin(false);
+        return user;
     }
 }

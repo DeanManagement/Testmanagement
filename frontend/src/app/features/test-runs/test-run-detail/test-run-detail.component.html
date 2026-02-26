@@ -186,6 +186,30 @@
                 <p class="no-steps">{{ 'stepResult.noSteps' | translate }}</p>
               }
 
+              @if (bugReportsEnabled && (result.status === 'FAILED' || result.status === 'BLOCKED')) {
+                <div class="bug-report-section" data-test-id="bug-report-section">
+                  <button mat-stroked-button (click)="reportBug(result, run)" class="report-bug-btn" data-test-id="report-bug-btn">
+                    <mat-icon>pest_control</mat-icon>
+                    {{ 'bugReport.reportBug' | translate }}
+                  </button>
+                </div>
+              }
+
+              @if (bugReportsEnabled && (linkedBugReports$ | async); as linkedBugs) {
+                @if (linkedBugs.length > 0) {
+                  <div class="linked-bugs-section" data-test-id="linked-bugs-section">
+                    <h4>{{ 'bugReport.linkedBugs' | translate }}</h4>
+                    @for (bug of linkedBugs; track bug.id) {
+                      <a [routerLink]="['/projects', projectId, 'bug-reports', bug.id]" class="linked-bug-item" [attr.data-test-id]="'linked-bug-' + bug.id">
+                        <span class="badge badge--{{ bug.status | lowercase }} badge--small">{{ 'bugReport.status.' + bug.status | translate }}</span>
+                        <span class="linked-bug-title">{{ bug.title }}</span>
+                        <span class="badge badge--{{ bug.priority | lowercase }} badge--small">{{ 'priority.' + bug.priority | translate }}</span>
+                      </a>
+                    }
+                  </div>
+                }
+              }
+
               <div class="case-nav">
                 <button mat-stroked-button [disabled]="!canNavigate('prev', run)" (click)="navigateResult('prev', run)" data-test-id="execution-prev-btn">
                   <mat-icon>chevron_left</mat-icon>

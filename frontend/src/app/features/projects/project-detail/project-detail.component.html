@@ -70,8 +70,35 @@
         </div>
         <p class="section-hint">{{ 'project.detail.activityHint' | translate }}</p>
       </a>
+      @if (project.bugReportsEnabled) {
+        <a class="section-card tm-card" [routerLink]="['/projects', project.id, 'bug-reports']" data-test-id="section-bug-reports">
+          <div class="section-header">
+            <mat-icon>pest_control</mat-icon>
+            <h3>{{ 'nav.bugReports' | translate }}</h3>
+          </div>
+          <p class="section-hint">{{ 'project.detail.bugReportsHint' | translate }}</p>
+        </a>
+      }
     </div>
 
+    @if (isProjectAdmin) {
+    <div class="settings-section tm-card" data-test-id="project-settings-section">
+      <h2>{{ 'project.settings.title' | translate }}</h2>
+      <div class="setting-item">
+        <div class="setting-info">
+          <h4>{{ 'project.settings.bugReports' | translate }}</h4>
+          <p class="setting-description">{{ 'project.settings.bugReportsDescription' | translate }}</p>
+        </div>
+        <mat-slide-toggle
+          [checked]="project.bugReportsEnabled"
+          (change)="toggleBugReports($event.checked)"
+          data-test-id="project-settings-bug-reports-toggle">
+        </mat-slide-toggle>
+      </div>
+    </div>
+    }
+
+    @if (isProjectAdmin) {
     <div class="members-section tm-card" data-test-id="members-section">
       <div class="members-header">
         <h2>{{ 'project.members.title' | translate }}</h2>
@@ -121,5 +148,6 @@
         </table>
       }
     </div>
+    }
   </div>
 }

@@ -9,7 +9,8 @@
     "testSuites": "Test Suites",
     "testRuns": "Test Runs",
     "testPlans": "Test Plans",
-    "settings": "Settings"
+    "settings": "Settings",
+    "bugReports": "Bug Reports"
   },
   "landing": {
     "nav": {
@@ -82,7 +83,13 @@
       "testRunsHint": "Execute test suites and track results across environments.",
       "testPlansHint": "Group test runs under milestones and track release progress.",
       "dashboardHint": "View project metrics, charts, and test run trends.",
-      "activityHint": "Track recent changes and audit history."
+      "activityHint": "Track recent changes and audit history.",
+      "bugReportsHint": "Track and manage bugs discovered during testing."
+    },
+    "settings": {
+      "title": "Project Settings",
+      "bugReports": "Bug Reports",
+      "bugReportsDescription": "Enable built-in bug reporting for this project."
     },
     "members": {
       "title": "Members",
@@ -309,7 +316,8 @@
       "TEST_RUN": "test run",
       "TEST_RESULT": "test result",
       "COMMENT": "comment",
-      "TEST_PLAN": "test plan"
+      "TEST_PLAN": "test plan",
+      "BUG_REPORT": "bug report"
     }
   },
   "projectDashboard": {
@@ -371,6 +379,44 @@
     "cancel": "Cancel",
     "edited": "edited",
     "charCount": "{{count}} / {{max}}"
+  },
+  "bugReport": {
+    "list": {
+      "title": "Bug Reports",
+      "create": "Report Bug",
+      "empty": "No bug reports yet.",
+      "filterStatus": "Filter by Status",
+      "allStatuses": "All Statuses",
+      "created": "Created"
+    },
+    "form": {
+      "createTitle": "Report Bug",
+      "editTitle": "Edit Bug Report",
+      "title": "Title",
+      "description": "Description",
+      "stepsToReproduce": "Steps to Reproduce",
+      "expectedBehavior": "Expected Behavior",
+      "actualBehavior": "Actual Behavior",
+      "priority": "Priority",
+      "status": "Status",
+      "environment": "Environment",
+      "assignee": "Assignee"
+    },
+    "status": {
+      "OPEN": "Open",
+      "IN_PROGRESS": "In Progress",
+      "RESOLVED": "Resolved",
+      "CLOSED": "Closed",
+      "WONTFIX": "Won't Fix"
+    },
+    "detail": {
+      "reportedBy": "Reported by",
+      "linkedItems": "Linked Items",
+      "testCase": "Test Case",
+      "testRun": "Test Run"
+    },
+    "reportBug": "Report Bug",
+    "linkedBugs": "Linked Bugs"
   },
   "common": {
     "save": "Save",

@@ -1,0 +1,122 @@
+@if (bugReport$ | async; as bug) {
+  <div class="detail-container">
+    <div class="detail-header">
+      <a mat-button [routerLink]="['/projects', projectId, 'bug-reports']" class="back-link" data-test-id="bug-report-detail-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <div class="detail-actions">
+        <a mat-stroked-button [routerLink]="['/projects', projectId, 'bug-reports', bug.id, 'edit']" data-test-id="bug-report-edit-btn">
+          <mat-icon>edit</mat-icon>
+          {{ 'common.edit' | translate }}
+        </a>
+        <button mat-stroked-button (click)="deleteBugReport(bug.id)" class="delete-btn" data-test-id="bug-report-delete-btn">
+          <mat-icon>delete</mat-icon>
+          {{ 'common.delete' | translate }}
+        </button>
+      </div>
+    </div>
+
+    <div class="bug-hero tm-card" data-test-id="bug-report-hero">
+      <div class="hero-top">
+        <h1 data-test-id="bug-report-detail-title">{{ bug.title }}</h1>
+        <div class="hero-badges">
+          <span class="badge badge--{{ bug.priority | lowercase }}" data-test-id="bug-report-detail-priority">
+            {{ 'priority.' + bug.priority | translate }}
+          </span>
+          <span class="badge badge--{{ bug.status | lowercase }}" data-test-id="bug-report-detail-status">
+            {{ 'bugReport.status.' + bug.status | translate }}
+          </span>
+        </div>
+      </div>
+      <div class="hero-meta">
+        @if (bug.environment) {
+          <span class="meta-item" data-test-id="bug-report-detail-env">
+            <mat-icon class="meta-icon">dns</mat-icon>
+            {{ bug.environment }}
+          </span>
+        }
+        @if (bug.reporterName) {
+          <span class="meta-item" data-test-id="bug-report-detail-reporter">
+            <mat-icon class="meta-icon">person</mat-icon>
+            {{ 'bugReport.detail.reportedBy' | translate }}: {{ bug.reporterName }}
+          </span>
+        }
+        @if (bug.assigneeName) {
+          <span class="meta-item" data-test-id="bug-report-detail-assignee">
+            <mat-icon class="meta-icon">assignment_ind</mat-icon>
+            {{ 'bugReport.form.assignee' | translate }}: {{ bug.assigneeName }}
+          </span>
+        }
+        <span class="meta-item" data-test-id="bug-report-detail-created">
+          <mat-icon class="meta-icon">schedule</mat-icon>
+          {{ bug.createdAt | date:'medium' }}
+        </span>
+      </div>
+
+      <div class="status-change">
+        <mat-form-field appearance="outline" class="status-select">
+          <mat-label>{{ 'bugReport.form.status' | translate }}</mat-label>
+          <mat-select [value]="bug.status" (selectionChange)="onStatusChange(bug, $event.value)" data-test-id="bug-report-detail-status-select">
+            @for (s of statuses; track s) {
+              <mat-option [value]="s">{{ 'bugReport.status.' + s | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="bug-details">
+      @if (bug.description) {
+        <div class="detail-section tm-card" data-test-id="bug-report-detail-description">
+          <h3>{{ 'bugReport.form.description' | translate }}</h3>
+          <p class="detail-text">{{ bug.description }}</p>
+        </div>
+      }
+
+      @if (bug.stepsToReproduce) {
+        <div class="detail-section tm-card" data-test-id="bug-report-detail-steps">
+          <h3>{{ 'bugReport.form.stepsToReproduce' | translate }}</h3>
+          <p class="detail-text">{{ bug.stepsToReproduce }}</p>
+        </div>
+      }
+
+      <div class="detail-row">
+        @if (bug.expectedBehavior) {
+          <div class="detail-section tm-card" data-test-id="bug-report-detail-expected">
+            <h3>{{ 'bugReport.form.expectedBehavior' | translate }}</h3>
+            <p class="detail-text">{{ bug.expectedBehavior }}</p>
+          </div>
+        }
+        @if (bug.actualBehavior) {
+          <div class="detail-section tm-card" data-test-id="bug-report-detail-actual">
+            <h3>{{ 'bugReport.form.actualBehavior' | translate }}</h3>
+            <p class="detail-text">{{ bug.actualBehavior }}</p>
+          </div>
+        }
+      </div>
+
+      @if (bug.testCaseTitle || bug.testRunName) {
+        <div class="detail-section tm-card" data-test-id="bug-report-detail-links">
+          <h3>{{ 'bugReport.detail.linkedItems' | translate }}</h3>
+          @if (bug.testCaseTitle && bug.testResultId) {
+            <p>
+              <mat-icon class="link-icon">science</mat-icon>
+              {{ 'bugReport.detail.testCase' | translate }}:
+              <span class="linked-item">{{ bug.testCaseTitle }}</span>
+            </p>
+          }
+          @if (bug.testRunName && bug.testRunId) {
+            <p>
+              <mat-icon class="link-icon">play_circle</mat-icon>
+              {{ 'bugReport.detail.testRun' | translate }}:
+              <a [routerLink]="['/projects', projectId, 'test-runs', bug.testRunId]" class="item-link" data-test-id="bug-report-detail-run-link">
+                {{ bug.testRunName }}
+              </a>
+            </p>
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

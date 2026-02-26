@@ -27,6 +27,9 @@ import { ReopenTestRunDialogComponent } from '../reopen-test-run-dialog/reopen-t
 import { CommentActions } from '../../../store/comment/comment.actions';
 import { selectAllComments, selectCommentsLoading } from '../../../store/comment/comment.selectors';
 import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
+import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
+import { selectLinkedBugReports } from '../../../store/bug-report/bug-report.selectors';
+import { ProjectApiService } from '../../../core/services/project-api.service';
 import { Comment } from '../../../shared/models/comment.model';
 import { CommentListComponent } from '../../../shared/components/comment-list/comment-list.component';
 import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
@@ -68,6 +71,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   private readonly testCaseApi = inject(TestCaseApiService);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly projectApi = inject(ProjectApiService);
   private autoSelectSub?: Subscription;
   private actualResultSub?: Subscription;
   private actualResultSubject = new Subject<{ resultId: string; step: StepResult; actualResult: string }>();
@@ -86,11 +90,16 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   authUser$ = this.store.select(selectAuthUser);
   isAdmin$ = this.store.select(selectIsSystemAdmin);
   editingComment: Comment | null = null;
+  bugReportsEnabled = false;
+  linkedBugReports$ = this.store.select(selectLinkedBugReports);
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.runId = this.route.snapshot.paramMap.get('runId') ?? '';
     if (this.projectId && this.runId) {
+      this.projectApi.getById(this.projectId).subscribe((project) => {
+        this.bugReportsEnabled = project.bugReportsEnabled;
+      });
       this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: this.runId }));
       this.testRun$ = this.store.select(selectTestRunById(this.runId));
       this.autoSelectSub = this.testRun$.subscribe(run => {
@@ -210,6 +219,12 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
     this.activeResultId = resultId;
     this.editingComment = null;
     this.loadCommentsForResult(resultId);
+    if (this.bugReportsEnabled) {
+      this.store.dispatch(BugReportActions.loadBugReportsByTestResult({
+        projectId: this.projectId,
+        testResultId: resultId,
+      }));
+    }
   }
 
   activeResultIndex(run: TestRun): number {
@@ -354,6 +369,17 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
         testRunKey: this.runKey,
       })
     );
+  }
+
+  reportBug(result: TestResult, run: TestRun): void {
+    this.router.navigate(['/projects', this.projectId, 'bug-reports', 'new'], {
+      queryParams: {
+        testResultId: result.id,
+        testRunId: run.id,
+        testCaseTitle: result.testCaseTitle,
+        environment: run.environment || '',
+      },
+    });
   }
 
   private loadCommentsForResult(resultId: string): void {

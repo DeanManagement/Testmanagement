@@ -1,0 +1,74 @@
+<div class="form-container">
+  <div class="form-header">
+    <a mat-button [routerLink]="['/projects', projectId, 'bug-reports']" class="back-link" data-test-id="bug-report-form-back">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'common.back' | translate }}
+    </a>
+    <h2>{{ (isEdit ? 'bugReport.form.editTitle' : 'bugReport.form.createTitle') | translate }}</h2>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="tm-card form-card">
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'bugReport.form.title' | translate }}</mat-label>
+      <input matInput formControlName="title" data-test-id="bug-report-form-title" />
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'bugReport.form.description' | translate }}</mat-label>
+      <textarea matInput formControlName="description" rows="3" data-test-id="bug-report-form-description"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'bugReport.form.stepsToReproduce' | translate }}</mat-label>
+      <textarea matInput formControlName="stepsToReproduce" rows="4" data-test-id="bug-report-form-steps"></textarea>
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>{{ 'bugReport.form.expectedBehavior' | translate }}</mat-label>
+        <textarea matInput formControlName="expectedBehavior" rows="3" data-test-id="bug-report-form-expected"></textarea>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="half-width">
+        <mat-label>{{ 'bugReport.form.actualBehavior' | translate }}</mat-label>
+        <textarea matInput formControlName="actualBehavior" rows="3" data-test-id="bug-report-form-actual"></textarea>
+      </mat-form-field>
+    </div>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>{{ 'bugReport.form.priority' | translate }}</mat-label>
+        <mat-select formControlName="priority" data-test-id="bug-report-form-priority">
+          @for (p of priorities; track p) {
+            <mat-option [value]="p">{{ 'priority.' + p | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      @if (isEdit) {
+        <mat-form-field appearance="outline" class="third-width">
+          <mat-label>{{ 'bugReport.form.status' | translate }}</mat-label>
+          <mat-select formControlName="status" data-test-id="bug-report-form-status">
+            @for (s of statuses; track s) {
+              <mat-option [value]="s">{{ 'bugReport.status.' + s | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+
+      <mat-form-field appearance="outline" class="third-width">
+        <mat-label>{{ 'bugReport.form.environment' | translate }}</mat-label>
+        <input matInput formControlName="environment" data-test-id="bug-report-form-environment" />
+      </mat-form-field>
+    </div>
+
+    <div class="form-actions">
+      <a mat-stroked-button [routerLink]="['/projects', projectId, 'bug-reports']" data-test-id="bug-report-form-cancel">
+        {{ 'common.cancel' | translate }}
+      </a>
+      <button mat-flat-button type="submit" [disabled]="form.invalid" data-test-id="bug-report-form-submit">
+        {{ 'common.save' | translate }}
+      </button>
+    </div>
+  </form>
+</div>

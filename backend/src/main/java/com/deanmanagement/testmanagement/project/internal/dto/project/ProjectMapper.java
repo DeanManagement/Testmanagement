@@ -14,13 +14,19 @@ public interface ProjectMapper {
 
     @Mapping(target = "key", ignore = true)
     @Mapping(target = "nextTestCaseNumber", ignore = true)
+    @Mapping(target = "nextTestRunNumber", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "members", ignore = true)
     @Mapping(target = "testCases", ignore = true)
     @Mapping(target = "testSuites", ignore = true)
     @Mapping(target = "testRuns", ignore = true)
+    @Mapping(target = "testPlans", ignore = true)
+    @Mapping(target = "bugReportsEnabled", ignore = true)
+    @Mapping(target = "bugReports", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
     Project toEntity(CreateProjectRequest request);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

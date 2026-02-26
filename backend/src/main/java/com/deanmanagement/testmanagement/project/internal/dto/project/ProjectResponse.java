@@ -8,6 +8,7 @@ public record ProjectResponse(
         String name,
         String description,
         String key,
+        boolean bugReportsEnabled,
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,

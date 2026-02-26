@@ -3,6 +3,7 @@ export interface Project {
   name: string;
   description: string;
   key: string;
+  bugReportsEnabled: boolean;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;

@@ -50,4 +50,10 @@ public class Project extends BaseEntity {
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<TestPlan> testPlans = new ArrayList<>();
+
+    @Column(name = "bug_reports_enabled", nullable = false)
+    private boolean bugReportsEnabled = false;
+
+    @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<BugReport> bugReports = new ArrayList<>();
 }

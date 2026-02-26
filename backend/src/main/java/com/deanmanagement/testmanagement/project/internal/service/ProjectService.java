@@ -72,6 +72,18 @@ public class ProjectService {
         projectRepository.delete(project);
     }
 
+    @Transactional
+    public ProjectResponse toggleBugReports(UUID id, boolean enabled, UUID userId) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+        project.setBugReportsEnabled(enabled);
+        project = projectRepository.save(project);
+        auditService.log(project.getId(), userId, AuditAction.UPDATED,
+                AuditEntityType.PROJECT, project.getId(), project.getName(),
+                "Bug reports " + (enabled ? "enabled" : "disabled"));
+        return projectMapper.toResponse(project);
+    }
+
     public List<ProjectResponse> searchByKey(String key) {
         return projectRepository.findByKeyContainingIgnoreCase(key).stream()
                 .map(projectMapper::toResponse)

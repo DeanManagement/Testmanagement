@@ -5,8 +5,12 @@ import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProj
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.service.DashboardService;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.service.ProjectService;
 import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
+import com.deanmanagement.testmanagement.user.UserService;
+import com.deanmanagement.testmanagement.user.User;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +40,8 @@ public class ProjectController {
 
     private final ProjectService projectService;
     private final DashboardService dashboardService;
+    private final ProjectMemberRepository projectMemberRepository;
+    private final UserService userService;
 
     @GetMapping
     public List<ProjectResponse> findAll(Authentication authentication) {
@@ -85,12 +91,37 @@ public class ProjectController {
         projectService.delete(id, userId);
     }
 
+    @PutMapping("/{id}/settings/bug-reports")
+    public ProjectResponse toggleBugReports(@PathVariable UUID id,
+                                            @RequestBody java.util.Map<String, Boolean> body,
+                                            Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        requireProjectAdmin(userId, id);
+        boolean enabled = Boolean.TRUE.equals(body.get("enabled"));
+        return projectService.toggleBugReports(id, enabled, userId);
+    }
+
     private void requireAdmin(Authentication authentication) {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .map(GrantedAuthority::getAuthority)
                 .anyMatch("ROLE_ADMIN"::equals);
         if (!isAdmin) {
             throw new ForbiddenException("Only system administrators can create projects");
+        }
+    }
+
+    private void requireProjectAdmin(UUID userId, UUID projectId) {
+        boolean isProjectAdmin = projectMemberRepository.findByUserIdAndProjectId(userId, projectId)
+                .map(member -> member.getRole() == ProjectRole.ADMIN)
+                .orElse(false);
+        if (isProjectAdmin) {
+            return;
+        }
+        boolean isSystemAdmin = userService.findEntityById(userId)
+                .map(User::isSystemAdmin)
+                .orElse(false);
+        if (!isSystemAdmin) {
+            throw new ForbiddenException("Only project admins can modify project settings");
         }
     }
 }

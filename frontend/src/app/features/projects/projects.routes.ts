@@ -32,4 +32,9 @@ export const projectsRoutes: Routes = [
     loadChildren: () =>
       import('../test-plans/test-plans.routes').then((m) => m.testPlansRoutes),
   },
+  {
+    path: ':id/bug-reports',
+    loadChildren: () =>
+      import('../bug-reports/bug-reports.routes').then((m) => m.bugReportsRoutes),
+  },
 ];

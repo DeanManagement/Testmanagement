@@ -36,4 +36,8 @@ export class ProjectApiService {
   getDashboard(projectId: string): Observable<ProjectDashboard> {
     return this.http.get<ProjectDashboard>(`${this.baseUrl}/${projectId}/dashboard`);
   }
+
+  toggleBugReports(projectId: string, enabled: boolean): Observable<Project> {
+    return this.http.put<Project>(`${this.baseUrl}/${projectId}/settings/bug-reports`, { enabled });
+  }
 }
