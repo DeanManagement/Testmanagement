@@ -62,3 +62,94 @@
     text-decoration: underline;
   }
 }
+
+// Kanban board styles
+.kanban-board {
+  display: flex;
+  gap: 16px;
+  overflow-x: auto;
+  padding-bottom: 16px;
+}
+
+.kanban-lane {
+  min-width: 220px;
+  width: 220px;
+  flex-shrink: 0;
+  background: var(--mat-sys-surface-container-low, #f5f5f5);
+  border-radius: 8px;
+  padding: 12px;
+  min-height: 200px;
+}
+
+.kanban-lane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant, #ddd);
+}
+
+.kanban-lane-count {
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  font-weight: 500;
+}
+
+.kanban-card {
+  background: var(--mat-sys-surface, #fff);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.kanban-card-title {
+  font-size: 13px;
+  margin-bottom: 8px;
+  line-height: 1.4;
+}
+
+.kanban-card-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.kanban-card-assignee {
+  font-size: 11px;
+  color: var(--mat-sys-on-surface-variant, #666);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100px;
+}
+
+.badge--small {
+  font-size: 10px;
+  padding: 1px 6px;
+}
+
+// CDK drag-drop styles
+.cdk-drag-preview {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms ease;
+}
+
+.kanban-lane.cdk-drop-list-dragging .kanban-card:not(.cdk-drag-placeholder) {
+  transition: transform 200ms ease;
+}

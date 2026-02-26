@@ -13,3 +13,6 @@ export const selectLinkedBugReports = createSelector(selectBugReportState, (stat
 
 export const selectBugReportById = (id: string) =>
   createSelector(selectBugReportEntities, (entities) => entities[id]);
+
+export const selectMyBugReports = createSelector(selectBugReportState, (state) => state.myBugReports);
+export const selectMyBugReportsLoading = createSelector(selectBugReportState, (state) => state.myBugReportsLoading);

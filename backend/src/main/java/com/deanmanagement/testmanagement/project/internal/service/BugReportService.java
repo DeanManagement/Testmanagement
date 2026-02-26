@@ -128,6 +128,12 @@ public class BugReportService {
         return toResponseWithReporter(bugReport);
     }
 
+    public List<BugReportResponse> findByAssignee(UUID assigneeId) {
+        return bugReportRepository.findByAssigneeIdWithDetails(assigneeId).stream()
+                .map(this::toResponseWithReporter)
+                .toList();
+    }
+
     @Transactional
     public void delete(UUID projectId, UUID id, UUID userId) {
         requireBugReportsEnabled(projectId);
@@ -174,7 +180,8 @@ public class BugReportService {
                 response.createdBy(),
                 reporterName,
                 response.createdAt(),
-                response.updatedAt()
+                response.updatedAt(),
+                response.projectKey()
         );
     }
 }

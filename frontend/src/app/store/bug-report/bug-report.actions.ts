@@ -28,6 +28,10 @@ export const BugReportActions = createActionGroup({
     'Delete Bug Report Success': props<{ id: string }>(),
     'Delete Bug Report Failure': props<{ error: string }>(),
 
+    'Load My Bug Reports': emptyProps(),
+    'Load My Bug Reports Success': props<{ bugReports: BugReport[] }>(),
+    'Load My Bug Reports Failure': props<{ error: string }>(),
+
     'Clear Bug Reports': emptyProps(),
   },
 });

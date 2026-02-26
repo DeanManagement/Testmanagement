@@ -64,5 +64,20 @@ export const bugReportReducer = createReducer(
     error,
   })),
 
+  on(BugReportActions.loadMyBugReports, (state) => ({
+    ...state,
+    myBugReportsLoading: true,
+  })),
+  on(BugReportActions.loadMyBugReportsSuccess, (state, { bugReports }) => ({
+    ...state,
+    myBugReports: bugReports,
+    myBugReportsLoading: false,
+  })),
+  on(BugReportActions.loadMyBugReportsFailure, (state, { error }) => ({
+    ...state,
+    myBugReportsLoading: false,
+    error,
+  })),
+
   on(BugReportActions.clearBugReports, () => initialBugReportState),
 );

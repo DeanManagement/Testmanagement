@@ -10,7 +10,9 @@
     "testRuns": "Testläufe",
     "testPlans": "Testpläne",
     "settings": "Einstellungen",
-    "bugReports": "Fehlermeldungen"
+    "bugReports": "Fehlermeldungen",
+    "myBugs": "Meine Fehlermeldungen",
+    "logout": "Abmelden"
   },
   "landing": {
     "nav": {
@@ -400,7 +402,8 @@
       "priority": "Priorität",
       "status": "Status",
       "environment": "Umgebung",
-      "assignee": "Zugewiesen an"
+      "assignee": "Zugewiesen an",
+      "noAssignee": "Nicht zugewiesen"
     },
     "status": {
       "OPEN": "Offen",
@@ -417,6 +420,11 @@
     },
     "reportBug": "Fehler melden",
     "linkedBugs": "Verknüpfte Fehler"
+  },
+  "myBugs": {
+    "title": "Meine Fehlermeldungen",
+    "empty": "Keine Fehler zugewiesen.",
+    "project": "Projekt"
   },
   "common": {
     "save": "Speichern",

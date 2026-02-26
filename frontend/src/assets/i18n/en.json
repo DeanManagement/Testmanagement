@@ -10,7 +10,9 @@
     "testRuns": "Test Runs",
     "testPlans": "Test Plans",
     "settings": "Settings",
-    "bugReports": "Bug Reports"
+    "bugReports": "Bug Reports",
+    "myBugs": "My Bug Reports",
+    "logout": "Sign Out"
   },
   "landing": {
     "nav": {
@@ -400,7 +402,8 @@
       "priority": "Priority",
       "status": "Status",
       "environment": "Environment",
-      "assignee": "Assignee"
+      "assignee": "Assignee",
+      "noAssignee": "Unassigned"
     },
     "status": {
       "OPEN": "Open",
@@ -417,6 +420,11 @@
     },
     "reportBug": "Report Bug",
     "linkedBugs": "Linked Bugs"
+  },
+  "myBugs": {
+    "title": "My Bug Reports",
+    "empty": "No bugs assigned to you.",
+    "project": "Project"
   },
   "common": {
     "save": "Save",

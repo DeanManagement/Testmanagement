@@ -43,10 +43,26 @@
         <button mat-menu-item (click)="switchLanguage('de')" data-test-id="lang-de">Deutsch</button>
       </mat-menu>
       @if (user$ | async; as user) {
-        <span class="user-display" data-test-id="user-display">{{ user.displayName }}</span>
-        <button mat-icon-button (click)="logout()" class="toolbar-action" data-test-id="logout-btn">
+        <button mat-button [matMenuTriggerFor]="profileMenu" class="toolbar-action" data-test-id="profile-menu-trigger">
           <mat-icon>account_circle</mat-icon>
+          <span class="user-display">{{ user.displayName }}</span>
         </button>
+        <mat-menu #profileMenu="matMenu">
+          <div class="profile-menu-header" mat-menu-item disabled>
+            <div class="profile-name">{{ user.displayName }}</div>
+            <div class="profile-email">{{ user.email }}</div>
+          </div>
+          <mat-divider></mat-divider>
+          <a mat-menu-item routerLink="/my-bugs" data-test-id="nav-my-bugs">
+            <mat-icon>bug_report</mat-icon>
+            <span>{{ 'nav.myBugs' | translate }}</span>
+          </a>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="logout()" data-test-id="logout-btn">
+            <mat-icon>logout</mat-icon>
+            <span>{{ 'nav.logout' | translate }}</span>
+          </button>
+        </mat-menu>
       }
     </mat-toolbar>
 

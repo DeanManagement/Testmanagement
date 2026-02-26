@@ -7,10 +7,14 @@ export interface BugReportState extends EntityState<BugReport> {
   loading: boolean;
   error: string | null;
   linkedBugReports: BugReport[];
+  myBugReports: BugReport[];
+  myBugReportsLoading: boolean;
 }
 
 export const initialBugReportState: BugReportState = bugReportAdapter.getInitialState({
   loading: false,
   error: null,
   linkedBugReports: [],
+  myBugReports: [],
+  myBugReportsLoading: false,
 });

@@ -54,7 +54,7 @@ public class TestCase extends BaseEntity {
 
     @ElementCollection
     @CollectionTable(name = "test_case_labels", joinColumns = @JoinColumn(name = "test_case_id"))
-    @Column(name = "label")
+    @Column(name = "label", nullable = false)
     private Set<String> labels = new HashSet<>();
 
     @ManyToOne(fetch = FetchType.LAZY)

@@ -35,4 +35,14 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
             "LEFT JOIN FETCH b.testRun " +
             "WHERE b.testResult.id = :testResultId AND b.project.id = :projectId")
     List<BugReport> findByTestResultIdAndProjectId(@Param("testResultId") UUID testResultId, @Param("projectId") UUID projectId);
+
+    @Query("SELECT b FROM BugReport b " +
+            "LEFT JOIN FETCH b.assignee " +
+            "LEFT JOIN FETCH b.testResult tr " +
+            "LEFT JOIN FETCH tr.testCase " +
+            "LEFT JOIN FETCH b.testRun " +
+            "JOIN FETCH b.project " +
+            "WHERE b.assignee.id = :assigneeId " +
+            "ORDER BY b.createdAt DESC")
+    List<BugReport> findByAssigneeIdWithDetails(@Param("assigneeId") UUID assigneeId);
 }

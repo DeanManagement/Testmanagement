@@ -38,6 +38,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/settings/settings.routes').then((m) => m.settingsRoutes),
       },
+      {
+        path: 'my-bugs',
+        loadChildren: () =>
+          import('./features/my-bug-reports/my-bug-reports.routes').then((m) => m.myBugReportsRoutes),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

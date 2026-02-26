@@ -62,6 +62,16 @@
       </mat-form-field>
     </div>
 
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'bugReport.form.assignee' | translate }}</mat-label>
+      <mat-select formControlName="assigneeId" data-test-id="bug-report-form-assignee">
+        <mat-option value="">{{ 'bugReport.form.noAssignee' | translate }}</mat-option>
+        @for (member of members; track member.id) {
+          <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
     <div class="form-actions">
       <a mat-stroked-button [routerLink]="['/projects', projectId, 'bug-reports']" data-test-id="bug-report-form-cancel">
         {{ 'common.cancel' | translate }}

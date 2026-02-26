@@ -26,6 +26,7 @@ public record BugReportResponse(
         UUID createdBy,
         String reporterName,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String projectKey
 ) {
 }

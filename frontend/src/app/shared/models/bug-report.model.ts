@@ -23,6 +23,7 @@ export interface BugReport {
   reporterName: string | null;
   createdAt: string;
   updatedAt: string;
+  projectKey: string | null;
 }
 
 export interface CreateBugReportRequest {

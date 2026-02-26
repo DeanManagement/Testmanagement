@@ -103,4 +103,16 @@ export class BugReportEffects {
       ),
     { dispatch: false }
   );
+
+  loadMyBugReports$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BugReportActions.loadMyBugReports),
+      mergeMap(() =>
+        this.bugReportApi.getAssignedToMe().pipe(
+          map((bugReports) => BugReportActions.loadMyBugReportsSuccess({ bugReports })),
+          catchError((error) => of(BugReportActions.loadMyBugReportsFailure({ error: error.message })))
+        )
+      )
+    )
+  );
 }

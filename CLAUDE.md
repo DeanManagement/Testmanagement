@@ -6,8 +6,8 @@
 
 ## Technology Stack
 
-- **Backend:** Java 21, Spring Boot 3.5.x, Maven
-- **Frontend:** Angular 19, Angular Material, NgRx, Chart.js
+- **Backend:** Java 25, Spring Boot 4.0.x, Maven
+- **Frontend:** Angular 21, Angular Material, NgRx, Chart.js
 - **Database:** PostgreSQL 16
 - **Auth:** OIDC via Keycloak (external)
 - **Packaging:** Docker, docker-compose
@@ -33,7 +33,7 @@ Testmanagement/
 │           ├── application.yml
 │           ├── application-dev.yml
 │           └── db/migration/ # Flyway SQL migrations (V1-V10)
-├── frontend/                 # Angular 19 project
+├── frontend/                 # Angular 21 project
 │   ├── Dockerfile
 │   ├── nginx.conf
 │   ├── proxy.conf.json
@@ -89,7 +89,7 @@ Testmanagement/
 
 ### Frontend
 
-- Angular 19 standalone components (no NgModules)
+- Angular 21 standalone components (no NgModules), zoneless change detection
 - NgRx with functional API (createActionGroup, createReducer, createEffect)
 - ngx-translate for i18n (en.json, de.json)
 - Angular Material for UI components
@@ -102,8 +102,8 @@ Testmanagement/
 
 ## Environment Setup
 
-- **Java:** 21 (Eclipse Temurin recommended)
-- **Node.js:** 20+ LTS
+- **Java:** 25 (Eclipse Temurin recommended)
+- **Node.js:** 22+ LTS
 - **Database:** PostgreSQL 16 (via Docker or local install)
 - **Keycloak:** External instance (not required for dev profile)
 

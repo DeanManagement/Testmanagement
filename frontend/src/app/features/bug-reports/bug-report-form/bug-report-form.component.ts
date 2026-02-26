@@ -12,6 +12,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { selectBugReportById } from '../../../store/bug-report/bug-report.selectors';
 import { BugReportStatus, Priority } from '../../../shared/models/bug-report.model';
+import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
+import { ProjectMember } from '../../../shared/models/project-member.model';
 
 @Component({
   selector: 'app-bug-report-form',
@@ -34,10 +36,12 @@ export class BugReportFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
+  private readonly memberApi = inject(ProjectMemberApiService);
 
   projectId = '';
   bugId = '';
   isEdit = false;
+  members: ProjectMember[] = [];
 
   priorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
   statuses: BugReportStatus[] = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'WONTFIX'];
@@ -60,6 +64,10 @@ export class BugReportFormComponent implements OnInit {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.bugId = this.route.snapshot.paramMap.get('bugId') ?? '';
     this.isEdit = !!this.bugId;
+
+    if (this.projectId) {
+      this.memberApi.getByProject(this.projectId).subscribe((m) => (this.members = m));
+    }
 
     // Pre-fill from query params (when coming from test runner)
     const params = this.route.snapshot.queryParams;

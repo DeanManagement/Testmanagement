@@ -34,4 +34,8 @@ export class BugReportApiService {
   delete(projectId: string, id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl(projectId)}/${id}`);
   }
+
+  getAssignedToMe(): Observable<BugReport[]> {
+    return this.http.get<BugReport[]>('/api/bug-reports/assigned-to-me');
+  }
 }
