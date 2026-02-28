@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
@@ -37,6 +37,7 @@ export class BugReportFormComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly memberApi = inject(ProjectMemberApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   projectId = '';
   bugId = '';
@@ -66,7 +67,10 @@ export class BugReportFormComponent implements OnInit {
     this.isEdit = !!this.bugId;
 
     if (this.projectId) {
-      this.memberApi.getByProject(this.projectId).subscribe((m) => (this.members = m));
+      this.memberApi.getByProject(this.projectId).subscribe((m) => {
+        this.members = m;
+        this.cdr.detectChanges();
+      });
     }
 
     // Pre-fill from query params (when coming from test runner)
@@ -101,6 +105,7 @@ export class BugReportFormComponent implements OnInit {
             testRunId: bug.testRunId || '',
             assigneeId: bug.assigneeId || '',
           });
+          this.cdr.detectChanges();
         }
       });
     }

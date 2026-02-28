@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatButtonModule } from '@angular/material/button';
@@ -31,6 +31,7 @@ export class AllureReportViewerComponent implements OnInit {
   private readonly testRunApi = inject(TestRunApiService);
   private readonly authService = inject(AuthService);
   private readonly store = inject(Store);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   iframeSrc: SafeResourceUrl | null = null;
   projectId = '';
@@ -49,6 +50,7 @@ export class AllureReportViewerComponent implements OnInit {
         const token = this.authService.getAccessToken();
         const url = token ? `${baseUrl}?token=${token}` : baseUrl;
         this.iframeSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+        this.cdr.detectChanges();
       }
     });
   }

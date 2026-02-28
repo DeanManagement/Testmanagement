@@ -1,4 +1,4 @@
-import { Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
@@ -35,6 +35,7 @@ import { CommentListComponent } from '../../../shared/components/comment-list/co
 import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
+import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 
 @Component({
   selector: 'app-test-run-detail',
@@ -59,6 +60,7 @@ import { StepSpecCardComponent } from '../../../shared/components/step-spec-card
     CommentFormComponent,
     AuthImagePipe,
     StepSpecCardComponent,
+    EntityHistoryComponent,
   ],
   templateUrl: './test-run-detail.component.html',
   styleUrl: './test-run-detail.component.scss',
@@ -72,6 +74,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly projectApi = inject(ProjectApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
   private autoSelectSub?: Subscription;
   private actualResultSub?: Subscription;
   private actualResultSubject = new Subject<{ resultId: string; step: StepResult; actualResult: string }>();
@@ -99,6 +102,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
     if (this.projectId && this.runId) {
       this.projectApi.getById(this.projectId).subscribe((project) => {
         this.bugReportsEnabled = project.bugReportsEnabled;
+        this.cdr.detectChanges();
       });
       this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: this.runId }));
       this.testRun$ = this.store.select(selectTestRunById(this.runId));
@@ -110,6 +114,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
           this.activeResultId = run.results[0].id;
           this.loadCommentsForResult(run.results[0].id);
         }
+        this.cdr.detectChanges();
       });
     }
 
@@ -252,6 +257,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
 
   completeRun(run: TestRun): void {
     this.testRunApi.getCompletionInfo(this.projectId, run.id).subscribe(info => {
+      this.cdr.detectChanges();
       const dialogRef = this.dialog.open(CompleteTestRunDialogComponent, { data: info });
       dialogRef.afterClosed().subscribe((confirmed: boolean) => {
         if (confirmed) {

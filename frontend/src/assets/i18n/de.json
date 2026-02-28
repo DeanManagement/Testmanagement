@@ -297,6 +297,11 @@
       "empty": "Noch keine Benutzer. Erstellen Sie Ihr erstes Benutzerkonto."
     }
   },
+  "history": {
+    "title": "Verlauf",
+    "empty": "Noch kein Verlauf.",
+    "loadMore": "Mehr laden"
+  },
   "activity": {
     "title": "Aktivität",
     "empty": "Noch keine Aktivitäten.",

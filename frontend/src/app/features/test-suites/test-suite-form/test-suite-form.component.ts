@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -38,6 +38,7 @@ export class TestSuiteFormComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   editMode = false;
   projectId = '';
@@ -67,6 +68,7 @@ export class TestSuiteFormComponent implements OnInit {
         if (suite) {
           this.form.patchValue({ name: suite.name, description: suite.description });
           this.selectedTestCaseIds = new Set(suite.testCases?.map((tc) => tc.id) ?? []);
+          this.cdr.detectChanges();
         }
       });
     }

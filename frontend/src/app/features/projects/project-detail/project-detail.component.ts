@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe } from '@angular/common';
@@ -47,6 +47,7 @@ export class ProjectDetailComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly memberApi = inject(ProjectMemberApiService);
   private readonly projectApi = inject(ProjectApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   project$: Observable<Project | undefined> = of(undefined);
   members: ProjectMember[] = [];
@@ -97,6 +98,7 @@ export class ProjectDetailComponent implements OnInit {
   toggleBugReports(enabled: boolean): void {
     this.projectApi.toggleBugReports(this.projectId, enabled).subscribe(() => {
       this.store.dispatch(ProjectActions.loadProjects());
+      this.cdr.detectChanges();
     });
   }
 
@@ -104,6 +106,7 @@ export class ProjectDetailComponent implements OnInit {
     this.memberApi.getByProject(this.projectId).subscribe((members) => {
       this.members = members;
       this.computeProjectAdmin(members);
+      this.cdr.detectChanges();
     });
   }
 

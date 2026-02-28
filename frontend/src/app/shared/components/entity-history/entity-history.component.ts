@@ -1,44 +1,43 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivityApiService } from '../../../core/services/activity-api.service';
-import { AuditEntry } from '../../../shared/models/activity.model';
+import { AuditEntry } from '../../models/activity.model';
 
 @Component({
-  selector: 'app-activity-feed',
+  selector: 'app-entity-history',
   standalone: true,
   imports: [
     DatePipe,
-    RouterLink,
-    MatCardModule,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
     TranslateModule,
   ],
-  templateUrl: './activity-feed.component.html',
-  styleUrl: './activity-feed.component.scss',
+  templateUrl: './entity-history.component.html',
+  styleUrl: './entity-history.component.scss',
 })
-export class ActivityFeedComponent implements OnInit {
-  private readonly route = inject(ActivatedRoute);
+export class EntityHistoryComponent implements OnChanges {
   private readonly activityApi = inject(ActivityApiService);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  projectId = '';
+  @Input({ required: true }) projectId!: string;
+  @Input({ required: true }) entityId!: string;
+
   entries: AuditEntry[] = [];
   loading = false;
   hasMore = true;
   private page = 0;
-  private readonly pageSize = 20;
+  private readonly pageSize = 10;
 
-  ngOnInit(): void {
-    this.projectId = this.route.snapshot.paramMap.get('id') ?? '';
-    if (this.projectId) {
+  ngOnChanges(): void {
+    this.entries = [];
+    this.page = 0;
+    this.hasMore = true;
+    if (this.projectId && this.entityId) {
       this.loadMore();
     }
   }
@@ -46,7 +45,7 @@ export class ActivityFeedComponent implements OnInit {
   loadMore(): void {
     if (this.loading || !this.hasMore) return;
     this.loading = true;
-    this.activityApi.getActivity(this.projectId, this.page, this.pageSize).subscribe({
+    this.activityApi.getEntityHistory(this.projectId, this.entityId, this.page, this.pageSize).subscribe({
       next: (response) => {
         this.entries = [...this.entries, ...response.content];
         this.hasMore = !response.last;

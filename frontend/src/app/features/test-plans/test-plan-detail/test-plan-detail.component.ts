@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, DecimalPipe, LowerCasePipe } from '@angular/common';
@@ -14,6 +14,7 @@ import { selectTestPlanById } from '../../../store/test-plan/test-plan.selectors
 import { TestPlan } from '../../../shared/models/test-plan.model';
 import { TestPlanSummary } from '../../../shared/models/test-plan.model';
 import { TestPlanApiService } from '../../../core/services/test-plan-api.service';
+import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 
 @Component({
   selector: 'app-test-plan-detail',
@@ -29,6 +30,7 @@ import { TestPlanApiService } from '../../../core/services/test-plan-api.service
     MatTableModule,
     MatChipsModule,
     TranslateModule,
+    EntityHistoryComponent,
   ],
   templateUrl: './test-plan-detail.component.html',
   styleUrl: './test-plan-detail.component.scss',
@@ -37,6 +39,7 @@ export class TestPlanDetailComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly testPlanApi = inject(TestPlanApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   projectId = '';
   planId = '';
@@ -62,6 +65,7 @@ export class TestPlanDetailComponent implements OnInit {
   private loadSummary(): void {
     this.testPlanApi.getSummary(this.projectId, this.planId).subscribe((summary) => {
       this.summary = summary;
+      this.cdr.detectChanges();
     });
   }
 }

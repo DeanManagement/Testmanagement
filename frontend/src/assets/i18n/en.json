@@ -297,6 +297,11 @@
       "empty": "No users yet. Create your first user account."
     }
   },
+  "history": {
+    "title": "History",
+    "empty": "No history yet.",
+    "loadMore": "Load More"
+  },
   "activity": {
     "title": "Activity",
     "empty": "No activity yet.",

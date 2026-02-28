@@ -24,8 +24,12 @@ public class AuditController {
     @GetMapping
     public Page<AuditEntryResponse> getActivity(
             @PathVariable UUID projectId,
+            @RequestParam(required = false) UUID entityId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "20") int size) {
+        if (entityId != null) {
+            return auditService.getEntityHistory(projectId, entityId, page, size);
+        }
         return auditService.getActivity(projectId, page, size);
     }
 }

@@ -19,6 +19,7 @@ import { Comment } from '../../../shared/models/comment.model';
 import { CommentListComponent } from '../../../shared/components/comment-list/comment-list.component';
 import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
+import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 
 @Component({
   selector: 'app-test-case-detail',
@@ -35,6 +36,7 @@ import { StepSpecCardComponent } from '../../../shared/components/step-spec-card
     CommentListComponent,
     CommentFormComponent,
     StepSpecCardComponent,
+    EntityHistoryComponent,
   ],
   templateUrl: './test-case-detail.component.html',
   styleUrl: './test-case-detail.component.scss',

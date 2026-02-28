@@ -13,4 +13,11 @@ export class ActivityApiService {
       { params: { page: page.toString(), size: size.toString() } }
     );
   }
+
+  getEntityHistory(projectId: string, entityId: string, page: number, size: number): Observable<PagedResponse<AuditEntry>> {
+    return this.http.get<PagedResponse<AuditEntry>>(
+      `/api/projects/${projectId}/activity`,
+      { params: { entityId, page: page.toString(), size: size.toString() } }
+    );
+  }
 }

@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
@@ -34,6 +34,7 @@ import { TestSuite } from '../../../shared/models/test-suite.model';
 export class BulkAddToSuiteDialogComponent implements OnInit {
   private readonly testSuiteApi = inject(TestSuiteApiService);
   private readonly dialogRef = inject(MatDialogRef<BulkAddToSuiteDialogComponent>);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   suites: TestSuite[] = [];
   selectedSuiteId: string | null = null;
@@ -43,6 +44,7 @@ export class BulkAddToSuiteDialogComponent implements OnInit {
     if (this.projectId) {
       this.testSuiteApi.getAll(this.projectId).subscribe(suites => {
         this.suites = suites;
+        this.cdr.detectChanges();
       });
     }
   }

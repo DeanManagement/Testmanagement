@@ -77,3 +77,15 @@
   font-size: 14px;
   margin: 0;
 }
+
+.history-section {
+  padding: 24px;
+  margin-top: 24px;
+
+  h3 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tm-text);
+  }
+}

@@ -10,4 +10,6 @@ import java.util.UUID;
 public interface AuditEntryRepository extends JpaRepository<AuditEntry, UUID> {
 
     Page<AuditEntry> findByProjectIdOrderByCreatedAtDesc(UUID projectId, Pageable pageable);
+
+    Page<AuditEntry> findByProjectIdAndEntityIdOrderByCreatedAtDesc(UUID projectId, UUID entityId, Pageable pageable);
 }

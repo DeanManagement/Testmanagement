@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -49,6 +49,7 @@ export class TestCaseFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly testCaseApi = inject(TestCaseApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   editMode = false;
   projectId = '';
@@ -107,6 +108,7 @@ export class TestCaseFormComponent implements OnInit {
               });
             }
           });
+          this.cdr.detectChanges();
         }
       });
     }
@@ -148,6 +150,7 @@ export class TestCaseFormComponent implements OnInit {
         preview: reader.result as string,
         removed: false,
       });
+      this.cdr.detectChanges();
     };
     reader.readAsDataURL(file);
     input.value = '';
@@ -202,10 +205,11 @@ export class TestCaseFormComponent implements OnInit {
           this.store.dispatch(TestCaseActions.updateTestCaseSuccess({ testCase: tc }));
           this.syncImages(tc).subscribe(() => {
             this.saving = false;
+            this.cdr.detectChanges();
             this.router.navigate(['/projects', this.projectId, 'test-cases', this.testCaseId]);
           });
         },
-        error: () => { this.saving = false; },
+        error: () => { this.saving = false; this.cdr.detectChanges(); },
       });
     } else {
       this.testCaseApi.create(this.projectId, request).subscribe({
@@ -213,10 +217,11 @@ export class TestCaseFormComponent implements OnInit {
           this.store.dispatch(TestCaseActions.createTestCaseSuccess({ testCase: tc }));
           this.syncImages(tc).subscribe(() => {
             this.saving = false;
+            this.cdr.detectChanges();
             this.router.navigate(['/projects', this.projectId, 'test-cases', tc.id]);
           });
         },
-        error: () => { this.saving = false; },
+        error: () => { this.saving = false; this.cdr.detectChanges(); },
       });
     }
   }

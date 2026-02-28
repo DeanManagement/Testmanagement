@@ -11,6 +11,7 @@ import { Observable, of } from 'rxjs';
 import { TestSuiteActions } from '../../../store/test-suite/test-suite.actions';
 import { selectTestSuiteById } from '../../../store/test-suite/test-suite.selectors';
 import { TestSuite } from '../../../shared/models/test-suite.model';
+import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 
 @Component({
   selector: 'app-test-suite-detail',
@@ -23,6 +24,7 @@ import { TestSuite } from '../../../shared/models/test-suite.model';
     MatIconModule,
     MatListModule,
     TranslateModule,
+    EntityHistoryComponent,
   ],
   templateUrl: './test-suite-detail.component.html',
   styleUrl: './test-suite-detail.component.scss',
@@ -32,14 +34,15 @@ export class TestSuiteDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
 
   projectId = '';
+  suiteId = '';
   testSuite$: Observable<TestSuite | undefined> = of(undefined);
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
-    const id = this.route.snapshot.paramMap.get('suiteId');
-    if (this.projectId && id) {
+    this.suiteId = this.route.snapshot.paramMap.get('suiteId') ?? '';
+    if (this.projectId && this.suiteId) {
       this.store.dispatch(TestSuiteActions.loadTestSuites({ projectId: this.projectId }));
-      this.testSuite$ = this.store.select(selectTestSuiteById(id));
+      this.testSuite$ = this.store.select(selectTestSuiteById(this.suiteId));
     }
   }
 

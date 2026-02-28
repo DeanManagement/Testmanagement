@@ -48,5 +48,10 @@
         <p class="empty-hint">{{ 'common.noResults' | translate }}</p>
       }
     </div>
+
+    <div class="history-section tm-card" data-test-id="test-suite-history-section">
+      <h3>{{ 'history.title' | translate }}</h3>
+      <app-entity-history [projectId]="projectId" [entityId]="suiteId"></app-entity-history>
+    </div>
   </div>
 }

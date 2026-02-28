@@ -1,0 +1,43 @@
+@if (entries.length === 0 && !loading) {
+  <p class="history-empty">{{ 'history.empty' | translate }}</p>
+}
+
+@if (entries.length > 0) {
+  <div class="history-list">
+    @for (entry of entries; track entry.id) {
+      <div class="history-item">
+        <div class="history-icon">
+          <mat-icon>{{ actionIcon(entry.action) }}</mat-icon>
+        </div>
+        <div class="history-content">
+          <div class="history-summary">
+            <span class="history-user">{{ entry.userDisplayName || ('activity.system' | translate) }}</span>
+            <span class="history-action">{{ 'activity.actions.' + entry.action | translate }}</span>
+            <span class="history-entity-type">{{ 'activity.entityTypes.' + entry.entityType | translate }}</span>
+            @if (entry.entityName) {
+              <span class="history-entity-name">"{{ entry.entityName }}"</span>
+            }
+          </div>
+          @if (entry.details) {
+            <p class="history-details">{{ entry.details }}</p>
+          }
+          <span class="history-time">{{ entry.createdAt | date:'medium' }}</span>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+@if (loading) {
+  <div class="spinner-container">
+    <mat-spinner diameter="32"></mat-spinner>
+  </div>
+}
+
+@if (hasMore && !loading && entries.length > 0) {
+  <div class="load-more">
+    <button mat-stroked-button (click)="loadMore()">
+      {{ 'history.loadMore' | translate }}
+    </button>
+  </div>
+}

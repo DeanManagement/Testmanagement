@@ -310,5 +310,10 @@
         </div>
       }
     }
+
+    <div class="history-section tm-card" data-test-id="test-run-history-section">
+      <h3>{{ 'history.title' | translate }}</h3>
+      <app-entity-history [projectId]="projectId" [entityId]="runId"></app-entity-history>
+    </div>
   </div>
 }

@@ -464,3 +464,15 @@ app-step-spec-card {
   flex: 1;
   font-size: 13px;
 }
+
+.history-section {
+  padding: 24px;
+  margin-top: 24px;
+
+  h3 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--tm-text);
+  }
+}

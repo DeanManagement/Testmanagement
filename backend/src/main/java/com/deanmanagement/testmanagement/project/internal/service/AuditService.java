@@ -45,6 +45,13 @@ public class AuditService {
         return entries.map(this::toResponse);
     }
 
+    @Transactional(readOnly = true)
+    public Page<AuditEntryResponse> getEntityHistory(UUID projectId, UUID entityId, int page, int size) {
+        Page<AuditEntry> entries = auditEntryRepository
+                .findByProjectIdAndEntityIdOrderByCreatedAtDesc(projectId, entityId, PageRequest.of(page, size));
+        return entries.map(this::toResponse);
+    }
+
     private AuditEntryResponse toResponse(AuditEntry entry) {
         String displayName = null;
         if (entry.getUserId() != null) {

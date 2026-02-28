@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -57,13 +57,17 @@ import { ProjectRole } from '../../../../shared/models/project-member.model';
 export class AddMemberDialogComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<AddMemberDialogComponent>);
   private readonly userApi = inject(UserApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   users: User[] = [];
   selectedUserId = '';
   selectedRole: ProjectRole = 'TESTER';
 
   ngOnInit(): void {
-    this.userApi.getAll().subscribe((users) => (this.users = users));
+    this.userApi.getAll().subscribe((users) => {
+      this.users = users;
+      this.cdr.detectChanges();
+    });
   }
 
   onCancel(): void {
