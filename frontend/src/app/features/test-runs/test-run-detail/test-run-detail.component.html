@@ -166,7 +166,7 @@
                       <div class="step-screenshot">
                         @if (step.screenshotId) {
                           <div class="screenshot-preview">
-                            <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" />
+                            <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" loading="lazy" />
                             <button mat-icon-button class="screenshot-delete" (click)="deleteScreenshot(result.id, step)">
                               <mat-icon>close</mat-icon>
                             </button>
@@ -295,7 +295,7 @@
                         }
                         @if (step.screenshotId) {
                           <div class="screenshot-preview screenshot-preview--readonly">
-                            <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" />
+                            <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" loading="lazy" />
                           </div>
                         }
                       </div>

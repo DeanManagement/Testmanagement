@@ -65,6 +65,10 @@ public class TestCase extends BaseEntity {
     @OrderBy("orderIndex ASC")
     private List<TestStep> steps = new ArrayList<>();
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "folder_id")
+    private TestCaseFolder folder;
+
     @ManyToMany(mappedBy = "testCases")
     private Set<TestSuite> testSuites = new HashSet<>();
 }

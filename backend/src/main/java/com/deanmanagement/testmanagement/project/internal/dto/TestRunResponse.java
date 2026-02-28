@@ -20,6 +20,8 @@ public record TestRunResponse(
         UUID testPlanId,
         String testPlanName,
         UUID allureReportId,
+        UUID projectId,
+        String projectKey,
         List<TestResultResponse> results,
         Instant createdAt,
         Instant updatedAt,

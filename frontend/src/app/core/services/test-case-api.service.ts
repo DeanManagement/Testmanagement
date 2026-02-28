@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BulkOperationResponse, CreateTestCaseRequest, TestCase, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 
@@ -11,8 +11,14 @@ export class TestCaseApiService {
     return `/api/projects/${projectId}/test-cases`;
   }
 
-  getAll(projectId: string): Observable<TestCase[]> {
-    return this.http.get<TestCase[]>(this.baseUrl(projectId));
+  getAll(projectId: string, folderId?: string | null, rootOnly?: boolean): Observable<TestCase[]> {
+    let params = new HttpParams();
+    if (folderId) {
+      params = params.set('folderId', folderId);
+    } else if (rootOnly) {
+      params = params.set('rootOnly', 'true');
+    }
+    return this.http.get<TestCase[]>(this.baseUrl(projectId), { params });
   }
 
   getById(projectId: string, id: string): Observable<TestCase> {

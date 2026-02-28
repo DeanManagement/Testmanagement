@@ -6,6 +6,13 @@
         {{ 'common.back' | translate }}
       </a>
       <div class="detail-actions">
+        <a mat-stroked-button
+          [routerLink]="['/projects', projectId, 'test-runs', 'new']"
+          [queryParams]="{ testPlanId: plan.id }"
+          data-test-id="test-plan-detail-create-run-btn">
+          <mat-icon>play_circle</mat-icon>
+          {{ 'testPlan.detail.createRun' | translate }}
+        </a>
         <a mat-stroked-button [routerLink]="['/projects', projectId, 'test-plans', plan.id, 'edit']" data-test-id="test-plan-detail-edit-btn">
           <mat-icon>edit</mat-icon>
           {{ 'common.edit' | translate }}

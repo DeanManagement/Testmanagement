@@ -17,6 +17,8 @@ public abstract class TestRunMapper {
     @Mapping(target = "testPlanId", source = "testPlan.id")
     @Mapping(target = "testPlanName", source = "testPlan.name")
     @Mapping(target = "allureReportId", source = "allureReport.id")
+    @Mapping(target = "projectId", source = "project.id")
+    @Mapping(target = "projectKey", source = "project.key")
     public abstract TestRunResponse toResponse(TestRun testRun);
 
     @Mapping(target = "testCaseId", source = "testCase.id")
@@ -29,7 +31,7 @@ public abstract class TestRunMapper {
     @Mapping(target = "testData", source = "testStep.testData")
     @Mapping(target = "orderIndex", source = "testStep.orderIndex")
     @Mapping(target = "screenshotId", source = "screenshot.id")
-    @Mapping(target = "stepImageId", expression = "java(stepResult.getTestStep().getImage() != null ? stepResult.getTestStep().getImage().getId() : null)")
+    @Mapping(target = "stepImageId", expression = "java(stepResult.getTestStep() != null && stepResult.getTestStep().getImage() != null ? stepResult.getTestStep().getImage().getId() : null)")
     public abstract StepResultResponse toStepResultResponse(StepResult stepResult);
 
     @Mapping(target = "id", ignore = true)

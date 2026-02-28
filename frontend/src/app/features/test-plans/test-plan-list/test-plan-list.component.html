@@ -27,7 +27,24 @@
       </a>
     </div>
   } @else {
-    <table mat-table [dataSource]="(testPlans$ | async) ?? []" class="data-table" data-test-id="test-plan-table">
+    @if (testPlans$ | async; as plans) {
+    <div class="filter-bar" data-test-id="test-plan-filter-bar">
+      <mat-form-field appearance="outline" class="search-field">
+        <mat-icon matPrefix>search</mat-icon>
+        <mat-label>{{ 'filter.search' | translate }}</mat-label>
+        <input matInput [(ngModel)]="searchTerm" data-test-id="test-plan-search">
+      </mat-form-field>
+      <mat-form-field appearance="outline" class="filter-select">
+        <mat-label>{{ 'filter.status' | translate }}</mat-label>
+        <mat-select [(value)]="statusFilter" data-test-id="test-plan-status-filter">
+          <mat-option value="">{{ 'filter.allStatuses' | translate }}</mat-option>
+          @for (s of allStatuses; track s) {
+            <mat-option [value]="s">{{ 'testPlan.status.' + s | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <table mat-table [dataSource]="filteredTestPlans(plans)" class="data-table" data-test-id="test-plan-table">
       <ng-container matColumnDef="name">
         <th mat-header-cell *matHeaderCellDef>{{ 'testPlan.form.name' | translate }}</th>
         <td mat-cell *matCellDef="let plan">
@@ -71,5 +88,6 @@
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
+    }
   }
 </div>

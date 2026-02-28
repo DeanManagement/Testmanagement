@@ -1,7 +1,24 @@
 import { Pipe, PipeTransform, inject, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
+
+const MAX_CACHE_SIZE = 100;
+
+interface CacheEntry {
+  blobUrl: string;
+  safeUrl: SafeUrl;
+}
+
+const globalCache = new Map<string, CacheEntry>();
+
+function evictOldest(): void {
+  if (globalCache.size <= MAX_CACHE_SIZE) return;
+  const firstKey = globalCache.keys().next().value!;
+  const entry = globalCache.get(firstKey)!;
+  URL.revokeObjectURL(entry.blobUrl);
+  globalCache.delete(firstKey);
+}
 
 @Pipe({
   name: 'authImage',
@@ -13,7 +30,7 @@ export class AuthImagePipe implements PipeTransform, OnDestroy {
   private readonly sanitizer = inject(DomSanitizer);
 
   private currentUrl: string | null = null;
-  private blobUrl: string | null = null;
+  private localBlobUrl: string | null = null;
   private result$ = new BehaviorSubject<SafeUrl | string>('');
   private loading = false;
 
@@ -24,7 +41,7 @@ export class AuthImagePipe implements PipeTransform, OnDestroy {
       return this.result$.value;
     }
 
-    this.cleanup();
+    this.cleanupLocal();
     this.currentUrl = url;
 
     if (url.startsWith('data:')) {
@@ -32,13 +49,22 @@ export class AuthImagePipe implements PipeTransform, OnDestroy {
       return url;
     }
 
+    const cached = globalCache.get(url);
+    if (cached) {
+      this.result$.next(cached.safeUrl);
+      return cached.safeUrl;
+    }
+
     if (!this.loading) {
       this.loading = true;
       this.http.get(url, { responseType: 'blob' }).subscribe({
         next: (blob) => {
-          this.blobUrl = URL.createObjectURL(blob);
-          const safe = this.sanitizer.bypassSecurityTrustUrl(this.blobUrl);
-          this.result$.next(safe);
+          const blobUrl = URL.createObjectURL(blob);
+          const safeUrl = this.sanitizer.bypassSecurityTrustUrl(blobUrl);
+          globalCache.set(url, { blobUrl, safeUrl });
+          evictOldest();
+          this.localBlobUrl = null;
+          this.result$.next(safeUrl);
           this.loading = false;
         },
         error: () => {
@@ -51,13 +77,13 @@ export class AuthImagePipe implements PipeTransform, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.cleanup();
+    this.cleanupLocal();
   }
 
-  private cleanup(): void {
-    if (this.blobUrl) {
-      URL.revokeObjectURL(this.blobUrl);
-      this.blobUrl = null;
+  private cleanupLocal(): void {
+    if (this.localBlobUrl) {
+      URL.revokeObjectURL(this.localBlobUrl);
+      this.localBlobUrl = null;
     }
   }
 }

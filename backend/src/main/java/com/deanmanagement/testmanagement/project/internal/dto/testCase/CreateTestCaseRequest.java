@@ -10,6 +10,7 @@ import jakarta.validation.constraints.Size;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 public record CreateTestCaseRequest(
         @NotBlank @Size(max = 255) String title,
@@ -18,6 +19,7 @@ public record CreateTestCaseRequest(
         @NotNull Priority priority,
         @NotNull TestCaseStatus status,
         Set<String> labels,
-        @Valid List<TestStepRequest> steps
+        @Valid List<TestStepRequest> steps,
+        UUID folderId
 ) {
 }

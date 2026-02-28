@@ -163,5 +163,22 @@ export const testRunReducer = createReducer(
   on(TestRunActions.deleteAllureReportFailure, (state, { error }) => ({
     ...state,
     error,
+  })),
+
+  on(TestRunActions.loadMyTestRuns, (state) => ({
+    ...state,
+    myTestRunsLoading: true,
+  })),
+
+  on(TestRunActions.loadMyTestRunsSuccess, (state, { testRuns }) => ({
+    ...state,
+    myTestRuns: testRuns,
+    myTestRunsLoading: false,
+  })),
+
+  on(TestRunActions.loadMyTestRunsFailure, (state, { error }) => ({
+    ...state,
+    myTestRunsLoading: false,
+    error,
   }))
 );

@@ -53,6 +53,10 @@
             <div class="profile-email">{{ user.email }}</div>
           </div>
           <mat-divider></mat-divider>
+          <a mat-menu-item routerLink="/my-test-runs" data-test-id="nav-my-test-runs">
+            <mat-icon>play_circle</mat-icon>
+            <span>{{ 'nav.myTestRuns' | translate }}</span>
+          </a>
           <a mat-menu-item routerLink="/my-bugs" data-test-id="nav-my-bugs">
             <mat-icon>bug_report</mat-icon>
             <span>{{ 'nav.myBugs' | translate }}</span>

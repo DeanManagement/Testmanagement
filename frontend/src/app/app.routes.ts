@@ -43,6 +43,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/my-bug-reports/my-bug-reports.routes').then((m) => m.myBugReportsRoutes),
       },
+      {
+        path: 'my-test-runs',
+        loadChildren: () =>
+          import('./features/my-test-runs/my-test-runs.routes').then((m) => m.myTestRunsRoutes),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

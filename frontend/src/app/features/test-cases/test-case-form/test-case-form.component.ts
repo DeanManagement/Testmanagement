@@ -78,6 +78,8 @@ export class TestCaseFormComponent implements OnInit {
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.testCaseId = this.route.snapshot.paramMap.get('tcId');
+    const folderId = this.route.snapshot.queryParamMap.get('folderId');
+
     if (this.testCaseId) {
       this.editMode = true;
       this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
@@ -199,11 +201,13 @@ export class TestCaseFormComponent implements OnInit {
       steps,
     };
 
+    const pendingImages = new Map(this.stepImages);
+
     if (this.editMode && this.testCaseId) {
       this.testCaseApi.update(this.projectId, this.testCaseId, request).subscribe({
         next: (tc) => {
-          this.store.dispatch(TestCaseActions.updateTestCaseSuccess({ testCase: tc }));
-          this.syncImages(tc).subscribe(() => {
+          this.syncImages(tc, pendingImages).subscribe(() => {
+            this.store.dispatch(TestCaseActions.updateTestCaseSuccess({ testCase: tc }));
             this.saving = false;
             this.cdr.detectChanges();
             this.router.navigate(['/projects', this.projectId, 'test-cases', this.testCaseId]);
@@ -212,10 +216,12 @@ export class TestCaseFormComponent implements OnInit {
         error: () => { this.saving = false; this.cdr.detectChanges(); },
       });
     } else {
-      this.testCaseApi.create(this.projectId, request).subscribe({
+      const folderId = this.route.snapshot.queryParamMap.get('folderId');
+      const createRequest = folderId ? { ...request, folderId } : request;
+      this.testCaseApi.create(this.projectId, createRequest).subscribe({
         next: (tc) => {
-          this.store.dispatch(TestCaseActions.createTestCaseSuccess({ testCase: tc }));
-          this.syncImages(tc).subscribe(() => {
+          this.syncImages(tc, pendingImages).subscribe(() => {
+            this.store.dispatch(TestCaseActions.createTestCaseSuccess({ testCase: tc }));
             this.saving = false;
             this.cdr.detectChanges();
             this.router.navigate(['/projects', this.projectId, 'test-cases', tc.id]);
@@ -226,11 +232,11 @@ export class TestCaseFormComponent implements OnInit {
     }
   }
 
-  private syncImages(savedTestCase: TestCase): Observable<unknown> {
+  private syncImages(savedTestCase: TestCase, images: Map<number, StepImageState>): Observable<unknown> {
     const ops: Observable<unknown>[] = [];
     const sortedSteps = [...savedTestCase.steps].sort((a, b) => a.orderIndex - b.orderIndex);
 
-    this.stepImages.forEach((state, index) => {
+    images.forEach((state, index) => {
       const step = sortedSteps[index];
       if (!step) return;
 

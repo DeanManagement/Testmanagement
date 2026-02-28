@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -16,6 +16,11 @@ import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectAllTestCases } from '../../../store/test-case/test-case.selectors';
 import { TestPlanActions } from '../../../store/test-plan/test-plan.actions';
 import { selectAllTestPlans } from '../../../store/test-plan/test-plan.selectors';
+import { TestCaseFolderActions } from '../../../store/test-case-folder/test-case-folder.actions';
+import { selectFolderTree } from '../../../store/test-case-folder/test-case-folder.selectors';
+import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
+import { ProjectMember } from '../../../shared/models/project-member.model';
+import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
 
 @Component({
   selector: 'app-test-run-form',
@@ -40,17 +45,23 @@ export class TestRunFormComponent implements OnInit {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
+  private readonly memberApi = inject(ProjectMemberApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   projectId = '';
   selectedTestCaseIds = new Set<string>();
+  selectedFolderId: string | null = null;
+  members: ProjectMember[] = [];
 
   testCases$ = this.store.select(selectAllTestCases);
   testPlans$ = this.store.select(selectAllTestPlans);
+  folders$ = this.store.select(selectFolderTree);
 
   form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
     environment: [''],
     testPlanId: [''],
+    executorId: [''],
   });
 
   ngOnInit(): void {
@@ -58,7 +69,41 @@ export class TestRunFormComponent implements OnInit {
     if (this.projectId) {
       this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
       this.store.dispatch(TestPlanActions.loadTestPlans({ projectId: this.projectId }));
+      this.store.dispatch(TestCaseFolderActions.loadFolders({ projectId: this.projectId }));
+      this.memberApi.getByProject(this.projectId).subscribe((m) => {
+        this.members = m;
+        this.cdr.detectChanges();
+      });
     }
+
+    const params = this.route.snapshot.queryParams;
+    if (params['testPlanId']) {
+      this.form.patchValue({ testPlanId: params['testPlanId'] });
+    }
+  }
+
+  filterByFolder(folderId: string | null): void {
+    this.selectedFolderId = folderId;
+    this.store.dispatch(
+      TestCaseActions.loadTestCases({
+        projectId: this.projectId,
+        folderId: folderId,
+      })
+    );
+  }
+
+  flattenFolders(folders: TestCaseFolder[]): TestCaseFolder[] {
+    const result: TestCaseFolder[] = [];
+    const traverse = (list: TestCaseFolder[]) => {
+      for (const folder of list) {
+        result.push(folder);
+        if (folder.children?.length) {
+          traverse(folder.children);
+        }
+      }
+    };
+    traverse(folders);
+    return result;
   }
 
   toggleTestCase(id: string): void {
@@ -80,6 +125,7 @@ export class TestRunFormComponent implements OnInit {
           environment: this.form.value.environment || undefined,
           testCaseIds: [...this.selectedTestCaseIds],
           testPlanId: this.form.value.testPlanId || undefined,
+          executorId: this.form.value.executorId || undefined,
         },
       })
     );

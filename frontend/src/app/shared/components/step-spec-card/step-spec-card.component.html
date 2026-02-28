@@ -16,7 +16,7 @@
     </div>
     <div class="spec-tile spec-tile--image">
       @if (imageUrl) {
-        <img [src]="imageUrl | authImage" alt="Reference image" class="ref-image-thumb" />
+        <img [src]="imageUrl | authImage" alt="Reference image" class="ref-image-thumb" loading="lazy" />
       }
     </div>
   }

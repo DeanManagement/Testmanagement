@@ -12,6 +12,7 @@
     "settings": "Einstellungen",
     "bugReports": "Fehlermeldungen",
     "myBugs": "Meine Fehlermeldungen",
+    "myTestRuns": "Meine Testläufe",
     "logout": "Abmelden"
   },
   "landing": {
@@ -163,7 +164,12 @@
       "createTitle": "Testlauf starten",
       "name": "Name",
       "environment": "Umgebung",
-      "testPlan": "Testplan (optional)"
+      "testPlan": "Testplan (optional)",
+      "executor": "Ausführender",
+      "noExecutor": "Nicht zugewiesen",
+      "filterByFolder": "Nach Ordner filtern",
+      "allFolders": "Alle Ordner",
+      "pickerHint": "Wählen Sie die Testfälle für diesen Lauf aus."
     },
     "status": {
       "PLANNED": "Geplant",
@@ -234,7 +240,8 @@
       "completedRuns": "Abgeschlossene Läufe",
       "passRate": "Erfolgsrate",
       "testRuns": "Testläufe",
-      "noRuns": "Diesem Plan sind noch keine Testläufe zugewiesen."
+      "noRuns": "Diesem Plan sind noch keine Testläufe zugewiesen.",
+      "createRun": "Testlauf starten"
     }
   },
   "priority": {
@@ -314,7 +321,8 @@
       "STATUS_CHANGED": "hat den Status geändert von",
       "COMPLETED": "hat abgeschlossen",
       "REOPENED": "hat wiedereröffnet",
-      "CLONED": "hat geklont"
+      "CLONED": "hat geklont",
+      "MOVED": "hat verschoben"
     },
     "entityTypes": {
       "PROJECT": "Projekt",
@@ -324,7 +332,8 @@
       "TEST_RESULT": "Testergebnis",
       "COMMENT": "Kommentar",
       "TEST_PLAN": "Testplan",
-      "BUG_REPORT": "Fehlermeldung"
+      "BUG_REPORT": "Fehlermeldung",
+      "TEST_CASE_FOLDER": "Testfall-Ordner"
     }
   },
   "projectDashboard": {
@@ -430,6 +439,30 @@
     "title": "Meine Fehlermeldungen",
     "empty": "Keine Fehler zugewiesen.",
     "project": "Projekt"
+  },
+  "myTestRuns": {
+    "title": "Meine Testläufe",
+    "empty": "Keine Testläufe zugewiesen.",
+    "project": "Projekt"
+  },
+  "folder": {
+    "title": "Ordner",
+    "allTestCases": "Alle Testfälle",
+    "create": "Ordner erstellen",
+    "createSubfolder": "Unterordner erstellen",
+    "rename": "Umbenennen",
+    "delete": "Löschen",
+    "deleteConfirm": "Ordner \"{{name}}\" löschen? Unterordner werden nach oben verschoben und Testfälle in die Wurzelebene.",
+    "nameLabel": "Ordnername",
+    "createTitle": "Ordner erstellen",
+    "renameTitle": "Ordner umbenennen"
+  },
+  "filter": {
+    "search": "Suchen",
+    "status": "Status",
+    "priority": "Priorität",
+    "allStatuses": "Alle Status",
+    "allPriorities": "Alle Prioritäten"
   },
   "common": {
     "save": "Speichern",

@@ -8,5 +8,6 @@ public enum AuditEntityType {
     TEST_RESULT,
     COMMENT,
     TEST_PLAN,
-    BUG_REPORT
+    BUG_REPORT,
+    TEST_CASE_FOLDER
 }

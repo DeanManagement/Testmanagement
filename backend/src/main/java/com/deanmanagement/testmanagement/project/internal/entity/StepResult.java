@@ -35,7 +35,7 @@ public class StepResult extends BaseEntity {
     private TestResult testResult;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "test_step_id", nullable = false)
+    @JoinColumn(name = "test_step_id")
     private TestStep testStep;
 
     @OneToOne(mappedBy = "stepResult", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)

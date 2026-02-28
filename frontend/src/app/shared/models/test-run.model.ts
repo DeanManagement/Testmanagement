@@ -42,6 +42,8 @@ export interface TestRun {
   testPlanId: string | null;
   testPlanName: string | null;
   allureReportId: string | null;
+  projectId: string | null;
+  projectKey: string | null;
   results: TestResult[];
   createdAt: string;
   updatedAt: string;
@@ -54,6 +56,7 @@ export interface CreateTestRunRequest {
   environment?: string;
   testCaseIds?: string[];
   testPlanId?: string;
+  executorId?: string;
 }
 
 export interface UpdateTestRunRequest {

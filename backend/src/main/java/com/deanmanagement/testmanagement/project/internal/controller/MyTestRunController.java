@@ -1,0 +1,28 @@
+package com.deanmanagement.testmanagement.project.internal.controller;
+
+import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
+import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.Authentication;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
+import java.util.UUID;
+
+@RestController
+@RequestMapping("/api/test-runs")
+@Tag(name = "My Test Runs", description = "Current user test run endpoints")
+@RequiredArgsConstructor
+public class MyTestRunController {
+
+    private final TestRunService testRunService;
+
+    @GetMapping("/assigned-to-me")
+    public List<TestRunResponse> getAssignedToMe(Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        return testRunService.findByExecutor(userId);
+    }
+}

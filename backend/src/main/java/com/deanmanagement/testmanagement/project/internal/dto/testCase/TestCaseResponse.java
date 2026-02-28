@@ -19,6 +19,7 @@ public record TestCaseResponse(
         TestCaseStatus status,
         Set<String> labels,
         List<TestStepResponse> steps,
+        UUID folderId,
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,

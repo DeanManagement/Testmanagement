@@ -26,6 +26,7 @@ export interface TestCase {
   status: TestCaseStatus;
   labels: string[];
   steps: TestStep[];
+  folderId: string | null;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -40,6 +41,7 @@ export interface CreateTestCaseRequest {
   status?: TestCaseStatus;
   labels?: string[];
   steps?: TestStepRequest[];
+  folderId?: string;
 }
 
 export interface UpdateTestCaseRequest {

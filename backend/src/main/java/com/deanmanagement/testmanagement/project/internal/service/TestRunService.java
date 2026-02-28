@@ -69,6 +69,12 @@ public class TestRunService {
                 .toList();
     }
 
+    public List<TestRunResponse> findByExecutor(UUID executorId) {
+        return testRunRepository.findByExecutorIdWithProject(executorId).stream()
+                .map(testRunMapper::toResponse)
+                .toList();
+    }
+
     public TestRunResponse findById(UUID projectId, UUID id) {
         TestRun run = testRunRepository.findById(id)
                 .filter(r -> r.getProject().getId().equals(projectId))
@@ -137,6 +143,12 @@ public class TestRunService {
             run.setTestPlan(testPlan);
         }
 
+        if (request.executorId() != null) {
+            User executor = userService.findEntityById(request.executorId())
+                    .orElseThrow(() -> new ResourceNotFoundException("User", request.executorId()));
+            run.setExecutor(executor);
+        }
+
         // If test case IDs provided, create pending results for each
         if (request.testCaseIds() != null && !request.testCaseIds().isEmpty()) {
             List<TestCase> testCases = testCaseRepository.findAllById(request.testCaseIds());
@@ -178,6 +190,7 @@ public class TestRunService {
                 request.name(),
                 request.environment(),
                 testCaseIds,
+                null,
                 null
         );
         TestRunResponse response = create(projectId, createRequest, userId);

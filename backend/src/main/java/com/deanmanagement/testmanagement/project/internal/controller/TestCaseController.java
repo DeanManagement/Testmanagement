@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -34,8 +35,10 @@ public class TestCaseController {
     private final TestCaseService testCaseService;
 
     @GetMapping
-    public List<TestCaseResponse> findAll(@PathVariable UUID projectId) {
-        return testCaseService.findByProject(projectId);
+    public List<TestCaseResponse> findAll(@PathVariable UUID projectId,
+                                          @RequestParam(required = false) UUID folderId,
+                                          @RequestParam(required = false, defaultValue = "false") boolean rootOnly) {
+        return testCaseService.findByProject(projectId, folderId, rootOnly);
     }
 
     @GetMapping("/{id}")

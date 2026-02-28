@@ -58,6 +58,7 @@ class ExternalTestRunControllerTest {
                 TestRunStatus.COMPLETED, NOW, NOW,
                 null, null, null,
                 null, null, null,
+                null, null,
                 List.of(), NOW, NOW, null, null
         );
     }

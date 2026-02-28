@@ -12,6 +12,7 @@
     "settings": "Settings",
     "bugReports": "Bug Reports",
     "myBugs": "My Bug Reports",
+    "myTestRuns": "My Test Runs",
     "logout": "Sign Out"
   },
   "landing": {
@@ -163,7 +164,12 @@
       "createTitle": "Start Test Run",
       "name": "Name",
       "environment": "Environment",
-      "testPlan": "Test Plan (optional)"
+      "testPlan": "Test Plan (optional)",
+      "executor": "Executor",
+      "noExecutor": "Unassigned",
+      "filterByFolder": "Filter by folder",
+      "allFolders": "All folders",
+      "pickerHint": "Select test cases to include in this run."
     },
     "status": {
       "PLANNED": "Planned",
@@ -234,7 +240,8 @@
       "completedRuns": "Completed Runs",
       "passRate": "Pass Rate",
       "testRuns": "Test Runs",
-      "noRuns": "No test runs assigned to this plan yet."
+      "noRuns": "No test runs assigned to this plan yet.",
+      "createRun": "Start Test Run"
     }
   },
   "priority": {
@@ -314,7 +321,8 @@
       "STATUS_CHANGED": "changed status of",
       "COMPLETED": "completed",
       "REOPENED": "reopened",
-      "CLONED": "cloned"
+      "CLONED": "cloned",
+      "MOVED": "moved"
     },
     "entityTypes": {
       "PROJECT": "project",
@@ -324,7 +332,8 @@
       "TEST_RESULT": "test result",
       "COMMENT": "comment",
       "TEST_PLAN": "test plan",
-      "BUG_REPORT": "bug report"
+      "BUG_REPORT": "bug report",
+      "TEST_CASE_FOLDER": "test case folder"
     }
   },
   "projectDashboard": {
@@ -430,6 +439,30 @@
     "title": "My Bug Reports",
     "empty": "No bugs assigned to you.",
     "project": "Project"
+  },
+  "myTestRuns": {
+    "title": "My Test Runs",
+    "empty": "No test runs assigned to you.",
+    "project": "Project"
+  },
+  "folder": {
+    "title": "Folders",
+    "allTestCases": "All Test Cases",
+    "create": "Create Folder",
+    "createSubfolder": "Create Subfolder",
+    "rename": "Rename",
+    "delete": "Delete",
+    "deleteConfirm": "Delete folder \"{{name}}\"? Subfolders will be moved up and test cases will be moved to root.",
+    "nameLabel": "Folder Name",
+    "createTitle": "Create Folder",
+    "renameTitle": "Rename Folder"
+  },
+  "filter": {
+    "search": "Search",
+    "status": "Status",
+    "priority": "Priority",
+    "allStatuses": "All Statuses",
+    "allPriorities": "All Priorities"
   },
   "common": {
     "save": "Save",

@@ -12,10 +12,12 @@ import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCaseFolder;
 import com.deanmanagement.testmanagement.project.internal.entity.StepImage;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestCaseFolderRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import lombok.RequiredArgsConstructor;
@@ -35,19 +37,28 @@ import java.util.UUID;
 public class TestCaseService {
 
     private final TestCaseRepository testCaseRepository;
+    private final TestCaseFolderRepository folderRepository;
     private final ProjectRepository projectRepository;
     private final TestCaseMapper testCaseMapper;
     private final AuditService auditService;
     private final TestResultRepository testResultRepository;
 
-    public List<TestCaseResponse> findByProject(UUID projectId) {
-        return testCaseRepository.findByProjectIdOrderByCreatedAtDesc(projectId).stream()
+    public List<TestCaseResponse> findByProject(UUID projectId, UUID folderId, boolean rootOnly) {
+        List<TestCase> testCases;
+        if (folderId != null) {
+            testCases = testCaseRepository.findByProjectIdAndFolderIdWithSteps(projectId, folderId);
+        } else if (rootOnly) {
+            testCases = testCaseRepository.findByProjectIdAndFolderIsNullWithSteps(projectId);
+        } else {
+            testCases = testCaseRepository.findByProjectIdWithSteps(projectId);
+        }
+        return testCases.stream()
                 .map(testCaseMapper::toResponse)
                 .toList();
     }
 
     public TestCaseResponse findById(UUID projectId, UUID id) {
-        TestCase tc = testCaseRepository.findById(id)
+        TestCase tc = testCaseRepository.findByIdWithSteps(id)
                 .filter(t -> t.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestCase", id));
         return testCaseMapper.toResponse(tc);
@@ -62,6 +73,13 @@ public class TestCaseService {
         tc.setProject(project);
         tc.setLabels(request.labels() != null ? request.labels() : new HashSet<>());
         tc.setSteps(buildSteps(request.steps(), tc));
+
+        if (request.folderId() != null) {
+            TestCaseFolder folder = folderRepository.findById(request.folderId())
+                    .filter(f -> f.getProject().getId().equals(projectId))
+                    .orElseThrow(() -> new ResourceNotFoundException("TestCaseFolder", request.folderId()));
+            tc.setFolder(folder);
+        }
 
         int number = project.getNextTestCaseNumber();
         tc.setKey(project.getKey() + "-" + number);

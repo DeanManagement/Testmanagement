@@ -16,7 +16,6 @@ export class AppComponent {
 
   constructor() {
     this.translate.addLangs(['en', 'de']);
-    this.translate.setDefaultLang('en');
     this.translate.use('en');
 
     this.authService.checkAuth();

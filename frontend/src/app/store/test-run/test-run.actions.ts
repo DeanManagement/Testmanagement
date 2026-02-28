@@ -1,4 +1,4 @@
-import { createActionGroup, props } from '@ngrx/store';
+import { createActionGroup, emptyProps, props } from '@ngrx/store';
 import { CreateTestRunRequest, TestRun, UpdateTestRunRequest, UpdateTestResultRequest, UpdateStepResultRequest, TestResult, StepResult } from '../../shared/models/test-run.model';
 
 export const TestRunActions = createActionGroup({
@@ -40,5 +40,8 @@ export const TestRunActions = createActionGroup({
     'Delete Allure Report': props<{ projectId: string; testRunId: string; testRunKey: string }>(),
     'Delete Allure Report Success': props<{ projectId: string; testRunId: string }>(),
     'Delete Allure Report Failure': props<{ error: string }>(),
+    'Load My Test Runs': emptyProps(),
+    'Load My Test Runs Success': props<{ testRuns: TestRun[] }>(),
+    'Load My Test Runs Failure': props<{ error: string }>(),
   },
 });

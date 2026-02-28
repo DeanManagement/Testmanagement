@@ -102,7 +102,7 @@
                           <input type="file" accept="image/*" hidden #imageInput (change)="onImageSelected(i, $event)" />
                           @if (hasImage(i)) {
                             <div class="step-image-preview">
-                              <img [src]="getImagePreview(i) | authImage" alt="Step image" />
+                              <img [src]="getImagePreview(i) | authImage" alt="Step image" loading="lazy" />
                               <button mat-icon-button type="button" (click)="removeImage(i)" class="remove-image" [attr.data-test-id]="'test-case-remove-image-' + i">
                                 <mat-icon>close</mat-icon>
                               </button>

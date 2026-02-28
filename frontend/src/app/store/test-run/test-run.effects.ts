@@ -246,4 +246,18 @@ export class TestRunEffects {
       )
     )
   );
+
+  loadMyTestRuns$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestRunActions.loadMyTestRuns),
+      mergeMap(() =>
+        this.testRunApi.getAssignedToMe().pipe(
+          map((testRuns) => TestRunActions.loadMyTestRunsSuccess({ testRuns })),
+          catchError((error) =>
+            of(TestRunActions.loadMyTestRunsFailure({ error: error.message }))
+          )
+        )
+      )
+    )
+  );
 }

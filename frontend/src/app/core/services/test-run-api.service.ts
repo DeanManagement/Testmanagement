@@ -26,6 +26,10 @@ export class TestRunApiService {
     return this.http.get<TestRun[]>(this.baseUrl(projectId));
   }
 
+  getAssignedToMe(): Observable<TestRun[]> {
+    return this.http.get<TestRun[]>('/api/test-runs/assigned-to-me');
+  }
+
   getById(projectId: string, id: string): Observable<TestRun> {
     return this.http.get<TestRun>(`${this.baseUrl(projectId)}/${id}`);
   }

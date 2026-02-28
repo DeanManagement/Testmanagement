@@ -24,6 +24,22 @@
   color: #fff !important;
 }
 
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.search-field {
+  flex: 1;
+  min-width: 200px;
+}
+
+.filter-select {
+  width: 170px;
+}
+
 .data-table { width: 100%; }
 
 .item-link {

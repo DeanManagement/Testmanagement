@@ -18,8 +18,8 @@ export class TestCaseEffects {
   loadTestCases$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TestCaseActions.loadTestCases),
-      mergeMap(({ projectId }) =>
-        this.testCaseApi.getAll(projectId).pipe(
+      mergeMap(({ projectId, folderId, rootOnly }) =>
+        this.testCaseApi.getAll(projectId, folderId, rootOnly).pipe(
           map((testCases) => TestCaseActions.loadTestCasesSuccess({ testCases })),
           catchError((error) =>
             of(TestCaseActions.loadTestCasesFailure({ error: error.message }))

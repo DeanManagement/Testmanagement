@@ -26,3 +26,13 @@ export const selectTestRunProjectId = createSelector(
 
 export const selectTestRunById = (id: string) =>
   createSelector(selectTestRunEntities, (entities) => entities[id]);
+
+export const selectMyTestRuns = createSelector(
+  selectTestRunState,
+  (state) => state.myTestRuns
+);
+
+export const selectMyTestRunsLoading = createSelector(
+  selectTestRunState,
+  (state) => state.myTestRunsLoading
+);

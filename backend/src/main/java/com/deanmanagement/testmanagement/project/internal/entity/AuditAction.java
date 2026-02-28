@@ -7,5 +7,6 @@ public enum AuditAction {
     STATUS_CHANGED,
     COMPLETED,
     REOPENED,
-    CLONED
+    CLONED,
+    MOVED
 }

@@ -4,7 +4,7 @@ import { CreateTestCaseRequest, TestCase, TestCaseStatus, UpdateTestCaseRequest 
 export const TestCaseActions = createActionGroup({
   source: 'TestCases',
   events: {
-    'Load Test Cases': props<{ projectId: string }>(),
+    'Load Test Cases': props<{ projectId: string; folderId?: string | null; rootOnly?: boolean }>(),
     'Load Test Cases Success': props<{ testCases: TestCase[] }>(),
     'Load Test Cases Failure': props<{ error: string }>(),
     'Create Test Case': props<{ projectId: string; request: CreateTestCaseRequest }>(),
