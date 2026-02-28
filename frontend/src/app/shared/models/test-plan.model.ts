@@ -7,6 +7,8 @@ export interface TestPlan {
   status: TestPlanStatus;
   targetDate: string | null;
   testRunCount: number;
+  assigneeId: string | null;
+  assigneeName: string | null;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -17,6 +19,7 @@ export interface CreateTestPlanRequest {
   name: string;
   description?: string;
   targetDate?: string;
+  assigneeId?: string;
 }
 
 export interface UpdateTestPlanRequest {
@@ -24,6 +27,7 @@ export interface UpdateTestPlanRequest {
   description?: string;
   status?: TestPlanStatus;
   targetDate?: string;
+  assigneeId?: string;
 }
 
 export interface TestPlanRunSummary {

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BugReport, CreateBugReportRequest, UpdateBugReportRequest } from '../../shared/models/bug-report.model';
+import { BugReport, BugReportStatus, CreateBugReportRequest, UpdateBugReportRequest } from '../../shared/models/bug-report.model';
 
 @Injectable({ providedIn: 'root' })
 export class BugReportApiService {
@@ -29,6 +29,10 @@ export class BugReportApiService {
 
   update(projectId: string, id: string, request: UpdateBugReportRequest): Observable<BugReport> {
     return this.http.put<BugReport>(`${this.baseUrl(projectId)}/${id}`, request);
+  }
+
+  changeStatus(projectId: string, id: string, status: BugReportStatus, reason: string): Observable<BugReport> {
+    return this.http.patch<BugReport>(`${this.baseUrl(projectId)}/${id}/status`, { status, reason });
   }
 
   delete(projectId: string, id: string): Observable<void> {

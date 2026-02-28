@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { BugReport, CreateBugReportRequest, UpdateBugReportRequest } from '../../shared/models/bug-report.model';
+import { BugReport, BugReportStatus, CreateBugReportRequest, UpdateBugReportRequest } from '../../shared/models/bug-report.model';
 
 export const BugReportActions = createActionGroup({
   source: 'BugReports',
@@ -23,6 +23,10 @@ export const BugReportActions = createActionGroup({
     'Update Bug Report': props<{ projectId: string; id: string; request: UpdateBugReportRequest }>(),
     'Update Bug Report Success': props<{ bugReport: BugReport }>(),
     'Update Bug Report Failure': props<{ error: string }>(),
+
+    'Change Bug Report Status': props<{ projectId: string; id: string; status: BugReportStatus; reason: string }>(),
+    'Change Bug Report Status Success': props<{ bugReport: BugReport }>(),
+    'Change Bug Report Status Failure': props<{ error: string }>(),
 
     'Delete Bug Report': props<{ projectId: string; id: string }>(),
     'Delete Bug Report Success': props<{ id: string }>(),

@@ -13,6 +13,7 @@
     "bugReports": "Fehlermeldungen",
     "myBugs": "Meine Fehlermeldungen",
     "myTestRuns": "Meine Testläufe",
+    "myWatched": "Meine beobachteten Elemente",
     "logout": "Abmelden"
   },
   "landing": {
@@ -226,7 +227,8 @@
       "name": "Name",
       "description": "Beschreibung",
       "targetDate": "Zieldatum",
-      "status": "Status"
+      "status": "Status",
+      "assignee": "Zugewiesen an"
     },
     "status": {
       "OPEN": "Offen",
@@ -241,7 +243,10 @@
       "passRate": "Erfolgsrate",
       "testRuns": "Testläufe",
       "noRuns": "Diesem Plan sind noch keine Testläufe zugewiesen.",
-      "createRun": "Testlauf starten"
+      "createRun": "Testlauf starten",
+      "resultDistribution": "Ergebnisverteilung",
+      "runsByStatus": "Läufe nach Status",
+      "passRatePerRun": "Erfolgsrate pro Lauf"
     }
   },
   "priority": {
@@ -432,6 +437,13 @@
       "testCase": "Testfall",
       "testRun": "Testlauf"
     },
+    "statusChange": {
+      "title": "Status ändern",
+      "reason": "Grund für die Statusänderung",
+      "reasonRequired": "Ein Grund ist erforderlich",
+      "confirm": "Status ändern",
+      "cancel": "Abbrechen"
+    },
     "reportBug": "Fehler melden",
     "linkedBugs": "Verknüpfte Fehler"
   },
@@ -463,6 +475,14 @@
     "priority": "Priorität",
     "allStatuses": "Alle Status",
     "allPriorities": "Alle Prioritäten"
+  },
+  "watcher": {
+    "myWatched": "Meine beobachteten Elemente",
+    "empty": "Sie beobachten noch keine Elemente.",
+    "watch": "Beobachten",
+    "unwatch": "Nicht mehr beobachten",
+    "type": "Typ",
+    "watchedAt": "Beobachtet seit"
   },
   "common": {
     "save": "Speichern",

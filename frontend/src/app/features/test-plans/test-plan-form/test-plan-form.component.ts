@@ -14,6 +14,8 @@ import { TranslateModule } from '@ngx-translate/core';
 import { TestPlanActions } from '../../../store/test-plan/test-plan.actions';
 import { selectTestPlanById } from '../../../store/test-plan/test-plan.selectors';
 import { TestPlanStatus } from '../../../shared/models/test-plan.model';
+import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
+import { ProjectMember } from '../../../shared/models/project-member.model';
 
 @Component({
   selector: 'app-test-plan-form',
@@ -40,22 +42,32 @@ export class TestPlanFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly memberApi = inject(ProjectMemberApiService);
 
   editMode = false;
   projectId = '';
   planId: string | null = null;
   statuses: TestPlanStatus[] = ['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+  members: ProjectMember[] = [];
 
   form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
     description: [''],
     targetDate: [null as Date | null],
     status: [null as TestPlanStatus | null],
+    assigneeId: [''],
   });
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.planId = this.route.snapshot.paramMap.get('planId');
+
+    if (this.projectId) {
+      this.memberApi.getByProject(this.projectId).subscribe((m) => {
+        this.members = m;
+        this.cdr.detectChanges();
+      });
+    }
 
     if (this.planId) {
       this.editMode = true;
@@ -67,6 +79,7 @@ export class TestPlanFormComponent implements OnInit {
             description: plan.description,
             targetDate: plan.targetDate ? new Date(plan.targetDate) : null,
             status: plan.status,
+            assigneeId: plan.assigneeId || '',
           });
           this.cdr.detectChanges();
         }
@@ -91,6 +104,7 @@ export class TestPlanFormComponent implements OnInit {
             description: this.form.value.description || undefined,
             status: this.form.value.status || undefined,
             targetDate,
+            assigneeId: this.form.value.assigneeId || undefined,
           },
         })
       );
@@ -103,6 +117,7 @@ export class TestPlanFormComponent implements OnInit {
             name: this.form.value.name!,
             description: this.form.value.description || undefined,
             targetDate,
+            assigneeId: this.form.value.assigneeId || undefined,
           },
         })
       );

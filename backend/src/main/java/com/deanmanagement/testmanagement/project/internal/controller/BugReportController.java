@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.ChangeBugStatusRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.CreateBugReportRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.UpdateBugReportRequest;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportService;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -61,6 +63,15 @@ public class BugReportController {
                                     Authentication authentication) {
         UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         return bugReportService.update(projectId, id, request, userId);
+    }
+
+    @PatchMapping("/{id}/status")
+    public BugReportResponse changeStatus(@PathVariable UUID projectId,
+                                          @PathVariable UUID id,
+                                          @Valid @RequestBody ChangeBugStatusRequest request,
+                                          Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return bugReportService.changeStatus(projectId, id, request, userId);
     }
 
     @DeleteMapping("/{id}")

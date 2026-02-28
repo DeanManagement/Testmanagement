@@ -48,6 +48,11 @@ export const routes: Routes = [
         loadChildren: () =>
           import('./features/my-test-runs/my-test-runs.routes').then((m) => m.myTestRunsRoutes),
       },
+      {
+        path: 'my-watched',
+        loadChildren: () =>
+          import('./features/my-watched/my-watched.routes').then((m) => m.myWatchedRoutes),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

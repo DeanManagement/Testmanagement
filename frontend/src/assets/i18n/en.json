@@ -13,6 +13,7 @@
     "bugReports": "Bug Reports",
     "myBugs": "My Bug Reports",
     "myTestRuns": "My Test Runs",
+    "myWatched": "My Watched Items",
     "logout": "Sign Out"
   },
   "landing": {
@@ -226,7 +227,8 @@
       "name": "Name",
       "description": "Description",
       "targetDate": "Target Date",
-      "status": "Status"
+      "status": "Status",
+      "assignee": "Assignee"
     },
     "status": {
       "OPEN": "Open",
@@ -241,7 +243,10 @@
       "passRate": "Pass Rate",
       "testRuns": "Test Runs",
       "noRuns": "No test runs assigned to this plan yet.",
-      "createRun": "Start Test Run"
+      "createRun": "Start Test Run",
+      "resultDistribution": "Result Distribution",
+      "runsByStatus": "Runs by Status",
+      "passRatePerRun": "Pass Rate per Run"
     }
   },
   "priority": {
@@ -432,6 +437,13 @@
       "testCase": "Test Case",
       "testRun": "Test Run"
     },
+    "statusChange": {
+      "title": "Change Status",
+      "reason": "Reason for status change",
+      "reasonRequired": "A reason is required",
+      "confirm": "Change Status",
+      "cancel": "Cancel"
+    },
     "reportBug": "Report Bug",
     "linkedBugs": "Linked Bugs"
   },
@@ -463,6 +475,14 @@
     "priority": "Priority",
     "allStatuses": "All Statuses",
     "allPriorities": "All Priorities"
+  },
+  "watcher": {
+    "myWatched": "My Watched Items",
+    "empty": "You are not watching any items yet.",
+    "watch": "Watch",
+    "unwatch": "Unwatch",
+    "type": "Type",
+    "watchedAt": "Watched Since"
   },
   "common": {
     "save": "Save",

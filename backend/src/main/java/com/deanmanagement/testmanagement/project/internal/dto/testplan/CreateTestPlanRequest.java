@@ -4,10 +4,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDate;
+import java.util.UUID;
 
 public record CreateTestPlanRequest(
         @NotBlank @Size(max = 255) String name,
         String description,
-        LocalDate targetDate
+        LocalDate targetDate,
+        UUID assigneeId
 ) {
 }

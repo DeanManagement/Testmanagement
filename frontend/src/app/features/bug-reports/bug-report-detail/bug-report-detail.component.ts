@@ -4,6 +4,7 @@ import { Store } from '@ngrx/store';
 import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
+import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,6 +13,8 @@ import { Observable, of } from 'rxjs';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { selectBugReportById } from '../../../store/bug-report/bug-report.selectors';
 import { BugReport, BugReportStatus } from '../../../shared/models/bug-report.model';
+import { ChangeBugStatusDialogComponent, ChangeBugStatusDialogData } from '../change-bug-status-dialog/change-bug-status-dialog.component';
+import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
 
 @Component({
   selector: 'app-bug-report-detail',
@@ -27,6 +30,7 @@ import { BugReport, BugReportStatus } from '../../../shared/models/bug-report.mo
     MatSelectModule,
     MatFormFieldModule,
     TranslateModule,
+    WatchToggleComponent,
   ],
   templateUrl: './bug-report-detail.component.html',
   styleUrl: './bug-report-detail.component.scss',
@@ -34,6 +38,7 @@ import { BugReport, BugReportStatus } from '../../../shared/models/bug-report.mo
 export class BugReportDetailComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
+  private readonly dialog = inject(MatDialog);
 
   projectId = '';
   bugId = '';
@@ -49,26 +54,25 @@ export class BugReportDetailComponent implements OnInit {
     }
   }
 
-  onStatusChange(bug: BugReport, status: BugReportStatus): void {
-    this.store.dispatch(
-      BugReportActions.updateBugReport({
-        projectId: this.projectId,
-        id: bug.id,
-        request: {
-          title: bug.title,
-          description: bug.description || undefined,
-          stepsToReproduce: bug.stepsToReproduce || undefined,
-          expectedBehavior: bug.expectedBehavior || undefined,
-          actualBehavior: bug.actualBehavior || undefined,
-          priority: bug.priority,
-          status,
-          environment: bug.environment || undefined,
-          testResultId: bug.testResultId || undefined,
-          testRunId: bug.testRunId || undefined,
-          assigneeId: bug.assigneeId || undefined,
-        },
-      })
-    );
+  onStatusChange(bug: BugReport, newStatus: BugReportStatus): void {
+    if (newStatus === bug.status) return;
+
+    const dialogRef = this.dialog.open(ChangeBugStatusDialogComponent, {
+      data: { currentStatus: bug.status, newStatus } as ChangeBugStatusDialogData,
+    });
+
+    dialogRef.afterClosed().subscribe((reason: string | undefined) => {
+      if (reason) {
+        this.store.dispatch(
+          BugReportActions.changeBugReportStatus({
+            projectId: this.projectId,
+            id: bug.id,
+            status: newStatus,
+            reason,
+          })
+        );
+      }
+    });
   }
 
   deleteBugReport(id: string): void {

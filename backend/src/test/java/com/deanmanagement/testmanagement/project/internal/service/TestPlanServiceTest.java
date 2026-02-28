@@ -15,6 +15,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.user.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -48,6 +49,9 @@ class TestPlanServiceTest {
     @Mock
     private AuditService auditService;
 
+    @Mock
+    private UserService userService;
+
     @InjectMocks
     private TestPlanService testPlanService;
 
@@ -78,7 +82,7 @@ class TestPlanServiceTest {
         return new TestPlanResponse(
                 PLAN_ID, "Release 2.3", "All tests for v2.3",
                 TestPlanStatus.OPEN, LocalDate.of(2026, 3, 15),
-                0, NOW, NOW, null, null
+                0, null, null, NOW, NOW, null, null
         );
     }
 
@@ -115,7 +119,7 @@ class TestPlanServiceTest {
 
     @Test
     void create_savesAndReturnsPlan() {
-        var request = new CreateTestPlanRequest("Release 2.3", "Description", LocalDate.of(2026, 3, 15));
+        var request = new CreateTestPlanRequest("Release 2.3", "Description", LocalDate.of(2026, 3, 15), null);
         Project project = sampleProject();
         TestPlan plan = samplePlan();
 
@@ -133,7 +137,7 @@ class TestPlanServiceTest {
 
     @Test
     void create_projectNotFound_throwsException() {
-        var request = new CreateTestPlanRequest("Release 2.3", null, null);
+        var request = new CreateTestPlanRequest("Release 2.3", null, null, null);
         when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> testPlanService.create(PROJECT_ID, request, null))
@@ -142,7 +146,7 @@ class TestPlanServiceTest {
 
     @Test
     void update_updatesAndReturnsPlan() {
-        var request = new UpdateTestPlanRequest("Updated Name", "Updated desc", TestPlanStatus.IN_PROGRESS, null);
+        var request = new UpdateTestPlanRequest("Updated Name", "Updated desc", TestPlanStatus.IN_PROGRESS, null, null);
         TestPlan plan = samplePlan();
 
         when(testPlanRepository.findById(PLAN_ID)).thenReturn(Optional.of(plan));

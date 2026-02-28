@@ -6,6 +6,7 @@
         {{ 'common.back' | translate }}
       </a>
       <div class="detail-actions">
+        <app-watch-toggle entityType="BUG_REPORT" [entityId]="bug.id"></app-watch-toggle>
         <a mat-stroked-button [routerLink]="['/projects', projectId, 'bug-reports', bug.id, 'edit']" data-test-id="bug-report-edit-btn">
           <mat-icon>edit</mat-icon>
           {{ 'common.edit' | translate }}

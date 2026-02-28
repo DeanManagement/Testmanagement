@@ -31,6 +31,8 @@ import { bugReportReducer } from './store/bug-report/bug-report.reducer';
 import { BugReportEffects } from './store/bug-report/bug-report.effects';
 import { testCaseFolderReducer } from './store/test-case-folder/test-case-folder.reducer';
 import { TestCaseFolderEffects } from './store/test-case-folder/test-case-folder.effects';
+import { watcherReducer } from './store/watcher/watcher.reducer';
+import { WatcherEffects } from './store/watcher/watcher.effects';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -50,8 +52,9 @@ export const appConfig: ApplicationConfig = {
       testPlans: testPlanReducer,
       bugReports: bugReportReducer,
       testCaseFolders: testCaseFolderReducer,
+      watchers: watcherReducer,
     }),
-    provideEffects(ProjectEffects, TestCaseEffects, TestCaseFolderEffects, TestSuiteEffects, TestRunEffects, ApiKeyEffects, UserEffects, CommentEffects, TestPlanEffects, BugReportEffects),
+    provideEffects(ProjectEffects, TestCaseEffects, TestCaseFolderEffects, TestSuiteEffects, TestRunEffects, ApiKeyEffects, UserEffects, CommentEffects, TestPlanEffects, BugReportEffects, WatcherEffects),
     provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
     provideTranslateService({
       fallbackLang: 'en',

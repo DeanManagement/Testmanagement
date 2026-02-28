@@ -6,6 +6,7 @@
         {{ 'common.back' | translate }}
       </a>
       <div class="detail-actions">
+        <app-watch-toggle entityType="TEST_RUN" [entityId]="run.id"></app-watch-toggle>
         @if (run.status === 'PLANNED') {
           <button mat-flat-button (click)="updateStatus(run, 'IN_PROGRESS')" class="start-btn" data-test-id="test-run-start-btn">
             <mat-icon>play_arrow</mat-icon>

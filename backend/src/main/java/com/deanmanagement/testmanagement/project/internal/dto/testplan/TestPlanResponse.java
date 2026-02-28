@@ -13,6 +13,8 @@ public record TestPlanResponse(
         TestPlanStatus status,
         LocalDate targetDate,
         int testRunCount,
+        UUID assigneeId,
+        String assigneeName,
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,

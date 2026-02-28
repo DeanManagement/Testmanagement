@@ -8,7 +8,7 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata_tm:/var/lib/postgresql/data
+      - pgdata_tm1:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U testmanagement"]
       interval: 5s
@@ -21,6 +21,7 @@ services:
       DB_URL: jdbc:postgresql://testmanagement-db:5432/testmanagement
       DB_USERNAME: testmanagement
       DB_PASSWORD: ${DB_PASSWORD:-testmanagement}
+      JWT_SECRET: ${JWT_SECRET:-defaultSecretKeyForDevelopmentOnlyMustBeAtLeast256BitsLong!!}
       KEYCLOAK_ISSUER_URI: ${KEYCLOAK_ISSUER_URI:-http://keycloak:8180/realms/testmanagement}
       KEYCLOAK_JWK_SET_URI: ${KEYCLOAK_JWK_SET_URI:-http://keycloak:8180/realms/testmanagement/protocol/openid-connect/certs}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost,http://localhost:8012,https://testmanagement.klopsch.org}
@@ -38,4 +39,4 @@ services:
       - testmanagement-backend
 
 volumes:
-  pgdata_tm:
+  pgdata_tm1:

@@ -56,6 +56,14 @@ export const bugReportReducer = createReducer(
     error,
   })),
 
+  on(BugReportActions.changeBugReportStatusSuccess, (state, { bugReport }) =>
+    bugReportAdapter.upsertOne(bugReport, state)
+  ),
+  on(BugReportActions.changeBugReportStatusFailure, (state, { error }) => ({
+    ...state,
+    error,
+  })),
+
   on(BugReportActions.deleteBugReportSuccess, (state, { id }) =>
     bugReportAdapter.removeOne(id, state)
   ),

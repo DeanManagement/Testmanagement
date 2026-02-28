@@ -10,5 +10,7 @@ public interface TestPlanRepository extends JpaRepository<TestPlan, UUID> {
 
     List<TestPlan> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
 
+    List<TestPlan> findByAssigneeIdOrderByCreatedAtDesc(UUID assigneeId);
+
     long countByProjectId(UUID projectId);
 }

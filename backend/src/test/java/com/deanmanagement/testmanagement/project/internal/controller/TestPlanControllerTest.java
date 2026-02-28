@@ -55,7 +55,7 @@ class TestPlanControllerTest {
         return new TestPlanResponse(
                 PLAN_ID, "Release 2.3", "Description",
                 TestPlanStatus.OPEN, LocalDate.of(2026, 3, 15),
-                2, NOW, NOW, null, null
+                2, null, null, NOW, NOW, null, null
         );
     }
 
@@ -108,7 +108,7 @@ class TestPlanControllerTest {
     @Test
     @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
     void create_returnsCreated() throws Exception {
-        var request = new CreateTestPlanRequest("Release 2.3", "Description", LocalDate.of(2026, 3, 15));
+        var request = new CreateTestPlanRequest("Release 2.3", "Description", LocalDate.of(2026, 3, 15), null);
         when(testPlanService.create(eq(PROJECT_ID), any(), any())).thenReturn(sampleResponse());
 
         mockMvc.perform(post("/api/projects/{projectId}/test-plans", PROJECT_ID)
@@ -122,7 +122,7 @@ class TestPlanControllerTest {
     @Test
     @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
     void create_blankName_returns400() throws Exception {
-        var request = new CreateTestPlanRequest("", null, null);
+        var request = new CreateTestPlanRequest("", null, null, null);
 
         mockMvc.perform(post("/api/projects/{projectId}/test-plans", PROJECT_ID)
                         .with(csrf())
@@ -134,7 +134,7 @@ class TestPlanControllerTest {
     @Test
     @WithMockUser(username = "00000000-0000-0000-0000-000000000001")
     void update_returnsPlan() throws Exception {
-        var request = new UpdateTestPlanRequest("Updated", "Desc", TestPlanStatus.IN_PROGRESS, null);
+        var request = new UpdateTestPlanRequest("Updated", "Desc", TestPlanStatus.IN_PROGRESS, null, null);
         when(testPlanService.update(eq(PROJECT_ID), eq(PLAN_ID), any(), any())).thenReturn(sampleResponse());
 
         mockMvc.perform(put("/api/projects/{projectId}/test-plans/{id}", PROJECT_ID, PLAN_ID)

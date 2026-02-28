@@ -18,6 +18,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -34,6 +35,7 @@ public class TestPlanService {
     private final ProjectRepository projectRepository;
     private final TestPlanMapper testPlanMapper;
     private final AuditService auditService;
+    private final UserService userService;
 
     public List<TestPlanResponse> findByProject(UUID projectId) {
         return testPlanRepository.findByProjectIdOrderByCreatedAtDesc(projectId).stream()
@@ -109,6 +111,10 @@ public class TestPlanService {
         plan.setProject(project);
         plan.setStatus(TestPlanStatus.OPEN);
 
+        if (request.assigneeId() != null) {
+            plan.setAssignee(userService.findEntityById(request.assigneeId()).orElse(null));
+        }
+
         plan = testPlanRepository.save(plan);
         auditService.log(projectId, userId, AuditAction.CREATED,
                 AuditEntityType.TEST_PLAN, plan.getId(), plan.getName(), null);
@@ -127,11 +133,22 @@ public class TestPlanService {
         if (request.status() != null) {
             plan.setStatus(request.status());
         }
+        if (request.assigneeId() != null) {
+            plan.setAssignee(userService.findEntityById(request.assigneeId()).orElse(null));
+        } else {
+            plan.setAssignee(null);
+        }
 
         plan = testPlanRepository.save(plan);
         auditService.log(projectId, userId, AuditAction.UPDATED,
                 AuditEntityType.TEST_PLAN, plan.getId(), plan.getName(), null);
         return testPlanMapper.toResponse(plan);
+    }
+
+    public List<TestPlanResponse> findByAssignee(UUID assigneeId) {
+        return testPlanRepository.findByAssigneeIdOrderByCreatedAtDesc(assigneeId).stream()
+                .map(testPlanMapper::toResponse)
+                .toList();
     }
 
     @Transactional

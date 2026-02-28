@@ -6,6 +6,7 @@
         {{ 'common.back' | translate }}
       </a>
       <div class="detail-actions">
+        <app-watch-toggle entityType="TEST_PLAN" [entityId]="plan.id"></app-watch-toggle>
         <a mat-stroked-button
           [routerLink]="['/projects', projectId, 'test-runs', 'new']"
           [queryParams]="{ testPlanId: plan.id }"
@@ -34,9 +35,20 @@
       @if (plan.description) {
         <p class="plan-description" data-test-id="test-plan-detail-description">{{ plan.description }}</p>
       }
-      @if (plan.targetDate) {
-        <p class="plan-target-date">{{ 'testPlan.form.targetDate' | translate }}: {{ plan.targetDate }}</p>
-      }
+      <div class="hero-meta">
+        @if (plan.assigneeName) {
+          <span class="meta-item" data-test-id="test-plan-detail-assignee">
+            <mat-icon class="meta-icon">assignment_ind</mat-icon>
+            {{ 'testPlan.form.assignee' | translate }}: {{ plan.assigneeName }}
+          </span>
+        }
+        @if (plan.targetDate) {
+          <span class="meta-item">
+            <mat-icon class="meta-icon">event</mat-icon>
+            {{ 'testPlan.form.targetDate' | translate }}: {{ plan.targetDate }}
+          </span>
+        }
+      </div>
     </div>
 
     @if (summary) {
@@ -62,6 +74,29 @@
           <span class="stat-label">{{ 'report.failed' | translate }}</span>
         </div>
       </div>
+
+      @if (summary.totalResults > 0) {
+        <div class="charts-section" data-test-id="test-plan-charts">
+          <div class="chart-card tm-card">
+            <h3>{{ 'testPlan.detail.resultDistribution' | translate }}</h3>
+            <div class="chart-container">
+              <canvas #resultDoughnut></canvas>
+            </div>
+          </div>
+          <div class="chart-card tm-card">
+            <h3>{{ 'testPlan.detail.runsByStatus' | translate }}</h3>
+            <div class="chart-container">
+              <canvas #runStatusBar></canvas>
+            </div>
+          </div>
+          <div class="chart-card tm-card">
+            <h3>{{ 'testPlan.detail.passRatePerRun' | translate }}</h3>
+            <div class="chart-container">
+              <canvas #passRateBar></canvas>
+            </div>
+          </div>
+        </div>
+      }
 
       <div class="runs-section tm-card" data-test-id="test-plan-runs-section">
         <div class="section-header">

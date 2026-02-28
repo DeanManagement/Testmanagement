@@ -24,6 +24,16 @@
           <mat-datepicker #picker></mat-datepicker>
         </mat-form-field>
 
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'testPlan.form.assignee' | translate }}</mat-label>
+          <mat-select formControlName="assigneeId" data-test-id="test-plan-assignee-select">
+            <mat-option value="">{{ 'bugReport.form.noAssignee' | translate }}</mat-option>
+            @for (member of members; track member.id) {
+              <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+
         @if (editMode) {
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>{{ 'testPlan.form.status' | translate }}</mat-label>

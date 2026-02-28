@@ -2,6 +2,7 @@ package com.deanmanagement.testmanagement.project.internal.service;
 
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.ChangeBugStatusRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.CreateBugReportRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.UpdateBugReportRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
@@ -125,6 +126,22 @@ public class BugReportService {
         bugReport = bugReportRepository.save(bugReport);
         auditService.log(projectId, userId, AuditAction.UPDATED,
                 AuditEntityType.BUG_REPORT, bugReport.getId(), bugReport.getTitle(), null);
+        return toResponseWithReporter(bugReport);
+    }
+
+    @Transactional
+    public BugReportResponse changeStatus(UUID projectId, UUID id, ChangeBugStatusRequest request, UUID userId) {
+        requireBugReportsEnabled(projectId);
+        BugReport bugReport = bugReportRepository.findByIdAndProjectIdWithDetails(id, projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("BugReport", id));
+
+        BugReportStatus oldStatus = bugReport.getStatus();
+        bugReport.setStatus(request.status());
+        bugReport = bugReportRepository.save(bugReport);
+
+        String details = oldStatus + " -> " + request.status() + ": " + request.reason();
+        auditService.log(projectId, userId, AuditAction.STATUS_CHANGED,
+                AuditEntityType.BUG_REPORT, bugReport.getId(), bugReport.getTitle(), details);
         return toResponseWithReporter(bugReport);
     }
 

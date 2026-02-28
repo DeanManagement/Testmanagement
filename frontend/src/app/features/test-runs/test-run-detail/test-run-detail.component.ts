@@ -36,6 +36,7 @@ import { CommentFormComponent } from '../../../shared/components/comment-form/co
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
 import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
+import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
 
 @Component({
   selector: 'app-test-run-detail',
@@ -61,6 +62,7 @@ import { EntityHistoryComponent } from '../../../shared/components/entity-histor
     AuthImagePipe,
     StepSpecCardComponent,
     EntityHistoryComponent,
+    WatchToggleComponent,
   ],
   templateUrl: './test-run-detail.component.html',
   styleUrl: './test-run-detail.component.scss',

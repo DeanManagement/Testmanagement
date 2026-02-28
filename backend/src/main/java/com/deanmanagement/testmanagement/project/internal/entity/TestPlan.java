@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.entity;
 
 import com.deanmanagement.testmanagement.shared.BaseEntity;
+import com.deanmanagement.testmanagement.user.User;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -41,6 +42,10 @@ public class TestPlan extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "assignee_id")
+    private User assignee;
 
     @OneToMany(mappedBy = "testPlan")
     private List<TestRun> testRuns = new ArrayList<>();

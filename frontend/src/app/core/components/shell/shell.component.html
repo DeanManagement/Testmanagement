@@ -61,6 +61,10 @@
             <mat-icon>bug_report</mat-icon>
             <span>{{ 'nav.myBugs' | translate }}</span>
           </a>
+          <a mat-menu-item routerLink="/my-watched" data-test-id="nav-my-watched">
+            <mat-icon>bookmark</mat-icon>
+            <span>{{ 'nav.myWatched' | translate }}</span>
+          </a>
           <mat-divider></mat-divider>
           <button mat-menu-item (click)="logout()" data-test-id="logout-btn">
             <mat-icon>logout</mat-icon>

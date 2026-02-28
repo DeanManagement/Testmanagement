@@ -83,6 +83,18 @@ export class BugReportEffects {
     )
   );
 
+  changeBugReportStatus$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(BugReportActions.changeBugReportStatus),
+      mergeMap(({ projectId, id, status, reason }) =>
+        this.bugReportApi.changeStatus(projectId, id, status, reason).pipe(
+          map((bugReport) => BugReportActions.changeBugReportStatusSuccess({ bugReport })),
+          catchError((error) => of(BugReportActions.changeBugReportStatusFailure({ error: error.message })))
+        )
+      )
+    )
+  );
+
   deleteBugReport$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BugReportActions.deleteBugReport),
