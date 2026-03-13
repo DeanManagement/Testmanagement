@@ -75,6 +75,12 @@ public class TestRunService {
                 .toList();
     }
 
+    public List<TestRunResponse> findByExecutorWithStatuses(UUID executorId, List<TestRunStatus> statuses) {
+        return testRunRepository.findByExecutorIdAndStatusInWithProject(executorId, statuses).stream()
+                .map(testRunMapper::toResponse)
+                .toList();
+    }
+
     public TestRunResponse findById(UUID projectId, UUID id) {
         TestRun run = testRunRepository.findById(id)
                 .filter(r -> r.getProject().getId().equals(projectId))

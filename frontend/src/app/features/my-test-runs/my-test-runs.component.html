@@ -3,61 +3,185 @@
     <h2>{{ 'myTestRuns.title' | translate }}</h2>
   </div>
 
-  @if (loading$ | async) {
+  @if (activeLoading$ | async) {
     <div class="loading-container">
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   } @else {
-    @if (myTestRuns$ | async; as runs) {
-      @if (runs.length === 0) {
-        <div class="empty-state tm-card" data-test-id="my-test-runs-empty">
-          <mat-icon class="empty-icon">check_circle</mat-icon>
-          <p>{{ 'myTestRuns.empty' | translate }}</p>
-        </div>
-      } @else {
-        <table mat-table [dataSource]="runs" class="my-test-runs-table tm-card" data-test-id="my-test-runs-table">
-          <ng-container matColumnDef="key">
-            <th mat-header-cell *matHeaderCellDef>{{ 'testRun.key' | translate }}</th>
-            <td mat-cell *matCellDef="let run">
-              <a [routerLink]="['/projects', run.projectId, 'test-runs', run.id]" class="item-link">
-                {{ run.key }}
-              </a>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="name">
-            <th mat-header-cell *matHeaderCellDef>{{ 'testRun.form.name' | translate }}</th>
-            <td mat-cell *matCellDef="let run">{{ run.name }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="projectKey">
-            <th mat-header-cell *matHeaderCellDef>{{ 'myTestRuns.project' | translate }}</th>
-            <td mat-cell *matCellDef="let run">{{ run.projectKey || '-' }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="environment">
-            <th mat-header-cell *matHeaderCellDef>{{ 'testRun.form.environment' | translate }}</th>
-            <td mat-cell *matCellDef="let run">{{ run.environment || '-' }}</td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>{{ 'testPlan.form.status' | translate }}</th>
-            <td mat-cell *matCellDef="let run">
-              <span class="status-badge status-badge--{{ run.status | lowercase }}">
-                {{ 'testRun.status.' + run.status | translate }}
-              </span>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="createdAt">
-            <th mat-header-cell *matHeaderCellDef>{{ 'bugReport.list.created' | translate }}</th>
-            <td mat-cell *matCellDef="let run">{{ run.createdAt | date:'mediumDate' }}</td>
-          </ng-container>
-
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-        </table>
-      }
+    <!-- In Progress Section -->
+    @if (inProgressRuns$ | async; as inProgressRuns) {
+      <section class="run-section">
+        <h3 class="section-title">
+          <mat-icon>play_circle</mat-icon>
+          {{ 'myTestRuns.inProgress' | translate }}
+          <span class="section-count">{{ inProgressRuns.length }}</span>
+        </h3>
+        @if (inProgressRuns.length === 0) {
+          <p class="section-empty">{{ 'myTestRuns.noInProgress' | translate }}</p>
+        } @else {
+          <table mat-table [dataSource]="inProgressRuns" class="run-table tm-card" data-test-id="my-test-runs-in-progress">
+            <ng-container matColumnDef="key">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testRun.key' | translate }}</th>
+              <td mat-cell *matCellDef="let run">
+                <a [routerLink]="['/projects', run.projectId, 'test-runs', run.id]" class="item-link">
+                  {{ run.key }}
+                </a>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testRun.form.name' | translate }}</th>
+              <td mat-cell *matCellDef="let run">{{ run.name }}</td>
+            </ng-container>
+            <ng-container matColumnDef="projectKey">
+              <th mat-header-cell *matHeaderCellDef>{{ 'myTestRuns.project' | translate }}</th>
+              <td mat-cell *matCellDef="let run">{{ run.projectKey || '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="environment">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testRun.form.environment' | translate }}</th>
+              <td mat-cell *matCellDef="let run">{{ run.environment || '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testPlan.form.status' | translate }}</th>
+              <td mat-cell *matCellDef="let run">
+                <span class="status-badge status-badge--{{ run.status | lowercase }}">
+                  {{ 'testRun.status.' + run.status | translate }}
+                </span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="createdAt">
+              <th mat-header-cell *matHeaderCellDef>{{ 'bugReport.list.created' | translate }}</th>
+              <td mat-cell *matCellDef="let run">{{ run.createdAt | date:'mediumDate' }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        }
+      </section>
     }
+
+    <!-- Planned Section -->
+    @if (plannedRuns$ | async; as plannedRuns) {
+      <section class="run-section">
+        <h3 class="section-title">
+          <mat-icon>schedule</mat-icon>
+          {{ 'myTestRuns.planned' | translate }}
+          <span class="section-count">{{ plannedRuns.length }}</span>
+        </h3>
+        @if (plannedRuns.length === 0) {
+          <p class="section-empty">{{ 'myTestRuns.noPlanned' | translate }}</p>
+        } @else {
+          <table mat-table [dataSource]="plannedRuns" class="run-table tm-card" data-test-id="my-test-runs-planned">
+            <ng-container matColumnDef="key">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testRun.key' | translate }}</th>
+              <td mat-cell *matCellDef="let run">
+                <a [routerLink]="['/projects', run.projectId, 'test-runs', run.id]" class="item-link">
+                  {{ run.key }}
+                </a>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testRun.form.name' | translate }}</th>
+              <td mat-cell *matCellDef="let run">{{ run.name }}</td>
+            </ng-container>
+            <ng-container matColumnDef="projectKey">
+              <th mat-header-cell *matHeaderCellDef>{{ 'myTestRuns.project' | translate }}</th>
+              <td mat-cell *matCellDef="let run">{{ run.projectKey || '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="environment">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testRun.form.environment' | translate }}</th>
+              <td mat-cell *matCellDef="let run">{{ run.environment || '-' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testPlan.form.status' | translate }}</th>
+              <td mat-cell *matCellDef="let run">
+                <span class="status-badge status-badge--{{ run.status | lowercase }}">
+                  {{ 'testRun.status.' + run.status | translate }}
+                </span>
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="createdAt">
+              <th mat-header-cell *matHeaderCellDef>{{ 'bugReport.list.created' | translate }}</th>
+              <td mat-cell *matCellDef="let run">{{ run.createdAt | date:'mediumDate' }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        }
+      </section>
+    }
+
+    <!-- Completed Section (on demand) -->
+    <section class="run-section">
+      <h3 class="section-title">
+        <mat-icon>check_circle</mat-icon>
+        {{ 'myTestRuns.completed' | translate }}
+        @if (completedLoaded$ | async) {
+          @if (completedRuns$ | async; as completedRuns) {
+            <span class="section-count">{{ completedRuns.length }}</span>
+          }
+        }
+      </h3>
+      @if (completedLoaded$ | async) {
+        @if (completedLoading$ | async) {
+          <div class="loading-container">
+            <mat-spinner diameter="32"></mat-spinner>
+          </div>
+        } @else {
+          @if (completedRuns$ | async; as completedRuns) {
+            @if (completedRuns.length === 0) {
+              <p class="section-empty">{{ 'myTestRuns.noCompleted' | translate }}</p>
+            } @else {
+              <table mat-table [dataSource]="completedRuns" class="run-table tm-card" data-test-id="my-test-runs-completed">
+                <ng-container matColumnDef="key">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'testRun.key' | translate }}</th>
+                  <td mat-cell *matCellDef="let run">
+                    <a [routerLink]="['/projects', run.projectId, 'test-runs', run.id]" class="item-link">
+                      {{ run.key }}
+                    </a>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="name">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'testRun.form.name' | translate }}</th>
+                  <td mat-cell *matCellDef="let run">{{ run.name }}</td>
+                </ng-container>
+                <ng-container matColumnDef="projectKey">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'myTestRuns.project' | translate }}</th>
+                  <td mat-cell *matCellDef="let run">{{ run.projectKey || '-' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="environment">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'testRun.form.environment' | translate }}</th>
+                  <td mat-cell *matCellDef="let run">{{ run.environment || '-' }}</td>
+                </ng-container>
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'testPlan.form.status' | translate }}</th>
+                  <td mat-cell *matCellDef="let run">
+                    <span class="status-badge status-badge--{{ run.status | lowercase }}">
+                      {{ 'testRun.status.' + run.status | translate }}
+                    </span>
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="createdAt">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'bugReport.list.created' | translate }}</th>
+                  <td mat-cell *matCellDef="let run">{{ run.createdAt | date:'mediumDate' }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+              </table>
+            }
+          }
+        }
+      } @else {
+        @if (completedLoading$ | async) {
+          <div class="loading-container loading-container--small">
+            <mat-spinner diameter="24"></mat-spinner>
+          </div>
+        } @else {
+          <button mat-stroked-button (click)="loadCompleted()">
+            <mat-icon>expand_more</mat-icon>
+            {{ 'myTestRuns.showCompleted' | translate }}
+          </button>
+        }
+      }
+    </section>
   }
 </div>

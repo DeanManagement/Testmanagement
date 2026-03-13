@@ -4,10 +4,18 @@ import { Store } from '@ngrx/store';
 import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
+import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { TestRunActions } from '../../store/test-run/test-run.actions';
-import { selectMyTestRuns, selectMyTestRunsLoading } from '../../store/test-run/test-run.selectors';
+import {
+  selectMyInProgressTestRuns,
+  selectMyPlannedTestRuns,
+  selectMyActiveTestRunsLoading,
+  selectMyCompletedTestRuns,
+  selectMyCompletedTestRunsLoading,
+  selectMyCompletedTestRunsLoaded,
+} from '../../store/test-run/test-run.selectors';
 
 @Component({
   selector: 'app-my-test-runs',
@@ -19,6 +27,7 @@ import { selectMyTestRuns, selectMyTestRunsLoading } from '../../store/test-run/
     RouterLink,
     MatTableModule,
     MatIconModule,
+    MatButtonModule,
     MatProgressSpinnerModule,
     TranslateModule,
   ],
@@ -28,11 +37,20 @@ import { selectMyTestRuns, selectMyTestRunsLoading } from '../../store/test-run/
 export class MyTestRunsComponent implements OnInit {
   private readonly store = inject(Store);
 
-  myTestRuns$ = this.store.select(selectMyTestRuns);
-  loading$ = this.store.select(selectMyTestRunsLoading);
+  inProgressRuns$ = this.store.select(selectMyInProgressTestRuns);
+  plannedRuns$ = this.store.select(selectMyPlannedTestRuns);
+  activeLoading$ = this.store.select(selectMyActiveTestRunsLoading);
+  completedRuns$ = this.store.select(selectMyCompletedTestRuns);
+  completedLoading$ = this.store.select(selectMyCompletedTestRunsLoading);
+  completedLoaded$ = this.store.select(selectMyCompletedTestRunsLoaded);
+
   displayedColumns = ['key', 'name', 'projectKey', 'environment', 'status', 'createdAt'];
 
   ngOnInit(): void {
-    this.store.dispatch(TestRunActions.loadMyTestRuns());
+    this.store.dispatch(TestRunActions.loadMyActiveTestRuns());
+  }
+
+  loadCompleted(): void {
+    this.store.dispatch(TestRunActions.loadMyCompletedTestRuns());
   }
 }

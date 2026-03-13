@@ -455,7 +455,14 @@
   "myTestRuns": {
     "title": "Meine Testläufe",
     "empty": "Keine Testläufe zugewiesen.",
-    "project": "Projekt"
+    "project": "Projekt",
+    "inProgress": "Laufend",
+    "planned": "Geplant",
+    "completed": "Abgeschlossen",
+    "noInProgress": "Keine laufenden Testläufe.",
+    "noPlanned": "Keine geplanten Testläufe.",
+    "noCompleted": "Keine abgeschlossenen Testläufe.",
+    "showCompleted": "Abgeschlossene anzeigen"
   },
   "folder": {
     "title": "Ordner",

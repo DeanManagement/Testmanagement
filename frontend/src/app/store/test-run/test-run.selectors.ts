@@ -27,12 +27,37 @@ export const selectTestRunProjectId = createSelector(
 export const selectTestRunById = (id: string) =>
   createSelector(selectTestRunEntities, (entities) => entities[id]);
 
-export const selectMyTestRuns = createSelector(
+export const selectMyActiveTestRuns = createSelector(
   selectTestRunState,
-  (state) => state.myTestRuns
+  (state) => state.myActiveTestRuns
 );
 
-export const selectMyTestRunsLoading = createSelector(
+export const selectMyActiveTestRunsLoading = createSelector(
   selectTestRunState,
-  (state) => state.myTestRunsLoading
+  (state) => state.myActiveTestRunsLoading
+);
+
+export const selectMyInProgressTestRuns = createSelector(
+  selectMyActiveTestRuns,
+  (runs) => runs.filter((r) => r.status === 'IN_PROGRESS')
+);
+
+export const selectMyPlannedTestRuns = createSelector(
+  selectMyActiveTestRuns,
+  (runs) => runs.filter((r) => r.status === 'PLANNED')
+);
+
+export const selectMyCompletedTestRuns = createSelector(
+  selectTestRunState,
+  (state) => state.myCompletedTestRuns
+);
+
+export const selectMyCompletedTestRunsLoading = createSelector(
+  selectTestRunState,
+  (state) => state.myCompletedTestRunsLoading
+);
+
+export const selectMyCompletedTestRunsLoaded = createSelector(
+  selectTestRunState,
+  (state) => state.myCompletedTestRunsLoaded
 );

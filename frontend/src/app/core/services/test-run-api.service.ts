@@ -26,7 +26,11 @@ export class TestRunApiService {
     return this.http.get<TestRun[]>(this.baseUrl(projectId));
   }
 
-  getAssignedToMe(): Observable<TestRun[]> {
+  getAssignedToMe(statuses?: string[]): Observable<TestRun[]> {
+    if (statuses && statuses.length > 0) {
+      const params = statuses.map((s) => `statuses=${s}`).join('&');
+      return this.http.get<TestRun[]>(`/api/test-runs/assigned-to-me?${params}`);
+    }
     return this.http.get<TestRun[]>('/api/test-runs/assigned-to-me');
   }
 

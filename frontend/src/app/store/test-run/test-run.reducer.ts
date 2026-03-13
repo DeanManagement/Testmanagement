@@ -165,20 +165,38 @@ export const testRunReducer = createReducer(
     error,
   })),
 
-  on(TestRunActions.loadMyTestRuns, (state) => ({
+  on(TestRunActions.loadMyActiveTestRuns, (state) => ({
     ...state,
-    myTestRunsLoading: true,
+    myActiveTestRunsLoading: true,
   })),
 
-  on(TestRunActions.loadMyTestRunsSuccess, (state, { testRuns }) => ({
+  on(TestRunActions.loadMyActiveTestRunsSuccess, (state, { testRuns }) => ({
     ...state,
-    myTestRuns: testRuns,
-    myTestRunsLoading: false,
+    myActiveTestRuns: testRuns,
+    myActiveTestRunsLoading: false,
   })),
 
-  on(TestRunActions.loadMyTestRunsFailure, (state, { error }) => ({
+  on(TestRunActions.loadMyActiveTestRunsFailure, (state, { error }) => ({
     ...state,
-    myTestRunsLoading: false,
+    myActiveTestRunsLoading: false,
+    error,
+  })),
+
+  on(TestRunActions.loadMyCompletedTestRuns, (state) => ({
+    ...state,
+    myCompletedTestRunsLoading: true,
+  })),
+
+  on(TestRunActions.loadMyCompletedTestRunsSuccess, (state, { testRuns }) => ({
+    ...state,
+    myCompletedTestRuns: testRuns,
+    myCompletedTestRunsLoading: false,
+    myCompletedTestRunsLoaded: true,
+  })),
+
+  on(TestRunActions.loadMyCompletedTestRunsFailure, (state, { error }) => ({
+    ...state,
+    myCompletedTestRunsLoading: false,
     error,
   }))
 );

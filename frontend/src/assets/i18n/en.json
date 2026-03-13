@@ -455,7 +455,14 @@
   "myTestRuns": {
     "title": "My Test Runs",
     "empty": "No test runs assigned to you.",
-    "project": "Project"
+    "project": "Project",
+    "inProgress": "In Progress",
+    "planned": "Planned",
+    "completed": "Completed",
+    "noInProgress": "No test runs in progress.",
+    "noPlanned": "No planned test runs.",
+    "noCompleted": "No completed test runs.",
+    "showCompleted": "Show Completed Runs"
   },
   "folder": {
     "title": "Folders",

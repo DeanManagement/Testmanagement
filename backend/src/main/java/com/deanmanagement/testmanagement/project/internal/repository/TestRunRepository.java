@@ -32,4 +32,16 @@ public interface TestRunRepository extends JpaRepository<TestRun, UUID> {
             "WHERE r.executor.id = :executorId " +
             "ORDER BY r.createdAt DESC")
     List<TestRun> findByExecutorIdWithProject(@Param("executorId") UUID executorId);
+
+    @Query("SELECT r FROM TestRun r " +
+            "JOIN FETCH r.project " +
+            "LEFT JOIN FETCH r.executor " +
+            "LEFT JOIN FETCH r.completedBy " +
+            "LEFT JOIN FETCH r.testPlan " +
+            "WHERE r.executor.id = :executorId " +
+            "AND r.status IN :statuses " +
+            "ORDER BY r.createdAt DESC")
+    List<TestRun> findByExecutorIdAndStatusInWithProject(
+            @Param("executorId") UUID executorId,
+            @Param("statuses") List<TestRunStatus> statuses);
 }

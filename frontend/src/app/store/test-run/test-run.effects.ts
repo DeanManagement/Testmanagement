@@ -247,14 +247,28 @@ export class TestRunEffects {
     )
   );
 
-  loadMyTestRuns$ = createEffect(() =>
+  loadMyActiveTestRuns$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(TestRunActions.loadMyTestRuns),
+      ofType(TestRunActions.loadMyActiveTestRuns),
       mergeMap(() =>
-        this.testRunApi.getAssignedToMe().pipe(
-          map((testRuns) => TestRunActions.loadMyTestRunsSuccess({ testRuns })),
+        this.testRunApi.getAssignedToMe(['PLANNED', 'IN_PROGRESS']).pipe(
+          map((testRuns) => TestRunActions.loadMyActiveTestRunsSuccess({ testRuns })),
           catchError((error) =>
-            of(TestRunActions.loadMyTestRunsFailure({ error: error.message }))
+            of(TestRunActions.loadMyActiveTestRunsFailure({ error: error.message }))
+          )
+        )
+      )
+    )
+  );
+
+  loadMyCompletedTestRuns$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestRunActions.loadMyCompletedTestRuns),
+      mergeMap(() =>
+        this.testRunApi.getAssignedToMe(['COMPLETED', 'ABORTED']).pipe(
+          map((testRuns) => TestRunActions.loadMyCompletedTestRunsSuccess({ testRuns })),
+          catchError((error) =>
+            of(TestRunActions.loadMyCompletedTestRunsFailure({ error: error.message }))
           )
         )
       )

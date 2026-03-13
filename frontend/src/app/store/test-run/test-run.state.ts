@@ -7,14 +7,20 @@ export interface TestRunState extends EntityState<TestRun> {
   loading: boolean;
   error: string | null;
   projectId: string | null;
-  myTestRuns: TestRun[];
-  myTestRunsLoading: boolean;
+  myActiveTestRuns: TestRun[];
+  myActiveTestRunsLoading: boolean;
+  myCompletedTestRuns: TestRun[];
+  myCompletedTestRunsLoading: boolean;
+  myCompletedTestRunsLoaded: boolean;
 }
 
 export const initialTestRunState: TestRunState = testRunAdapter.getInitialState({
   loading: false,
   error: null,
   projectId: null,
-  myTestRuns: [],
-  myTestRunsLoading: false,
+  myActiveTestRuns: [],
+  myActiveTestRunsLoading: false,
+  myCompletedTestRuns: [],
+  myCompletedTestRunsLoading: false,
+  myCompletedTestRunsLoaded: false,
 });
