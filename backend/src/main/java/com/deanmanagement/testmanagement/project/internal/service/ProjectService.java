@@ -7,8 +7,12 @@ import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProj
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
+import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,8 +26,10 @@ import java.util.UUID;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final ProjectMapper projectMapper;
     private final AuditService auditService;
+    private final UserService userService;
 
     public List<ProjectResponse> findAll(UUID userId, boolean isSystemAdmin) {
         if (isSystemAdmin) {
@@ -47,6 +53,7 @@ public class ProjectService {
         Project project = projectMapper.toEntity(request);
         project.setKey(generateKey(request.name()));
         project = projectRepository.save(project);
+        addCreatorAsAdmin(project, userId);
         auditService.log(project.getId(), userId, AuditAction.CREATED,
                 AuditEntityType.PROJECT, project.getId(), project.getName(), null);
         return projectMapper.toResponse(project);
@@ -84,10 +91,33 @@ public class ProjectService {
         return projectMapper.toResponse(project);
     }
 
-    public List<ProjectResponse> searchByKey(String key) {
+    public List<ProjectResponse> searchByKey(String key, UUID userId, boolean isSystemAdmin) {
         return projectRepository.findByKeyContainingIgnoreCase(key).stream()
+                .filter(p -> isSystemAdmin
+                        || projectMemberRepository.existsByUserIdAndProjectId(userId, p.getId()))
                 .map(projectMapper::toResponse)
                 .toList();
+    }
+
+    /**
+     * Adds the project creator as an {@link ProjectRole#ADMIN} member so a freshly-created project
+     * is manageable without relying on the system-admin bypass. No-op when the creator is unknown
+     * (e.g. dev/permit-all contexts) or already a member.
+     */
+    private void addCreatorAsAdmin(Project project, UUID userId) {
+        if (userId == null) {
+            return;
+        }
+        if (projectMemberRepository.existsByUserIdAndProjectId(userId, project.getId())) {
+            return;
+        }
+        userService.findEntityById(userId).ifPresent(user -> {
+            ProjectMember member = new ProjectMember();
+            member.setProject(project);
+            member.setUser(user);
+            member.setRole(ProjectRole.ADMIN);
+            projectMemberRepository.save(member);
+        });
     }
 
     String generateKey(String name) {

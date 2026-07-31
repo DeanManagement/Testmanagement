@@ -104,6 +104,8 @@ public class CommentService {
                 comment.getContent(),
                 comment.getAuthorId(),
                 displayName,
+                comment.getEntityType(),
+                comment.getEntityId(),
                 comment.getCreatedAt(),
                 comment.getUpdatedAt(),
                 comment.getCreatedBy(),

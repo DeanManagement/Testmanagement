@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 import com.deanmanagement.testmanagement.project.internal.dto.project.AddProjectMemberRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectMemberResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectMemberRequest;
+import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.service.ProjectMemberService;
@@ -38,6 +39,7 @@ public class ProjectMemberController {
     private final UserService userService;
 
     @GetMapping
+    @RequireProjectRole
     public List<ProjectMemberResponse> findByProject(@PathVariable UUID projectId) {
         return projectMemberService.findByProject(projectId);
     }

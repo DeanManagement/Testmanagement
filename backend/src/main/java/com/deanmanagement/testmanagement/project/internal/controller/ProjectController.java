@@ -4,6 +4,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.dashboard.Dashboar
 import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectRequest;
+import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
 import com.deanmanagement.testmanagement.project.internal.service.DashboardService;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
@@ -53,16 +54,23 @@ public class ProjectController {
     }
 
     @GetMapping("/search")
-    public List<ProjectResponse> searchByKey(@RequestParam String key) {
-        return projectService.searchByKey(key);
+    public List<ProjectResponse> searchByKey(@RequestParam String key,
+                                             Authentication authentication) {
+        UUID userId = UUID.fromString(authentication.getName());
+        boolean isSystemAdmin = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .anyMatch("ROLE_ADMIN"::equals);
+        return projectService.searchByKey(key, userId, isSystemAdmin);
     }
 
     @GetMapping("/{id}")
+    @RequireProjectRole(pathVariable = "id")
     public ProjectResponse findById(@PathVariable UUID id) {
         return projectService.findById(id);
     }
 
     @GetMapping("/{id}/dashboard")
+    @RequireProjectRole(pathVariable = "id")
     public DashboardResponse getDashboard(@PathVariable UUID id) {
         return dashboardService.getDashboard(id);
     }
@@ -77,6 +85,7 @@ public class ProjectController {
     }
 
     @PutMapping("/{id}")
+    @RequireProjectRole(value = ProjectRole.ADMIN, pathVariable = "id")
     public ProjectResponse update(@PathVariable UUID id,
                                   @Valid @RequestBody UpdateProjectRequest request,
                                   Authentication authentication) {
@@ -86,6 +95,7 @@ public class ProjectController {
 
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
+    @RequireProjectRole(value = ProjectRole.ADMIN, pathVariable = "id")
     public void delete(@PathVariable UUID id, Authentication authentication) {
         UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         projectService.delete(id, userId);

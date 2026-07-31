@@ -12,4 +12,7 @@ public interface ApiKeyRepository extends JpaRepository<ApiKey, UUID> {
     Optional<ApiKey> findByKeyHash(String keyHash);
 
     List<ApiKey> findAllByOrderByCreatedAtDesc();
+
+    /** Legacy/global keys (PRD-021 §4.2) — surfaced in the startup deprecation warning. */
+    List<ApiKey> findByProjectIsNullAndRevokedFalse();
 }

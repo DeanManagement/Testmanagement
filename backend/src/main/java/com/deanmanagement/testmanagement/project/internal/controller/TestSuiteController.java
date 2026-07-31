@@ -1,15 +1,22 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
+import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.BulkTestCasesRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.CreateTestSuiteRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuiteReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestSuiteResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestSuiteRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.filter.TestSuiteListFilter;
 import com.deanmanagement.testmanagement.project.internal.service.PdfReportService;
 import com.deanmanagement.testmanagement.project.internal.service.TestSuiteService;
+import com.deanmanagement.testmanagement.shared.PageableUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -22,6 +29,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -38,21 +46,28 @@ public class TestSuiteController {
     private final PdfReportService pdfReportService;
 
     @GetMapping
-    public List<TestSuiteResponse> findAll(@PathVariable UUID projectId) {
-        return testSuiteService.findByProject(projectId);
+    @RequireProjectRole
+    public Page<TestSuiteResponse> findAll(@PathVariable UUID projectId,
+                                           @RequestParam(required = false) String q,
+                                           @PageableDefault(size = PageableUtils.DEFAULT_SIZE) Pageable pageable) {
+        TestSuiteListFilter filter = new TestSuiteListFilter(q);
+        return testSuiteService.findByProject(projectId, filter, PageableUtils.normalize(pageable));
     }
 
     @GetMapping("/{id}")
+    @RequireProjectRole
     public TestSuiteResponse findById(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testSuiteService.findById(projectId, id);
     }
 
     @GetMapping("/{id}/report")
+    @RequireProjectRole
     public TestSuiteReportResponse getReport(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testSuiteService.getReport(projectId, id);
     }
 
     @GetMapping("/{id}/report/pdf")
+    @RequireProjectRole
     public ResponseEntity<byte[]> getReportPdf(@PathVariable UUID projectId, @PathVariable UUID id) {
         byte[] pdf = pdfReportService.generateTestSuiteReport(projectId, id);
         HttpHeaders headers = new HttpHeaders();
@@ -62,6 +77,7 @@ public class TestSuiteController {
     }
 
     @PostMapping
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.CREATED)
     public TestSuiteResponse create(@PathVariable UUID projectId,
                                     @Valid @RequestBody CreateTestSuiteRequest request,
@@ -71,6 +87,7 @@ public class TestSuiteController {
     }
 
     @PutMapping("/{id}")
+    @RequireProjectRole(ProjectRole.TESTER)
     public TestSuiteResponse update(@PathVariable UUID projectId,
                                     @PathVariable UUID id,
                                     @Valid @RequestBody UpdateTestSuiteRequest request,
@@ -80,6 +97,7 @@ public class TestSuiteController {
     }
 
     @DeleteMapping("/{id}")
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID projectId, @PathVariable UUID id,
                        Authentication authentication) {
@@ -88,6 +106,7 @@ public class TestSuiteController {
     }
 
     @PostMapping("/{id}/bulk-add")
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void bulkAddTestCases(@PathVariable UUID projectId,
                                   @PathVariable UUID id,
@@ -98,6 +117,7 @@ public class TestSuiteController {
     }
 
     @PostMapping("/{id}/bulk-remove")
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void bulkRemoveTestCases(@PathVariable UUID projectId,
                                      @PathVariable UUID id,

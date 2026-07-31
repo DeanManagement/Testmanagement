@@ -1,10 +1,12 @@
 package com.deanmanagement.testmanagement.project.internal.repository;
 
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.RunStatusCount;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -20,4 +22,12 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
 
     @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM TestResult r WHERE r.testCase.id IN :testCaseIds")
     boolean existsByTestCaseIdIn(@Param("testCaseIds") Set<UUID> testCaseIds);
+
+    @Query("SELECT r FROM TestResult r LEFT JOIN FETCH r.stepResults WHERE r.id IN :ids AND r.testRun.id = :runId")
+    List<TestResult> findByIdInAndTestRunId(@Param("ids") Set<UUID> ids, @Param("runId") UUID runId);
+
+    @Query("SELECT new com.deanmanagement.testmanagement.project.internal.dto.testrun.RunStatusCount(" +
+           "r.testRun.id, r.status, COUNT(r)) " +
+           "FROM TestResult r WHERE r.testRun.id IN :runIds GROUP BY r.testRun.id, r.status")
+    List<RunStatusCount> countStatusByRunIds(@Param("runIds") Collection<UUID> runIds);
 }

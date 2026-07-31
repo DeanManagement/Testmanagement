@@ -1,4 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
+import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.CreateTestCaseFolderRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.MoveTestCasesRequest;
@@ -33,11 +35,13 @@ public class TestCaseFolderController {
     private final TestCaseFolderService folderService;
 
     @GetMapping
+    @RequireProjectRole
     public List<TestCaseFolderResponse> getTree(@PathVariable UUID projectId) {
         return folderService.getTree(projectId);
     }
 
     @PostMapping
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.CREATED)
     public TestCaseFolderResponse create(@PathVariable UUID projectId,
                                          @Valid @RequestBody CreateTestCaseFolderRequest request,
@@ -47,6 +51,7 @@ public class TestCaseFolderController {
     }
 
     @PutMapping("/{folderId}")
+    @RequireProjectRole(ProjectRole.TESTER)
     public TestCaseFolderResponse update(@PathVariable UUID projectId,
                                          @PathVariable UUID folderId,
                                          @Valid @RequestBody UpdateTestCaseFolderRequest request,
@@ -56,6 +61,7 @@ public class TestCaseFolderController {
     }
 
     @DeleteMapping("/{folderId}")
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID projectId,
                        @PathVariable UUID folderId,
@@ -65,6 +71,7 @@ public class TestCaseFolderController {
     }
 
     @PutMapping("/reorder")
+    @RequireProjectRole(ProjectRole.TESTER)
     public List<TestCaseFolderResponse> reorder(@PathVariable UUID projectId,
                                                  @Valid @RequestBody ReorderFoldersRequest request,
                                                  Authentication authentication) {
@@ -73,6 +80,7 @@ public class TestCaseFolderController {
     }
 
     @PostMapping("/move-test-cases")
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void moveTestCases(@PathVariable UUID projectId,
                               @Valid @RequestBody MoveTestCasesRequest request,

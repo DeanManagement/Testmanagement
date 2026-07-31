@@ -1,4 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
+import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 
 import com.deanmanagement.testmanagement.project.internal.dto.audit.AuditEntryResponse;
 import com.deanmanagement.testmanagement.project.internal.service.AuditService;
@@ -22,6 +24,7 @@ public class AuditController {
     private final AuditService auditService;
 
     @GetMapping
+    @RequireProjectRole
     public Page<AuditEntryResponse> getActivity(
             @PathVariable UUID projectId,
             @RequestParam(required = false) UUID entityId,

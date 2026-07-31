@@ -8,6 +8,8 @@ import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseM
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestStepRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestCaseRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.filter.TestCaseListFilter;
+import com.deanmanagement.testmanagement.project.internal.repository.spec.TestCaseSpecifications;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
@@ -21,6 +23,8 @@ import com.deanmanagement.testmanagement.project.internal.repository.TestCaseFol
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,19 +46,11 @@ public class TestCaseService {
     private final TestCaseMapper testCaseMapper;
     private final AuditService auditService;
     private final TestResultRepository testResultRepository;
+    private final ProjectSequenceService projectSequenceService;
 
-    public List<TestCaseResponse> findByProject(UUID projectId, UUID folderId, boolean rootOnly) {
-        List<TestCase> testCases;
-        if (folderId != null) {
-            testCases = testCaseRepository.findByProjectIdAndFolderIdWithSteps(projectId, folderId);
-        } else if (rootOnly) {
-            testCases = testCaseRepository.findByProjectIdAndFolderIsNullWithSteps(projectId);
-        } else {
-            testCases = testCaseRepository.findByProjectIdWithSteps(projectId);
-        }
-        return testCases.stream()
-                .map(testCaseMapper::toResponse)
-                .toList();
+    public Page<TestCaseResponse> findByProject(UUID projectId, TestCaseListFilter filter, Pageable pageable) {
+        return testCaseRepository.findAll(TestCaseSpecifications.build(projectId, filter), pageable)
+                .map(testCaseMapper::toResponse);
     }
 
     public TestCaseResponse findById(UUID projectId, UUID id) {
@@ -81,10 +77,8 @@ public class TestCaseService {
             tc.setFolder(folder);
         }
 
-        int number = project.getNextTestCaseNumber();
+        int number = projectSequenceService.nextTestCaseNumber(projectId);
         tc.setKey(project.getKey() + "-" + number);
-        project.setNextTestCaseNumber(number + 1);
-        projectRepository.save(project);
 
         tc = testCaseRepository.save(tc);
         auditService.log(projectId, userId, AuditAction.CREATED,

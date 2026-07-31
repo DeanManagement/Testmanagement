@@ -10,20 +10,27 @@ import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType
 import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.WebhookEventType;
+import com.deanmanagement.testmanagement.project.internal.webhook.WebhookEvent;
 import com.deanmanagement.testmanagement.project.internal.repository.BugReportRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
-import com.deanmanagement.testmanagement.user.User;
 import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -37,12 +44,11 @@ public class BugReportService {
     private final UserService userService;
     private final BugReportMapper bugReportMapper;
     private final AuditService auditService;
+    private final ApplicationEventPublisher eventPublisher;
 
     public List<BugReportResponse> findByProject(UUID projectId) {
         requireBugReportsEnabled(projectId);
-        return bugReportRepository.findByProjectIdWithDetails(projectId).stream()
-                .map(this::toResponseWithReporter)
-                .toList();
+        return toResponsesWithReporters(bugReportRepository.findByProjectIdWithDetails(projectId));
     }
 
     public BugReportResponse findById(UUID projectId, UUID id) {
@@ -54,9 +60,7 @@ public class BugReportService {
 
     public List<BugReportResponse> findByTestResult(UUID projectId, UUID testResultId) {
         requireBugReportsEnabled(projectId);
-        return bugReportRepository.findByTestResultIdAndProjectId(testResultId, projectId).stream()
-                .map(this::toResponseWithReporter)
-                .toList();
+        return toResponsesWithReporters(bugReportRepository.findByTestResultIdAndProjectId(testResultId, projectId));
     }
 
     @Transactional
@@ -89,6 +93,14 @@ public class BugReportService {
         bugReport = bugReportRepository.save(bugReport);
         auditService.log(projectId, userId, AuditAction.CREATED,
                 AuditEntityType.BUG_REPORT, bugReport.getId(), bugReport.getTitle(), null);
+
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("bugReportId", bugReport.getId().toString());
+        data.put("title", bugReport.getTitle());
+        data.put("priority", bugReport.getPriority() != null ? bugReport.getPriority().name() : null);
+        data.put("status", bugReport.getStatus().name());
+        eventPublisher.publishEvent(new WebhookEvent(WebhookEventType.BUG_REPORT_CREATED, projectId, data));
+
         return toResponseWithReporter(bugReport);
     }
 
@@ -146,9 +158,7 @@ public class BugReportService {
     }
 
     public List<BugReportResponse> findByAssignee(UUID assigneeId) {
-        return bugReportRepository.findByAssigneeIdWithDetails(assigneeId).stream()
-                .map(this::toResponseWithReporter)
-                .toList();
+        return toResponsesWithReporters(bugReportRepository.findByAssigneeIdWithDetails(assigneeId));
     }
 
     @Transactional
@@ -170,13 +180,27 @@ public class BugReportService {
     }
 
     private BugReportResponse toResponseWithReporter(BugReport bugReport) {
+        Map<UUID, String> reporterNames = bugReport.getCreatedBy() != null
+                ? userService.findDisplayNamesByIds(Set.of(bugReport.getCreatedBy()))
+                : Map.of();
+        return toResponseWithReporter(bugReport, reporterNames);
+    }
+
+    private List<BugReportResponse> toResponsesWithReporters(List<BugReport> bugReports) {
+        Map<UUID, String> reporterNames = userService.findDisplayNamesByIds(bugReports.stream()
+                .map(BugReport::getCreatedBy)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet()));
+        return bugReports.stream()
+                .map(bugReport -> toResponseWithReporter(bugReport, reporterNames))
+                .toList();
+    }
+
+    private BugReportResponse toResponseWithReporter(BugReport bugReport, Map<UUID, String> reporterNames) {
         BugReportResponse response = bugReportMapper.toResponse(bugReport);
-        String reporterName = null;
-        if (bugReport.getCreatedBy() != null) {
-            reporterName = userService.findEntityById(bugReport.getCreatedBy())
-                    .map(User::getDisplayName)
-                    .orElse(null);
-        }
+        String reporterName = bugReport.getCreatedBy() != null
+                ? reporterNames.get(bugReport.getCreatedBy())
+                : null;
         return new BugReportResponse(
                 response.id(),
                 response.title(),

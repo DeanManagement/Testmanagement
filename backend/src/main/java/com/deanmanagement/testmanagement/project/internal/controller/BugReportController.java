@@ -1,4 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
+import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.ChangeBugStatusRequest;
@@ -34,6 +36,7 @@ public class BugReportController {
     private final BugReportService bugReportService;
 
     @GetMapping
+    @RequireProjectRole
     public List<BugReportResponse> findAll(@PathVariable UUID projectId,
                                            @RequestParam(required = false) UUID testResultId) {
         if (testResultId != null) {
@@ -43,11 +46,13 @@ public class BugReportController {
     }
 
     @GetMapping("/{id}")
+    @RequireProjectRole
     public BugReportResponse findById(@PathVariable UUID projectId, @PathVariable UUID id) {
         return bugReportService.findById(projectId, id);
     }
 
     @PostMapping
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.CREATED)
     public BugReportResponse create(@PathVariable UUID projectId,
                                     @Valid @RequestBody CreateBugReportRequest request,
@@ -57,6 +62,7 @@ public class BugReportController {
     }
 
     @PutMapping("/{id}")
+    @RequireProjectRole(ProjectRole.TESTER)
     public BugReportResponse update(@PathVariable UUID projectId,
                                     @PathVariable UUID id,
                                     @Valid @RequestBody UpdateBugReportRequest request,
@@ -66,6 +72,7 @@ public class BugReportController {
     }
 
     @PatchMapping("/{id}/status")
+    @RequireProjectRole(ProjectRole.TESTER)
     public BugReportResponse changeStatus(@PathVariable UUID projectId,
                                           @PathVariable UUID id,
                                           @Valid @RequestBody ChangeBugStatusRequest request,
@@ -75,6 +82,7 @@ public class BugReportController {
     }
 
     @DeleteMapping("/{id}")
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID projectId, @PathVariable UUID id,
                        Authentication authentication) {

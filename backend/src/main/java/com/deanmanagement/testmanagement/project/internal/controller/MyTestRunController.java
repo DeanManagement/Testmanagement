@@ -1,6 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
-import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.TestRunSummaryResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -23,7 +23,7 @@ public class MyTestRunController {
     private final TestRunService testRunService;
 
     @GetMapping("/assigned-to-me")
-    public List<TestRunResponse> getAssignedToMe(
+    public List<TestRunSummaryResponse> getAssignedToMe(
             Authentication authentication,
             @RequestParam(required = false) List<TestRunStatus> statuses) {
         UUID userId = UUID.fromString(authentication.getName());

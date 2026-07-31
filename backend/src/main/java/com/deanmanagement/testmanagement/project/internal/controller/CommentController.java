@@ -1,9 +1,11 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
+import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
 import com.deanmanagement.testmanagement.project.internal.dto.comment.CommentResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.comment.CreateCommentRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.comment.UpdateCommentRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.CommentEntityType;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.service.CommentService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -32,12 +34,14 @@ public class CommentController {
     private final CommentService commentService;
 
     @GetMapping("/test-cases/{testCaseId}/comments")
+    @RequireProjectRole
     public List<CommentResponse> getTestCaseComments(@PathVariable UUID projectId,
                                                      @PathVariable UUID testCaseId) {
         return commentService.findByEntity(projectId, CommentEntityType.TEST_CASE, testCaseId);
     }
 
     @PostMapping("/test-cases/{testCaseId}/comments")
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.CREATED)
     public CommentResponse createTestCaseComment(@PathVariable UUID projectId,
                                                  @PathVariable UUID testCaseId,
@@ -48,6 +52,7 @@ public class CommentController {
     }
 
     @GetMapping("/test-runs/{runId}/results/{resultId}/comments")
+    @RequireProjectRole
     public List<CommentResponse> getTestResultComments(@PathVariable UUID projectId,
                                                        @PathVariable UUID runId,
                                                        @PathVariable UUID resultId) {
@@ -55,6 +60,7 @@ public class CommentController {
     }
 
     @PostMapping("/test-runs/{runId}/results/{resultId}/comments")
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.CREATED)
     public CommentResponse createTestResultComment(@PathVariable UUID projectId,
                                                    @PathVariable UUID runId,
@@ -66,6 +72,7 @@ public class CommentController {
     }
 
     @PutMapping("/comments/{commentId}")
+    @RequireProjectRole
     public CommentResponse updateComment(@PathVariable UUID projectId,
                                          @PathVariable UUID commentId,
                                          @Valid @RequestBody UpdateCommentRequest request,
@@ -75,6 +82,7 @@ public class CommentController {
     }
 
     @DeleteMapping("/comments/{commentId}")
+    @RequireProjectRole
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void deleteComment(@PathVariable UUID projectId,
                               @PathVariable UUID commentId,

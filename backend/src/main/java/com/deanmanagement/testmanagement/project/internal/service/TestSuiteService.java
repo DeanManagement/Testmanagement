@@ -5,6 +5,8 @@ import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuit
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuiteReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestSuiteResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestSuiteRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.filter.TestSuiteListFilter;
+import com.deanmanagement.testmanagement.project.internal.repository.spec.TestSuiteSpecifications;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
@@ -18,6 +20,8 @@ import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRep
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestSuiteRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -42,10 +46,9 @@ public class TestSuiteService {
     private final TestSuiteMapper testSuiteMapper;
     private final AuditService auditService;
 
-    public List<TestSuiteResponse> findByProject(UUID projectId) {
-        return testSuiteRepository.findByProjectIdOrderByCreatedAtDesc(projectId).stream()
-                .map(testSuiteMapper::toResponse)
-                .toList();
+    public Page<TestSuiteResponse> findByProject(UUID projectId, TestSuiteListFilter filter, Pageable pageable) {
+        return testSuiteRepository.findAll(TestSuiteSpecifications.build(projectId, filter), pageable)
+                .map(testSuiteMapper::toResponse);
     }
 
     public TestSuiteResponse findById(UUID projectId, UUID id) {

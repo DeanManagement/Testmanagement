@@ -5,8 +5,13 @@ import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectMap
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
+import com.deanmanagement.testmanagement.user.User;
+import com.deanmanagement.testmanagement.user.UserService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -35,6 +40,12 @@ class ProjectServiceTest {
 
     @Mock
     private AuditService auditService;
+
+    @Mock
+    private ProjectMemberRepository projectMemberRepository;
+
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private ProjectService projectService;
@@ -113,6 +124,30 @@ class ProjectServiceTest {
 
         assertThat(result).isNotNull();
         verify(projectRepository).save(any(Project.class));
+    }
+
+    @Test
+    void create_addsCreatorAsAdminMember() {
+        var request = new CreateProjectRequest("New Project", "Description");
+        Project project = sampleProject();
+        UUID creatorId = UUID.randomUUID();
+        User creator = new User();
+        creator.setId(creatorId);
+
+        when(projectMapper.toEntity(request)).thenReturn(project);
+        when(projectRepository.existsByKey("NP")).thenReturn(false);
+        when(projectRepository.save(project)).thenReturn(project);
+        when(projectMapper.toResponse(project)).thenReturn(sampleResponse());
+        when(projectMemberRepository.existsByUserIdAndProjectId(creatorId, PROJECT_ID)).thenReturn(false);
+        when(userService.findEntityById(creatorId)).thenReturn(Optional.of(creator));
+
+        projectService.create(request, creatorId);
+
+        org.mockito.ArgumentCaptor<ProjectMember> captor =
+                org.mockito.ArgumentCaptor.forClass(ProjectMember.class);
+        verify(projectMemberRepository).save(captor.capture());
+        assertThat(captor.getValue().getRole()).isEqualTo(ProjectRole.ADMIN);
+        assertThat(captor.getValue().getUser()).isEqualTo(creator);
     }
 
     @Test

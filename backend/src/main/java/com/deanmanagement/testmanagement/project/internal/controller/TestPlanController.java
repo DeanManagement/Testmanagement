@@ -1,4 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
+import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.CreateTestPlanRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanResponse;
@@ -32,21 +34,25 @@ public class TestPlanController {
     private final TestPlanService testPlanService;
 
     @GetMapping
+    @RequireProjectRole
     public List<TestPlanResponse> findAll(@PathVariable UUID projectId) {
         return testPlanService.findByProject(projectId);
     }
 
     @GetMapping("/{id}")
+    @RequireProjectRole
     public TestPlanResponse findById(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testPlanService.findById(projectId, id);
     }
 
     @GetMapping("/{id}/summary")
+    @RequireProjectRole
     public TestPlanSummaryResponse getSummary(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testPlanService.getSummary(projectId, id);
     }
 
     @PostMapping
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.CREATED)
     public TestPlanResponse create(@PathVariable UUID projectId,
                                    @Valid @RequestBody CreateTestPlanRequest request,
@@ -56,6 +62,7 @@ public class TestPlanController {
     }
 
     @PutMapping("/{id}")
+    @RequireProjectRole(ProjectRole.TESTER)
     public TestPlanResponse update(@PathVariable UUID projectId,
                                    @PathVariable UUID id,
                                    @Valid @RequestBody UpdateTestPlanRequest request,
@@ -65,6 +72,7 @@ public class TestPlanController {
     }
 
     @DeleteMapping("/{id}")
+    @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable UUID projectId, @PathVariable UUID id,
                        Authentication authentication) {
