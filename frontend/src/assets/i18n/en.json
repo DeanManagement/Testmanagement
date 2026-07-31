@@ -779,5 +779,45 @@
     "step": "Step",
     "executedVersion": "Executed v{{number}}",
     "executedVersionUnknown": "Version not recorded"
+  },
+  "requirement": {
+    "title": "Requirements",
+    "cardHint": "Trace requirements to tests and see coverage",
+    "description": "Link requirements to the test cases that prove them, and see what is actually covered.",
+    "add": "Add requirement",
+    "createTitle": "Add a requirement",
+    "editTitle": "Edit requirement",
+    "empty": "No requirements yet.",
+    "externalId": "Requirement ID",
+    "externalIdHint": "The id used in your spec or tracker.",
+    "name": "Title",
+    "descriptionLabel": "Description",
+    "saved": "Requirement saved.",
+    "deleted": "Requirement removed.",
+    "deleteTitle": "Remove this requirement?",
+    "deleteMessage": "{{id}} will be removed. The test cases linked to it are not affected.",
+    "linkCase": "Link a test case",
+    "chooseCase": "Test case",
+    "link": "Link",
+    "unlink": "Unlink",
+    "noCases": "No test cases linked — this requirement is unproven.",
+    "coverage": "Coverage",
+    "coverageNote": "Requirements whose linked tests have passed",
+    "status": {
+      "PASSED": "Covered",
+      "FAILED": "Failing",
+      "BLOCKED": "Blocked",
+      "SKIPPED": "Skipped",
+      "UNTESTED": "Untested",
+      "UNCOVERED": "No tests"
+    },
+    "statusHint": {
+      "PASSED": "Every linked test passed in its most recent run.",
+      "FAILED": "At least one linked test failed most recently.",
+      "BLOCKED": "At least one linked test was blocked.",
+      "SKIPPED": "Linked tests were skipped.",
+      "UNTESTED": "A test is linked but has never been executed, so nothing proves this requirement yet.",
+      "UNCOVERED": "No test case is linked to this requirement."
+    }
   }
 }

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | ✅ Implemented (2026-07-31) |
 | **Author** | Engineering review (Claude) |
 | **Created** | 2026-06-09 |
 | **Priority** | P3 — v2.0, compliance-driven |
@@ -70,3 +70,37 @@ Pairs naturally with issue-tracker integration (PRD-010) and versioning (PRD-011
 - [ ] Matrix shows latest result status per requirement/case.
 - [ ] Coverage report lists uncovered + failing requirements with a coverage %.
 - [ ] Model, query, and authz tests pass.
+
+
+## 8. As Built (2026-07-31)
+
+**Coverage means a linked test has *passed*, not that a test is linked.** This is the one judgement
+that shapes everything else. Counting "has a test attached" would let a project report 100% coverage
+having never executed anything — the exact false assurance a traceability report exists to prevent.
+So `coveragePercent` counts only requirements whose linked tests passed most recently.
+
+**Row status is the worst cell.** A requirement is only as proven as its weakest test, so one
+failing case among five passing ones reads FAILED, not covered. Severity order is
+FAILED → BLOCKED → UNTESTED → SKIPPED → PASSED.
+
+**UNTESTED is a first-class state**, distinct from UNCOVERED. "A test is linked but has never run"
+is the quiet failure mode in traceability: it looks covered on the page and proves nothing. Both
+render in warning or danger colours rather than neutral.
+
+**Latest status reuses the completed-run query** the suite report already uses (§3.3) rather than
+introducing a second definition of "latest", which would eventually disagree with itself.
+
+**Requirements are deliberately thin** — external id, title, description. This is not a
+requirements-management tool; it exists so coverage can be demonstrated, and anything richer belongs
+in the system of record. External ids are unique per project, since two projects may legitimately
+both have REQ-1.
+
+**Tests: 14.** Per-project uniqueness, idempotent linking, cross-project link rejection, and the
+coverage semantics case by case — uncovered, linked-but-never-run, passing, latest-result-wins, one
+failure sinking a row, an untested case among passing ones, per-cell status, the percentage counting
+only proven requirements, and an empty project not dividing by zero.
+
+### Deferred
+- CSV/ALM import of requirements (§2 non-goal).
+- Column-capping for very large matrices: the current view is per-requirement rows with their linked
+  cases, which does not blow up the way a full requirements × cases grid would.

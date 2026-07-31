@@ -1,0 +1,205 @@
+.requirements-container {
+  padding: 24px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-link { color: var(--tm-text-secondary); }
+
+.page-hint {
+  color: var(--tm-text-secondary);
+  margin: 0 0 24px;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.coverage-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.kpi {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.kpi-value {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.kpi-label {
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+}
+
+.kpi-note {
+  color: var(--tm-text-secondary);
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.kpi--warn .kpi-value { color: var(--tm-warn); }
+.kpi--danger .kpi-value { color: var(--tm-danger); }
+
+.form-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+
+  h2 { margin-top: 0; }
+}
+
+.field-row {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.external-id-field { flex: 0 1 200px; }
+.title-field { flex: 1 1 320px; }
+.full-width { width: 100%; }
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.requirement-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.requirement-card { padding: 16px 20px; }
+
+.requirement-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.requirement-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.requirement-key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 13px;
+  color: var(--tm-text-secondary);
+}
+
+.requirement-name { font-weight: 600; }
+
+.requirement-actions {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.requirement-description {
+  color: var(--tm-text-secondary);
+  font-size: 14px;
+  margin: 8px 0 0;
+}
+
+.coverage-badge {
+  &--passed { background: var(--tm-tint-success-bg); color: var(--tm-tint-success-fg); }
+  &--failed { background: var(--tm-tint-danger-bg); color: var(--tm-tint-danger-fg); }
+  &--blocked { background: var(--tm-tint-warn-bg); color: var(--tm-tint-warn-fg); }
+  &--skipped { background: var(--tm-tint-neutral-bg); color: var(--tm-tint-neutral-fg); }
+  // Untested and uncovered are the states this report exists to surface, so neither reads as calm.
+  &--untested { background: var(--tm-tint-warn-bg); color: var(--tm-tint-warn-fg); }
+  &--uncovered { background: var(--tm-tint-danger-bg); color: var(--tm-tint-danger-fg); }
+}
+
+.link-picker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  flex-wrap: wrap;
+
+  mat-form-field { flex: 1 1 280px; }
+}
+
+.no-cases {
+  color: var(--tm-tint-danger-fg);
+  font-size: 13px;
+  margin: 12px 0 0;
+}
+
+.cells {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.cell {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-radius: var(--tm-radius);
+  background: var(--tm-subtle-bg);
+}
+
+.cell-status {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &--passed { background: var(--tm-success); }
+  &--failed { background: var(--tm-danger); }
+  &--blocked { background: var(--tm-warn); }
+  &--skipped { background: var(--tm-text-secondary); }
+  &--untested { background: var(--tm-warn); opacity: 0.5; }
+}
+
+.cell-link {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  color: var(--tm-text);
+
+  &:hover .cell-title { text-decoration: underline; }
+}
+
+.cell-key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--tm-text-secondary);
+  white-space: nowrap;
+}
+
+.cell-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-unlink { flex-shrink: 0; }

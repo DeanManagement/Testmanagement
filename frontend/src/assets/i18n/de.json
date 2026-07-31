@@ -779,5 +779,45 @@
     "step": "Schritt",
     "executedVersion": "Ausgeführt: v{{number}}",
     "executedVersionUnknown": "Version nicht erfasst"
+  },
+  "requirement": {
+    "title": "Anforderungen",
+    "cardHint": "Anforderungen mit Tests verknüpfen und Abdeckung sehen",
+    "description": "Verknüpfe Anforderungen mit den Testfällen, die sie belegen, und sieh, was tatsächlich abgedeckt ist.",
+    "add": "Anforderung hinzufügen",
+    "createTitle": "Anforderung hinzufügen",
+    "editTitle": "Anforderung bearbeiten",
+    "empty": "Noch keine Anforderungen.",
+    "externalId": "Anforderungs-ID",
+    "externalIdHint": "Die ID aus eurer Spezifikation oder eurem Tracker.",
+    "name": "Titel",
+    "descriptionLabel": "Beschreibung",
+    "saved": "Anforderung gespeichert.",
+    "deleted": "Anforderung entfernt.",
+    "deleteTitle": "Diese Anforderung entfernen?",
+    "deleteMessage": "{{id}} wird entfernt. Die verknüpften Testfälle bleiben bestehen.",
+    "linkCase": "Testfall verknüpfen",
+    "chooseCase": "Testfall",
+    "link": "Verknüpfen",
+    "unlink": "Verknüpfung aufheben",
+    "noCases": "Kein Testfall verknüpft — diese Anforderung ist unbelegt.",
+    "coverage": "Abdeckung",
+    "coverageNote": "Anforderungen, deren verknüpfte Tests bestanden haben",
+    "status": {
+      "PASSED": "Abgedeckt",
+      "FAILED": "Fehlgeschlagen",
+      "BLOCKED": "Blockiert",
+      "SKIPPED": "Übersprungen",
+      "UNTESTED": "Ungetestet",
+      "UNCOVERED": "Keine Tests"
+    },
+    "statusHint": {
+      "PASSED": "Alle verknüpften Tests waren im letzten Durchlauf erfolgreich.",
+      "FAILED": "Mindestens ein verknüpfter Test ist zuletzt fehlgeschlagen.",
+      "BLOCKED": "Mindestens ein verknüpfter Test war blockiert.",
+      "SKIPPED": "Verknüpfte Tests wurden übersprungen.",
+      "UNTESTED": "Ein Test ist verknüpft, wurde aber nie ausgeführt — die Anforderung ist damit noch nicht belegt.",
+      "UNCOVERED": "Dieser Anforderung ist kein Testfall zugeordnet."
+    }
   }
 }

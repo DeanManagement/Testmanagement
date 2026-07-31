@@ -1,0 +1,167 @@
+<div class="requirements-container">
+  <div class="page-header">
+    <div class="page-header-left">
+      <a mat-button [routerLink]="['/projects', projectId]" class="back-link" data-test-id="requirements-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <h1 data-test-id="requirements-title">{{ 'requirement.title' | translate }}</h1>
+    </div>
+    @if (!formOpen) {
+      <button mat-flat-button (click)="openCreate()" data-test-id="requirement-add-btn">
+        <mat-icon>add</mat-icon>
+        {{ 'requirement.add' | translate }}
+      </button>
+    }
+  </div>
+
+  <p class="page-hint">{{ 'requirement.description' | translate }}</p>
+
+  @if (loading) {
+    <div class="loading-state"><mat-spinner diameter="32"></mat-spinner></div>
+  } @else {
+
+    @if (coverage && coverage.totalRequirements > 0) {
+      <div class="coverage-cards" data-test-id="coverage-summary">
+        <div class="tm-card kpi">
+          <span class="kpi-value">{{ coverage.coveragePercent }}%</span>
+          <span class="kpi-label">{{ 'requirement.coverage' | translate }}</span>
+          <span class="kpi-note">{{ 'requirement.coverageNote' | translate }}</span>
+        </div>
+        <div class="tm-card kpi">
+          <span class="kpi-value">{{ coverage.passing }}</span>
+          <span class="kpi-label">{{ 'requirement.status.PASSED' | translate }}</span>
+        </div>
+        <div class="tm-card kpi kpi--warn">
+          <span class="kpi-value">{{ coverage.untested }}</span>
+          <span class="kpi-label">{{ 'requirement.status.UNTESTED' | translate }}</span>
+        </div>
+        <div class="tm-card kpi kpi--danger">
+          <span class="kpi-value">{{ coverage.failing }}</span>
+          <span class="kpi-label">{{ 'requirement.status.FAILED' | translate }}</span>
+        </div>
+        <div class="tm-card kpi kpi--danger">
+          <span class="kpi-value">{{ coverage.uncovered }}</span>
+          <span class="kpi-label">{{ 'requirement.status.UNCOVERED' | translate }}</span>
+        </div>
+      </div>
+    }
+
+    @if (formOpen) {
+      <div class="tm-card form-card" data-test-id="requirement-form">
+        <h2>{{ (editingId ? 'requirement.editTitle' : 'requirement.createTitle') | translate }}</h2>
+        <div class="field-row">
+          <mat-form-field appearance="outline" class="external-id-field">
+            <mat-label>{{ 'requirement.externalId' | translate }}</mat-label>
+            <input matInput [(ngModel)]="formExternalId" placeholder="REQ-014" data-test-id="requirement-external-id-input">
+            <mat-hint>{{ 'requirement.externalIdHint' | translate }}</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="title-field">
+            <mat-label>{{ 'requirement.name' | translate }}</mat-label>
+            <input matInput [(ngModel)]="formTitle" data-test-id="requirement-title-input">
+          </mat-form-field>
+        </div>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'requirement.descriptionLabel' | translate }}</mat-label>
+          <textarea matInput rows="3" [(ngModel)]="formDescription" data-test-id="requirement-description-input"></textarea>
+        </mat-form-field>
+        <div class="form-actions">
+          <button mat-button (click)="closeForm()" data-test-id="requirement-cancel-btn">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button mat-flat-button [disabled]="!canSave || saving" (click)="save()" data-test-id="requirement-save-btn">
+            {{ (saving ? 'common.saving' : 'common.save') | translate }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (requirements.length === 0) {
+      <div class="empty-state" data-test-id="requirements-empty">
+        <mat-icon>fact_check</mat-icon>
+        <p>{{ 'requirement.empty' | translate }}</p>
+      </div>
+    } @else {
+      <div class="requirement-list">
+        @for (requirement of requirements; track requirement.id) {
+          <div class="tm-card requirement-card" [attr.data-test-id]="'requirement-' + requirement.externalId">
+            <div class="requirement-head">
+              <div class="requirement-heading">
+                <span class="requirement-key">{{ requirement.externalId }}</span>
+                <span class="requirement-name">{{ requirement.title }}</span>
+                @if (rowFor(requirement.id); as row) {
+                  <span class="badge coverage-badge coverage-badge--{{ row.coverage | lowercase }}"
+                        [matTooltip]="'requirement.statusHint.' + row.coverage | translate">
+                    {{ 'requirement.status.' + row.coverage | translate }}
+                  </span>
+                }
+              </div>
+              <div class="requirement-actions">
+                <button mat-icon-button (click)="openLink(requirement)"
+                        [matTooltip]="'requirement.linkCase' | translate"
+                        [attr.data-test-id]="'requirement-link-' + requirement.externalId">
+                  <mat-icon>add_link</mat-icon>
+                </button>
+                <button mat-icon-button (click)="openEdit(requirement)"
+                        [matTooltip]="'common.edit' | translate"
+                        [attr.data-test-id]="'requirement-edit-' + requirement.externalId">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="remove(requirement)"
+                        [matTooltip]="'common.delete' | translate"
+                        [attr.data-test-id]="'requirement-delete-' + requirement.externalId">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            @if (requirement.description) {
+              <p class="requirement-description">{{ requirement.description }}</p>
+            }
+
+            @if (linkingId === requirement.id) {
+              <div class="link-picker" [attr.data-test-id]="'requirement-link-picker-' + requirement.externalId">
+                <mat-form-field appearance="outline">
+                  <mat-label>{{ 'requirement.chooseCase' | translate }}</mat-label>
+                  <mat-select [(ngModel)]="linkSelection" data-test-id="requirement-link-select">
+                    @for (testCase of availableTestCases(requirement); track testCase.id) {
+                      <mat-option [value]="testCase.id">{{ testCase.key }} — {{ testCase.title }}</mat-option>
+                    }
+                  </mat-select>
+                </mat-form-field>
+                <button mat-flat-button [disabled]="!linkSelection" (click)="confirmLink()" data-test-id="requirement-link-confirm">
+                  {{ 'requirement.link' | translate }}
+                </button>
+                <button mat-button (click)="closeLink()">{{ 'common.cancel' | translate }}</button>
+              </div>
+            }
+
+            @if (rowFor(requirement.id); as row) {
+              @if (row.cells.length === 0) {
+                <p class="no-cases">{{ 'requirement.noCases' | translate }}</p>
+              } @else {
+                <div class="cells">
+                  @for (cell of row.cells; track cell.testCaseId) {
+                    <div class="cell" [attr.data-test-id]="'cell-' + cell.testCaseKey">
+                      <span class="cell-status cell-status--{{ cell.status | lowercase }}"
+                            [matTooltip]="'requirement.status.' + cell.status | translate"></span>
+                      <a [routerLink]="['/projects', projectId, 'test-cases', cell.testCaseId]" class="cell-link">
+                        <span class="cell-key">{{ cell.testCaseKey }}</span>
+                        <span class="cell-title">{{ cell.testCaseTitle }}</span>
+                      </a>
+                      <button mat-icon-button class="cell-unlink"
+                              (click)="unlink(requirement, cell.testCaseId)"
+                              [matTooltip]="'requirement.unlink' | translate">
+                        <mat-icon>link_off</mat-icon>
+                      </button>
+                    </div>
+                  }
+                </div>
+              }
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>
