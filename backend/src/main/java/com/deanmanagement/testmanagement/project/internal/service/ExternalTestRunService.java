@@ -32,6 +32,7 @@ public class ExternalTestRunService {
     private final ProjectRepository projectRepository;
     private final TestCaseRepository testCaseRepository;
     private final TestRunMapper testRunMapper;
+    private final ProjectSequenceService projectSequenceService;
 
     @Transactional
     public TestRunResponse createExternalRun(String projectKey, ExternalCreateTestRunRequest request) {
@@ -47,8 +48,8 @@ public class ExternalTestRunService {
         run.setStatus(TestRunStatus.COMPLETED);
         run.setStartTime(now);
         run.setEndTime(now);
-        run.setKey(project.getKey() + "-Run-" + project.getNextTestRunNumber());
-        project.setNextTestRunNumber(project.getNextTestRunNumber() + 1);
+        int runNumber = projectSequenceService.nextTestRunNumber(project.getId());
+        run.setKey(project.getKey() + "-Run-" + runNumber);
 
         for (ExternalTestResultRequest resultReq : request.results()) {
             TestCase testCase = testCaseRepository.findByKeyAndProjectId(resultReq.testCaseKey(), project.getId())

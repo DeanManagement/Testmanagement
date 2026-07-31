@@ -48,6 +48,15 @@ class ExternalTestRunControllerTest {
     @MockitoBean
     private TestRunRepository testRunRepository;
 
+    @MockitoBean
+    private com.deanmanagement.testmanagement.project.internal.service.CiIngestionService ciIngestionService;
+
+    @MockitoBean
+    private com.deanmanagement.testmanagement.project.internal.ci.JUnitXmlParser jUnitXmlParser;
+
+    @MockitoBean
+    private com.deanmanagement.testmanagement.project.internal.ci.CucumberJsonParser cucumberJsonParser;
+
     private static final String PROJECT_KEY = "TEST";
     private static final String TEST_CASE_KEY = "TEST-1";
     private static final Instant NOW = Instant.now();

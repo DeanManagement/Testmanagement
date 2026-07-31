@@ -48,6 +48,9 @@ class ExternalTestRunServiceTest {
     @Mock
     private TestRunMapper testRunMapper;
 
+    @Mock
+    private ProjectSequenceService projectSequenceService;
+
     @InjectMocks
     private ExternalTestRunService externalTestRunService;
 
