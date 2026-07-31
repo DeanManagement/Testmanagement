@@ -72,3 +72,91 @@
   color: #f44336;
   font-weight: 500;
 }
+
+// Flaky tests widget (PRD-016).
+.flaky-card {
+  padding: 20px;
+  margin-top: 24px;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+  }
+}
+
+.flaky-help {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  color: var(--tm-text-secondary);
+  cursor: help;
+}
+
+.flaky-hint {
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+  margin: 4px 0 16px;
+}
+
+.flaky-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.flaky-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px 12px;
+  align-items: center;
+}
+
+.flaky-link {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+  color: var(--tm-text);
+
+  &:hover .flaky-title {
+    text-decoration: underline;
+  }
+}
+
+.flaky-key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--tm-text-secondary);
+  white-space: nowrap;
+}
+
+.flaky-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flaky-score {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--tm-tint-neutral-bg);
+  overflow: hidden;
+}
+
+// Warn rather than danger: a flaky test is a nuisance to investigate, not a failure to alarm about.
+.flaky-bar {
+  height: 100%;
+  background: var(--tm-warn);
+}
+
+.flaky-meta {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  color: var(--tm-text-secondary);
+}

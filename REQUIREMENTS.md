@@ -635,7 +635,7 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 | ~~Dark mode / theming (§13.7)~~ — ✅ shipped | [PRD-013](docs/prd/PRD-013-dark-mode-theming.md) | S |
 | Traceability matrix (§13.2) | [PRD-014](docs/prd/PRD-014-traceability-matrix.md) | M |
 | Parameterized cases (§13.3) | [PRD-015](docs/prd/PRD-015-parameterized-test-cases.md) | M |
-| Flaky detection (§13.4) | [PRD-016](docs/prd/PRD-016-flaky-test-detection.md) | M |
+| ~~Flaky detection (§13.4)~~ — ✅ shipped | [PRD-016](docs/prd/PRD-016-flaky-test-detection.md) | M |
 
 ### 13.1 Test Case Versioning / History — [PRD-011](docs/prd/PRD-011-test-case-versioning.md)
 
@@ -660,7 +660,16 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 - When added to a test run, the test case is expanded into N results (one per parameter set).
 - Useful for boundary value testing and combinatorial testing.
 
-### 13.4 Flaky Test Detection — [PRD-016](docs/prd/PRD-016-flaky-test-detection.md)
+### 13.4 Flaky Test Detection — ✅ shipped ([PRD-016](docs/prd/PRD-016-flaky-test-detection.md))
+
+Shipped 2026-07-31, no schema change. The score counts outcome *transitions* across the last N
+terminal results, so a consistently failing test scores 0 (broken, not flaky). Blocked, skipped and
+pending results and aborted runs are excluded. `GET /api/projects/{id}/analytics/flaky` is
+membership-scoped; the project dashboard shows a "Flaky tests" widget. Auto-labelling is available
+via `app.flaky.auto-label` but off by default, since labels are user-owned and every change is
+audited.
+
+Original scope:
 
 - Automatically flag test cases that alternate between pass and fail across recent runs.
 - Flaky score: percentage of status changes in last N executions.

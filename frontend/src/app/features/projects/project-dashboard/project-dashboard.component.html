@@ -118,6 +118,35 @@
           </table>
         </div>
       }
+
+      @if (flakyTests.length > 0) {
+        <div class="tm-card flaky-card" data-test-id="flaky-tests-widget">
+          <h2>
+            {{ 'flaky.title' | translate }}
+            <mat-icon class="flaky-help"
+                      [matTooltip]="'flaky.explanation' | translate">help_outline</mat-icon>
+          </h2>
+          <p class="flaky-hint">{{ 'flaky.hint' | translate }}</p>
+          <ul class="flaky-list">
+            @for (test of flakyTests; track test.testCaseId) {
+              <li class="flaky-item" [attr.data-test-id]="'flaky-' + test.testCaseKey">
+                <a [routerLink]="['/projects', projectId, 'test-cases', test.testCaseId]" class="flaky-link">
+                  <span class="flaky-key">{{ test.testCaseKey }}</span>
+                  <span class="flaky-title">{{ test.title }}</span>
+                </a>
+                <div class="flaky-score">
+                  <div class="flaky-bar" [style.width.%]="scorePercent(test)"></div>
+                </div>
+                <span class="flaky-meta">
+                  {{ 'flaky.scoreLabel' | translate: { score: scorePercent(test) } }}
+                  ·
+                  {{ 'flaky.runsLabel' | translate: { runs: test.runsConsidered } }}
+                </span>
+              </li>
+            }
+          </ul>
+        </div>
+      }
     </div>
   }
 </div>

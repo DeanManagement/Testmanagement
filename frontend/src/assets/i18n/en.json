@@ -758,5 +758,12 @@
     "localLoginEnabled": "Password sign-in enabled.",
     "localLoginDisabled": "Password sign-in disabled for everyone except system admins.",
     "completingSignIn": "Completing sign-in…"
+  },
+  "flaky": {
+    "title": "Flaky tests",
+    "hint": "These cases keep changing outcome across recent runs.",
+    "explanation": "The score counts how often consecutive runs disagreed, not how often the test failed. A test that always fails is broken, not flaky, and scores 0%.",
+    "scoreLabel": "{{score}}% flaky",
+    "runsLabel": "{{runs}} runs considered"
   }
 }

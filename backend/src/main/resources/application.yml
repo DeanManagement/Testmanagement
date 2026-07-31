@@ -87,6 +87,15 @@ app:
     frontend-callback-url: ${SSO_CALLBACK_URL:/login/callback}
     # SSRF guard for admin-supplied issuer URLs.
     allow-private-issuers: ${SSO_ALLOW_PRIVATE_ISSUERS:false}
+  flaky:
+    # Flakiness scoring (PRD-016). Conservative by design: under-reporting beats calling a
+    # team's tests flaky on thin evidence.
+    window: 20
+    threshold: 0.3
+    min-runs: 5
+    # Labels are user-owned, and every change is audited, so this stays off unless asked for.
+    auto-label: ${FLAKY_AUTO_LABEL:false}
+    label: flaky
   issuetracker:
     # AES key (base64, 16/24/32 bytes) for stored tracker API tokens. Unset means the
     # integration refuses to store a token rather than keeping it in plaintext (PRD-010).

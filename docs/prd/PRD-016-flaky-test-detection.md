@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | ✅ Implemented (2026-07-31) |
 | **Author** | Engineering review (Claude) |
 | **Created** | 2026-06-09 |
 | **Priority** | P3 — v2.0, cheap analytics win |
@@ -58,8 +58,46 @@ Surface test cases that flip between pass and fail across recent runs ("flaky"),
 - **Risk:** Low — read-only analytics over existing data; main care is a defensible score definition and not flooding audit via auto-label.
 
 ## 7. Acceptance Criteria
-- [ ] Flakiness score computed from recent PASSED/FAILED history with configurable window/threshold/min-runs.
-- [ ] `GET .../analytics/flaky` returns membership-scoped top flaky cases.
-- [ ] Dashboard widget lists top flaky tests linking to the case.
-- [ ] Optional auto-label is off by default and audited when enabled.
-- [ ] Score, endpoint, and scoping tests pass.
+- [x] Flakiness score computed from recent PASSED/FAILED history with configurable window/threshold/min-runs.
+- [x] `GET .../analytics/flaky` returns membership-scoped top flaky cases.
+- [x] Dashboard widget lists top flaky tests linking to the case.
+- [x] Optional auto-label is off by default and audited when enabled.
+- [x] Score, endpoint, and scoping tests pass.
+
+## 8. As Built (2026-07-31)
+
+**No schema change.** Scoring reads existing results through a narrow projection
+(`FlakyResultRow`: case id, key, title, status, run time) rather than loading `TestResult` graphs.
+Computed on demand, as §3.2 suggested starting: at this tool's scale the query is a few thousand
+narrow rows fetched once per dashboard visit, and a cached column plus a nightly job would be two
+more things to keep correct for no measurable gain.
+
+**The score answers "does this keep changing its mind", not "does this fail."** Transitions over
+comparable pairs, so a test that fails every time scores 0 — it is broken, not flaky — and a single
+regression in a long history scores near 0 rather than looking intermittent. Tests assert both
+distinctions explicitly because getting them wrong would fill the widget with ordinary failures.
+
+**Ordering** is by `COALESCE(run.endTime, run.startTime, run.createdAt)`, not row creation time:
+CI ingestion (PRD-005) backfills results long after the run they describe, so writing order is not
+run order.
+
+**Excluded:** BLOCKED, SKIPPED and PENDING (they describe the environment or the schedule, not the
+test), and ABORTED runs (a run someone cut short must not read as a transition). IN_PROGRESS runs
+still count — a recorded result is a real observation.
+
+**`runsConsidered` is exposed** so the UI can tell "stable" from "not enough history to say". Below
+`min-runs` a case is never reported flaky regardless of score: one flip out of two results is 1.0 on
+almost no evidence.
+
+**Auto-label** is off by default and idempotent — a second sync over unchanged data writes nothing,
+so enabling it does not flood the audit log. It preserves other labels and is admin-only, since it
+edits test cases.
+
+**Tests: 27 backend.** Score maths (alternating, monotonic, always-failing, single regression,
+single result), window ageing out old behaviour, min-runs suppression, status and aborted-run
+exclusion, cross-project isolation, endpoint scoping and the VIEWER/ADMIN split, plus six auto-label
+cases with the flag on.
+
+### Deferred
+- Cached `flaky_score` column and nightly job — revisit if the query shows up in profiling.
+- Cross-project ranking and root-cause analysis remain out of scope per §2.

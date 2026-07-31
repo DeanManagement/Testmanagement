@@ -33,3 +33,15 @@ export interface PassRateTrendEntry {
   completedAt: string;
   passRate: number;
 }
+
+/** A test case that keeps changing outcome across recent runs (PRD-016). */
+export interface FlakyTest {
+  testCaseId: string;
+  testCaseKey: string;
+  title: string;
+  /** Proportion of consecutive pass/fail pairs that changed outcome, in [0,1]. */
+  flakyScore: number;
+  failRate: number;
+  runsConsidered: number;
+  flaky: boolean;
+}

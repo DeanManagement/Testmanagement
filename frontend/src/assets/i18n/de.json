@@ -758,5 +758,12 @@
     "localLoginEnabled": "Passwort-Anmeldung aktiviert.",
     "localLoginDisabled": "Passwort-Anmeldung für alle außer Systemadministratoren deaktiviert.",
     "completingSignIn": "Anmeldung wird abgeschlossen…"
+  },
+  "flaky": {
+    "title": "Instabile Tests",
+    "hint": "Diese Testfälle wechseln in den letzten Durchläufen wiederholt ihr Ergebnis.",
+    "explanation": "Der Wert zählt, wie oft aufeinanderfolgende Durchläufe unterschiedlich ausfielen — nicht wie oft der Test fehlschlug. Ein Test, der immer fehlschlägt, ist defekt und nicht instabil; er erhält 0 %.",
+    "scoreLabel": "{{score}} % instabil",
+    "runsLabel": "{{runs}} Durchläufe berücksichtigt"
   }
 }

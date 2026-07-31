@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
   Chart,
@@ -26,7 +27,7 @@ import {
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { applyChartDefaults } from '../../../core/utils/chart-theme';
-import { ProjectDashboard } from '../../../shared/models/dashboard.model';
+import { FlakyTest, ProjectDashboard } from '../../../shared/models/dashboard.model';
 
 Chart.register(
   DoughnutController, BarController, LineController,
@@ -47,6 +48,7 @@ Chart.register(
     MatIconModule,
     MatTableModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     TranslateModule,
   ],
   templateUrl: './project-dashboard.component.html',
@@ -67,6 +69,8 @@ export class ProjectDashboardComponent implements OnInit {
 
   projectId = '';
   dashboard: ProjectDashboard | null = null;
+  /** Empty is the common case and reads as "nothing to worry about" rather than an error. */
+  flakyTests: FlakyTest[] = [];
   loading = true;
   recentRunColumns = ['name', 'environment', 'status', 'results'];
 
@@ -90,6 +94,20 @@ export class ProjectDashboardComponent implements OnInit {
         },
       });
     }
+    if (this.projectId) {
+      this.projectApi.getFlakyTests(this.projectId, 5)
+        .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (flaky) => {
+            this.flakyTests = flaky;
+            this.cdr.detectChanges();
+          },
+          // Analytics are a nice-to-have on this screen; a failure here must not blank the
+          // dashboard that already loaded.
+          error: () => undefined,
+        });
+    }
+
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.dashboard) {
         this.renderCharts();
@@ -232,4 +250,10 @@ export class ProjectDashboardComponent implements OnInit {
       },
     });
   }
+
+  /** Score as a percentage for the bar width and the label. */
+  scorePercent(test: FlakyTest): number {
+    return Math.round(test.flakyScore * 100);
+  }
+
 }
