@@ -1,0 +1,41 @@
+<button mat-icon-button
+        class="toolbar-action"
+        [matMenuTriggerFor]="bellMenu"
+        (menuOpened)="onMenuOpened()"
+        [matTooltip]="'notification.title' | translate"
+        data-test-id="notification-bell"
+        aria-label="Notifications">
+  <mat-icon [matBadge]="unreadCount" [matBadgeHidden]="unreadCount === 0" matBadgeColor="warn" matBadgeSize="small">
+    notifications
+  </mat-icon>
+</button>
+
+<mat-menu #bellMenu="matMenu" class="notification-menu">
+  <div class="notification-header" (click)="$event.stopPropagation()">
+    <span>{{ 'notification.title' | translate }}</span>
+    @if (unreadCount > 0) {
+      <button mat-button (click)="markAllRead()" data-test-id="notification-mark-all">
+        {{ 'notification.markAllRead' | translate }}
+      </button>
+    }
+  </div>
+
+  @if (loading) {
+    <div class="notification-empty">{{ 'common.loading' | translate }}</div>
+  } @else if (notifications.length === 0) {
+    <div class="notification-empty" data-test-id="notification-empty">{{ 'notification.empty' | translate }}</div>
+  } @else {
+    @for (n of notifications; track n.id) {
+      <button mat-menu-item class="notification-item" [class.unread]="!n.read"
+              (click)="open(n)" data-test-id="notification-item">
+        <span class="notification-text">
+          <strong>{{ n.actorName || ('notification.someone' | translate) }}</strong>
+          {{ 'notification.action.' + n.action | translate }}
+          {{ 'notification.type.' + n.entityType | translate }}
+          @if (n.entityName) { <em>{{ n.entityName }}</em> }
+        </span>
+        <span class="notification-time">{{ n.createdAt | date: 'short' }}</span>
+      </button>
+    }
+  }
+</mat-menu>

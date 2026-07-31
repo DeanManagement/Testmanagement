@@ -1,0 +1,39 @@
+.notification-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 1rem;
+  font-weight: 500;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.notification-empty {
+  padding: 1rem;
+  color: var(--mat-sys-on-surface-variant, #5f6368);
+  text-align: center;
+}
+
+.notification-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: auto;
+  line-height: 1.3;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  white-space: normal;
+}
+
+.notification-item.unread {
+  background: rgba(25, 118, 210, 0.06);
+}
+
+.notification-text {
+  display: block;
+  max-width: 320px;
+}
+
+.notification-time {
+  font-size: 0.72rem;
+  color: var(--mat-sys-on-surface-variant, #5f6368);
+}

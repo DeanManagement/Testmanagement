@@ -1,0 +1,92 @@
+@if (loading) {
+  <div class="my-queue-loading" data-test-id="my-queue-loading">
+    <mat-spinner diameter="24"></mat-spinner>
+  </div>
+} @else if (queue && !isEmpty) {
+  <mat-card class="my-queue" data-test-id="my-queue">
+    <mat-card-header>
+      <mat-card-title>
+        <mat-icon class="title-icon">flag</mat-icon>
+        {{ 'myQueue.title' | translate }}
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (queue.dueTestPlans.length) {
+        <section class="bucket" data-test-id="my-queue-due-plans">
+          <h3>
+            <mat-icon>event</mat-icon>
+            {{ 'myQueue.duePlans' | translate }}
+          </h3>
+          <ul>
+            @for (item of queue.dueTestPlans; track item.id) {
+              <li>
+                <a [routerLink]="['/projects', item.projectId, 'test-plans', item.id]">
+                  <span class="project-key">{{ item.projectKey }}</span>
+                  <span class="item-title">{{ item.name }}</span>
+                </a>
+                <span class="meta">{{ item.targetDate }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+      @if (queue.inProgressRuns.length) {
+        <section class="bucket" data-test-id="my-queue-in-progress-runs">
+          <h3>
+            <mat-icon>play_circle</mat-icon>
+            {{ 'myQueue.inProgressRuns' | translate }}
+          </h3>
+          <ul>
+            @for (item of queue.inProgressRuns; track item.id) {
+              <li>
+                <a [routerLink]="['/projects', item.projectId, 'test-runs', item.id]">
+                  <span class="project-key">{{ item.key }}</span>
+                  <span class="item-title">{{ item.name }}</span>
+                </a>
+                <span class="meta">{{ item.updatedAt | localizedDate }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+      @if (queue.staleBugReports.length) {
+        <section class="bucket" data-test-id="my-queue-stale-bugs">
+          <h3>
+            <mat-icon>bug_report</mat-icon>
+            {{ 'myQueue.staleBugs' | translate }}
+          </h3>
+          <ul>
+            @for (item of queue.staleBugReports; track item.id) {
+              <li>
+                <a [routerLink]="['/projects', item.projectId, 'bug-reports', item.id]">
+                  <span class="project-key">{{ item.projectKey }}</span>
+                  <span class="item-title">{{ item.title }}</span>
+                </a>
+                <span class="meta">{{ item.updatedAt | localizedDate }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+      @if (queue.oldDraftTestCases.length) {
+        <section class="bucket" data-test-id="my-queue-old-drafts">
+          <h3>
+            <mat-icon>edit_note</mat-icon>
+            {{ 'myQueue.oldDrafts' | translate }}
+          </h3>
+          <ul>
+            @for (item of queue.oldDraftTestCases; track item.id) {
+              <li>
+                <a [routerLink]="['/projects', item.projectId, 'test-cases', item.id]">
+                  <span class="project-key">{{ item.key }}</span>
+                  <span class="item-title">{{ item.title }}</span>
+                </a>
+                <span class="meta">{{ item.updatedAt | localizedDate }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    </mat-card-content>
+  </mat-card>
+}

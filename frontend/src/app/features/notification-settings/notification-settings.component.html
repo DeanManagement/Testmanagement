@@ -1,0 +1,31 @@
+<div class="prefs-container">
+  <div class="page-header">
+    <a mat-button routerLink="/dashboard" class="back-link">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'common.back' | translate }}
+    </a>
+    <h1>{{ 'notification.prefs.title' | translate }}</h1>
+  </div>
+  <p class="page-hint">{{ 'notification.prefs.hint' | translate }}</p>
+
+  <div class="tm-card">
+    <div class="prefs-row prefs-head">
+      <span class="prefs-event">{{ 'notification.prefs.event' | translate }}</span>
+      <span>{{ 'notification.prefs.inApp' | translate }}</span>
+      <span>{{ 'notification.prefs.email' | translate }}</span>
+    </div>
+    @for (action of actions; track action) {
+      <div class="prefs-row" data-test-id="pref-row">
+        <span class="prefs-event">{{ 'notification.action.' + action | translate }}</span>
+        <mat-slide-toggle [(ngModel)]="prefs[action].inApp" data-test-id="pref-inapp"></mat-slide-toggle>
+        <mat-slide-toggle [(ngModel)]="prefs[action].email" data-test-id="pref-email"></mat-slide-toggle>
+      </div>
+    }
+  </div>
+
+  <div class="prefs-actions">
+    <button mat-flat-button [disabled]="saving" (click)="save()" data-test-id="prefs-save">
+      {{ 'common.save' | translate }}
+    </button>
+  </div>
+</div>

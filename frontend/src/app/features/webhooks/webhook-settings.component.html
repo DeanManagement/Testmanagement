@@ -1,0 +1,128 @@
+<div class="webhook-container">
+  <div class="page-header">
+    <div class="page-header-left">
+      <a mat-button [routerLink]="['/projects', projectId]" class="back-link" data-test-id="webhook-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <h1 data-test-id="webhook-title">{{ 'webhook.title' | translate }}</h1>
+    </div>
+    <button mat-flat-button class="create-btn" (click)="openCreate()" data-test-id="webhook-create-btn">
+      <mat-icon>add</mat-icon>
+      {{ 'webhook.add' | translate }}
+    </button>
+  </div>
+
+  <p class="page-hint">{{ 'webhook.description' | translate }}</p>
+
+  @if (formOpen) {
+    <div class="tm-card form-card" data-test-id="webhook-form">
+      <h2>{{ (editingId ? 'webhook.editTitle' : 'webhook.createTitle') | translate }}</h2>
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'webhook.url' | translate }}</mat-label>
+        <input matInput [(ngModel)]="formUrl" placeholder="https://example.com/hook" data-test-id="webhook-url-input">
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ editingId ? ('webhook.secretEdit' | translate) : ('webhook.secret' | translate) }}</mat-label>
+        <input matInput type="password" [(ngModel)]="formSecret" data-test-id="webhook-secret-input">
+      </mat-form-field>
+
+      <div class="events-group">
+        <span class="events-label">{{ 'webhook.events' | translate }}</span>
+        @for (event of allEvents; track event) {
+          <mat-checkbox
+            [checked]="formEvents.has(event)"
+            (change)="toggleEvent(event, $event.checked)"
+            data-test-id="webhook-event-checkbox">
+            {{ 'webhook.event.' + event | translate }}
+          </mat-checkbox>
+        }
+      </div>
+
+      <mat-slide-toggle [(ngModel)]="formActive" class="active-toggle">{{ 'webhook.active' | translate }}</mat-slide-toggle>
+
+      <div class="form-actions">
+        <button mat-button (click)="cancelForm()" data-test-id="webhook-cancel-btn">{{ 'common.cancel' | translate }}</button>
+        <button mat-flat-button [disabled]="!formValid" (click)="save()" data-test-id="webhook-save-btn">{{ 'common.save' | translate }}</button>
+      </div>
+    </div>
+  }
+
+  @if (loading) {
+    <div class="spinner-container"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else if (webhooks.length === 0) {
+    <div class="empty-state" data-test-id="webhook-empty">
+      <mat-icon>webhook</mat-icon>
+      <p>{{ 'webhook.empty' | translate }}</p>
+    </div>
+  } @else {
+    @for (webhook of webhooks; track webhook.id) {
+      <div class="tm-card webhook-row" data-test-id="webhook-row">
+        <div class="webhook-main">
+          <div class="webhook-info">
+            <span class="webhook-url">{{ webhook.url }}</span>
+            <div class="webhook-events">
+              @for (event of webhook.events; track event) {
+                <span class="event-chip">{{ 'webhook.event.' + event | translate }}</span>
+              }
+            </div>
+          </div>
+          <div class="webhook-actions">
+            <mat-slide-toggle
+              [checked]="webhook.active"
+              (change)="toggleActive(webhook, $event.checked)"
+              data-test-id="webhook-active-toggle">
+            </mat-slide-toggle>
+            <button mat-icon-button (click)="test(webhook)" [attr.aria-label]="'webhook.test' | translate" data-test-id="webhook-test-btn">
+              <mat-icon>send</mat-icon>
+            </button>
+            <button mat-icon-button (click)="viewDeliveries(webhook)" [attr.aria-label]="'webhook.deliveries' | translate" data-test-id="webhook-deliveries-btn">
+              <mat-icon>history</mat-icon>
+            </button>
+            <button mat-icon-button (click)="openEdit(webhook)" [attr.aria-label]="'common.edit' | translate" data-test-id="webhook-edit-btn">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button class="danger" (click)="remove(webhook)" [attr.aria-label]="'common.delete' | translate" data-test-id="webhook-delete-btn">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        @if (expandedWebhookId === webhook.id) {
+          <div class="deliveries-panel" data-test-id="webhook-deliveries-panel">
+            @if (deliveriesLoading) {
+              <mat-spinner diameter="28"></mat-spinner>
+            } @else if (deliveries.length === 0) {
+              <p class="no-deliveries">{{ 'webhook.noDeliveries' | translate }}</p>
+            } @else {
+              <table mat-table [dataSource]="deliveries" class="deliveries-table">
+                <ng-container matColumnDef="event">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'webhook.events' | translate }}</th>
+                  <td mat-cell *matCellDef="let d">{{ 'webhook.event.' + d.event | translate }}</td>
+                </ng-container>
+                <ng-container matColumnDef="status">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'webhook.statusColumn' | translate }}</th>
+                  <td mat-cell *matCellDef="let d">
+                    <span class="delivery-status">{{ deliveryStatusLabel(d) | translate }}</span>
+                    @if (d.responseStatus != null) { <span class="response-code">({{ d.responseStatus }})</span> }
+                  </td>
+                </ng-container>
+                <ng-container matColumnDef="attempt">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'webhook.attempt' | translate }}</th>
+                  <td mat-cell *matCellDef="let d">{{ d.attempt }}</td>
+                </ng-container>
+                <ng-container matColumnDef="createdAt">
+                  <th mat-header-cell *matHeaderCellDef>{{ 'webhook.time' | translate }}</th>
+                  <td mat-cell *matCellDef="let d">{{ d.createdAt | date: 'short' }}</td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="deliveryColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: deliveryColumns"></tr>
+              </table>
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

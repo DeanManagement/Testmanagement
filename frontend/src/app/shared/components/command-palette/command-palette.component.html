@@ -1,0 +1,53 @@
+<div class="palette" data-test-id="command-palette">
+  <mat-form-field appearance="outline" class="palette-search">
+    <mat-icon matPrefix>search</mat-icon>
+    <input #searchInput
+           matInput
+           type="text"
+           autocomplete="off"
+           [placeholder]="'commandPalette.placeholder' | translate"
+           [(ngModel)]="query"
+           (ngModelChange)="onQueryChange()"
+           data-test-id="command-palette-input" />
+  </mat-form-field>
+
+  @if (results.length > 0) {
+    <ul class="palette-results" data-test-id="command-palette-results">
+      @for (item of results; track $index; let i = $index) {
+        <li class="palette-result"
+            [class.palette-result--active]="i === selectedIndex"
+            (mouseenter)="selectedIndex = i"
+            (click)="selectItem(i)"
+            [attr.data-test-id]="'command-palette-result-' + i">
+          <mat-icon class="palette-result-icon">{{ item.icon }}</mat-icon>
+          <div class="palette-result-text">
+            <div class="palette-result-title">
+              @if (item.key) {
+                <span class="palette-result-key">{{ item.key }}</span>
+              }
+              <span>{{ item.title }}</span>
+            </div>
+            @if (item.subtitle) {
+              <div class="palette-result-subtitle">{{ item.subtitle }}</div>
+            }
+          </div>
+          <span class="palette-result-type">{{ ('commandPalette.types.' + item.type) | translate }}</span>
+        </li>
+      }
+    </ul>
+  } @else {
+    <div class="palette-empty">
+      @if (query.trim()) {
+        {{ 'commandPalette.noResults' | translate }}
+      } @else {
+        {{ 'commandPalette.hint' | translate }}
+      }
+    </div>
+  }
+
+  <div class="palette-footer">
+    <span><kbd>↑</kbd><kbd>↓</kbd> {{ 'commandPalette.navigate' | translate }}</span>
+    <span><kbd>↵</kbd> {{ 'commandPalette.open' | translate }}</span>
+    <span><kbd>Esc</kbd> {{ 'commandPalette.close' | translate }}</span>
+  </div>
+</div>

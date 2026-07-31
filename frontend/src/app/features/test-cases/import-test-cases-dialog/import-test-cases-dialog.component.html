@@ -1,0 +1,42 @@
+<h2 mat-dialog-title>{{ 'import.title' | translate }}</h2>
+<mat-dialog-content>
+  <p class="import-hint">{{ 'import.hint' | translate }}</p>
+
+  <input type="file" accept=".csv,.json" (change)="onFileSelected($event)" data-test-id="import-file-input">
+
+  @if (loading) {
+    <div class="import-spinner"><mat-spinner diameter="32"></mat-spinner></div>
+  }
+
+  @if (preview) {
+    <div class="import-summary" data-test-id="import-preview">
+      <span class="summary-chip summary-ok">{{ 'import.imported' | translate }}: {{ preview.imported }}</span>
+      <span class="summary-chip summary-skip">{{ 'import.skipped' | translate }}: {{ preview.skipped }}</span>
+      @if (preview.dryRun) { <span class="summary-chip">{{ 'import.dryRunBadge' | translate }}</span> }
+    </div>
+
+    @if (preview.errors.length > 0) {
+      <table mat-table [dataSource]="preview.errors" class="error-table">
+        <ng-container matColumnDef="row">
+          <th mat-header-cell *matHeaderCellDef>{{ 'import.row' | translate }}</th>
+          <td mat-cell *matCellDef="let e">{{ e.row }}</td>
+        </ng-container>
+        <ng-container matColumnDef="message">
+          <th mat-header-cell *matHeaderCellDef>{{ 'import.error' | translate }}</th>
+          <td mat-cell *matCellDef="let e">{{ e.message }}</td>
+        </ng-container>
+        <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: errorColumns"></tr>
+      </table>
+    }
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button (click)="cancel()" data-test-id="import-cancel-btn">{{ 'common.cancel' | translate }}</button>
+  <button mat-stroked-button [disabled]="!file || loading" (click)="dryRun()" data-test-id="import-preview-btn">
+    {{ 'import.preview' | translate }}
+  </button>
+  <button mat-flat-button [disabled]="!file || loading" (click)="confirmImport()" data-test-id="import-confirm-btn">
+    {{ 'import.confirm' | translate }}
+  </button>
+</mat-dialog-actions>
