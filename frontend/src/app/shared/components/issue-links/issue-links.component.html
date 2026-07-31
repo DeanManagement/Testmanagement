@@ -1,0 +1,105 @@
+<div class="issue-links" data-test-id="issue-links-section">
+  <div class="issue-links-header">
+    <h4>{{ 'issueTracker.linkedIssues' | translate }}</h4>
+    @if (links.length > 0) {
+      <button mat-icon-button
+              [disabled]="busy"
+              (click)="refresh()"
+              [matTooltip]="'issueTracker.refreshState' | translate"
+              [attr.aria-label]="'issueTracker.refreshState' | translate"
+              data-test-id="issue-links-refresh-btn">
+        <mat-icon>refresh</mat-icon>
+      </button>
+    }
+  </div>
+
+  @if (loading) {
+    <mat-spinner diameter="20"></mat-spinner>
+  } @else {
+    @if (links.length === 0) {
+      <p class="no-issues">{{ 'issueTracker.noLinkedIssues' | translate }}</p>
+    } @else {
+      <div class="issue-chip-list">
+        @for (link of links; track trackById($index, link)) {
+          <div class="issue-chip" [attr.data-test-id]="'issue-link-' + link.id">
+            <span class="issue-state issue-state--{{ link.state | lowercase }}"
+                  [matTooltip]="link.stateCheckedAt
+                    ? ('issueTracker.checkedAt' | translate) + ' ' + (link.stateCheckedAt | localizedDate: 'short')
+                    : ('issueTracker.neverChecked' | translate)">
+              {{ 'issueTracker.state.' + link.state | translate }}
+            </span>
+            <a [href]="link.url" target="_blank" rel="noopener noreferrer" class="issue-chip-link">
+              <span class="issue-ref">{{ link.externalId }}</span>
+              @if (link.title) {
+                <span class="issue-title">{{ link.title }}</span>
+              }
+              <mat-icon class="external-icon">open_in_new</mat-icon>
+            </a>
+            @if (canEdit) {
+              <button mat-icon-button
+                      class="unlink-btn"
+                      [disabled]="busy"
+                      (click)="unlink(link)"
+                      [matTooltip]="'issueTracker.unlink' | translate"
+                      [attr.aria-label]="'issueTracker.unlink' | translate"
+                      [attr.data-test-id]="'issue-unlink-' + link.id">
+                <mat-icon>link_off</mat-icon>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    @if (canEdit) {
+      <div class="issue-actions">
+        @if (!searchOpen) {
+          <button mat-stroked-button [disabled]="busy" (click)="openSearch()" data-test-id="issue-link-existing-btn">
+            <mat-icon>link</mat-icon>
+            {{ 'issueTracker.linkExisting' | translate }}
+          </button>
+          @if (allowCreate) {
+            <button mat-stroked-button [disabled]="busy" (click)="createIssue()" data-test-id="issue-create-btn">
+              <mat-icon>bug_report</mat-icon>
+              {{ 'issueTracker.createIssue' | translate }}
+            </button>
+          }
+        } @else {
+          <div class="issue-search">
+            <mat-form-field appearance="outline" class="issue-search-field">
+              <mat-label>{{ 'issueTracker.searchLabel' | translate }}</mat-label>
+              <input matInput
+                     [ngModel]="searchTerm"
+                     (ngModelChange)="onSearchInput($event)"
+                     [matAutocomplete]="issueAuto"
+                     data-test-id="issue-search-input">
+              @if (searching) {
+                <mat-spinner matSuffix diameter="18"></mat-spinner>
+              }
+              <mat-hint>{{ 'issueTracker.searchHint' | translate }}</mat-hint>
+            </mat-form-field>
+            <mat-autocomplete #issueAuto="matAutocomplete">
+              @for (option of searchResults; track option.externalId) {
+                <mat-option [value]="option.externalId" (onSelectionChange)="linkExisting(option)">
+                  <span class="option-state option-state--{{ option.state | lowercase }}">
+                    {{ 'issueTracker.state.' + option.state | translate }}
+                  </span>
+                  <span class="option-ref">{{ option.externalId }}</span>
+                  <span class="option-title">{{ option.title }}</span>
+                </mat-option>
+              }
+            </mat-autocomplete>
+            <button mat-button (click)="closeSearch()" data-test-id="issue-search-cancel-btn">
+              {{ 'common.cancel' | translate }}
+            </button>
+          </div>
+          @if (searchError) {
+            <p class="search-error">{{ 'issueTracker.searchFailed' | translate }}</p>
+          } @else if (!searching && searchTerm && searchResults.length === 0) {
+            <p class="search-empty">{{ 'issueTracker.searchNoResults' | translate }}</p>
+          }
+        }
+      </div>
+    }
+  }
+</div>

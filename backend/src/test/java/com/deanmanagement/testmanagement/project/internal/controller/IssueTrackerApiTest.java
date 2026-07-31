@@ -221,6 +221,53 @@ class IssueTrackerApiTest {
     }
 
     @Test
+    void statusIsReadableByAnyMemberAndLeaksNoConfigDetail() throws Exception {
+        mockMvc.perform(put(configUrl(projectId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(saveBody(TOKEN))
+                        .with(user(admin)))
+                .andExpect(status().isOk());
+
+        // A tester may not read the config, but must know whether linking is possible at all.
+        String response = mockMvc.perform(get(configUrl(projectId) + "/status").with(user(tester)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.configured").value(true))
+                .andExpect(jsonPath("$.provider").value("GITLAB"))
+                .andReturn().getResponse().getContentAsString();
+
+        assertThat(response).doesNotContain(TOKEN);
+        assertThat(response).doesNotContain("gitlab.example.com");
+        assertThat(response).doesNotContain("group/project");
+    }
+
+    @Test
+    void statusReportsNotConfiguredRatherThanFailing() throws Exception {
+        mockMvc.perform(get(configUrl(projectId) + "/status").with(user(tester)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.configured").value(false));
+    }
+
+    @Test
+    void statusIsStillMembershipScoped() throws Exception {
+        mockMvc.perform(get(configUrl(projectId) + "/status").with(user(outsider)))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void inactiveConfigCountsAsNotConfigured() throws Exception {
+        mockMvc.perform(put(configUrl(projectId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"provider\":\"GITLAB\",\"baseUrl\":\"https://gitlab.example.com\","
+                                + "\"projectRef\":\"group/project\",\"apiToken\":\"" + TOKEN + "\",\"active\":false}")
+                        .with(user(admin)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get(configUrl(projectId) + "/status").with(user(tester)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.configured").value(false));
+    }
+
+    @Test
     void unsupportedProviderIsRejectedUntilItHasAnAdapter() throws Exception {
         mockMvc.perform(put(configUrl(projectId))
                         .contentType(MediaType.APPLICATION_JSON)

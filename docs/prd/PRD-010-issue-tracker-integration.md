@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 🚧 Backend implemented (2026-07-31, GitLab + Forgejo) — frontend pending |
+| **Status** | ✅ Implemented (2026-07-31, GitLab + Forgejo) |
 | **Author** | Engineering review (Claude) |
 | **Created** | 2026-06-09 |
 | **Priority** | P3 — v2.0, highest value in the v2 set |
@@ -73,8 +73,8 @@ Ship **one provider first** (GitHub or GitLab — REST, token auth, simple) and 
 
 ## 7. Acceptance Criteria
 - [x] Project admin configures a provider with an encrypted token (never returned).
-- [x] Tester searches issues and links one to a result; can create a templated issue from a failure. *(API only — UI pending.)*
-- [x] Linked issues show an OPEN/CLOSED pill refreshed within the poll window. *(State cached and polled; pill pending.)*
+- [x] Tester searches issues and links one to a result; can create a templated issue from a failure.
+- [x] Linked issues show an OPEN/CLOSED pill refreshed within the poll window.
 - [x] No outbound calls when no tracker is configured; non-HTTPS/private base URLs rejected.
 - [x] `defectLink` remains usable; provider/adapter/authz tests pass.
 
@@ -147,7 +147,29 @@ stop-on-auth-failure.
 whose primitive component is absent from the body, which made "link an existing issue" 400. The same
 latent bug was fixed in `GrantTestCasePermissionRequest.canEdit`.
 
+## 9. As Built — frontend (2026-07-31)
+
+- **Settings** (`/projects/:id/issue-tracker`, linked from the project settings card, admin-only):
+  provider select limited to trackers with an adapter, instance URL, project reference with a
+  provider-specific hint, token field, active toggle, test-connection button and disconnect. The
+  token field always starts empty and an empty value on save means "keep the stored token" — the
+  API never returns it, so prefilling a placeholder would risk saving the placeholder back. The
+  tracker's last error renders as a banner so a bad token is visible here rather than only at the
+  next search.
+- **Result detail**: linked issues render as chips with an OPEN/CLOSED pill, the external link, and
+  an unlink action for testers. A typeahead (debounced 300ms) links an existing issue; on FAILED and
+  BLOCKED results a "file new issue" button posts `{create: true}` and lets the backend template the
+  body. A refresh button re-reads state on demand.
+- **New endpoint:** `GET /issue-tracker/status` returns `{configured, provider}` to any project
+  member. The execution screen needs to know whether to offer linking at all, but the config
+  endpoint is admin-only and exposing it would leak the instance URL and project reference to
+  testers. The status response deliberately carries neither.
+- The section is hidden entirely when no tracker is configured, and read-only for VIEWERs.
+- **Tests:** 10 component specs covering load failure, re-link replacing rather than duplicating,
+  create posting no external id, unlink rollback on failure, and cached state surviving a failed
+  refresh; 4 backend specs for the status endpoint's authz and its non-disclosure of config detail.
+
 ### Still to do
-- Frontend: project-settings config form with test-connection button; link/create UI and OPEN/CLOSED
-  pill on result detail (§3.5).
-- Screenshot links in the templated body (§2) — deferred until the UI exists to exercise them.
+- Screenshot links in the templated body (§2) — deferred; the body carries the test case key, run
+  key, environment, tester comment and per-step actual results, which covers the reproduction need
+  without shipping media URLs to an external system.

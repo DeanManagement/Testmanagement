@@ -641,7 +641,8 @@
     "unsavedChangesWarning": "You have unsaved changes. Are you sure you want to leave?",
     "loadError": "Failed to load data. Please try again.",
     "retry": "Retry",
-    "ok": "OK"
+    "ok": "OK",
+    "saving": "Saving…"
   },
   "errors": {
     "server": "A server error occurred. Please try again later.",
@@ -652,5 +653,54 @@
     "light": "Light",
     "dark": "Dark",
     "system": "System"
+  },
+  "issueTracker": {
+    "title": "Issue tracker",
+    "description": "Connect this project to an issue tracker so testers can link or file defects from a failed result.",
+    "manage": "Configure",
+    "provider": "Provider",
+    "providerHint": "Only trackers with an available adapter are listed.",
+    "providers": {
+      "GITLAB": "GitLab",
+      "FORGEJO": "Forgejo / Gitea",
+      "GITHUB": "GitHub",
+      "JIRA": "Jira",
+      "LINEAR": "Linear"
+    },
+    "baseUrl": "Instance URL",
+    "baseUrlHint": "Must use https. Private and loopback addresses are rejected.",
+    "projectRef": "Project reference",
+    "token": "API token",
+    "tokenReplace": "Replace API token",
+    "tokenHint": "Stored encrypted. Requires ISSUE_TRACKER_ENCRYPTION_KEY to be configured on the server.",
+    "tokenStoredHint": "A token is stored. Leave empty to keep it.",
+    "active": "Active",
+    "activeHint": "When inactive, no calls are made to the tracker and linking is unavailable.",
+    "testConnection": "Test connection",
+    "testing": "Testing…",
+    "testSucceeded": "Connection succeeded.",
+    "saved": "Issue tracker settings saved.",
+    "deleted": "Issue tracker disconnected.",
+    "deleteTitle": "Disconnect issue tracker?",
+    "deleteMessage": "This project will no longer be able to search, link or create issues.",
+    "deleteKeepsLinks": "Issues already linked to results are kept and stay clickable.",
+    "lastError": "Last error from the tracker",
+    "linkedIssues": "Linked issues",
+    "noLinkedIssues": "No issues linked to this result.",
+    "linkExisting": "Link issue",
+    "createIssue": "File new issue",
+    "unlink": "Unlink",
+    "refreshState": "Refresh status",
+    "searchLabel": "Search issues",
+    "searchHint": "Type to search the connected tracker.",
+    "searchNoResults": "No matching issues.",
+    "searchFailed": "Could not search the tracker. It may be unreachable or the token may be invalid.",
+    "checkedAt": "Checked",
+    "neverChecked": "Status not checked yet",
+    "state": {
+      "OPEN": "Open",
+      "CLOSED": "Closed",
+      "UNKNOWN": "Unknown"
+    }
   }
 }

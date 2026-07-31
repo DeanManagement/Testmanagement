@@ -17,7 +17,7 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
-import { Observable, of, Subject } from 'rxjs';
+import { Observable, combineLatest, of, Subject } from 'rxjs';
 import { debounceTime, take } from 'rxjs/operators';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
@@ -43,6 +43,9 @@ import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
 import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
+import { IssueLinksComponent } from '../../../shared/components/issue-links/issue-links.component';
+import { IssueTrackerApiService } from '../../../core/services/issue-tracker-api.service';
+import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 
 @Component({
   selector: 'app-test-run-detail',
@@ -72,6 +75,7 @@ import { WatchToggleComponent } from '../../../shared/components/watch-toggle/wa
     StepSpecCardComponent,
     EntityHistoryComponent,
     WatchToggleComponent,
+    IssueLinksComponent,
   ],
   templateUrl: './test-run-detail.component.html',
   styleUrl: './test-run-detail.component.scss',
@@ -87,6 +91,8 @@ export class TestRunDetailComponent implements OnInit {
   private readonly projectApi = inject(ProjectApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly issueTrackerApi = inject(IssueTrackerApiService);
+  private readonly memberApi = inject(ProjectMemberApiService);
   private actualResultSubject = new Subject<{ resultId: string; step: StepResult; actualResult: string }>();
 
   /**
@@ -131,6 +137,10 @@ export class TestRunDetailComponent implements OnInit {
   isAdmin$ = this.store.select(selectIsSystemAdmin);
   editingComment: Comment | null = null;
   bugReportsEnabled = false;
+  /** Whether a tracker is configured for this project, so the section is hidden when it is not. */
+  issueTrackerConfigured = false;
+  /** TESTER and up may link, create and unlink issues; viewers see them read-only. */
+  canLinkIssues = false;
   linkedBugReports$: Observable<import('../../../shared/models/bug-report.model').BugReport[]> = of([]);
   uploadProgress$ = this.testRunApi.uploadProgress$;
 
@@ -144,6 +154,7 @@ export class TestRunDetailComponent implements OnInit {
           this.bugReportsEnabled = project.bugReportsEnabled;
           this.cdr.detectChanges();
         });
+      this.loadIssueTrackerContext();
       this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: this.runId }));
       this.testRun$ = this.store.select(selectTestRunById(this.runId));
       this.testRun$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(run => {
@@ -589,4 +600,40 @@ export class TestRunDetailComponent implements OnInit {
       }));
     }
   }
+
+  /**
+   * Resolves whether this project has a tracker and whether the caller may write to it. Both are
+   * needed before the issue section renders: showing "link an issue" on a project with no tracker
+   * would only produce a confusing error at the first search.
+   */
+  private loadIssueTrackerContext(): void {
+    this.issueTrackerApi.getStatus(this.projectId)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (status) => {
+          this.issueTrackerConfigured = status.configured;
+          this.cdr.detectChanges();
+        },
+        error: () => undefined,
+      });
+
+    combineLatest([
+      this.memberApi.getByProject(this.projectId),
+      this.store.select(selectAuthUser).pipe(take(1)),
+    ])
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ([members, user]) => {
+          if (!user) {
+            this.canLinkIssues = false;
+            return;
+          }
+          const role = members.find((m) => m.userId === user.id)?.role;
+          this.canLinkIssues = user.systemAdmin || role === 'ADMIN' || role === 'TESTER';
+          this.cdr.detectChanges();
+        },
+        error: () => undefined,
+      });
+  }
+
 }

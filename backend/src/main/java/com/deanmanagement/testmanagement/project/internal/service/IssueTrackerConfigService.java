@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueTrackerConfigResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueTrackerStatusResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.SaveIssueTrackerConfigRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerConfig;
 import com.deanmanagement.testmanagement.project.internal.issuetracker.IssueTrackerProvider;
@@ -39,6 +40,17 @@ public class IssueTrackerConfigService {
 
     public Optional<IssueTrackerConfigResponse> find(UUID projectId) {
         return configRepository.findByProjectId(projectId).map(IssueTrackerConfigService::toResponse);
+    }
+
+    /**
+     * The minimum any project member may know: whether linking issues is possible here, and to
+     * which kind of tracker. Deliberately excludes the base URL, project reference and error state,
+     * which stay admin-only.
+     */
+    public IssueTrackerStatusResponse status(UUID projectId) {
+        return activeConfig(projectId)
+                .map(config -> new IssueTrackerStatusResponse(true, config.getProvider()))
+                .orElseGet(() -> new IssueTrackerStatusResponse(false, null));
     }
 
     @Transactional

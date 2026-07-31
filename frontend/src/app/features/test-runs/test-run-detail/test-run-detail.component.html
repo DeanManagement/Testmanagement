@@ -248,6 +248,16 @@
                 }
               }
 
+              @if (issueTrackerConfigured) {
+                <app-issue-links
+                  [projectId]="projectId"
+                  [runId]="runId"
+                  [resultId]="result.id"
+                  [canEdit]="canLinkIssues"
+                  [allowCreate]="result.status === 'FAILED' || result.status === 'BLOCKED'"
+                ></app-issue-links>
+              }
+
               <div class="case-nav">
                 <button mat-stroked-button [disabled]="!canNavigate('prev', run)" (click)="navigateResult('prev', run)" data-test-id="execution-prev-btn">
                   <mat-icon>chevron_left</mat-icon>

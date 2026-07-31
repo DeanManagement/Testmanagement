@@ -1,0 +1,87 @@
+<div class="tracker-container">
+  <div class="page-header">
+    <div class="page-header-left">
+      <a mat-button [routerLink]="['/projects', projectId]" class="back-link" data-test-id="issue-tracker-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <h1 data-test-id="issue-tracker-title">{{ 'issueTracker.title' | translate }}</h1>
+    </div>
+  </div>
+
+  <p class="page-hint">{{ 'issueTracker.description' | translate }}</p>
+
+  @if (loading) {
+    <div class="loading-state">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  } @else {
+    @if (config?.lastError) {
+      <div class="tracker-error tm-card" data-test-id="issue-tracker-error">
+        <mat-icon>error_outline</mat-icon>
+        <div>
+          <strong>{{ 'issueTracker.lastError' | translate }}</strong>
+          <p>{{ config?.lastError }}</p>
+          @if (config?.lastErrorAt) {
+            <small>{{ config?.lastErrorAt | localizedDate: 'medium' }}</small>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="tm-card form-card" data-test-id="issue-tracker-form">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'issueTracker.provider' | translate }}</mat-label>
+        <mat-select [(ngModel)]="formProvider" data-test-id="issue-tracker-provider-select">
+          @for (provider of providers; track provider) {
+            <mat-option [value]="provider">{{ 'issueTracker.providers.' + provider | translate }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>{{ 'issueTracker.providerHint' | translate }}</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'issueTracker.baseUrl' | translate }}</mat-label>
+        <input matInput [(ngModel)]="formBaseUrl" placeholder="https://gitlab.com" data-test-id="issue-tracker-base-url-input">
+        <mat-hint>{{ 'issueTracker.baseUrlHint' | translate }}</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ 'issueTracker.projectRef' | translate }}</mat-label>
+        <input matInput [(ngModel)]="formProjectRef" [placeholder]="projectRefHint" data-test-id="issue-tracker-project-ref-input">
+        <mat-hint>{{ projectRefHint }}</mat-hint>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>{{ (config?.tokenSet ? 'issueTracker.tokenReplace' : 'issueTracker.token') | translate }}</mat-label>
+        <input matInput type="password" autocomplete="off" [(ngModel)]="formToken" data-test-id="issue-tracker-token-input">
+        <mat-hint>
+          {{ (config?.tokenSet ? 'issueTracker.tokenStoredHint' : 'issueTracker.tokenHint') | translate }}
+        </mat-hint>
+      </mat-form-field>
+
+      <div class="toggle-row">
+        <mat-slide-toggle [(ngModel)]="formActive" data-test-id="issue-tracker-active-toggle">
+          {{ 'issueTracker.active' | translate }}
+        </mat-slide-toggle>
+        <p class="setting-description">{{ 'issueTracker.activeHint' | translate }}</p>
+      </div>
+
+      <div class="form-actions">
+        @if (config) {
+          <button mat-stroked-button color="warn" (click)="remove()" data-test-id="issue-tracker-delete-btn">
+            <mat-icon>delete</mat-icon>
+            {{ 'common.delete' | translate }}
+          </button>
+          <button mat-stroked-button [disabled]="testing" (click)="testConnection()" data-test-id="issue-tracker-test-btn">
+            <mat-icon>network_check</mat-icon>
+            {{ (testing ? 'issueTracker.testing' : 'issueTracker.testConnection') | translate }}
+          </button>
+        }
+        <button mat-flat-button [disabled]="!canSave || saving" (click)="save()" data-test-id="issue-tracker-save-btn">
+          {{ (saving ? 'common.saving' : 'common.save') | translate }}
+        </button>
+      </div>
+    </div>
+  }
+</div>

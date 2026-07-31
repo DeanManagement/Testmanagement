@@ -641,7 +641,8 @@
     "unsavedChangesWarning": "Sie haben ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?",
     "loadError": "Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
     "retry": "Erneut versuchen",
-    "ok": "OK"
+    "ok": "OK",
+    "saving": "Wird gespeichert…"
   },
   "errors": {
     "server": "Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
@@ -652,5 +653,54 @@
     "light": "Hell",
     "dark": "Dunkel",
     "system": "System"
+  },
+  "issueTracker": {
+    "title": "Issue-Tracker",
+    "description": "Verbinde dieses Projekt mit einem Issue-Tracker, damit Tester Fehler aus einem fehlgeschlagenen Ergebnis verknüpfen oder erfassen können.",
+    "manage": "Konfigurieren",
+    "provider": "Anbieter",
+    "providerHint": "Es werden nur Tracker mit verfügbarem Adapter angezeigt.",
+    "providers": {
+      "GITLAB": "GitLab",
+      "FORGEJO": "Forgejo / Gitea",
+      "GITHUB": "GitHub",
+      "JIRA": "Jira",
+      "LINEAR": "Linear"
+    },
+    "baseUrl": "Instanz-URL",
+    "baseUrlHint": "Muss https verwenden. Private und Loopback-Adressen werden abgelehnt.",
+    "projectRef": "Projektreferenz",
+    "token": "API-Token",
+    "tokenReplace": "API-Token ersetzen",
+    "tokenHint": "Wird verschlüsselt gespeichert. Erfordert ISSUE_TRACKER_ENCRYPTION_KEY auf dem Server.",
+    "tokenStoredHint": "Ein Token ist gespeichert. Leer lassen, um es beizubehalten.",
+    "active": "Aktiv",
+    "activeHint": "Bei Inaktivität werden keine Aufrufe an den Tracker gesendet und das Verknüpfen ist nicht verfügbar.",
+    "testConnection": "Verbindung testen",
+    "testing": "Wird getestet…",
+    "testSucceeded": "Verbindung erfolgreich.",
+    "saved": "Issue-Tracker-Einstellungen gespeichert.",
+    "deleted": "Issue-Tracker getrennt.",
+    "deleteTitle": "Issue-Tracker trennen?",
+    "deleteMessage": "Dieses Projekt kann dann keine Issues mehr suchen, verknüpfen oder erstellen.",
+    "deleteKeepsLinks": "Bereits verknüpfte Issues bleiben erhalten und weiterhin anklickbar.",
+    "lastError": "Letzter Fehler vom Tracker",
+    "linkedIssues": "Verknüpfte Issues",
+    "noLinkedIssues": "Keine Issues mit diesem Ergebnis verknüpft.",
+    "linkExisting": "Issue verknüpfen",
+    "createIssue": "Neues Issue erstellen",
+    "unlink": "Verknüpfung aufheben",
+    "refreshState": "Status aktualisieren",
+    "searchLabel": "Issues suchen",
+    "searchHint": "Tippen, um im verbundenen Tracker zu suchen.",
+    "searchNoResults": "Keine passenden Issues.",
+    "searchFailed": "Suche im Tracker fehlgeschlagen. Er ist möglicherweise nicht erreichbar oder das Token ist ungültig.",
+    "checkedAt": "Geprüft",
+    "neverChecked": "Status noch nicht geprüft",
+    "state": {
+      "OPEN": "Offen",
+      "CLOSED": "Geschlossen",
+      "UNKNOWN": "Unbekannt"
+    }
   }
 }

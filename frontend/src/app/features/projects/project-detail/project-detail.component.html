@@ -105,6 +105,16 @@
           {{ 'webhook.manage' | translate }}
         </a>
       </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <h4>{{ 'issueTracker.title' | translate }}</h4>
+          <p class="setting-description">{{ 'issueTracker.description' | translate }}</p>
+        </div>
+        <a mat-stroked-button [routerLink]="['/projects', project.id, 'issue-tracker']" data-test-id="project-settings-issue-tracker-link">
+          <mat-icon>bug_report</mat-icon>
+          {{ 'issueTracker.manage' | translate }}
+        </a>
+      </div>
     </div>
     }
 

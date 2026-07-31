@@ -1,0 +1,149 @@
+.issue-links {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid var(--tm-border);
+}
+
+.issue-links-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  h4 {
+    margin: 0;
+    flex: 1;
+  }
+}
+
+.no-issues {
+  color: var(--tm-text-secondary);
+  font-size: 14px;
+  margin: 4px 0 12px;
+}
+
+.issue-chip-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.issue-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-radius);
+  background: var(--tm-surface);
+}
+
+.issue-chip-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+  color: var(--tm-text);
+
+  &:hover .issue-title {
+    text-decoration: underline;
+  }
+}
+
+.issue-ref {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--tm-text-secondary);
+  white-space: nowrap;
+}
+
+.issue-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.external-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  color: var(--tm-text-secondary);
+  flex-shrink: 0;
+}
+
+// Status pill. UNKNOWN is deliberately neutral rather than alarming — it usually means
+// "not polled yet", not "something is wrong".
+.issue-state,
+.option-state {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  flex-shrink: 0;
+
+  &--open {
+    background: var(--tm-tint-success-bg);
+    color: var(--tm-tint-success-fg);
+  }
+
+  &--closed {
+    background: var(--tm-tint-neutral-bg);
+    color: var(--tm-tint-neutral-fg);
+  }
+
+  &--unknown {
+    background: var(--tm-tint-neutral-bg);
+    color: var(--tm-tint-neutral-fg);
+    opacity: 0.75;
+  }
+}
+
+.unlink-btn {
+  flex-shrink: 0;
+}
+
+.issue-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.issue-search {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+}
+
+.issue-search-field {
+  flex: 1;
+  max-width: 420px;
+}
+
+.option-ref {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12px;
+  color: var(--tm-text-secondary);
+  margin: 0 8px;
+}
+
+.search-error,
+.search-empty {
+  width: 100%;
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+.search-error {
+  color: var(--tm-danger);
+}
+
+.search-empty {
+  color: var(--tm-text-secondary);
+}

@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueSearchResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueTrackerConfigResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueTrackerStatusResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.SaveIssueTrackerConfigRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerProviderType;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
@@ -77,6 +78,16 @@ public class IssueTrackerController {
     public ResponseEntity<Void> testConnection(@PathVariable UUID projectId) {
         configService.testConnection(projectId);
         return ResponseEntity.noContent().build();
+    }
+
+    /**
+     * Whether this project can link issues. Any member may ask, because the execution screen needs
+     * it to decide whether to offer the action; the admin-only config stays hidden.
+     */
+    @GetMapping("/issue-tracker/status")
+    @RequireProjectRole
+    public IssueTrackerStatusResponse status(@PathVariable UUID projectId) {
+        return configService.status(projectId);
     }
 
     @GetMapping("/issues/search")
