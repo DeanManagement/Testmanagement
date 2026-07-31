@@ -12,11 +12,28 @@ export const testSuiteReducer = createReducer(
     projectId,
   })),
 
-  on(TestSuiteActions.loadTestSuitesSuccess, (state, { testSuites }) =>
-    testSuiteAdapter.setAll(testSuites, { ...state, loading: false })
+  on(TestSuiteActions.loadTestSuitesSuccess, (state, { testSuites, page }) =>
+    testSuiteAdapter.setAll(testSuites, { ...state, loading: false, page })
   ),
 
   on(TestSuiteActions.loadTestSuitesFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error,
+  })),
+
+  on(TestSuiteActions.loadTestSuite, (state, { projectId }) => ({
+    ...state,
+    loading: true,
+    error: null,
+    projectId,
+  })),
+
+  on(TestSuiteActions.loadTestSuiteSuccess, (state, { testSuite }) =>
+    testSuiteAdapter.upsertOne(testSuite, { ...state, loading: false })
+  ),
+
+  on(TestSuiteActions.loadTestSuiteFailure, (state, { error }) => ({
     ...state,
     loading: false,
     error,

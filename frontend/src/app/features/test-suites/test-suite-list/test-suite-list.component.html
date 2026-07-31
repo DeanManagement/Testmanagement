@@ -13,12 +13,29 @@
     </a>
   </div>
 
+  <div class="filter-bar" data-test-id="test-suite-filter-bar">
+    <mat-form-field appearance="outline" class="search-field">
+      <mat-icon matPrefix>search</mat-icon>
+      <mat-label>{{ 'filter.search' | translate }}</mat-label>
+      <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchInput()" data-test-id="test-suite-search">
+    </mat-form-field>
+  </div>
+
   @if (loading$ | async) {
     <div class="spinner-container" data-test-id="test-suite-list-loading">
       <mat-spinner diameter="40"></mat-spinner>
     </div>
+  } @else if (error$ | async) {
+    <div class="error-state" data-test-id="test-suite-list-error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ 'common.loadError' | translate }}</p>
+      <button mat-stroked-button (click)="retry()">
+        <mat-icon>refresh</mat-icon>
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
   } @else if ((testSuites$ | async)?.length === 0) {
-    <div class="empty-state" data-test-id="test-suite-list-empty">
+    <div class="empty-state" data-test-id="test-suite-list-empty" role="status">
       <mat-icon>playlist_add_check</mat-icon>
       <p>{{ 'testSuite.list.empty' | translate }}</p>
       <a mat-flat-button [routerLink]="['new']" class="create-btn" data-test-id="test-suite-create-empty-btn">
@@ -27,17 +44,12 @@
       </a>
     </div>
   } @else {
-    @if (testSuites$ | async; as suites) {
-    <div class="filter-bar" data-test-id="test-suite-filter-bar">
-      <mat-form-field appearance="outline" class="search-field">
-        <mat-icon matPrefix>search</mat-icon>
-        <mat-label>{{ 'filter.search' | translate }}</mat-label>
-        <input matInput [(ngModel)]="searchTerm" data-test-id="test-suite-search">
-      </mat-form-field>
-    </div>
-    <table mat-table [dataSource]="filteredTestSuites(suites)" class="data-table" data-test-id="test-suite-table">
+    <table mat-table matSort
+           [matSortActive]="sortActive" [matSortDirection]="sortDirection"
+           (matSortChange)="onSortChange($event)"
+           [dataSource]="(testSuites$ | async) ?? []" class="data-table" data-test-id="test-suite-table" aria-label="Test suites">
       <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>{{ 'testSuite.form.name' | translate }}</th>
+        <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'testSuite.form.name' | translate }}</th>
         <td mat-cell *matCellDef="let suite">
           <a [routerLink]="[suite.id]" class="item-link" data-test-id="test-suite-link">{{ suite.name }}</a>
         </td>
@@ -58,10 +70,10 @@
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let suite" class="actions-cell">
-          <a mat-icon-button [routerLink]="[suite.id, 'edit']" class="action-btn" data-test-id="test-suite-edit-btn">
+          <a mat-icon-button [routerLink]="[suite.id, 'edit']" class="action-btn" data-test-id="test-suite-edit-btn" [attr.aria-label]="'Edit ' + suite.name">
             <mat-icon>edit</mat-icon>
           </a>
-          <button mat-icon-button (click)="deleteTestSuite(suite.id)" class="action-btn action-btn--danger" data-test-id="test-suite-delete-btn">
+          <button mat-icon-button (click)="deleteTestSuite(suite.id)" class="action-btn action-btn--danger" data-test-id="test-suite-delete-btn" [attr.aria-label]="'Delete ' + suite.name">
             <mat-icon>delete</mat-icon>
           </button>
         </td>
@@ -70,6 +82,16 @@
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
       <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
-    }
+  }
+
+  @if (page$ | async; as page) {
+    <mat-paginator
+      [length]="page.totalElements"
+      [pageSize]="page.size"
+      [pageIndex]="page.number"
+      [pageSizeOptions]="[25, 50, 100, 200]"
+      (page)="onPage($event)"
+      data-test-id="test-suite-paginator">
+    </mat-paginator>
   }
 </div>

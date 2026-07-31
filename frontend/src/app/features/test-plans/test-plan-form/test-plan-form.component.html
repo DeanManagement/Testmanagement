@@ -9,7 +9,7 @@
       <form [formGroup]="form" (ngSubmit)="onSubmit()" data-test-id="test-plan-form">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{ 'testPlan.form.name' | translate }}</mat-label>
-          <input matInput formControlName="name" data-test-id="test-plan-name-input" />
+          <input matInput formControlName="name" (ngModelChange)="markDirty()" data-test-id="test-plan-name-input" />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -47,8 +47,12 @@
 
         <div class="actions">
           <a mat-button [routerLink]="['/projects', projectId, 'test-plans']" data-test-id="test-plan-form-cancel">{{ 'common.cancel' | translate }}</a>
-          <button mat-flat-button type="submit" [disabled]="form.invalid" data-test-id="test-plan-form-submit">
-            {{ 'common.save' | translate }}
+          <button mat-flat-button type="submit" [disabled]="form.invalid || saving" data-test-id="test-plan-form-submit">
+            @if (saving) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              {{ 'common.save' | translate }}
+            }
           </button>
         </div>
       </form>

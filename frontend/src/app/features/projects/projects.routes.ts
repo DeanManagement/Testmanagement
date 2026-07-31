@@ -4,14 +4,17 @@ import { ProjectFormComponent } from './project-form/project-form.component';
 import { ProjectDetailComponent } from './project-detail/project-detail.component';
 import { ActivityFeedComponent } from './activity-feed/activity-feed.component';
 import { ProjectDashboardComponent } from './project-dashboard/project-dashboard.component';
+import { WebhookSettingsComponent } from '../webhooks/webhook-settings.component';
+import { unsavedChangesGuard } from '../../core/guards/unsaved-changes.guard';
 
 export const projectsRoutes: Routes = [
   { path: '', component: ProjectListComponent },
-  { path: 'new', component: ProjectFormComponent },
+  { path: 'new', component: ProjectFormComponent, canDeactivate: [unsavedChangesGuard] },
   { path: ':id', component: ProjectDetailComponent },
-  { path: ':id/edit', component: ProjectFormComponent },
+  { path: ':id/edit', component: ProjectFormComponent, canDeactivate: [unsavedChangesGuard] },
   { path: ':id/activity', component: ActivityFeedComponent },
   { path: ':id/dashboard', component: ProjectDashboardComponent },
+  { path: ':id/webhooks', component: WebhookSettingsComponent },
   {
     path: ':id/test-cases',
     loadChildren: () =>

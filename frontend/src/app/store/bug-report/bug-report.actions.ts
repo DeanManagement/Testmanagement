@@ -13,7 +13,7 @@ export const BugReportActions = createActionGroup({
     'Load Bug Report Failure': props<{ error: string }>(),
 
     'Load Bug Reports By Test Result': props<{ projectId: string; testResultId: string }>(),
-    'Load Bug Reports By Test Result Success': props<{ bugReports: BugReport[] }>(),
+    'Load Bug Reports By Test Result Success': props<{ testResultId: string; bugReports: BugReport[] }>(),
     'Load Bug Reports By Test Result Failure': props<{ error: string }>(),
 
     'Create Bug Report': props<{ projectId: string; request: CreateBugReportRequest }>(),

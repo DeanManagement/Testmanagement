@@ -476,3 +476,51 @@ app-step-spec-card {
     color: var(--tm-text);
   }
 }
+
+/* PRD-008 §2.5: responsive execution screen for tablets */
+@media (max-width: 1024px) {
+  .execution-layout {
+    flex-direction: column;
+  }
+
+  .execution-sidebar {
+    width: 100%;
+    max-width: none;
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+
+  .execution-main {
+    width: 100%;
+  }
+}
+
+/* Bulk result selection bar (PRD-008 §2.1) */
+.bulk-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin-bottom: 0.5rem;
+}
+
+.bulk-result-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.5rem;
+  background: rgba(25, 118, 210, 0.06);
+  border-radius: 8px;
+}
+
+.result-item--selected {
+  background: rgba(25, 118, 210, 0.12);
+}
+
+.result-select-icon {
+  font-size: 1.1rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  margin-right: 0.25rem;
+  vertical-align: middle;
+}

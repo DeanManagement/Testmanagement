@@ -14,6 +14,13 @@ export interface TestSuite {
   updatedBy?: string;
 }
 
+export interface TestSuiteQuery {
+  q?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}
+
 export interface CreateTestSuiteRequest {
   name: string;
   description?: string;

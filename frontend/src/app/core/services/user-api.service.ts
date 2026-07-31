@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { User, CreateUserRequest, UpdateUserRequest } from '../../shared/models/user.model';
+import { retryWithBackoff } from '../utils/retry-strategy';
 
 @Injectable({ providedIn: 'root' })
 export class UserApiService {
@@ -9,7 +10,7 @@ export class UserApiService {
   private readonly baseUrl = '/api/users';
 
   getAll(): Observable<User[]> {
-    return this.http.get<User[]>(this.baseUrl);
+    return this.http.get<User[]>(this.baseUrl).pipe(retryWithBackoff());
   }
 
   create(request: CreateUserRequest): Observable<User> {

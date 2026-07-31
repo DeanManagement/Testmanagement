@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiKey, ApiKeyCreated, CreateApiKeyRequest } from '../../shared/models/api-key.model';
+import { retryWithBackoff } from '../utils/retry-strategy';
 
 @Injectable({ providedIn: 'root' })
 export class ApiKeyApiService {
@@ -9,7 +10,7 @@ export class ApiKeyApiService {
   private readonly baseUrl = '/api/api-keys';
 
   getAll(): Observable<ApiKey[]> {
-    return this.http.get<ApiKey[]>(this.baseUrl);
+    return this.http.get<ApiKey[]>(this.baseUrl).pipe(retryWithBackoff());
   }
 
   create(request: CreateApiKeyRequest): Observable<ApiKeyCreated> {

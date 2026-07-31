@@ -58,3 +58,28 @@ export interface BulkOperationResponse {
   affected: number;
   message: string;
 }
+
+export interface ImportError {
+  row: number;
+  message: string;
+}
+
+export interface ImportResult {
+  imported: number;
+  skipped: number;
+  dryRun: boolean;
+  errors: ImportError[];
+}
+
+export interface TestCaseQuery {
+  q?: string;
+  status?: TestCaseStatus[];
+  priority?: Priority[];
+  label?: string[];
+  folderId?: string | null;
+  rootOnly?: boolean;
+  updatedAfter?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
+}

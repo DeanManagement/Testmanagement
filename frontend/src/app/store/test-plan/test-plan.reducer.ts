@@ -22,6 +22,23 @@ export const testPlanReducer = createReducer(
     error,
   })),
 
+  on(TestPlanActions.loadTestPlan, (state, { projectId }) => ({
+    ...state,
+    loading: true,
+    error: null,
+    projectId,
+  })),
+
+  on(TestPlanActions.loadTestPlanSuccess, (state, { testPlan }) =>
+    testPlanAdapter.upsertOne(testPlan, { ...state, loading: false })
+  ),
+
+  on(TestPlanActions.loadTestPlanFailure, (state, { error }) => ({
+    ...state,
+    loading: false,
+    error,
+  })),
+
   on(TestPlanActions.createTestPlanSuccess, (state, { testPlan }) =>
     testPlanAdapter.addOne(testPlan, state)
   ),

@@ -15,14 +15,21 @@ export const authReducer = createReducer(
     ...state,
     user,
     isAuthenticated: true,
+    initialized: true,
     loading: false,
     error: null,
   })),
 
   on(AuthActions.loginFailure, (state, { error }) => ({
     ...state,
+    initialized: true,
     loading: false,
     error,
+  })),
+
+  on(AuthActions.authInitialized, (state) => ({
+    ...state,
+    initialized: true,
   })),
 
   on(AuthActions.logout, (state) => ({
@@ -32,5 +39,6 @@ export const authReducer = createReducer(
 
   on(AuthActions.logoutSuccess, () => ({
     ...initialAuthState,
+    initialized: true,
   }))
 );

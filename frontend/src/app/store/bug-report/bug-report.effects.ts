@@ -1,6 +1,8 @@
 import { Injectable, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { BugReportActions } from './bug-report.actions';
@@ -11,6 +13,8 @@ export class BugReportEffects {
   private readonly actions$ = inject(Actions);
   private readonly bugReportApi = inject(BugReportApiService);
   private readonly router = inject(Router);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly translate = inject(TranslateService);
 
   loadBugReports$ = createEffect(() =>
     this.actions$.pipe(
@@ -41,7 +45,7 @@ export class BugReportEffects {
       ofType(BugReportActions.loadBugReportsByTestResult),
       mergeMap(({ projectId, testResultId }) =>
         this.bugReportApi.getByTestResult(projectId, testResultId).pipe(
-          map((bugReports) => BugReportActions.loadBugReportsByTestResultSuccess({ bugReports })),
+          map((bugReports) => BugReportActions.loadBugReportsByTestResultSuccess({ testResultId, bugReports })),
           catchError((error) => of(BugReportActions.loadBugReportsByTestResultFailure({ error: error.message })))
         )
       )
@@ -64,6 +68,7 @@ export class BugReportEffects {
     () =>
       this.actions$.pipe(
         ofType(BugReportActions.createBugReportSuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.savedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 })),
         tap(({ bugReport }) =>
           this.router.navigate(['/projects', bugReport.projectId, 'bug-reports', bugReport.id])
         )
@@ -83,6 +88,15 @@ export class BugReportEffects {
     )
   );
 
+  updateBugReportSnackbar$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(BugReportActions.updateBugReportSuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.savedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 }))
+      ),
+    { dispatch: false }
+  );
+
   changeBugReportStatus$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BugReportActions.changeBugReportStatus),
@@ -93,6 +107,15 @@ export class BugReportEffects {
         )
       )
     )
+  );
+
+  changeBugReportStatusSnackbar$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(BugReportActions.changeBugReportStatusSuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.savedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 }))
+      ),
+    { dispatch: false }
   );
 
   deleteBugReport$ = createEffect(() =>
@@ -111,6 +134,7 @@ export class BugReportEffects {
     () =>
       this.actions$.pipe(
         ofType(BugReportActions.deleteBugReportSuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.deletedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 })),
         tap(() => history.back())
       ),
     { dispatch: false }

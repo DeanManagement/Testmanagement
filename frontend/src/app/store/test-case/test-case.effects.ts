@@ -18,11 +18,27 @@ export class TestCaseEffects {
   loadTestCases$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TestCaseActions.loadTestCases),
-      mergeMap(({ projectId, folderId, rootOnly }) =>
-        this.testCaseApi.getAll(projectId, folderId, rootOnly).pipe(
-          map((testCases) => TestCaseActions.loadTestCasesSuccess({ testCases })),
+      mergeMap(({ projectId, query }) =>
+        this.testCaseApi.getAll(projectId, query).pipe(
+          map((result) =>
+            TestCaseActions.loadTestCasesSuccess({ testCases: result.content, page: result.page })
+          ),
           catchError((error) =>
             of(TestCaseActions.loadTestCasesFailure({ error: error.message }))
+          )
+        )
+      )
+    )
+  );
+
+  loadTestCase$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestCaseActions.loadTestCase),
+      mergeMap(({ projectId, id }) =>
+        this.testCaseApi.getById(projectId, id).pipe(
+          map((testCase) => TestCaseActions.loadTestCaseSuccess({ testCase })),
+          catchError((error) =>
+            of(TestCaseActions.loadTestCaseFailure({ error: error.message }))
           )
         )
       )

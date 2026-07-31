@@ -22,6 +22,13 @@
             <mat-icon>stop</mat-icon>
             Abort
           </button>
+          <button mat-icon-button
+                  (click)="openShortcutsHelp()"
+                  [matTooltip]="'testRun.shortcuts.hint' | translate"
+                  data-test-id="test-run-shortcuts-help-btn"
+                  aria-label="Keyboard shortcuts">
+            <mat-icon>keyboard</mat-icon>
+          </button>
         }
         @if (run.status === 'COMPLETED') {
           <button mat-stroked-button (click)="reopenRun(run)" class="reopen-btn" data-test-id="test-run-reopen-btn">
@@ -72,10 +79,10 @@
       }
       <div class="run-meta">
         @if (run.startTime) {
-          <span class="meta-item" data-test-id="test-run-start-time">Started: {{ run.startTime | date:'medium' }}</span>
+          <span class="meta-item" data-test-id="test-run-start-time">Started: {{ run.startTime | localizedDate:'medium' }}</span>
         }
         @if (run.endTime) {
-          <span class="meta-item" data-test-id="test-run-end-time">Ended: {{ run.endTime | date:'medium' }}</span>
+          <span class="meta-item" data-test-id="test-run-end-time">Ended: {{ run.endTime | localizedDate:'medium' }}</span>
         }
         @if (run.executorName) {
           <span class="meta-item" data-test-id="test-run-executor">
@@ -98,7 +105,7 @@
       }
     </div>
 
-    @if (run.results.length) {
+    @if (run.results?.length) {
       @if (run.status === 'IN_PROGRESS') {
         <div class="execution-layout" data-test-id="test-run-execution-layout">
           <div class="execution-sidebar" data-test-id="execution-sidebar">
@@ -106,9 +113,36 @@
               <mat-icon matPrefix>search</mat-icon>
               <input matInput [(ngModel)]="executionSearchTerm" [placeholder]="'testRun.execution.search' | translate" />
             </mat-form-field>
+            <div class="bulk-toolbar">
+              <button mat-button (click)="toggleBulkMode()" data-test-id="bulk-select-toggle">
+                <mat-icon>{{ bulkMode ? 'close' : 'checklist' }}</mat-icon>
+                {{ (bulkMode ? 'common.cancel' : 'bulk.select') | translate }}
+              </button>
+              @if (bulkMode && selectedResultIds.size > 0) {
+                <div class="bulk-result-bar" data-test-id="bulk-result-bar">
+                  <span class="bulk-count">{{ 'bulk.selected' | translate: { count: selectedResultIds.size } }}</span>
+                  <mat-checkbox [(ngModel)]="bulkCascade" data-test-id="bulk-cascade">{{ 'bulk.cascadeSteps' | translate }}</mat-checkbox>
+                  <button mat-stroked-button [matMenuTriggerFor]="bulkStatusMenu" data-test-id="bulk-set-status">
+                    {{ 'bulk.setStatus' | translate }}
+                  </button>
+                  <mat-menu #bulkStatusMenu="matMenu">
+                    @for (s of resultStatuses; track s) {
+                      <button mat-menu-item (click)="bulkApply(s)">{{ 'resultStatus.' + s | translate }}</button>
+                    }
+                  </mat-menu>
+                </div>
+              }
+            </div>
             <div class="result-list">
               @for (result of filteredResults(run); track result.id) {
-                <div class="result-item" [class.result-item--active]="result.id === activeResultId" (click)="setActiveResult(result.id)" [attr.data-test-id]="'execution-sidebar-item-' + result.id">
+                <div class="result-item"
+                     [class.result-item--active]="!bulkMode && result.id === activeResultId"
+                     [class.result-item--selected]="bulkMode && isResultSelected(result.id)"
+                     (click)="bulkMode ? toggleResultSelection(result.id) : setActiveResult(result.id)"
+                     [attr.data-test-id]="'execution-sidebar-item-' + result.id">
+                  @if (bulkMode) {
+                    <mat-icon class="result-select-icon">{{ isResultSelected(result.id) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+                  }
                   <span class="result-item-title">{{ result.testCaseTitle }}</span>
                   <span class="badge badge--{{ result.status | lowercase }} badge--small">{{ 'resultStatus.' + result.status | translate }}</span>
                 </div>
@@ -178,6 +212,9 @@
                             {{ 'stepResult.addScreenshot' | translate }}
                           </button>
                           <input #focusFileInput type="file" accept="image/*" hidden (change)="onScreenshotUpload(result.id, step.id, $event)" />
+                          @if ((uploadProgress$ | async)! > 0 && (uploadProgress$ | async)! < 100) {
+                              <mat-progress-bar mode="determinate" [value]="(uploadProgress$ | async)"></mat-progress-bar>
+                          }
                         }
                       </div>
                     </div>
@@ -216,7 +253,7 @@
                   <mat-icon>chevron_left</mat-icon>
                   {{ 'testRun.execution.prev' | translate }}
                 </button>
-                <span class="case-counter">{{ activeResultIndex(run) + 1 }} / {{ run.results.length }}</span>
+                <span class="case-counter">{{ activeResultIndex(run) + 1 }} / {{ run.results?.length ?? 0 }}</span>
                 <button mat-stroked-button [disabled]="!canNavigate('next', run)" (click)="navigateResult('next', run)" data-test-id="execution-next-btn">
                   {{ 'testRun.execution.next' | translate }}
                   <mat-icon>chevron_right</mat-icon>
@@ -245,6 +282,7 @@
                   ></app-comment-form>
                 } @else {
                   <app-comment-form
+                    #addCommentForm
                     (submitComment)="addResultComment($event)"
                   ></app-comment-form>
                 }
@@ -259,7 +297,7 @@
         </div>
       } @else {
         <div class="results-section" data-test-id="test-run-results-section">
-          <h3 class="results-title">{{ 'stepResult.results' | translate }} ({{ run.results.length }})</h3>
+          <h3 class="results-title">{{ 'stepResult.results' | translate }} ({{ run.results?.length ?? 0 }})</h3>
           <mat-accordion multi data-test-id="test-run-results-accordion">
             @for (result of run.results; track result.id) {
               <mat-expansion-panel class="result-panel" [attr.data-test-id]="'test-result-panel-' + result.id">

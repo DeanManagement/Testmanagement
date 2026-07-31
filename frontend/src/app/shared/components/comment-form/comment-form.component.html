@@ -1,7 +1,7 @@
 <div class="comment-form">
   <mat-form-field appearance="outline" class="comment-input">
     <mat-label>{{ (isEditing ? 'comment.edit' : 'comment.placeholder') | translate }}</mat-label>
-    <textarea matInput
+    <textarea #textarea matInput
       [(ngModel)]="content"
       [maxlength]="maxLength"
       rows="3"

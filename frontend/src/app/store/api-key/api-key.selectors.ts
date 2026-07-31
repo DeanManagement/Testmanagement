@@ -11,3 +11,8 @@ export const selectApiKeysLoading = createSelector(
   selectApiKeyState,
   (state) => state.loading
 );
+
+export const selectApiKeysError = createSelector(
+  selectApiKeyState,
+  (state) => state.error
+);

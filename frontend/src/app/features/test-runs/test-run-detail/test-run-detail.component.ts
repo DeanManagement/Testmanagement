@@ -1,7 +1,8 @@
-import { ChangeDetectorRef, Component, inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, HostListener, inject, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
+import { AsyncPipe, LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
@@ -11,10 +12,13 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
-import { Observable, of, Subject, Subscription } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { Observable, of, Subject } from 'rxjs';
+import { debounceTime, take } from 'rxjs/operators';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
 import { TestRun, TestResult, StepResult, TestResultStatus } from '../../../shared/models/test-run.model';
@@ -25,15 +29,17 @@ import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-
 import { CompleteTestRunDialogComponent } from '../complete-test-run-dialog/complete-test-run-dialog.component';
 import { ReopenTestRunDialogComponent } from '../reopen-test-run-dialog/reopen-test-run-dialog.component';
 import { CommentActions } from '../../../store/comment/comment.actions';
-import { selectAllComments, selectCommentsLoading } from '../../../store/comment/comment.selectors';
+import { selectCommentsForEntity, selectCommentsLoading } from '../../../store/comment/comment.selectors';
 import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
-import { selectLinkedBugReports } from '../../../store/bug-report/bug-report.selectors';
+import { selectLinkedBugReportsFor } from '../../../store/bug-report/bug-report.selectors';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { Comment } from '../../../shared/models/comment.model';
 import { CommentListComponent } from '../../../shared/components/comment-list/comment-list.component';
 import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
+import { KeyboardShortcutsDialogComponent } from '../keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.component';
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
+import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
 import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
@@ -43,7 +49,7 @@ import { WatchToggleComponent } from '../../../shared/components/watch-toggle/wa
   standalone: true,
   imports: [
     AsyncPipe,
-    DatePipe,
+    LocalizedDatePipe,
     LowerCasePipe,
     RouterLink,
     MatCardModule,
@@ -54,6 +60,9 @@ import { WatchToggleComponent } from '../../../shared/components/watch-toggle/wa
     MatSelectModule,
     MatFormFieldModule,
     MatInputModule,
+    MatProgressBarModule,
+    MatMenuModule,
+    MatCheckboxModule,
     FormsModule,
     TranslateModule,
     MatTooltipModule,
@@ -67,7 +76,7 @@ import { WatchToggleComponent } from '../../../shared/components/watch-toggle/wa
   templateUrl: './test-run-detail.component.html',
   styleUrl: './test-run-detail.component.scss',
 })
-export class TestRunDetailComponent implements OnInit, OnDestroy {
+export class TestRunDetailComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
@@ -77,9 +86,23 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly projectApi = inject(ProjectApiService);
   private readonly cdr = inject(ChangeDetectorRef);
-  private autoSelectSub?: Subscription;
-  private actualResultSub?: Subscription;
+  private readonly destroyRef = inject(DestroyRef);
   private actualResultSubject = new Subject<{ resultId: string; step: StepResult; actualResult: string }>();
+
+  /**
+   * Latest snapshot of the test run from the store. Kept on the component
+   * so synchronous handlers (keyboard shortcuts) can read it without
+   * subscribing inside the handler.
+   */
+  private currentRun: TestRun | undefined;
+
+  /**
+   * Reference to the in-page comment form. The `c` keyboard shortcut calls
+   * its `focus()` method so the tester can drop a comment without reaching
+   * for the mouse. The view query has `descendants: true` and an explicit
+   * filter on the editing-vs-adding form because both render conditionally.
+   */
+  @ViewChild('addCommentForm') addCommentForm?: CommentFormComponent;
 
   projectId = '';
   runId = '';
@@ -90,37 +113,55 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   activeResultId: string | null = null;
   executionSearchTerm = '';
 
-  comments$ = this.store.select(selectAllComments);
+  // Bulk result-status selection (PRD-008 §2.1)
+  bulkMode = false;
+  bulkCascade = false;
+  readonly selectedResultIds = new Set<string>();
+
+  /**
+   * Result IDs whose comments + linked bug reports have been fetched at least
+   * once during the current visit to this run. Used to skip re-fetching when
+   * the user clicks through the sidebar repeatedly.
+   */
+  private readonly loadedResultIds = new Set<string>();
+
+  comments$: Observable<Comment[]> = of([]);
   commentsLoading$ = this.store.select(selectCommentsLoading);
   authUser$ = this.store.select(selectAuthUser);
   isAdmin$ = this.store.select(selectIsSystemAdmin);
   editingComment: Comment | null = null;
   bugReportsEnabled = false;
-  linkedBugReports$ = this.store.select(selectLinkedBugReports);
+  linkedBugReports$: Observable<import('../../../shared/models/bug-report.model').BugReport[]> = of([]);
+  uploadProgress$ = this.testRunApi.uploadProgress$;
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.runId = this.route.snapshot.paramMap.get('runId') ?? '';
     if (this.projectId && this.runId) {
-      this.projectApi.getById(this.projectId).subscribe((project) => {
-        this.bugReportsEnabled = project.bugReportsEnabled;
-        this.cdr.detectChanges();
-      });
+      this.projectApi.getById(this.projectId)
+        .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe((project) => {
+          this.bugReportsEnabled = project.bugReportsEnabled;
+          this.cdr.detectChanges();
+        });
       this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: this.runId }));
       this.testRun$ = this.store.select(selectTestRunById(this.runId));
-      this.autoSelectSub = this.testRun$.subscribe(run => {
+      this.testRun$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(run => {
+        this.currentRun = run;
         if (run) {
           this.runKey = run.key;
         }
-        if (run?.status === 'IN_PROGRESS' && !this.activeResultId && run.results.length > 0) {
-          this.activeResultId = run.results[0].id;
-          this.loadCommentsForResult(run.results[0].id);
+        if (run?.status === 'IN_PROGRESS' && !this.activeResultId && run.results?.length) {
+          // Resume on the first unfinished case if there is one; otherwise the first.
+          const firstPending = run.results.find(r => r.status === 'PENDING');
+          const target = firstPending ?? run.results[0];
+          this.setActiveResult(target.id);
         }
         this.cdr.detectChanges();
       });
     }
 
-    this.actualResultSub = this.actualResultSubject.pipe(debounceTime(500)).subscribe(({ resultId, step, actualResult }) => {
+    this.actualResultSubject.pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef)).subscribe(({ resultId, step, actualResult }) => {
       this.store.dispatch(
         TestRunActions.updateStepResult({
           projectId: this.projectId,
@@ -133,9 +174,114 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnDestroy(): void {
-    this.autoSelectSub?.unsubscribe();
-    this.actualResultSub?.unsubscribe();
+  /**
+   * Keyboard-driven execution. Bindings are documented in the
+   * `KeyboardShortcutsDialogComponent` cheatsheet (press `?` to open).
+   *
+   * The handler ignores key events when:
+   *   - focus is in any input/textarea/contenteditable element (so typing
+   *     in the "actual result" field or comment box still works as normal)
+   *   - any CDK overlay is open (mat-select, mat-menu, mat-dialog, etc.)
+   * This keeps the shortcuts unobtrusive — they only fire when the user is
+   * navigating the page, not when they are entering data.
+   */
+  @HostListener('document:keydown', ['$event'])
+  onKeyDown(event: KeyboardEvent): void {
+    if (this.shouldIgnoreKeyEvent(event)) {
+      return;
+    }
+    const run = this.currentRun;
+    if (!run || run.status !== 'IN_PROGRESS') {
+      return;
+    }
+
+    switch (event.key) {
+      case 'j':
+      case 'ArrowDown':
+        event.preventDefault();
+        this.navigateResult('next', run);
+        break;
+      case 'k':
+      case 'ArrowUp':
+        event.preventDefault();
+        this.navigateResult('prev', run);
+        break;
+      case 'p':
+        event.preventDefault();
+        this.shortcutSetActiveStatus('PASSED');
+        break;
+      case 'P': // Shift+P
+        event.preventDefault();
+        this.shortcutMarkAllStepsPassed();
+        break;
+      case 'f':
+      case 'F':
+        event.preventDefault();
+        this.shortcutSetActiveStatus('FAILED');
+        break;
+      case 'b':
+      case 'B':
+        event.preventDefault();
+        this.shortcutSetActiveStatus('BLOCKED');
+        break;
+      case 's':
+      case 'S':
+        event.preventDefault();
+        this.shortcutSetActiveStatus('SKIPPED');
+        break;
+      case 'c':
+      case 'C':
+        event.preventDefault();
+        this.addCommentForm?.focus();
+        break;
+      case '?':
+        event.preventDefault();
+        this.openShortcutsHelp();
+        break;
+    }
+  }
+
+  /** True when the keyboard handler should not intercept the event. */
+  private shouldIgnoreKeyEvent(event: KeyboardEvent): boolean {
+    if (event.altKey || event.ctrlKey || event.metaKey) {
+      return true;
+    }
+    const target = event.target as HTMLElement | null;
+    if (target) {
+      if (target.isContentEditable) return true;
+      const tag = target.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+      // Closing the gap: mat-select / mat-menu / mat-dialog all render in a
+      // .cdk-overlay-pane. If the user is interacting with one, don't steal
+      // their keys.
+      if (typeof target.closest === 'function' && target.closest('.cdk-overlay-pane')) {
+        return true;
+      }
+    }
+    if (this.dialog.openDialogs.length > 0) return true;
+    return false;
+  }
+
+  private shortcutSetActiveStatus(status: TestResultStatus): void {
+    if (this.activeResultId) {
+      this.onResultStatusChange(this.activeResultId, status);
+    }
+  }
+
+  private shortcutMarkAllStepsPassed(): void {
+    const run = this.currentRun;
+    if (!run || !this.activeResultId) return;
+    const result = run.results?.find(r => r.id === this.activeResultId);
+    if (!result) return;
+    for (const step of result.stepResults) {
+      this.onStepStatusChange(result.id, step, 'PASSED');
+    }
+    // Also flip the overall result to PASSED so the user only needs one keystroke.
+    this.onResultStatusChange(result.id, 'PASSED');
+  }
+
+  openShortcutsHelp(): void {
+    this.dialog.open(KeyboardShortcutsDialogComponent, { width: '420px' });
   }
 
   updateStatus(run: TestRun, status: 'IN_PROGRESS' | 'COMPLETED' | 'ABORTED'): void {
@@ -157,6 +303,37 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
         request: { status },
       })
     );
+  }
+
+  toggleBulkMode(): void {
+    this.bulkMode = !this.bulkMode;
+    this.selectedResultIds.clear();
+  }
+
+  isResultSelected(id: string): boolean {
+    return this.selectedResultIds.has(id);
+  }
+
+  toggleResultSelection(id: string): void {
+    if (this.selectedResultIds.has(id)) {
+      this.selectedResultIds.delete(id);
+    } else {
+      this.selectedResultIds.add(id);
+    }
+  }
+
+  bulkApply(status: TestResultStatus): void {
+    if (this.selectedResultIds.size === 0) {
+      return;
+    }
+    this.testRunApi
+      .bulkResultStatus(this.projectId, this.runId, [...this.selectedResultIds], status, this.bulkCascade)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.selectedResultIds.clear();
+        this.bulkMode = false;
+        this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: this.runId }));
+      });
   }
 
   onStepStatusChange(resultId: string, step: StepResult, status: TestResultStatus): void {
@@ -213,43 +390,48 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   }
 
   filteredResults(run: TestRun): TestResult[] {
-    if (!this.executionSearchTerm) return run.results;
+    const results = run.results ?? [];
+    if (!this.executionSearchTerm) return results;
     const term = this.executionSearchTerm.toLowerCase();
-    return run.results.filter(r => r.testCaseTitle.toLowerCase().includes(term));
+    return results.filter(r => r.testCaseTitle.toLowerCase().includes(term));
   }
 
   activeResult(run: TestRun): TestResult | undefined {
-    return run.results.find(r => r.id === this.activeResultId);
+    return run.results?.find(r => r.id === this.activeResultId);
   }
 
   setActiveResult(resultId: string): void {
     this.activeResultId = resultId;
     this.editingComment = null;
     this.loadCommentsForResult(resultId);
-    if (this.bugReportsEnabled) {
+    this.linkedBugReports$ = this.store.select(selectLinkedBugReportsFor(resultId));
+    if (this.bugReportsEnabled && !this.loadedResultIds.has(resultId)) {
       this.store.dispatch(BugReportActions.loadBugReportsByTestResult({
         projectId: this.projectId,
         testResultId: resultId,
       }));
     }
+    this.loadedResultIds.add(resultId);
   }
 
   activeResultIndex(run: TestRun): number {
-    return run.results.findIndex(r => r.id === this.activeResultId);
+    return run.results?.findIndex(r => r.id === this.activeResultId) ?? -1;
   }
 
   canNavigate(direction: 'prev' | 'next', run: TestRun): boolean {
     const idx = this.activeResultIndex(run);
     if (idx === -1) return false;
-    return direction === 'prev' ? idx > 0 : idx < run.results.length - 1;
+    const count = run.results?.length ?? 0;
+    return direction === 'prev' ? idx > 0 : idx < count - 1;
   }
 
   navigateResult(direction: 'prev' | 'next', run: TestRun): void {
+    const results = run.results ?? [];
     const idx = this.activeResultIndex(run);
     if (idx === -1) return;
     const newIdx = direction === 'prev' ? idx - 1 : idx + 1;
-    if (newIdx >= 0 && newIdx < run.results.length) {
-      this.activeResultId = run.results[newIdx].id;
+    if (newIdx >= 0 && newIdx < results.length) {
+      this.activeResultId = results[newIdx].id;
     }
   }
 
@@ -258,10 +440,12 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   }
 
   completeRun(run: TestRun): void {
-    this.testRunApi.getCompletionInfo(this.projectId, run.id).subscribe(info => {
+    this.testRunApi.getCompletionInfo(this.projectId, run.id)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(info => {
       this.cdr.detectChanges();
       const dialogRef = this.dialog.open(CompleteTestRunDialogComponent, { data: info });
-      dialogRef.afterClosed().subscribe((confirmed: boolean) => {
+      dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((confirmed: boolean) => {
         if (confirmed) {
           this.store.dispatch(
             TestRunActions.updateTestRun({
@@ -277,7 +461,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
 
   reopenRun(run: TestRun): void {
     const dialogRef = this.dialog.open(ReopenTestRunDialogComponent);
-    dialogRef.afterClosed().subscribe((reason: string | undefined) => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((reason: string | undefined) => {
       if (reason) {
         this.store.dispatch(
           TestRunActions.updateTestRun({
@@ -294,7 +478,7 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
     const dialogRef = this.dialog.open(CloneTestRunDialogComponent, {
       data: { name: run.name, environment: run.environment },
     });
-    dialogRef.afterClosed().subscribe((result: CloneTestRunDialogResult | undefined) => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result: CloneTestRunDialogResult | undefined) => {
       if (result) {
         this.store.dispatch(
           TestRunActions.cloneTestRun({
@@ -391,12 +575,18 @@ export class TestRunDetailComponent implements OnInit, OnDestroy {
   }
 
   private loadCommentsForResult(resultId: string): void {
-    this.store.dispatch(CommentActions.clearComments());
-    this.store.dispatch(CommentActions.loadComments({
-      projectId: this.projectId,
-      entityType: 'TEST_RESULT',
-      entityId: resultId,
-      runId: this.runId,
-    }));
+    // Switch the visible thread to this result.
+    this.comments$ = this.store.select(selectCommentsForEntity('TEST_RESULT', resultId));
+    // Fetch only the first time we land on this result during this visit.
+    // Comments for other results we have already seen stay in the store so
+    // navigating back to them is instant.
+    if (!this.loadedResultIds.has(resultId)) {
+      this.store.dispatch(CommentActions.loadComments({
+        projectId: this.projectId,
+        entityType: 'TEST_RESULT',
+        entityId: resultId,
+        runId: this.runId,
+      }));
+    }
   }
 }

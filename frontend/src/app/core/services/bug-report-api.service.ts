@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BugReport, BugReportStatus, CreateBugReportRequest, UpdateBugReportRequest } from '../../shared/models/bug-report.model';
+import { retryWithBackoff } from '../utils/retry-strategy';
 
 @Injectable({ providedIn: 'root' })
 export class BugReportApiService {
@@ -12,15 +13,15 @@ export class BugReportApiService {
   }
 
   getAll(projectId: string): Observable<BugReport[]> {
-    return this.http.get<BugReport[]>(this.baseUrl(projectId));
+    return this.http.get<BugReport[]>(this.baseUrl(projectId)).pipe(retryWithBackoff());
   }
 
   getById(projectId: string, id: string): Observable<BugReport> {
-    return this.http.get<BugReport>(`${this.baseUrl(projectId)}/${id}`);
+    return this.http.get<BugReport>(`${this.baseUrl(projectId)}/${id}`).pipe(retryWithBackoff());
   }
 
   getByTestResult(projectId: string, testResultId: string): Observable<BugReport[]> {
-    return this.http.get<BugReport[]>(this.baseUrl(projectId), { params: { testResultId } });
+    return this.http.get<BugReport[]>(this.baseUrl(projectId), { params: { testResultId } }).pipe(retryWithBackoff());
   }
 
   create(projectId: string, request: CreateBugReportRequest): Observable<BugReport> {
@@ -40,6 +41,6 @@ export class BugReportApiService {
   }
 
   getAssignedToMe(): Observable<BugReport[]> {
-    return this.http.get<BugReport[]>('/api/bug-reports/assigned-to-me');
+    return this.http.get<BugReport[]>('/api/bug-reports/assigned-to-me').pipe(retryWithBackoff());
   }
 }

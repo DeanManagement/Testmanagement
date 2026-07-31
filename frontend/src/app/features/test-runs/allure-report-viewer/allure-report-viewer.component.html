@@ -8,9 +8,12 @@
   </mat-toolbar>
 
   @if (iframeSrc) {
+    <!-- PRD-018: sandbox WITHOUT allow-same-origin — the report runs in an opaque origin
+         and cannot read localStorage/cookies or touch the parent app. -->
     <iframe
       [src]="iframeSrc"
       class="allure-iframe"
+      sandbox="allow-scripts allow-popups"
       data-test-id="allure-report-iframe"
     ></iframe>
   }

@@ -12,8 +12,12 @@ export const testCaseReducer = createReducer(
     projectId,
   })),
 
-  on(TestCaseActions.loadTestCasesSuccess, (state, { testCases }) =>
-    testCaseAdapter.setAll(testCases, { ...state, loading: false })
+  on(TestCaseActions.loadTestCasesSuccess, (state, { testCases, page }) =>
+    testCaseAdapter.setAll(testCases, { ...state, loading: false, page })
+  ),
+
+  on(TestCaseActions.loadTestCaseSuccess, (state, { testCase }) =>
+    testCaseAdapter.upsertOne(testCase, state)
   ),
 
   on(TestCaseActions.loadTestCasesFailure, (state, { error }) => ({

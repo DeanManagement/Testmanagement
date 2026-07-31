@@ -30,6 +30,8 @@ export const apiKeyReducer = createReducer(
         revoked: false,
         lastUsedAt: null,
         createdAt: created.createdAt,
+        projectId: created.projectId,
+        projectName: created.projectName,
       },
       state
     )

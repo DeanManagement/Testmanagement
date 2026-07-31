@@ -14,12 +14,12 @@
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   } @else if ((users$ | async)?.length === 0) {
-    <div class="empty-state" data-test-id="user-list-empty">
+    <div class="empty-state" data-test-id="user-list-empty" role="status">
       <mat-icon>people</mat-icon>
       <p>{{ 'settings.users.empty' | translate }}</p>
     </div>
   } @else {
-    <table mat-table [dataSource]="(users$ | async) ?? []" class="user-table" data-test-id="user-table">
+    <table mat-table [dataSource]="(users$ | async) ?? []" class="user-table" data-test-id="user-table" aria-label="Users">
       <ng-container matColumnDef="email">
         <th mat-header-cell *matHeaderCellDef>{{ 'auth.email' | translate }}</th>
         <td mat-cell *matCellDef="let user">{{ user.email }}</td>
@@ -43,18 +43,18 @@
 
       <ng-container matColumnDef="createdAt">
         <th mat-header-cell *matHeaderCellDef>{{ 'settings.apiKeys.createdAt' | translate }}</th>
-        <td mat-cell *matCellDef="let user">{{ user.createdAt | date:'medium' }}</td>
+        <td mat-cell *matCellDef="let user">{{ user.createdAt | localizedDate:'medium' }}</td>
       </ng-container>
 
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let user" class="actions-cell">
           <button mat-icon-button (click)="openEditDialog(user)" class="action-btn"
-                  data-test-id="user-edit-btn">
+                  data-test-id="user-edit-btn" [attr.aria-label]="'Edit ' + user.email">
             <mat-icon>edit</mat-icon>
           </button>
           <button mat-icon-button (click)="deleteUser(user.id)" class="action-btn action-btn--danger"
-                  data-test-id="user-delete-btn">
+                  data-test-id="user-delete-btn" [attr.aria-label]="'Delete ' + user.email">
             <mat-icon>delete</mat-icon>
           </button>
         </td>

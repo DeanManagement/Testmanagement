@@ -46,7 +46,7 @@ import { User } from '../../../shared/models/user.model';
   `,
   styles: [`
     .full-width { width: 100%; }
-    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: 450px; }
+    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: min(90vw, 450px); }
   `],
 })
 export class EditUserDialogComponent {

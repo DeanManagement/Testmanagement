@@ -1,17 +1,17 @@
 import { createReducer, on } from '@ngrx/store';
 import { TestRunActions } from './test-run.actions';
 import { initialTestRunState, testRunAdapter } from './test-run.state';
-import { TestRun } from '../../shared/models/test-run.model';
+import { TestRun, StepResult } from '../../shared/models/test-run.model';
 
 function updateStepInRun(
   run: TestRun,
   resultId: string,
   stepResultId: string,
-  updater: (step: any) => any
+  updater: (step: StepResult) => StepResult
 ): TestRun {
   return {
     ...run,
-    results: run.results.map((r) =>
+    results: (run.results ?? []).map((r) =>
       r.id === resultId
         ? {
             ...r,
@@ -34,8 +34,8 @@ export const testRunReducer = createReducer(
     projectId,
   })),
 
-  on(TestRunActions.loadTestRunsSuccess, (state, { testRuns }) =>
-    testRunAdapter.setAll(testRuns, { ...state, loading: false })
+  on(TestRunActions.loadTestRunsSuccess, (state, { testRuns, page }) =>
+    testRunAdapter.setAll(testRuns, { ...state, loading: false, page })
   ),
 
   on(TestRunActions.loadTestRunsFailure, (state, { error }) => ({
@@ -90,7 +90,7 @@ export const testRunReducer = createReducer(
   on(TestRunActions.updateTestResultSuccess, (state, { runId, result }) => {
     const run = state.entities[runId];
     if (!run) return state;
-    const updatedResults = run.results.map((r) =>
+    const updatedResults = (run.results ?? []).map((r) =>
       r.id === result.id ? result : r
     );
     return testRunAdapter.upsertOne(

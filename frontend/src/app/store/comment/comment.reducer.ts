@@ -12,7 +12,9 @@ export const commentReducer = createReducer(
   })),
 
   on(CommentActions.loadCommentsSuccess, (state, { comments }) =>
-    commentAdapter.setAll(comments, { ...state, loading: false })
+    // upsertMany keeps comments loaded for other entities so switching
+    // between test results within a run does not need to re-fetch.
+    commentAdapter.upsertMany(comments, { ...state, loading: false })
   ),
 
   on(CommentActions.loadCommentsFailure, (state, { error }) => ({

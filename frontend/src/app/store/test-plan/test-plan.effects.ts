@@ -2,6 +2,8 @@ import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { catchError, map, mergeMap, tap, withLatestFrom } from 'rxjs/operators';
 import { TestPlanApiService } from '../../core/services/test-plan-api.service';
@@ -14,6 +16,8 @@ export class TestPlanEffects {
   private readonly testPlanApi = inject(TestPlanApiService);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly translate = inject(TranslateService);
 
   loadTestPlans$ = createEffect(() =>
     this.actions$.pipe(
@@ -23,6 +27,20 @@ export class TestPlanEffects {
           map((testPlans) => TestPlanActions.loadTestPlansSuccess({ testPlans })),
           catchError((error) =>
             of(TestPlanActions.loadTestPlansFailure({ error: error.message }))
+          )
+        )
+      )
+    )
+  );
+
+  loadTestPlan$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(TestPlanActions.loadTestPlan),
+      mergeMap(({ projectId, id }) =>
+        this.testPlanApi.getById(projectId, id).pipe(
+          map((testPlan) => TestPlanActions.loadTestPlanSuccess({ testPlan })),
+          catchError((error) =>
+            of(TestPlanActions.loadTestPlanFailure({ error: error.message }))
           )
         )
       )
@@ -47,6 +65,7 @@ export class TestPlanEffects {
     () =>
       this.actions$.pipe(
         ofType(TestPlanActions.createTestPlanSuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.savedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 })),
         withLatestFrom(this.store.select(selectTestPlanProjectId)),
         tap(([{ testPlan }, projectId]) =>
           this.router.navigate(['/projects', projectId, 'test-plans', testPlan.id])
@@ -69,6 +88,15 @@ export class TestPlanEffects {
     )
   );
 
+  updateTestPlanSnackbar$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(TestPlanActions.updateTestPlanSuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.savedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 }))
+      ),
+    { dispatch: false }
+  );
+
   deleteTestPlan$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TestPlanActions.deleteTestPlan),
@@ -87,6 +115,7 @@ export class TestPlanEffects {
     () =>
       this.actions$.pipe(
         ofType(TestPlanActions.deleteTestPlanSuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.deletedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 })),
         withLatestFrom(this.store.select(selectTestPlanProjectId)),
         tap(([, projectId]) =>
           this.router.navigate(['/projects', projectId, 'test-plans'])

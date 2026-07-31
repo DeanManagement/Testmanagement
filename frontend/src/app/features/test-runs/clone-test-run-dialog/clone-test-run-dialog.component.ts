@@ -28,11 +28,11 @@ export interface CloneTestRunDialogResult {
     TranslateModule,
   ],
   template: `
-    <h2 mat-dialog-title>{{ 'testRun.cloneDialog.title' | translate }}</h2>
-    <mat-dialog-content>
+    <h2 mat-dialog-title id="clone-test-run-dialog-title">{{ 'testRun.cloneDialog.title' | translate }}</h2>
+    <mat-dialog-content role="dialog" aria-labelledby="clone-test-run-dialog-title">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>{{ 'testRun.cloneDialog.name' | translate }}</mat-label>
-        <input matInput [(ngModel)]="name" required />
+        <input matInput [(ngModel)]="name" required aria-required="true" />
       </mat-form-field>
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>{{ 'testRun.cloneDialog.environment' | translate }}</mat-label>
@@ -48,7 +48,7 @@ export interface CloneTestRunDialogResult {
   `,
   styles: [`
     .full-width { width: 100%; }
-    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: 400px; }
+    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: min(90vw, 400px); }
   `],
 })
 export class CloneTestRunDialogComponent {

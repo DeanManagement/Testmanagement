@@ -33,9 +33,12 @@ export const bugReportReducer = createReducer(
     error,
   })),
 
-  on(BugReportActions.loadBugReportsByTestResultSuccess, (state, { bugReports }) => ({
+  on(BugReportActions.loadBugReportsByTestResultSuccess, (state, { testResultId, bugReports }) => ({
     ...state,
-    linkedBugReports: bugReports,
+    linkedBugReportsByResult: {
+      ...state.linkedBugReportsByResult,
+      [testResultId]: bugReports,
+    },
   })),
 
   on(BugReportActions.createBugReportSuccess, (state, { bugReport }) =>

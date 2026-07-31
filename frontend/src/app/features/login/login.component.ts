@@ -1,4 +1,5 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe } from '@angular/common';
@@ -33,6 +34,7 @@ export class LoginComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
+  private readonly destroyRef = inject(DestroyRef);
 
   loading$ = this.store.select(selectAuthLoading);
   error$ = this.store.select(selectAuthError);
@@ -41,7 +43,7 @@ export class LoginComponent implements OnInit {
   password = '';
 
   ngOnInit(): void {
-    this.store.select(selectIsAuthenticated).subscribe((isAuth) => {
+    this.store.select(selectIsAuthenticated).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((isAuth) => {
       if (isAuth) {
         this.router.navigate(['/dashboard']);
       }

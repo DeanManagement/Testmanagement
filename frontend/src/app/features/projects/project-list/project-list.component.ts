@@ -12,7 +12,7 @@ import { MatInputModule } from '@angular/material/input';
 import { TranslateModule } from '@ngx-translate/core';
 import { map, Observable } from 'rxjs';
 import { ProjectActions } from '../../../store/project/project.actions';
-import { selectAllProjects, selectProjectsLoading } from '../../../store/project/project.selectors';
+import { selectAllProjects, selectProjectsLoading, selectProjectsError } from '../../../store/project/project.selectors';
 import { selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
 import { Project } from '../../../shared/models/project.model';
 
@@ -39,6 +39,7 @@ export class ProjectListComponent implements OnInit {
 
   projects$ = this.store.select(selectAllProjects);
   loading$ = this.store.select(selectProjectsLoading);
+  error$ = this.store.select(selectProjectsError);
   isAdmin$ = this.store.select(selectIsSystemAdmin);
   displayedColumns = ['key', 'name', 'description', 'actions'];
   searchTerm = '';
@@ -58,6 +59,10 @@ export class ProjectListComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.store.dispatch(ProjectActions.loadProjects());
+  }
+
+  retry(): void {
     this.store.dispatch(ProjectActions.loadProjects());
   }
 

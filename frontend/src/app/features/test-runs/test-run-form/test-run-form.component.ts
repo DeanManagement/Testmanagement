@@ -1,5 +1,7 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
-import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormBuilder, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
+import { take } from 'rxjs/operators';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -9,6 +11,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { AsyncPipe } from '@angular/common';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
@@ -21,6 +24,7 @@ import { selectFolderTree } from '../../../store/test-case-folder/test-case-fold
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { ProjectMember } from '../../../shared/models/project-member.model';
 import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
+import { TestCase } from '../../../shared/models/test-case.model';
 
 @Component({
   selector: 'app-test-run-form',
@@ -28,6 +32,7 @@ import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
   imports: [
     AsyncPipe,
     ReactiveFormsModule,
+    FormsModule,
     RouterLink,
     MatFormFieldModule,
     MatInputModule,
@@ -36,6 +41,7 @@ import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
     MatCheckboxModule,
     MatSelectModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     TranslateModule,
   ],
   templateUrl: './test-run-form.component.html',
@@ -47,11 +53,14 @@ export class TestRunFormComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly memberApi = inject(ProjectMemberApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
+  saving = false;
   selectedTestCaseIds = new Set<string>();
   selectedFolderId: string | null = null;
   members: ProjectMember[] = [];
+  searchTerm = '';
 
   testCases$ = this.store.select(selectAllTestCases);
   testPlans$ = this.store.select(selectAllTestPlans);
@@ -67,10 +76,10 @@ export class TestRunFormComponent implements OnInit {
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     if (this.projectId) {
-      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
+      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId, query: { size: 200 } }));
       this.store.dispatch(TestPlanActions.loadTestPlans({ projectId: this.projectId }));
       this.store.dispatch(TestCaseFolderActions.loadFolders({ projectId: this.projectId }));
-      this.memberApi.getByProject(this.projectId).subscribe((m) => {
+      this.memberApi.getByProject(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((m) => {
         this.members = m;
         this.cdr.detectChanges();
       });
@@ -87,7 +96,7 @@ export class TestRunFormComponent implements OnInit {
     this.store.dispatch(
       TestCaseActions.loadTestCases({
         projectId: this.projectId,
-        folderId: folderId,
+        query: { folderId, size: 200 },
       })
     );
   }
@@ -106,6 +115,17 @@ export class TestRunFormComponent implements OnInit {
     return result;
   }
 
+  filterTestCases(testCases: TestCase[]): TestCase[] {
+    if (!this.searchTerm.trim()) {
+      return testCases;
+    }
+    const term = this.searchTerm.toLowerCase();
+    return testCases.filter(tc =>
+      tc.title.toLowerCase().includes(term) ||
+      (tc.key && tc.key.toLowerCase().includes(term))
+    );
+  }
+
   toggleTestCase(id: string): void {
     if (this.selectedTestCaseIds.has(id)) {
       this.selectedTestCaseIds.delete(id);
@@ -116,6 +136,7 @@ export class TestRunFormComponent implements OnInit {
 
   onSubmit(): void {
     if (this.form.invalid) return;
+    this.saving = true;
 
     this.store.dispatch(
       TestRunActions.createTestRun({

@@ -1,15 +1,20 @@
 import { ApplicationConfig, provideZonelessChangeDetection, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import { registerLocaleData } from '@angular/common';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
 import { provideStore } from '@ngrx/store';
 import { provideEffects } from '@ngrx/effects';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideTranslateHttpLoader } from '@ngx-translate/http-loader';
+import localeDe from '@angular/common/locales/de';
+
+registerLocaleData(localeDe);
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
+import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { authReducer } from './store/auth/auth.reducer';
 import { projectReducer } from './store/project/project.reducer';
 import { ProjectEffects } from './store/project/project.effects';
@@ -38,7 +43,7 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideAnimationsAsync(),
     provideStore({
       auth: authReducer,
@@ -55,7 +60,8 @@ export const appConfig: ApplicationConfig = {
       watchers: watcherReducer,
     }),
     provideEffects(ProjectEffects, TestCaseEffects, TestCaseFolderEffects, TestSuiteEffects, TestRunEffects, ApiKeyEffects, UserEffects, CommentEffects, TestPlanEffects, BugReportEffects, WatcherEffects),
-    provideStoreDevtools({ maxAge: 25, logOnly: !isDevMode() }),
+    // Dev only: even logOnly devtools expose the full state tree to the extension in prod.
+    ...(isDevMode() ? [provideStoreDevtools({ maxAge: 25 })] : []),
     provideTranslateService({
       fallbackLang: 'en',
     }),

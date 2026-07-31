@@ -76,8 +76,12 @@
       <a mat-stroked-button [routerLink]="['/projects', projectId, 'bug-reports']" data-test-id="bug-report-form-cancel">
         {{ 'common.cancel' | translate }}
       </a>
-      <button mat-flat-button type="submit" [disabled]="form.invalid" data-test-id="bug-report-form-submit">
-        {{ 'common.save' | translate }}
+      <button mat-flat-button type="submit" [disabled]="form.invalid || saving" data-test-id="bug-report-form-submit">
+        @if (saving) {
+          <mat-spinner diameter="20"></mat-spinner>
+        } @else {
+          {{ 'common.save' | translate }}
+        }
       </button>
     </div>
   </form>

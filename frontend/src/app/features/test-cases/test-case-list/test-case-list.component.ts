@@ -1,5 +1,6 @@
-import { Component, inject, OnInit } from '@angular/core';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, LowerCasePipe } from '@angular/common';
@@ -17,17 +18,26 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSortModule, Sort } from '@angular/material/sort';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { Subject } from 'rxjs';
+import { debounceTime, take } from 'rxjs/operators';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TestCaseApiService } from '../../../core/services/test-case-api.service';
+import { ImportTestCasesDialogComponent } from '../import-test-cases-dialog/import-test-cases-dialog.component';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
-import { selectAllTestCases, selectTestCasesLoading, selectSelectedTestCaseIds, selectHasSelection } from '../../../store/test-case/test-case.selectors';
+import { selectAllTestCases, selectTestCasesLoading, selectSelectedTestCaseIds, selectHasSelection, selectTestCasePage } from '../../../store/test-case/test-case.selectors';
 import { TestCaseFolderActions } from '../../../store/test-case-folder/test-case-folder.actions';
-import { selectFolderTree, selectSelectedFolderId } from '../../../store/test-case-folder/test-case-folder.selectors';
+import { selectFolderTree } from '../../../store/test-case-folder/test-case-folder.selectors';
 import { BulkStatusDialogComponent } from '../bulk-status-dialog/bulk-status-dialog.component';
 import { BulkAddToSuiteDialogComponent } from '../bulk-add-to-suite-dialog/bulk-add-to-suite-dialog.component';
 import { FolderNameDialogComponent, FolderNameDialogData } from '../folder-name-dialog/folder-name-dialog.component';
 import { TestSuiteApiService } from '../../../core/services/test-suite-api.service';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
-import { TestCase, Priority, TestCaseStatus } from '../../../shared/models/test-case.model';
+import { Priority, TestCaseQuery, TestCaseStatus } from '../../../shared/models/test-case.model';
 
 interface FlatFolderNode {
   id: string;
@@ -58,6 +68,9 @@ interface FlatFolderNode {
     MatFormFieldModule,
     MatInputModule,
     MatSelectModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatTooltipModule,
     TranslateModule,
   ],
   templateUrl: './test-case-list.component.html',
@@ -66,9 +79,16 @@ interface FlatFolderNode {
 export class TestCaseListComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly testSuiteApi = inject(TestSuiteApiService);
+  private readonly testCaseApi = inject(TestCaseApiService);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
+
+  /** Upper bound for cross-page bulk selection (PRD-022 §4.4). */
+  private static readonly MAX_SELECTION = 500;
 
   projectId = '';
   testCases$ = this.store.select(selectAllTestCases);
@@ -76,15 +96,22 @@ export class TestCaseListComponent implements OnInit {
   selectedIds$ = this.store.select(selectSelectedTestCaseIds);
   hasSelection$ = this.store.select(selectHasSelection);
   folders$ = this.store.select(selectFolderTree);
-  selectedFolderId$ = this.store.select(selectSelectedFolderId);
+  page$ = this.store.select(selectTestCasePage);
   displayedColumns = ['select', 'key', 'title', 'priority', 'status', 'labels', 'actions'];
 
   selectedFolderId: string | null = null;
+  /** Table row density; persisted across sessions (PRD-008 §2.3). */
+  density: 'comfortable' | 'compact' =
+    (localStorage.getItem('tc-density') as 'comfortable' | 'compact') ?? 'comfortable';
   searchTerm = '';
   statusFilter: TestCaseStatus | '' = '';
   priorityFilter: Priority | '' = '';
+  sortActive = 'updatedAt';
+  sortDirection: 'asc' | 'desc' = 'desc';
   allStatuses: TestCaseStatus[] = ['DRAFT', 'ACTIVE', 'DEPRECATED'];
   allPriorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
+
+  private readonly searchChange$ = new Subject<void>();
 
   private transformer = (node: TestCaseFolder, level: number): FlatFolderNode => ({
     id: node.id,
@@ -113,45 +140,87 @@ export class TestCaseListComponent implements OnInit {
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
-    if (this.projectId) {
-      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
-      this.store.dispatch(TestCaseFolderActions.loadFolders({ projectId: this.projectId }));
+    if (!this.projectId) {
+      return;
     }
 
-    this.folders$.subscribe(folders => {
+    this.store.dispatch(TestCaseFolderActions.loadFolders({ projectId: this.projectId }));
+    this.folders$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(folders => {
       this.dataSource.data = folders;
     });
 
-    this.selectedFolderId$.subscribe(folderId => {
-      this.selectedFolderId = folderId;
+    // URL query params are the single source of truth for filters + paging.
+    this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
+      this.searchTerm = params.get('q') ?? '';
+      this.statusFilter = (params.get('status') as TestCaseStatus) ?? '';
+      this.priorityFilter = (params.get('priority') as Priority) ?? '';
+      this.selectedFolderId = params.get('folderId');
+      this.sortActive = params.get('sort')?.split(',')[0] ?? 'updatedAt';
+      this.sortDirection = (params.get('sort')?.split(',')[1] as 'asc' | 'desc') ?? 'desc';
+
+      const query: TestCaseQuery = {
+        q: this.searchTerm || undefined,
+        status: this.statusFilter ? [this.statusFilter] : undefined,
+        priority: this.priorityFilter ? [this.priorityFilter] : undefined,
+        folderId: this.selectedFolderId,
+        page: params.get('page') ? Number(params.get('page')) : 0,
+        size: params.get('size') ? Number(params.get('size')) : 50,
+        sort: params.get('sort') ?? 'updatedAt,desc',
+      };
+      this.store.dispatch(TestCaseFolderActions.selectFolder({ folderId: this.selectedFolderId }));
+      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId, query }));
+    });
+
+    this.searchChange$
+      .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.applyFilters());
+  }
+
+  /** Writes the current filter form into the URL, resetting to the first page. */
+  applyFilters(): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: {
+        q: this.searchTerm || null,
+        status: this.statusFilter || null,
+        priority: this.priorityFilter || null,
+        page: null,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
     });
   }
 
-  filteredTestCases(testCases: TestCase[]): TestCase[] {
-    let result = testCases;
-    if (this.searchTerm) {
-      const term = this.searchTerm.toLowerCase();
-      result = result.filter(tc =>
-        tc.key.toLowerCase().includes(term) ||
-        tc.title.toLowerCase().includes(term)
-      );
-    }
-    if (this.statusFilter) {
-      result = result.filter(tc => tc.status === this.statusFilter);
-    }
-    if (this.priorityFilter) {
-      result = result.filter(tc => tc.priority === this.priorityFilter);
-    }
-    return result;
+  onSearchInput(): void {
+    this.searchChange$.next();
+  }
+
+  onPage(event: PageEvent): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { page: event.pageIndex, size: event.pageSize },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  onSortChange(sort: Sort): void {
+    const sortParam = sort.direction ? `${sort.active},${sort.direction}` : null;
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { sort: sortParam, page: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   selectFolder(folderId: string | null): void {
-    this.store.dispatch(TestCaseFolderActions.selectFolder({ folderId }));
-    if (folderId) {
-      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId, folderId }));
-    } else {
-      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
-    }
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { folderId: folderId || null, page: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
   }
 
   createFolder(parentId?: string | null): void {
@@ -159,7 +228,7 @@ export class TestCaseListComponent implements OnInit {
       width: '400px',
       data: { title: 'folder.createTitle', name: '' } as FolderNameDialogData,
     });
-    dialogRef.afterClosed().subscribe(name => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(name => {
       if (name) {
         this.store.dispatch(TestCaseFolderActions.createFolder({
           projectId: this.projectId,
@@ -174,7 +243,7 @@ export class TestCaseListComponent implements OnInit {
       width: '400px',
       data: { title: 'folder.renameTitle', name: node.name } as FolderNameDialogData,
     });
-    dialogRef.afterClosed().subscribe(name => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(name => {
       if (name) {
         this.store.dispatch(TestCaseFolderActions.updateFolder({
           projectId: this.projectId,
@@ -186,13 +255,22 @@ export class TestCaseListComponent implements OnInit {
   }
 
   deleteFolder(node: FlatFolderNode): void {
-    const message = this.translate.instant('folder.deleteConfirm', { name: node.name });
-    if (confirm(message)) {
-      this.store.dispatch(TestCaseFolderActions.deleteFolder({
-        projectId: this.projectId,
-        folderId: node.id,
-      }));
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titleKey: 'common.delete',
+        messageKey: 'folder.deleteConfirm',
+        messageParams: { name: node.name },
+        danger: true,
+      } as ConfirmDialogData,
+    });
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(confirmed => {
+      if (confirmed) {
+        this.store.dispatch(TestCaseFolderActions.deleteFolder({
+          projectId: this.projectId,
+          folderId: node.id,
+        }));
+      }
+    });
   }
 
   onDragStart(event: DragEvent, testCaseId: string): void {
@@ -233,7 +311,12 @@ export class TestCaseListComponent implements OnInit {
     return {};
   }
 
-  toggleSelect(id: string): void {
+  toggleSelect(id: string, selectedIds: string[]): void {
+    // Adding (not removing) past the cap is rejected with feedback (PRD-022 §4.4).
+    if (!selectedIds.includes(id) && selectedIds.length >= TestCaseListComponent.MAX_SELECTION) {
+      this.showSelectionLimit();
+      return;
+    }
     this.store.dispatch(TestCaseActions.toggleSelectTestCase({ id }));
   }
 
@@ -242,7 +325,20 @@ export class TestCaseListComponent implements OnInit {
   }
 
   selectAll(ids: string[]): void {
-    this.store.dispatch(TestCaseActions.selectAllTestCases({ ids }));
+    let capped = ids;
+    if (ids.length > TestCaseListComponent.MAX_SELECTION) {
+      capped = ids.slice(0, TestCaseListComponent.MAX_SELECTION);
+      this.showSelectionLimit();
+    }
+    this.store.dispatch(TestCaseActions.selectAllTestCases({ ids: capped }));
+  }
+
+  private showSelectionLimit(): void {
+    this.snackBar.open(
+      this.translate.instant('bulk.selectionLimit', { max: TestCaseListComponent.MAX_SELECTION }),
+      'OK',
+      { duration: 4000 },
+    );
   }
 
   deselectAll(): void {
@@ -259,7 +355,7 @@ export class TestCaseListComponent implements OnInit {
 
   bulkUpdateStatus(selectedIds: string[]): void {
     const dialogRef = this.dialog.open(BulkStatusDialogComponent, { width: '400px' });
-    dialogRef.afterClosed().subscribe(status => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       if (status) {
         this.store.dispatch(TestCaseActions.bulkUpdateStatus({
           projectId: this.projectId,
@@ -271,29 +367,73 @@ export class TestCaseListComponent implements OnInit {
   }
 
   bulkDelete(selectedIds: string[]): void {
-    const message = this.translate.instant('bulk.confirmDelete', { count: selectedIds.length })
-      + ' ' + this.translate.instant('bulk.deleteWarning');
-    if (confirm(message)) {
-      this.store.dispatch(TestCaseActions.bulkDelete({
-        projectId: this.projectId,
-        testCaseIds: selectedIds,
-      }));
-    }
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titleKey: 'bulk.delete',
+        messageKey: 'bulk.confirmDelete',
+        messageParams: { count: selectedIds.length },
+        secondaryMessageKey: 'bulk.deleteWarning',
+        danger: true,
+      } as ConfirmDialogData,
+    });
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(confirmed => {
+      if (confirmed) {
+        this.store.dispatch(TestCaseActions.bulkDelete({
+          projectId: this.projectId,
+          testCaseIds: selectedIds,
+        }));
+      }
+    });
   }
 
   bulkAddToSuite(selectedIds: string[]): void {
     const dialogRef = this.dialog.open(BulkAddToSuiteDialogComponent, { width: '400px' });
     dialogRef.componentInstance.projectId = this.projectId;
-    dialogRef.afterClosed().subscribe(suiteId => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(suiteId => {
       if (suiteId) {
-        this.testSuiteApi.bulkAddTestCases(this.projectId, suiteId, selectedIds).subscribe(() => {
-          this.store.dispatch(TestCaseActions.deselectAllTestCases());
-        });
+        this.testSuiteApi.bulkAddTestCases(this.projectId, suiteId, selectedIds)
+          .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+          .subscribe(() => {
+            this.store.dispatch(TestCaseActions.deselectAllTestCases());
+          });
       }
     });
   }
 
   deleteTestCase(id: string): void {
     this.store.dispatch(TestCaseActions.deleteTestCase({ projectId: this.projectId, id }));
+  }
+
+  toggleDensity(): void {
+    this.density = this.density === 'compact' ? 'comfortable' : 'compact';
+    localStorage.setItem('tc-density', this.density);
+  }
+
+  exportTestCases(format: 'json' | 'csv', excel = false): void {
+    this.testCaseApi.export(this.projectId, format, excel)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `test-cases.${format}`;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url));
+      });
+  }
+
+  openImport(): void {
+    const dialogRef = this.dialog.open(ImportTestCasesDialogComponent, { width: '560px' });
+    dialogRef.componentInstance.projectId = this.projectId;
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
+      if (result) {
+        this.snackBar.open(
+          this.translate.instant('import.done', { imported: result.imported, skipped: result.skipped }),
+          'OK',
+          { duration: 5000 },
+        );
+        this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
+      }
+    });
   }
 }

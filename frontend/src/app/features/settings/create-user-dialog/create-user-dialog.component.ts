@@ -20,19 +20,19 @@ import { TranslateModule } from '@ngx-translate/core';
     TranslateModule,
   ],
   template: `
-    <h2 mat-dialog-title>{{ 'settings.users.createTitle' | translate }}</h2>
-    <mat-dialog-content>
+    <h2 mat-dialog-title id="create-user-dialog-title">{{ 'settings.users.createTitle' | translate }}</h2>
+    <mat-dialog-content role="dialog" aria-labelledby="create-user-dialog-title">
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>{{ 'auth.email' | translate }}</mat-label>
-        <input matInput type="email" [(ngModel)]="email" required data-test-id="user-email-input" />
+        <input matInput type="email" [(ngModel)]="email" required data-test-id="user-email-input" aria-required="true" />
       </mat-form-field>
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>{{ 'settings.users.displayName' | translate }}</mat-label>
-        <input matInput [(ngModel)]="displayName" required data-test-id="user-name-input" />
+        <input matInput [(ngModel)]="displayName" required data-test-id="user-name-input" aria-required="true" />
       </mat-form-field>
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>{{ 'auth.password' | translate }}</mat-label>
-        <input matInput type="password" [(ngModel)]="password" required data-test-id="user-password-input" />
+        <input matInput type="password" [(ngModel)]="password" required data-test-id="user-password-input" aria-required="true" />
       </mat-form-field>
       <mat-checkbox [(ngModel)]="systemAdmin" data-test-id="user-admin-checkbox">
         {{ 'settings.users.systemAdminLabel' | translate }}
@@ -49,7 +49,7 @@ import { TranslateModule } from '@ngx-translate/core';
   `,
   styles: [`
     .full-width { width: 100%; }
-    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: 450px; }
+    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: min(90vw, 450px); }
   `],
 })
 export class CreateUserDialogComponent {

@@ -28,7 +28,7 @@ import { TestCaseStatus } from '../../../shared/models/test-case.model';
       <button mat-flat-button [disabled]="!selectedStatus" (click)="confirm()">{{ 'common.confirm' | translate }}</button>
     </mat-dialog-actions>
   `,
-  styles: [`.full-width { width: 100%; }`],
+  styles: [`.full-width { width: 100%; } mat-dialog-content { min-width: min(90vw, 400px); }`],
 })
 export class BulkStatusDialogComponent {
   selectedStatus: TestCaseStatus | null = null;

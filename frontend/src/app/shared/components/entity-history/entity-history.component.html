@@ -21,7 +21,7 @@
           @if (entry.details) {
             <p class="history-details">{{ entry.details }}</p>
           }
-          <span class="history-time">{{ entry.createdAt | date:'medium' }}</span>
+          <span class="history-time">{{ entry.createdAt | localizedDate:'medium' }}</span>
         </div>
       </div>
     }

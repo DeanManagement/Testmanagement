@@ -9,7 +9,25 @@ export const selectAllBugReports = createSelector(selectBugReportState, selectAl
 export const selectBugReportEntities = createSelector(selectBugReportState, selectEntities);
 export const selectBugReportsLoading = createSelector(selectBugReportState, (state) => state.loading);
 export const selectBugReportsError = createSelector(selectBugReportState, (state) => state.error);
-export const selectLinkedBugReports = createSelector(selectBugReportState, (state) => state.linkedBugReports);
+export const selectLinkedBugReportsByResult = createSelector(
+  selectBugReportState,
+  (state) => state.linkedBugReportsByResult,
+);
+
+/**
+ * Bug reports linked to a single test result. Returns `[]` if not loaded.
+ * Use `selectLinkedBugReportsLoadedFor` to distinguish "not yet fetched" from
+ * "fetched, empty result."
+ */
+export const selectLinkedBugReportsFor = (testResultId: string | null) =>
+  createSelector(selectLinkedBugReportsByResult, (byResult) =>
+    testResultId ? byResult[testResultId] ?? [] : []
+  );
+
+export const selectLinkedBugReportsLoadedFor = (testResultId: string | null) =>
+  createSelector(selectLinkedBugReportsByResult, (byResult) =>
+    testResultId ? Object.prototype.hasOwnProperty.call(byResult, testResultId) : false
+  );
 
 export const selectBugReportById = (id: string) =>
   createSelector(selectBugReportEntities, (entities) => entities[id]);

@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { MatButtonModule } from '@angular/material/button';
@@ -7,10 +8,9 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { TranslateModule } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
-import { AuthService } from '../../../core/services/auth.service';
 import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
-import { first } from 'rxjs/operators';
+import { first, map, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-allure-report-viewer',
@@ -29,9 +29,9 @@ export class AllureReportViewerComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly sanitizer = inject(DomSanitizer);
   private readonly testRunApi = inject(TestRunApiService);
-  private readonly authService = inject(AuthService);
   private readonly store = inject(Store);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   iframeSrc: SafeResourceUrl | null = null;
   projectId = '';
@@ -42,16 +42,20 @@ export class AllureReportViewerComponent implements OnInit {
     this.runId = this.route.snapshot.paramMap.get('runId') ?? '';
 
     this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: this.runId }));
+    // PRD-018: mint a short-lived, single-report view session via the authenticated API,
+    // then load the report through the token-in-path URL. The JWT never appears in a URL,
+    // and the sandboxed iframe (see template) isolates the report's scripts.
     this.store.select(selectTestRunById(this.runId)).pipe(
       first(run => !!run),
-    ).subscribe(run => {
-      if (run) {
-        const baseUrl = this.testRunApi.getAllureReportViewUrl(this.projectId, run.key);
-        const token = this.authService.getAccessToken();
-        const url = token ? `${baseUrl}?token=${token}` : baseUrl;
-        this.iframeSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
-        this.cdr.detectChanges();
-      }
+      switchMap(run =>
+        this.testRunApi.createAllureViewSession(this.projectId, run!.key).pipe(
+          map(session => this.testRunApi.getAllureReportViewUrl(this.projectId, run!.key, session.token)),
+        ),
+      ),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(url => {
+      this.iframeSrc = this.sanitizer.bypassSecurityTrustResourceUrl(url);
+      this.cdr.detectChanges();
     });
   }
 

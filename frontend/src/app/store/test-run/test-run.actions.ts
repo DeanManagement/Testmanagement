@@ -1,11 +1,12 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { CreateTestRunRequest, TestRun, UpdateTestRunRequest, UpdateTestResultRequest, UpdateStepResultRequest, TestResult, StepResult } from '../../shared/models/test-run.model';
+import { CreateTestRunRequest, TestRun, TestRunQuery, UpdateTestRunRequest, UpdateTestResultRequest, UpdateStepResultRequest, TestResult, StepResult } from '../../shared/models/test-run.model';
+import { PageMetadata } from '../../shared/models/page.model';
 
 export const TestRunActions = createActionGroup({
   source: 'TestRuns',
   events: {
-    'Load Test Runs': props<{ projectId: string }>(),
-    'Load Test Runs Success': props<{ testRuns: TestRun[] }>(),
+    'Load Test Runs': props<{ projectId: string; query?: TestRunQuery }>(),
+    'Load Test Runs Success': props<{ testRuns: TestRun[]; page: PageMetadata }>(),
     'Load Test Runs Failure': props<{ error: string }>(),
     'Load Test Run': props<{ projectId: string; id: string }>(),
     'Load Test Run Success': props<{ testRun: TestRun }>(),

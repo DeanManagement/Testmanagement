@@ -3,11 +3,12 @@ import { TestSuiteListComponent } from './test-suite-list/test-suite-list.compon
 import { TestSuiteFormComponent } from './test-suite-form/test-suite-form.component';
 import { TestSuiteDetailComponent } from './test-suite-detail/test-suite-detail.component';
 import { TestSuiteReportComponent } from './test-suite-report/test-suite-report.component';
+import { unsavedChangesGuard } from '../../core/guards/unsaved-changes.guard';
 
 export const testSuitesRoutes: Routes = [
   { path: '', component: TestSuiteListComponent },
-  { path: 'new', component: TestSuiteFormComponent },
+  { path: 'new', component: TestSuiteFormComponent, canDeactivate: [unsavedChangesGuard] },
   { path: ':suiteId', component: TestSuiteDetailComponent },
-  { path: ':suiteId/edit', component: TestSuiteFormComponent },
+  { path: ':suiteId/edit', component: TestSuiteFormComponent, canDeactivate: [unsavedChangesGuard] },
   { path: ':suiteId/report', component: TestSuiteReportComponent },
 ];

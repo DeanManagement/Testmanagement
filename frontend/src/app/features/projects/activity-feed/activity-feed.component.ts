@@ -1,6 +1,7 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe } from '@angular/common';
+import { take } from 'rxjs/operators';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -8,12 +9,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivityApiService } from '../../../core/services/activity-api.service';
 import { AuditEntry } from '../../../shared/models/activity.model';
+import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 
 @Component({
   selector: 'app-activity-feed',
   standalone: true,
   imports: [
-    DatePipe,
+    LocalizedDatePipe,
     RouterLink,
     MatCardModule,
     MatButtonModule,
@@ -28,6 +30,7 @@ export class ActivityFeedComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly activityApi = inject(ActivityApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
   entries: AuditEntry[] = [];
@@ -46,7 +49,7 @@ export class ActivityFeedComponent implements OnInit {
   loadMore(): void {
     if (this.loading || !this.hasMore) return;
     this.loading = true;
-    this.activityApi.getActivity(this.projectId, this.page, this.pageSize).subscribe({
+    this.activityApi.getActivity(this.projectId, this.page, this.pageSize).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.entries = [...this.entries, ...response.content];
         this.hasMore = !response.last;

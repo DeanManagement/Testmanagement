@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { CreateProjectRequest, Project, UpdateProjectRequest } from '../../shared/models/project.model';
 import { ProjectDashboard } from '../../shared/models/dashboard.model';
+import { retryWithBackoff } from '../utils/retry-strategy';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectApiService {
@@ -10,11 +11,11 @@ export class ProjectApiService {
   private readonly baseUrl = '/api/projects';
 
   getAll(): Observable<Project[]> {
-    return this.http.get<Project[]>(this.baseUrl);
+    return this.http.get<Project[]>(this.baseUrl).pipe(retryWithBackoff());
   }
 
   getById(id: string): Observable<Project> {
-    return this.http.get<Project>(`${this.baseUrl}/${id}`);
+    return this.http.get<Project>(`${this.baseUrl}/${id}`).pipe(retryWithBackoff());
   }
 
   create(request: CreateProjectRequest): Observable<Project> {
@@ -30,11 +31,11 @@ export class ProjectApiService {
   }
 
   searchByKey(key: string): Observable<Project[]> {
-    return this.http.get<Project[]>(`${this.baseUrl}/search`, { params: { key } });
+    return this.http.get<Project[]>(`${this.baseUrl}/search`, { params: { key } }).pipe(retryWithBackoff());
   }
 
   getDashboard(projectId: string): Observable<ProjectDashboard> {
-    return this.http.get<ProjectDashboard>(`${this.baseUrl}/${projectId}/dashboard`);
+    return this.http.get<ProjectDashboard>(`${this.baseUrl}/${projectId}/dashboard`).pipe(retryWithBackoff());
   }
 
   toggleBugReports(projectId: string, enabled: boolean): Observable<Project> {

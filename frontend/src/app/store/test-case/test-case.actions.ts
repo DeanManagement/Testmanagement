@@ -1,12 +1,16 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { CreateTestCaseRequest, TestCase, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
+import { CreateTestCaseRequest, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
+import { PageMetadata } from '../../shared/models/page.model';
 
 export const TestCaseActions = createActionGroup({
   source: 'TestCases',
   events: {
-    'Load Test Cases': props<{ projectId: string; folderId?: string | null; rootOnly?: boolean }>(),
-    'Load Test Cases Success': props<{ testCases: TestCase[] }>(),
+    'Load Test Cases': props<{ projectId: string; query?: TestCaseQuery }>(),
+    'Load Test Cases Success': props<{ testCases: TestCase[]; page: PageMetadata }>(),
     'Load Test Cases Failure': props<{ error: string }>(),
+    'Load Test Case': props<{ projectId: string; id: string }>(),
+    'Load Test Case Success': props<{ testCase: TestCase }>(),
+    'Load Test Case Failure': props<{ error: string }>(),
     'Create Test Case': props<{ projectId: string; request: CreateTestCaseRequest }>(),
     'Create Test Case Success': props<{ testCase: TestCase }>(),
     'Create Test Case Failure': props<{ error: string }>(),

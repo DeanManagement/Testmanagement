@@ -7,10 +7,25 @@
       </a>
       <h1 data-test-id="test-case-list-title">{{ 'testCase.list.title' | translate }}</h1>
     </div>
-    <a mat-flat-button [routerLink]="['new']" [queryParams]="getCreateLink()" class="create-btn" data-test-id="test-case-create-btn">
-      <mat-icon>add</mat-icon>
-      {{ 'testCase.list.create' | translate }}
-    </a>
+    <div class="header-actions">
+      <button mat-stroked-button (click)="openImport()" data-test-id="test-case-import-btn">
+        <mat-icon>upload</mat-icon>
+        {{ 'import.button' | translate }}
+      </button>
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu" data-test-id="test-case-export-btn">
+        <mat-icon>download</mat-icon>
+        {{ 'import.export' | translate }}
+      </button>
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportTestCases('json')" data-test-id="export-json">JSON</button>
+        <button mat-menu-item (click)="exportTestCases('csv')" data-test-id="export-csv">CSV</button>
+        <button mat-menu-item (click)="exportTestCases('csv', true)" data-test-id="export-csv-excel">{{ 'import.csvExcel' | translate }}</button>
+      </mat-menu>
+      <a mat-flat-button [routerLink]="['new']" [queryParams]="getCreateLink()" class="create-btn" data-test-id="test-case-create-btn">
+        <mat-icon>add</mat-icon>
+        {{ 'testCase.list.create' | translate }}
+      </a>
+    </div>
   </div>
 
   @if (hasSelection$ | async) {
@@ -140,6 +155,38 @@
 
     <!-- Table Panel -->
     <div class="table-panel">
+      <div class="filter-bar" data-test-id="test-case-filter-bar">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-icon matPrefix>search</mat-icon>
+          <mat-label>{{ 'filter.search' | translate }}</mat-label>
+          <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchInput()" data-test-id="test-case-search">
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-select">
+          <mat-label>{{ 'filter.status' | translate }}</mat-label>
+          <mat-select [(ngModel)]="statusFilter" (selectionChange)="applyFilters()" data-test-id="test-case-status-filter">
+            <mat-option value="">{{ 'filter.allStatuses' | translate }}</mat-option>
+            @for (s of allStatuses; track s) {
+              <mat-option [value]="s">{{ 'testCaseStatus.' + s | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="filter-select">
+          <mat-label>{{ 'filter.priority' | translate }}</mat-label>
+          <mat-select [(ngModel)]="priorityFilter" (selectionChange)="applyFilters()" data-test-id="test-case-priority-filter">
+            <mat-option value="">{{ 'filter.allPriorities' | translate }}</mat-option>
+            @for (p of allPriorities; track p) {
+              <mat-option [value]="p">{{ 'priority.' + p | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <button mat-icon-button (click)="toggleDensity()"
+                [matTooltip]="'filter.density' | translate"
+                class="density-toggle" data-test-id="test-case-density-toggle"
+                [attr.aria-label]="'filter.density' | translate">
+          <mat-icon>{{ density === 'compact' ? 'density_small' : 'density_medium' }}</mat-icon>
+        </button>
+      </div>
+
       @if (loading$ | async) {
         <div class="spinner-container" data-test-id="test-case-list-loading">
           <mat-spinner diameter="40"></mat-spinner>
@@ -153,111 +200,99 @@
             {{ 'testCase.list.create' | translate }}
           </a>
         </div>
-      } @else {
-        <div class="filter-bar" data-test-id="test-case-filter-bar">
-          <mat-form-field appearance="outline" class="search-field">
-            <mat-icon matPrefix>search</mat-icon>
-            <mat-label>{{ 'filter.search' | translate }}</mat-label>
-            <input matInput [(ngModel)]="searchTerm" data-test-id="test-case-search">
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="filter-select">
-            <mat-label>{{ 'filter.status' | translate }}</mat-label>
-            <mat-select [(value)]="statusFilter" data-test-id="test-case-status-filter">
-              <mat-option value="">{{ 'filter.allStatuses' | translate }}</mat-option>
-              @for (s of allStatuses; track s) {
-                <mat-option [value]="s">{{ 'testCaseStatus.' + s | translate }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field appearance="outline" class="filter-select">
-            <mat-label>{{ 'filter.priority' | translate }}</mat-label>
-            <mat-select [(value)]="priorityFilter" data-test-id="test-case-priority-filter">
-              <mat-option value="">{{ 'filter.allPriorities' | translate }}</mat-option>
-              @for (p of allPriorities; track p) {
-                <mat-option [value]="p">{{ 'priority.' + p | translate }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </div>
-        @if (selectedIds$ | async; as selectedIds) {
-          <table mat-table [dataSource]="filteredTestCases((testCases$ | async) ?? [])" class="data-table" data-test-id="test-case-table">
-            <ng-container matColumnDef="select">
-              <th mat-header-cell *matHeaderCellDef>
-                @if ((testCases$ | async); as tcs) {
-                  <mat-checkbox
-                    [checked]="selectedIds.length > 0 && selectedIds.length === tcs.length"
-                    [indeterminate]="selectedIds.length > 0 && selectedIds.length < tcs.length"
-                    (change)="toggleSelectAll(tcs, selectedIds)"
-                    data-test-id="select-all-checkbox">
-                  </mat-checkbox>
-                }
-              </th>
-              <td mat-cell *matCellDef="let tc">
+      } @else if (selectedIds$ | async; as selectedIds) {
+        <table mat-table matSort
+               [matSortActive]="sortActive" [matSortDirection]="sortDirection"
+               (matSortChange)="onSortChange($event)"
+               [class.compact]="density === 'compact'"
+               [dataSource]="(testCases$ | async) ?? []" class="data-table" data-test-id="test-case-table">
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef>
+              @if ((testCases$ | async); as tcs) {
                 <mat-checkbox
-                  [checked]="isSelected(tc.id, selectedIds)"
-                  (change)="toggleSelect(tc.id)"
-                  data-test-id="select-checkbox">
+                  [checked]="selectedIds.length > 0 && selectedIds.length === tcs.length"
+                  [indeterminate]="selectedIds.length > 0 && selectedIds.length < tcs.length"
+                  (change)="toggleSelectAll(tcs, selectedIds)"
+                  data-test-id="select-all-checkbox">
                 </mat-checkbox>
-              </td>
-            </ng-container>
+              }
+            </th>
+            <td mat-cell *matCellDef="let tc">
+              <mat-checkbox
+                [checked]="isSelected(tc.id, selectedIds)"
+                (change)="toggleSelect(tc.id, selectedIds)"
+                data-test-id="select-checkbox">
+              </mat-checkbox>
+            </td>
+          </ng-container>
 
-            <ng-container matColumnDef="key">
-              <th mat-header-cell *matHeaderCellDef>{{ 'testCase.key' | translate }}</th>
-              <td mat-cell *matCellDef="let tc">
-                <span class="test-case-key" data-test-id="test-case-key">{{ tc.key }}</span>
-              </td>
-            </ng-container>
+          <ng-container matColumnDef="key">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'testCase.key' | translate }}</th>
+            <td mat-cell *matCellDef="let tc">
+              <span class="test-case-key" data-test-id="test-case-key">{{ tc.key }}</span>
+            </td>
+          </ng-container>
 
-            <ng-container matColumnDef="title">
-              <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.title' | translate }}</th>
-              <td mat-cell *matCellDef="let tc">
-                <a [routerLink]="[tc.id]" class="item-link" data-test-id="test-case-link">{{ tc.title }}</a>
-              </td>
-            </ng-container>
+          <ng-container matColumnDef="title">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'testCase.form.title' | translate }}</th>
+            <td mat-cell *matCellDef="let tc">
+              <a [routerLink]="[tc.id]" class="item-link" data-test-id="test-case-link">{{ tc.title }}</a>
+            </td>
+          </ng-container>
 
-            <ng-container matColumnDef="priority">
-              <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.priority' | translate }}</th>
-              <td mat-cell *matCellDef="let tc">
-                <span class="badge badge--{{ tc.priority | lowercase }}" data-test-id="test-case-priority">{{ 'priority.' + tc.priority | translate }}</span>
-              </td>
-            </ng-container>
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'testCase.form.priority' | translate }}</th>
+            <td mat-cell *matCellDef="let tc">
+              <span class="badge badge--{{ tc.priority | lowercase }}" data-test-id="test-case-priority">{{ 'priority.' + tc.priority | translate }}</span>
+            </td>
+          </ng-container>
 
-            <ng-container matColumnDef="status">
-              <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.status' | translate }}</th>
-              <td mat-cell *matCellDef="let tc">
-                <span class="badge badge--{{ tc.status | lowercase }}" data-test-id="test-case-status">{{ 'testCaseStatus.' + tc.status | translate }}</span>
-              </td>
-            </ng-container>
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'testCase.form.status' | translate }}</th>
+            <td mat-cell *matCellDef="let tc">
+              <span class="badge badge--{{ tc.status | lowercase }}" data-test-id="test-case-status">{{ 'testCaseStatus.' + tc.status | translate }}</span>
+            </td>
+          </ng-container>
 
-            <ng-container matColumnDef="labels">
-              <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.labels' | translate }}</th>
-              <td mat-cell *matCellDef="let tc">
-                @for (label of tc.labels; track label) {
-                  <mat-chip-option class="label-chip" disabled data-test-id="test-case-label">{{ label }}</mat-chip-option>
-                }
-              </td>
-            </ng-container>
+          <ng-container matColumnDef="labels">
+            <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.labels' | translate }}</th>
+            <td mat-cell *matCellDef="let tc">
+              @for (label of tc.labels; track label) {
+                <mat-chip-option class="label-chip" disabled data-test-id="test-case-label">{{ label }}</mat-chip-option>
+              }
+            </td>
+          </ng-container>
 
-            <ng-container matColumnDef="actions">
-              <th mat-header-cell *matHeaderCellDef></th>
-              <td mat-cell *matCellDef="let tc" class="actions-cell">
-                <a mat-icon-button [routerLink]="[tc.id, 'edit']" class="action-btn" data-test-id="test-case-edit-btn">
-                  <mat-icon>edit</mat-icon>
-                </a>
-                <button mat-icon-button (click)="deleteTestCase(tc.id)" class="action-btn action-btn--danger" data-test-id="test-case-delete-btn">
-                  <mat-icon>delete</mat-icon>
-                </button>
-              </td>
-            </ng-container>
+          <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef></th>
+            <td mat-cell *matCellDef="let tc" class="actions-cell">
+              <a mat-icon-button [routerLink]="[tc.id, 'edit']" class="action-btn" data-test-id="test-case-edit-btn">
+                <mat-icon>edit</mat-icon>
+              </a>
+              <button mat-icon-button (click)="deleteTestCase(tc.id)" class="action-btn action-btn--danger" data-test-id="test-case-delete-btn">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </td>
+          </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-            <tr mat-row
-                *matRowDef="let row; columns: displayedColumns"
-                draggable="true"
-                (dragstart)="onDragStart($event, row.id)">
-            </tr>
-          </table>
-        }
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row
+              *matRowDef="let row; columns: displayedColumns"
+              draggable="true"
+              (dragstart)="onDragStart($event, row.id)">
+          </tr>
+        </table>
+      }
+
+      @if (page$ | async; as page) {
+        <mat-paginator
+          [length]="page.totalElements"
+          [pageSize]="page.size"
+          [pageIndex]="page.number"
+          [pageSizeOptions]="[25, 50, 100, 200]"
+          (page)="onPage($event)"
+          data-test-id="test-case-paginator">
+        </mat-paginator>
       }
     </div>
   </div>

@@ -37,7 +37,7 @@ import { TranslateModule } from '@ngx-translate/core';
   `,
   styles: [`
     .full-width { width: 100%; }
-    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: 400px; }
+    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: min(90vw, 400px); }
   `],
 })
 export class ReopenTestRunDialogComponent {

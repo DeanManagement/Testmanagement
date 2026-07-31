@@ -1,20 +1,21 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
+import { AsyncPipe, LowerCasePipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { BugReportActions } from '../../store/bug-report/bug-report.actions';
 import { selectMyBugReports, selectMyBugReportsLoading } from '../../store/bug-report/bug-report.selectors';
+import { LocalizedDatePipe } from '../../shared/pipes/localized-date.pipe';
 
 @Component({
   selector: 'app-my-bug-reports',
   standalone: true,
   imports: [
     AsyncPipe,
-    DatePipe,
+    LocalizedDatePipe,
     LowerCasePipe,
     RouterLink,
     MatTableModule,

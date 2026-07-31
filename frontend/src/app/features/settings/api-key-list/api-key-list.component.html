@@ -25,6 +25,13 @@
         <td mat-cell *matCellDef="let key">{{ key.name }}</td>
       </ng-container>
 
+      <ng-container matColumnDef="project">
+        <th mat-header-cell *matHeaderCellDef>{{ 'settings.apiKeys.project' | translate }}</th>
+        <td mat-cell *matCellDef="let key">
+          {{ key.projectName ?? ('settings.apiKeys.globalKey' | translate) }}
+        </td>
+      </ng-container>
+
       <ng-container matColumnDef="keyPrefix">
         <th mat-header-cell *matHeaderCellDef>{{ 'settings.apiKeys.key' | translate }}</th>
         <td mat-cell *matCellDef="let key">
@@ -34,13 +41,13 @@
 
       <ng-container matColumnDef="createdAt">
         <th mat-header-cell *matHeaderCellDef>{{ 'settings.apiKeys.createdAt' | translate }}</th>
-        <td mat-cell *matCellDef="let key">{{ key.createdAt | date:'medium' }}</td>
+        <td mat-cell *matCellDef="let key">{{ key.createdAt | localizedDate:'medium' }}</td>
       </ng-container>
 
       <ng-container matColumnDef="lastUsedAt">
         <th mat-header-cell *matHeaderCellDef>{{ 'settings.apiKeys.lastUsed' | translate }}</th>
         <td mat-cell *matCellDef="let key">
-          {{ key.lastUsedAt ? (key.lastUsedAt | date:'medium') : ('settings.apiKeys.never' | translate) }}
+          {{ key.lastUsedAt ? (key.lastUsedAt | localizedDate:'medium') : ('settings.apiKeys.never' | translate) }}
         </td>
       </ng-container>
 

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -25,8 +25,15 @@ export class CommentFormComponent implements OnChanges {
   @Output() submitComment = new EventEmitter<string>();
   @Output() cancelEdit = new EventEmitter<void>();
 
+  @ViewChild('textarea') textareaRef?: ElementRef<HTMLTextAreaElement>;
+
   content = '';
   maxLength = 2000;
+
+  /** Focus the comment textarea — used by the test-run keyboard shortcut. */
+  focus(): void {
+    this.textareaRef?.nativeElement.focus();
+  }
 
   ngOnChanges(): void {
     this.content = this.initialContent;

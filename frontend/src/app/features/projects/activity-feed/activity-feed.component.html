@@ -35,7 +35,7 @@
             @if (entry.details) {
               <p class="activity-details">{{ entry.details }}</p>
             }
-            <span class="activity-time">{{ entry.createdAt | date:'medium' }}</span>
+            <span class="activity-time">{{ entry.createdAt | localizedDate:'medium' }}</span>
           </div>
         </div>
       }

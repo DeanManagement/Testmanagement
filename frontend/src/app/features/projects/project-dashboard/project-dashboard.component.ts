@@ -1,12 +1,14 @@
-import { ChangeDetectorRef, Component, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { take } from 'rxjs/operators';
 import { DecimalPipe, KeyValuePipe, LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import {
   Chart,
   DoughnutController,
@@ -52,6 +54,8 @@ export class ProjectDashboardComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly projectApi = inject(ProjectApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('statusChart') statusChartCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('priorityChart') priorityChartCanvas!: ElementRef<HTMLCanvasElement>;
@@ -71,7 +75,7 @@ export class ProjectDashboardComponent implements OnInit {
   ngOnInit(): void {
     this.projectId = this.route.snapshot.paramMap.get('id') ?? '';
     if (this.projectId) {
-      this.projectApi.getDashboard(this.projectId).subscribe({
+      this.projectApi.getDashboard(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (data) => {
           this.dashboard = data;
           this.loading = false;
@@ -83,6 +87,11 @@ export class ProjectDashboardComponent implements OnInit {
         },
       });
     }
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.dashboard) {
+        this.renderCharts();
+      }
+    });
   }
 
   private renderCharts(): void {
@@ -106,7 +115,7 @@ export class ProjectDashboardComponent implements OnInit {
     this.statusChart = new Chart(this.statusChartCanvas.nativeElement, {
       type: 'doughnut',
       data: {
-        labels: Object.keys(data),
+        labels: Object.keys(data).map(k => this.translate.instant('testCaseStatus.' + k)),
         datasets: [{
           data: Object.values(data),
           backgroundColor: Object.keys(data).map(k => statusColors[k] || '#2196f3'),
@@ -135,7 +144,7 @@ export class ProjectDashboardComponent implements OnInit {
     this.priorityChart = new Chart(this.priorityChartCanvas.nativeElement, {
       type: 'bar',
       data: {
-        labels: Object.keys(data),
+        labels: Object.keys(data).map(k => this.translate.instant('priority.' + k)),
         datasets: [{
           data: Object.values(data),
           backgroundColor: Object.keys(data).map(k => priorityColors[k] || '#9e9e9e'),
@@ -170,7 +179,7 @@ export class ProjectDashboardComponent implements OnInit {
     this.resultsChart = new Chart(this.resultsChartCanvas.nativeElement, {
       type: 'doughnut',
       data: {
-        labels: Object.keys(data),
+        labels: Object.keys(data).map(k => this.translate.instant('resultStatus.' + k)),
         datasets: [{
           data: Object.values(data),
           backgroundColor: Object.keys(data).map(k => resultColors[k] || '#bdbdbd'),
@@ -196,7 +205,7 @@ export class ProjectDashboardComponent implements OnInit {
       data: {
         labels: trend.map(t => t.name),
         datasets: [{
-          label: 'Pass Rate %',
+          label: this.translate.instant('report.passRate'),
           data: trend.map(t => t.passRate),
           borderColor: '#4caf50',
           backgroundColor: 'rgba(76, 175, 80, 0.1)',

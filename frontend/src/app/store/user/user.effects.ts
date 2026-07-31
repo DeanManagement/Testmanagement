@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { UserApiService } from '../../core/services/user-api.service';
 import { UserActions } from './user.actions';
 
@@ -9,6 +11,8 @@ import { UserActions } from './user.actions';
 export class UserEffects {
   private readonly actions$ = inject(Actions);
   private readonly userApi = inject(UserApiService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly translate = inject(TranslateService);
 
   loadUsers$ = createEffect(() =>
     this.actions$.pipe(
@@ -38,6 +42,15 @@ export class UserEffects {
     )
   );
 
+  createUserSnackbar$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(UserActions.createUserSuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.savedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 }))
+      ),
+    { dispatch: false }
+  );
+
   updateUser$ = createEffect(() =>
     this.actions$.pipe(
       ofType(UserActions.updateUser),
@@ -52,6 +65,15 @@ export class UserEffects {
     )
   );
 
+  updateUserSnackbar$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(UserActions.updateUserSuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.savedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 }))
+      ),
+    { dispatch: false }
+  );
+
   deleteUser$ = createEffect(() =>
     this.actions$.pipe(
       ofType(UserActions.deleteUser),
@@ -64,5 +86,14 @@ export class UserEffects {
         )
       )
     )
+  );
+
+  deleteUserSnackbar$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(UserActions.deleteUserSuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.deletedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 }))
+      ),
+    { dispatch: false }
   );
 }

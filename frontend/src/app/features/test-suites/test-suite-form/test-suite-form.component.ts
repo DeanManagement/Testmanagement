@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -8,12 +9,14 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { AsyncPipe } from '@angular/common';
 import { TestSuiteActions } from '../../../store/test-suite/test-suite.actions';
 import { selectTestSuiteById } from '../../../store/test-suite/test-suite.selectors';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectAllTestCases } from '../../../store/test-case/test-case.selectors';
+import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 
 @Component({
   selector: 'app-test-suite-form',
@@ -28,21 +31,25 @@ import { selectAllTestCases } from '../../../store/test-case/test-case.selectors
     MatCardModule,
     MatCheckboxModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     TranslateModule,
   ],
   templateUrl: './test-suite-form.component.html',
   styleUrl: './test-suite-form.component.scss',
 })
-export class TestSuiteFormComponent implements OnInit {
+export class TestSuiteFormComponent implements OnInit, HasUnsavedChanges {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   editMode = false;
   projectId = '';
   suiteId: string | null = null;
+  saving = false;
+  dirty = false;
   selectedTestCaseIds = new Set<string>();
 
   testCases$ = this.store.select(selectAllTestCases);
@@ -58,13 +65,13 @@ export class TestSuiteFormComponent implements OnInit {
 
     // Load available test cases
     if (this.projectId) {
-      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
+      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId, query: { size: 200 } }));
     }
 
     if (this.suiteId) {
       this.editMode = true;
-      this.store.dispatch(TestSuiteActions.loadTestSuites({ projectId: this.projectId }));
-      this.store.select(selectTestSuiteById(this.suiteId)).subscribe((suite) => {
+      this.store.dispatch(TestSuiteActions.loadTestSuites({ projectId: this.projectId, query: { size: 200 } }));
+      this.store.select(selectTestSuiteById(this.suiteId)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((suite) => {
         if (suite) {
           this.form.patchValue({ name: suite.name, description: suite.description });
           this.selectedTestCaseIds = new Set(suite.testCases?.map((tc) => tc.id) ?? []);
@@ -80,10 +87,13 @@ export class TestSuiteFormComponent implements OnInit {
     } else {
       this.selectedTestCaseIds.add(id);
     }
+    this.markDirty();
   }
 
   onSubmit(): void {
     if (this.form.invalid) return;
+    this.dirty = false;
+    this.saving = true;
 
     const testCaseIds = [...this.selectedTestCaseIds];
 
@@ -112,5 +122,13 @@ export class TestSuiteFormComponent implements OnInit {
         })
       );
     }
+  }
+
+  markDirty(): void {
+    this.dirty = true;
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.dirty && !this.saving;
   }
 }

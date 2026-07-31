@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { ProjectCardComponent } from './project-card/project-card.component';
+import { MyQueueComponent } from './my-queue/my-queue.component';
 import { ProjectActions } from '../../store/project/project.actions';
 import { selectAllProjects, selectProjectsLoading } from '../../store/project/project.selectors';
 import { selectAuthUser, selectIsSystemAdmin } from '../../store/auth/auth.selectors';
@@ -22,6 +23,7 @@ import { selectAuthUser, selectIsSystemAdmin } from '../../store/auth/auth.selec
     MatProgressSpinnerModule,
     TranslateModule,
     ProjectCardComponent,
+    MyQueueComponent,
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',

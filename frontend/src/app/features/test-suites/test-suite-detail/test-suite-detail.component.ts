@@ -41,7 +41,7 @@ export class TestSuiteDetailComponent implements OnInit {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.suiteId = this.route.snapshot.paramMap.get('suiteId') ?? '';
     if (this.projectId && this.suiteId) {
-      this.store.dispatch(TestSuiteActions.loadTestSuites({ projectId: this.projectId }));
+      this.store.dispatch(TestSuiteActions.loadTestSuite({ projectId: this.projectId, id: this.suiteId }));
       this.testSuite$ = this.store.select(selectTestSuiteById(this.suiteId));
     }
   }

@@ -39,6 +39,7 @@ export interface FolderNameDialogData {
   `,
   styles: [`
     .full-width { width: 100%; }
+    mat-dialog-content { min-width: min(90vw, 350px); }
   `],
 })
 export class FolderNameDialogComponent {

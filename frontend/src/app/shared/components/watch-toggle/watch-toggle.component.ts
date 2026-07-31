@@ -1,4 +1,5 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, Input, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
 import { AsyncPipe } from '@angular/common';
 import { MatButtonModule } from '@angular/material/button';
@@ -6,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { WatchableEntityType } from '../../models/watcher.model';
 import { WatcherActions } from '../../../store/watcher/watcher.actions';
 import { selectIsWatching } from '../../../store/watcher/watcher.selectors';
@@ -40,6 +42,7 @@ import { selectIsWatching } from '../../../store/watcher/watcher.selectors';
 })
 export class WatchToggleComponent implements OnInit {
   private readonly store = inject(Store);
+  private readonly destroyRef = inject(DestroyRef);
 
   @Input({ required: true }) entityType!: WatchableEntityType;
   @Input({ required: true }) entityId!: string;
@@ -55,7 +58,9 @@ export class WatchToggleComponent implements OnInit {
   }
 
   toggleWatch(): void {
-    this.isWatching$.subscribe((watching) => {
+    // Called from the template (not an injection context) — pass the
+    // DestroyRef explicitly.
+    this.isWatching$.pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((watching) => {
       if (watching) {
         this.store.dispatch(WatcherActions.unwatchEntity({
           entityType: this.entityType,
@@ -67,6 +72,6 @@ export class WatchToggleComponent implements OnInit {
           entityId: this.entityId,
         }));
       }
-    }).unsubscribe();
+    });
   }
 }

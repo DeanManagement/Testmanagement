@@ -19,8 +19,17 @@
     <div class="spinner-container" data-test-id="project-list-loading">
       <mat-spinner diameter="40"></mat-spinner>
     </div>
+  } @else if (error$ | async) {
+    <div class="error-state" data-test-id="project-list-error" role="alert">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ 'common.loadError' | translate }}</p>
+      <button mat-stroked-button (click)="retry()">
+        <mat-icon>refresh</mat-icon>
+        {{ 'common.retry' | translate }}
+      </button>
+    </div>
   } @else if ((filteredProjects$ | async)?.length === 0) {
-    <div class="empty-state" data-test-id="project-list-empty">
+    <div class="empty-state" data-test-id="project-list-empty" role="status">
       <mat-icon>folder_open</mat-icon>
       <p>{{ (searchTerm ? 'common.noResults' : 'project.list.empty') | translate }}</p>
       @if (!searchTerm && (isAdmin$ | async)) {
@@ -31,7 +40,7 @@
       }
     </div>
   } @else {
-    <table mat-table [dataSource]="(filteredProjects$ | async) ?? []" class="project-table" data-test-id="project-table">
+    <table mat-table [dataSource]="(filteredProjects$ | async) ?? []" class="project-table" data-test-id="project-table" aria-label="Projects">
       <ng-container matColumnDef="key">
         <th mat-header-cell *matHeaderCellDef>{{ 'project.form.key' | translate }}</th>
         <td mat-cell *matCellDef="let project">
@@ -56,10 +65,10 @@
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef></th>
         <td mat-cell *matCellDef="let project" class="actions-cell">
-          <a mat-icon-button [routerLink]="['/projects', project.id, 'edit']" class="action-btn" data-test-id="project-edit-btn">
+          <a mat-icon-button [routerLink]="['/projects', project.id, 'edit']" class="action-btn" data-test-id="project-edit-btn" [attr.aria-label]="'Edit ' + project.name">
             <mat-icon>edit</mat-icon>
           </a>
-          <button mat-icon-button (click)="deleteProject(project.id)" class="action-btn action-btn--danger" data-test-id="project-delete-btn">
+          <button mat-icon-button (click)="deleteProject(project.id)" class="action-btn action-btn--danger" data-test-id="project-delete-btn" [attr.aria-label]="'Delete ' + project.name">
             <mat-icon>delete</mat-icon>
           </button>
         </td>

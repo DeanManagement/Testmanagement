@@ -48,7 +48,7 @@ export interface ChangeBugStatusDialogData {
   `,
   styles: [`
     .full-width { width: 100%; }
-    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: 400px; }
+    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: min(90vw, 400px); }
     .status-transition { font-weight: 500; margin: 0 0 8px; }
   `],
 })

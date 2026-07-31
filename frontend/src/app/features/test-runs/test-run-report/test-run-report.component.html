@@ -24,10 +24,10 @@
       </div>
       <div class="run-meta">
         @if (report.startTime) {
-          <span class="meta-item">Started: {{ report.startTime | date:'medium' }}</span>
+          <span class="meta-item">Started: {{ report.startTime | localizedDate:'medium' }}</span>
         }
         @if (report.endTime) {
-          <span class="meta-item">Ended: {{ report.endTime | date:'medium' }}</span>
+          <span class="meta-item">Ended: {{ report.endTime | localizedDate:'medium' }}</span>
         }
       </div>
     </div>

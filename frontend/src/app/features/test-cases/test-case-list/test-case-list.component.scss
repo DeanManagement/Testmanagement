@@ -243,3 +243,20 @@ tr[draggable="true"] {
     cursor: grabbing;
   }
 }
+
+/* PRD-008 §2.3: compact density toggle */
+.data-table.compact th.mat-mdc-header-cell,
+.data-table.compact td.mat-mdc-cell {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  font-size: 0.82rem;
+}
+
+.data-table.compact .mat-mdc-row,
+.data-table.compact .mat-mdc-header-row {
+  height: 36px;
+}
+
+.density-toggle {
+  align-self: center;
+}

@@ -5,6 +5,8 @@ export interface Comment {
   content: string;
   authorId: string;
   authorDisplayName: string;
+  entityType: CommentEntityType;
+  entityId: string;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;

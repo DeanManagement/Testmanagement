@@ -58,11 +58,21 @@
           }
 
           @if (testCases$ | async; as testCases) {
+            @if (testCases.length > 0) {
+              <mat-form-field appearance="outline" class="full-width search-field">
+                <mat-label>{{ 'testRun.form.searchTestCases' | translate }}</mat-label>
+                <input matInput [(ngModel)]="searchTerm" name="searchTerm" data-test-id="test-run-search-input" />
+                <mat-icon matPrefix>search</mat-icon>
+              </mat-form-field>
+            }
+          }
+
+          @if (testCases$ | async; as testCases) {
             @if (testCases.length === 0) {
               <p class="empty-hint">{{ 'testCase.list.empty' | translate }}</p>
             } @else {
               <div class="tc-list">
-                @for (tc of testCases; track tc.id) {
+                @for (tc of filterTestCases(testCases); track tc.id) {
                   <mat-checkbox
                     [checked]="selectedTestCaseIds.has(tc.id)"
                     (change)="toggleTestCase(tc.id)"
@@ -78,8 +88,12 @@
 
         <div class="actions">
           <a mat-button [routerLink]="['/projects', projectId, 'test-runs']" data-test-id="test-run-form-cancel">{{ 'common.cancel' | translate }}</a>
-          <button mat-flat-button type="submit" [disabled]="form.invalid" data-test-id="test-run-form-submit">
-            {{ 'testRun.list.create' | translate }}
+          <button mat-flat-button type="submit" [disabled]="form.invalid || saving" data-test-id="test-run-form-submit">
+            @if (saving) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              {{ 'testRun.list.create' | translate }}
+            }
           </button>
         </div>
       </form>

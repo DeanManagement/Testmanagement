@@ -1,5 +1,7 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { take } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -51,20 +53,21 @@ import { ProjectRole } from '../../../../shared/models/project-member.model';
   `,
   styles: [`
     .full-width { width: 100%; }
-    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: 450px; }
+    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: min(90vw, 450px); }
   `],
 })
 export class AddMemberDialogComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<AddMemberDialogComponent>);
   private readonly userApi = inject(UserApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   users: User[] = [];
   selectedUserId = '';
   selectedRole: ProjectRole = 'TESTER';
 
   ngOnInit(): void {
-    this.userApi.getAll().subscribe((users) => {
+    this.userApi.getAll().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((users) => {
       this.users = users;
       this.cdr.detectChanges();
     });

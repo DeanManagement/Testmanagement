@@ -72,7 +72,7 @@ import { CompletionInfo } from '../../../shared/models/test-run.model';
     </mat-dialog-actions>
   `,
   styles: [`
-    mat-dialog-content { min-width: 400px; }
+    mat-dialog-content { min-width: min(90vw, 400px); }
     .stats { display: flex; flex-direction: column; gap: 4px; margin-bottom: 16px; }
     .stat-row { display: flex; justify-content: space-between; padding: 4px 8px; border-radius: 4px; }
     .stat--passed { color: #2e7d32; }

@@ -1,5 +1,7 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
+import { take } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { ReactiveFormsModule, FormBuilder, Validators } from '@angular/forms';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -8,12 +10,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { selectBugReportById } from '../../../store/bug-report/bug-report.selectors';
 import { BugReportStatus, Priority } from '../../../shared/models/bug-report.model';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { ProjectMember } from '../../../shared/models/project-member.model';
+import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 
 @Component({
   selector: 'app-bug-report-form',
@@ -27,21 +31,25 @@ import { ProjectMember } from '../../../shared/models/project-member.model';
     MatButtonModule,
     MatCardModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     TranslateModule,
   ],
   templateUrl: './bug-report-form.component.html',
   styleUrl: './bug-report-form.component.scss',
 })
-export class BugReportFormComponent implements OnInit {
+export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly memberApi = inject(ProjectMemberApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
   bugId = '';
   isEdit = false;
+  saving = false;
+  dirty = false;
   members: ProjectMember[] = [];
 
   priorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
@@ -67,7 +75,7 @@ export class BugReportFormComponent implements OnInit {
     this.isEdit = !!this.bugId;
 
     if (this.projectId) {
-      this.memberApi.getByProject(this.projectId).subscribe((m) => {
+      this.memberApi.getByProject(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((m) => {
         this.members = m;
         this.cdr.detectChanges();
       });
@@ -90,7 +98,7 @@ export class BugReportFormComponent implements OnInit {
 
     if (this.isEdit && this.projectId) {
       this.store.dispatch(BugReportActions.loadBugReport({ projectId: this.projectId, id: this.bugId }));
-      this.store.select(selectBugReportById(this.bugId)).subscribe((bug) => {
+      this.store.select(selectBugReportById(this.bugId)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((bug) => {
         if (bug) {
           this.form.patchValue({
             title: bug.title,
@@ -113,6 +121,8 @@ export class BugReportFormComponent implements OnInit {
 
   onSubmit(): void {
     if (this.form.invalid) return;
+    this.dirty = false;
+    this.saving = true;
 
     const value = this.form.value;
     if (this.isEdit) {
@@ -154,5 +164,13 @@ export class BugReportFormComponent implements OnInit {
         })
       );
     }
+  }
+
+  markDirty(): void {
+    this.dirty = true;
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.dirty && !this.saving;
   }
 }

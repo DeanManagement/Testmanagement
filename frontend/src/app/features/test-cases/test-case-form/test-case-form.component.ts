@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormArray, FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -12,10 +13,12 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { TranslateModule } from '@ngx-translate/core';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectTestCaseById } from '../../../store/test-case/test-case.selectors';
-import { Priority, TestCase, TestCaseStatus } from '../../../shared/models/test-case.model';
+import { Priority, TestCase, TestCaseStatus, TestStepRequest } from '../../../shared/models/test-case.model';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { forkJoin, Observable, of } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
+import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 
 interface StepImageState {
   id?: string;
@@ -43,18 +46,20 @@ interface StepImageState {
   templateUrl: './test-case-form.component.html',
   styleUrl: './test-case-form.component.scss',
 })
-export class TestCaseFormComponent implements OnInit {
+export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly testCaseApi = inject(TestCaseApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   editMode = false;
   projectId = '';
   testCaseId: string | null = null;
   saving = false;
+  dirty = false;
 
   priorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
   statuses: TestCaseStatus[] = ['DRAFT', 'ACTIVE', 'DEPRECATED'];
@@ -82,8 +87,8 @@ export class TestCaseFormComponent implements OnInit {
 
     if (this.testCaseId) {
       this.editMode = true;
-      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
-      this.store.select(selectTestCaseById(this.testCaseId)).subscribe((tc) => {
+      this.store.dispatch(TestCaseActions.loadTestCase({ projectId: this.projectId, id: this.testCaseId }));
+      this.store.select(selectTestCaseById(this.testCaseId)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((tc) => {
         if (tc) {
           this.form.patchValue({
             title: tc.title,
@@ -177,15 +182,24 @@ export class TestCaseFormComponent implements OnInit {
     return !!this.getImagePreview(index);
   }
 
+  markDirty(): void {
+    this.dirty = true;
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.dirty && !this.saving;
+  }
+
   onSubmit(): void {
     if (this.form.invalid || this.saving) return;
+    this.dirty = false;
     this.saving = true;
 
     const labelsStr = this.form.value.labels as string;
     const labels = labelsStr
       ? labelsStr.split(',').map((l) => l.trim()).filter((l) => l)
       : [];
-    const steps = this.steps.value.map((s: any) => ({
+    const steps = this.steps.value.map((s: TestStepRequest) => ({
       action: s.action,
       expectedResult: s.expectedResult,
       testData: s.testData || undefined,
@@ -204,30 +218,32 @@ export class TestCaseFormComponent implements OnInit {
     const pendingImages = new Map(this.stepImages);
 
     if (this.editMode && this.testCaseId) {
-      this.testCaseApi.update(this.projectId, this.testCaseId, request).subscribe({
+      this.testCaseApi.update(this.projectId, this.testCaseId, request).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (tc) => {
-          this.syncImages(tc, pendingImages).subscribe(() => {
+          this.syncImages(tc, pendingImages).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.store.dispatch(TestCaseActions.updateTestCaseSuccess({ testCase: tc }));
             this.saving = false;
             this.cdr.detectChanges();
             this.router.navigate(['/projects', this.projectId, 'test-cases', this.testCaseId]);
           });
         },
-        error: () => { this.saving = false; this.cdr.detectChanges(); },
+        // Re-arm the unsaved-changes guard after a failed save (PRD-022 §4.5).
+        error: () => { this.dirty = true; this.saving = false; this.cdr.detectChanges(); },
       });
     } else {
       const folderId = this.route.snapshot.queryParamMap.get('folderId');
       const createRequest = folderId ? { ...request, folderId } : request;
-      this.testCaseApi.create(this.projectId, createRequest).subscribe({
+      this.testCaseApi.create(this.projectId, createRequest).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (tc) => {
-          this.syncImages(tc, pendingImages).subscribe(() => {
+          this.syncImages(tc, pendingImages).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.store.dispatch(TestCaseActions.createTestCaseSuccess({ testCase: tc }));
             this.saving = false;
             this.cdr.detectChanges();
             this.router.navigate(['/projects', this.projectId, 'test-cases', tc.id]);
           });
         },
-        error: () => { this.saving = false; this.cdr.detectChanges(); },
+        // Re-arm the unsaved-changes guard after a failed save (PRD-022 §4.5).
+        error: () => { this.dirty = true; this.saving = false; this.cdr.detectChanges(); },
       });
     }
   }

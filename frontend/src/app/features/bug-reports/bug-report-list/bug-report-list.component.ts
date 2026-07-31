@@ -1,7 +1,7 @@
 import { Component, inject, OnInit } from '@angular/core';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
+import { AsyncPipe, LowerCasePipe } from '@angular/common';
 import { CdkDragDrop, DragDropModule } from '@angular/cdk/drag-drop';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,15 +12,16 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
-import { selectAllBugReports, selectBugReportsLoading } from '../../../store/bug-report/bug-report.selectors';
+import { selectAllBugReports, selectBugReportsLoading, selectBugReportsError } from '../../../store/bug-report/bug-report.selectors';
 import { BugReport, BugReportStatus } from '../../../shared/models/bug-report.model';
+import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 
 @Component({
   selector: 'app-bug-report-list',
   standalone: true,
   imports: [
     AsyncPipe,
-    DatePipe,
+    LocalizedDatePipe,
     LowerCasePipe,
     RouterLink,
     DragDropModule,
@@ -43,6 +44,7 @@ export class BugReportListComponent implements OnInit {
   projectId = '';
   bugReports$ = this.store.select(selectAllBugReports);
   loading$ = this.store.select(selectBugReportsLoading);
+  error$ = this.store.select(selectBugReportsError);
   displayedColumns = ['title', 'priority', 'status', 'assignee', 'createdAt'];
 
   viewMode: 'list' | 'kanban' = 'list';
@@ -59,6 +61,10 @@ export class BugReportListComponent implements OnInit {
     if (this.projectId) {
       this.store.dispatch(BugReportActions.loadBugReports({ projectId: this.projectId }));
     }
+  }
+
+  retry(): void {
+    this.store.dispatch(BugReportActions.loadBugReports({ projectId: this.projectId }));
   }
 
   filteredReports(reports: BugReport[]): BugReport[] {

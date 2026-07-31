@@ -44,11 +44,29 @@ export interface TestRun {
   allureReportId: string | null;
   projectId: string | null;
   projectKey: string | null;
-  results: TestResult[];
+  /** Present on detail responses only; list endpoints return counts instead. */
+  results?: TestResult[];
+  total?: number;
+  passed?: number;
+  failed?: number;
+  blocked?: number;
+  skipped?: number;
+  pending?: number;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
   updatedBy?: string;
+}
+
+export interface TestRunQuery {
+  q?: string;
+  status?: TestRunStatus[];
+  testPlanId?: string;
+  executorId?: string;
+  startedAfter?: string;
+  page?: number;
+  size?: number;
+  sort?: string;
 }
 
 export interface CreateTestRunRequest {

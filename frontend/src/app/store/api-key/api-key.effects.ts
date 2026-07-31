@@ -1,7 +1,9 @@
 import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { ApiKeyApiService } from '../../core/services/api-key-api.service';
 import { ApiKeyActions } from './api-key.actions';
 
@@ -9,6 +11,8 @@ import { ApiKeyActions } from './api-key.actions';
 export class ApiKeyEffects {
   private readonly actions$ = inject(Actions);
   private readonly apiKeyApi = inject(ApiKeyApiService);
+  private readonly snackBar = inject(MatSnackBar);
+  private readonly translate = inject(TranslateService);
 
   loadApiKeys$ = createEffect(() =>
     this.actions$.pipe(
@@ -38,6 +42,15 @@ export class ApiKeyEffects {
     )
   );
 
+  createApiKeySnackbar$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(ApiKeyActions.createApiKeySuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.savedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 }))
+      ),
+    { dispatch: false }
+  );
+
   revokeApiKey$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ApiKeyActions.revokeApiKey),
@@ -50,5 +63,14 @@ export class ApiKeyEffects {
         )
       )
     )
+  );
+
+  revokeApiKeySnackbar$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(ApiKeyActions.revokeApiKeySuccess),
+        tap(() => this.snackBar.open(this.translate.instant('common.deletedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 }))
+      ),
+    { dispatch: false }
   );
 }

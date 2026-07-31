@@ -1,7 +1,9 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { AsyncPipe, DatePipe, LowerCasePipe } from '@angular/common';
+import { AsyncPipe, LowerCasePipe } from '@angular/common';
+import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -10,6 +12,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { selectBugReportById } from '../../../store/bug-report/bug-report.selectors';
 import { BugReport, BugReportStatus } from '../../../shared/models/bug-report.model';
@@ -21,7 +24,7 @@ import { WatchToggleComponent } from '../../../shared/components/watch-toggle/wa
   standalone: true,
   imports: [
     AsyncPipe,
-    DatePipe,
+    LocalizedDatePipe,
     LowerCasePipe,
     RouterLink,
     MatCardModule,
@@ -39,6 +42,7 @@ export class BugReportDetailComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
   bugId = '';
@@ -61,7 +65,7 @@ export class BugReportDetailComponent implements OnInit {
       data: { currentStatus: bug.status, newStatus } as ChangeBugStatusDialogData,
     });
 
-    dialogRef.afterClosed().subscribe((reason: string | undefined) => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((reason: string | undefined) => {
       if (reason) {
         this.store.dispatch(
           BugReportActions.changeBugReportStatus({

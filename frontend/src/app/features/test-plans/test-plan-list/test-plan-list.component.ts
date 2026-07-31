@@ -13,7 +13,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { TestPlanActions } from '../../../store/test-plan/test-plan.actions';
-import { selectAllTestPlans, selectTestPlansLoading } from '../../../store/test-plan/test-plan.selectors';
+import { selectAllTestPlans, selectTestPlansLoading, selectTestPlansError } from '../../../store/test-plan/test-plan.selectors';
 import { TestPlan, TestPlanStatus } from '../../../shared/models/test-plan.model';
 
 @Component({
@@ -44,6 +44,7 @@ export class TestPlanListComponent implements OnInit {
   projectId = '';
   testPlans$ = this.store.select(selectAllTestPlans);
   loading$ = this.store.select(selectTestPlansLoading);
+  error$ = this.store.select(selectTestPlansError);
   displayedColumns = ['name', 'status', 'targetDate', 'testRunCount', 'actions'];
   searchTerm = '';
   statusFilter: TestPlanStatus | '' = '';
@@ -66,6 +67,10 @@ export class TestPlanListComponent implements OnInit {
       result = result.filter(p => p.status === this.statusFilter);
     }
     return result;
+  }
+
+  retry(): void {
+    this.store.dispatch(TestPlanActions.loadTestPlans({ projectId: this.projectId }));
   }
 
   deleteTestPlan(id: string): void {

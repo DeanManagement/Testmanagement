@@ -1,6 +1,7 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { AsyncPipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,13 +14,14 @@ import { take } from 'rxjs/operators';
 import { ApiKeyActions } from '../../../store/api-key/api-key.actions';
 import { selectAllApiKeys, selectApiKeysLoading } from '../../../store/api-key/api-key.selectors';
 import { CreateApiKeyDialogComponent } from '../create-api-key-dialog/create-api-key-dialog.component';
+import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 
 @Component({
   selector: 'app-api-key-list',
   standalone: true,
   imports: [
     AsyncPipe,
-    DatePipe,
+    LocalizedDatePipe,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
@@ -34,10 +36,11 @@ export class ApiKeyListComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly dialog = inject(MatDialog);
   private readonly actions$ = inject(Actions);
+  private readonly destroyRef = inject(DestroyRef);
 
   apiKeys$ = this.store.select(selectAllApiKeys);
   loading$ = this.store.select(selectApiKeysLoading);
-  displayedColumns = ['name', 'keyPrefix', 'createdAt', 'lastUsedAt', 'status', 'actions'];
+  displayedColumns = ['name', 'project', 'keyPrefix', 'createdAt', 'lastUsedAt', 'status', 'actions'];
 
   ngOnInit(): void {
     this.store.dispatch(ApiKeyActions.loadApiKeys());
@@ -48,13 +51,14 @@ export class ApiKeyListComponent implements OnInit {
       disableClose: true,
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result?.action === 'create') {
-        this.store.dispatch(ApiKeyActions.createApiKey({ request: { name: result.name } }));
+        this.store.dispatch(ApiKeyActions.createApiKey({ request: { name: result.name, projectId: result.projectId } }));
 
         this.actions$.pipe(
           ofType(ApiKeyActions.createApiKeySuccess),
-          take(1)
+          take(1),
+          takeUntilDestroyed(this.destroyRef)
         ).subscribe(({ created }) => {
           const newDialogRef = this.dialog.open(CreateApiKeyDialogComponent, {
             disableClose: true,

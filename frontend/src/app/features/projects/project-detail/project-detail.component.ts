@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe } from '@angular/common';
@@ -13,6 +14,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
+import { take } from 'rxjs/operators';
 import { ProjectActions } from '../../../store/project/project.actions';
 import { selectProjectById } from '../../../store/project/project.selectors';
 import { selectAuthUser } from '../../../store/auth/auth.selectors';
@@ -48,6 +50,7 @@ export class ProjectDetailComponent implements OnInit {
   private readonly memberApi = inject(ProjectMemberApiService);
   private readonly projectApi = inject(ProjectApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   project$: Observable<Project | undefined> = of(undefined);
   members: ProjectMember[] = [];
@@ -74,9 +77,9 @@ export class ProjectDetailComponent implements OnInit {
       width: '500px',
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result) {
-        this.memberApi.addMember(this.projectId, result).subscribe(() => {
+        this.memberApi.addMember(this.projectId, result).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
           this.loadMembers();
         });
       }
@@ -84,26 +87,26 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   updateMemberRole(member: ProjectMember, role: ProjectRole): void {
-    this.memberApi.updateRole(this.projectId, member.id, { role }).subscribe(() => {
+    this.memberApi.updateRole(this.projectId, member.id, { role }).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.loadMembers();
     });
   }
 
   removeMember(memberId: string): void {
-    this.memberApi.removeMember(this.projectId, memberId).subscribe(() => {
+    this.memberApi.removeMember(this.projectId, memberId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.loadMembers();
     });
   }
 
   toggleBugReports(enabled: boolean): void {
-    this.projectApi.toggleBugReports(this.projectId, enabled).subscribe(() => {
+    this.projectApi.toggleBugReports(this.projectId, enabled).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.store.dispatch(ProjectActions.loadProjects());
       this.cdr.detectChanges();
     });
   }
 
   private loadMembers(): void {
-    this.memberApi.getByProject(this.projectId).subscribe((members) => {
+    this.memberApi.getByProject(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((members) => {
       this.members = members;
       this.computeProjectAdmin(members);
       this.cdr.detectChanges();
@@ -111,13 +114,17 @@ export class ProjectDetailComponent implements OnInit {
   }
 
   private computeProjectAdmin(members: ProjectMember[]): void {
-    this.store.select(selectAuthUser).subscribe((user) => {
-      if (!user) {
-        this.isProjectAdmin = false;
-        return;
-      }
-      this.isProjectAdmin = user.systemAdmin ||
-        members.some(m => m.userId === user.id && m.role === 'ADMIN');
-    }).unsubscribe();
+    // Called from a subscription callback (not an injection context), so the
+    // DestroyRef must be passed explicitly.
+    this.store.select(selectAuthUser)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((user) => {
+        if (!user) {
+          this.isProjectAdmin = false;
+          return;
+        }
+        this.isProjectAdmin = user.systemAdmin ||
+          members.some(m => m.userId === user.id && m.role === 'ADMIN');
+      });
   }
 }

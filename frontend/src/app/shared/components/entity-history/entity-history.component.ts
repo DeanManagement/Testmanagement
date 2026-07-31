@@ -1,17 +1,19 @@
-import { ChangeDetectorRef, Component, inject, Input, OnChanges } from '@angular/core';
-import { DatePipe } from '@angular/common';
+import { ChangeDetectorRef, Component, DestroyRef, inject, Input, OnChanges } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { take } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { ActivityApiService } from '../../../core/services/activity-api.service';
 import { AuditEntry } from '../../models/activity.model';
+import { LocalizedDatePipe } from '../../pipes/localized-date.pipe';
 
 @Component({
   selector: 'app-entity-history',
   standalone: true,
   imports: [
-    DatePipe,
+    LocalizedDatePipe,
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
@@ -23,6 +25,7 @@ import { AuditEntry } from '../../models/activity.model';
 export class EntityHistoryComponent implements OnChanges {
   private readonly activityApi = inject(ActivityApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   @Input({ required: true }) projectId!: string;
   @Input({ required: true }) entityId!: string;
@@ -45,7 +48,7 @@ export class EntityHistoryComponent implements OnChanges {
   loadMore(): void {
     if (this.loading || !this.hasMore) return;
     this.loading = true;
-    this.activityApi.getEntityHistory(this.projectId, this.entityId, this.page, this.pageSize).subscribe({
+    this.activityApi.getEntityHistory(this.projectId, this.entityId, this.page, this.pageSize).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (response) => {
         this.entries = [...this.entries, ...response.content];
         this.hasMore = !response.last;

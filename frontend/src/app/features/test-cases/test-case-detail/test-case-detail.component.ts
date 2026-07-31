@@ -13,7 +13,7 @@ import { selectTestCaseById } from '../../../store/test-case/test-case.selectors
 import { TestCase } from '../../../shared/models/test-case.model';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { CommentActions } from '../../../store/comment/comment.actions';
-import { selectAllComments, selectCommentsLoading } from '../../../store/comment/comment.selectors';
+import { selectCommentsForEntity, selectCommentsLoading } from '../../../store/comment/comment.selectors';
 import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
 import { Comment } from '../../../shared/models/comment.model';
 import { CommentListComponent } from '../../../shared/components/comment-list/comment-list.component';
@@ -53,7 +53,7 @@ export class TestCaseDetailComponent implements OnInit {
     return this.testCaseApi.getStepImageUrl(imageId);
   }
 
-  comments$ = this.store.select(selectAllComments);
+  comments$: Observable<Comment[]> = of([]);
   commentsLoading$ = this.store.select(selectCommentsLoading);
   authUser$ = this.store.select(selectAuthUser);
   isAdmin$ = this.store.select(selectIsSystemAdmin);
@@ -64,8 +64,9 @@ export class TestCaseDetailComponent implements OnInit {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.testCaseId = this.route.snapshot.paramMap.get('tcId') ?? '';
     if (this.projectId && this.testCaseId) {
-      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
+      this.store.dispatch(TestCaseActions.loadTestCase({ projectId: this.projectId, id: this.testCaseId }));
       this.testCase$ = this.store.select(selectTestCaseById(this.testCaseId));
+      this.comments$ = this.store.select(selectCommentsForEntity('TEST_CASE', this.testCaseId));
       this.store.dispatch(CommentActions.loadComments({
         projectId: this.projectId,
         entityType: 'TEST_CASE',

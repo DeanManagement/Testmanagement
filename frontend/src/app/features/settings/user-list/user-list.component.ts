@@ -1,6 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Store } from '@ngrx/store';
-import { AsyncPipe, DatePipe } from '@angular/common';
+import { take } from 'rxjs/operators';
+import { AsyncPipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -13,13 +15,14 @@ import { selectAllUsers, selectUsersLoading } from '../../../store/user/user.sel
 import { CreateUserDialogComponent } from '../create-user-dialog/create-user-dialog.component';
 import { EditUserDialogComponent } from '../edit-user-dialog/edit-user-dialog.component';
 import { User } from '../../../shared/models/user.model';
+import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 
 @Component({
   selector: 'app-user-list',
   standalone: true,
   imports: [
     AsyncPipe,
-    DatePipe,
+    LocalizedDatePipe,
     MatTableModule,
     MatButtonModule,
     MatIconModule,
@@ -33,6 +36,7 @@ import { User } from '../../../shared/models/user.model';
 export class UserListComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   users$ = this.store.select(selectAllUsers);
   loading$ = this.store.select(selectUsersLoading);
@@ -47,7 +51,7 @@ export class UserListComponent implements OnInit {
       width: '500px',
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result) {
         this.store.dispatch(UserActions.createUser({ request: result }));
       }
@@ -60,7 +64,7 @@ export class UserListComponent implements OnInit {
       data: user,
     });
 
-    dialogRef.afterClosed().subscribe((result) => {
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result) {
         this.store.dispatch(UserActions.updateUser({ id: user.id, request: result }));
       }

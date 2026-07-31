@@ -7,6 +7,7 @@ import {
   TestPlanSummary,
   UpdateTestPlanRequest,
 } from '../../shared/models/test-plan.model';
+import { retryWithBackoff } from '../utils/retry-strategy';
 
 @Injectable({ providedIn: 'root' })
 export class TestPlanApiService {
@@ -17,15 +18,15 @@ export class TestPlanApiService {
   }
 
   getAll(projectId: string): Observable<TestPlan[]> {
-    return this.http.get<TestPlan[]>(this.baseUrl(projectId));
+    return this.http.get<TestPlan[]>(this.baseUrl(projectId)).pipe(retryWithBackoff());
   }
 
   getById(projectId: string, id: string): Observable<TestPlan> {
-    return this.http.get<TestPlan>(`${this.baseUrl(projectId)}/${id}`);
+    return this.http.get<TestPlan>(`${this.baseUrl(projectId)}/${id}`).pipe(retryWithBackoff());
   }
 
   getSummary(projectId: string, id: string): Observable<TestPlanSummary> {
-    return this.http.get<TestPlanSummary>(`${this.baseUrl(projectId)}/${id}/summary`);
+    return this.http.get<TestPlanSummary>(`${this.baseUrl(projectId)}/${id}/summary`).pipe(retryWithBackoff());
   }
 
   create(projectId: string, request: CreateTestPlanRequest): Observable<TestPlan> {

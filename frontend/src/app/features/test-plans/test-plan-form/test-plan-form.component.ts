@@ -1,5 +1,7 @@
-import { ChangeDetectorRef, Component, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { take } from 'rxjs/operators';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -10,12 +12,14 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { TestPlanActions } from '../../../store/test-plan/test-plan.actions';
 import { selectTestPlanById } from '../../../store/test-plan/test-plan.selectors';
 import { TestPlanStatus } from '../../../shared/models/test-plan.model';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { ProjectMember } from '../../../shared/models/project-member.model';
+import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 
 @Component({
   selector: 'app-test-plan-form',
@@ -31,22 +35,26 @@ import { ProjectMember } from '../../../shared/models/project-member.model';
     MatDatepickerModule,
     MatNativeDateModule,
     MatIconModule,
+    MatProgressSpinnerModule,
     TranslateModule,
   ],
   templateUrl: './test-plan-form.component.html',
   styleUrl: './test-plan-form.component.scss',
 })
-export class TestPlanFormComponent implements OnInit {
+export class TestPlanFormComponent implements OnInit, HasUnsavedChanges {
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly memberApi = inject(ProjectMemberApiService);
+  private readonly destroyRef = inject(DestroyRef);
 
   editMode = false;
   projectId = '';
   planId: string | null = null;
+  saving = false;
+  dirty = false;
   statuses: TestPlanStatus[] = ['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
   members: ProjectMember[] = [];
 
@@ -63,7 +71,7 @@ export class TestPlanFormComponent implements OnInit {
     this.planId = this.route.snapshot.paramMap.get('planId');
 
     if (this.projectId) {
-      this.memberApi.getByProject(this.projectId).subscribe((m) => {
+      this.memberApi.getByProject(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((m) => {
         this.members = m;
         this.cdr.detectChanges();
       });
@@ -72,7 +80,7 @@ export class TestPlanFormComponent implements OnInit {
     if (this.planId) {
       this.editMode = true;
       this.store.dispatch(TestPlanActions.loadTestPlans({ projectId: this.projectId }));
-      this.store.select(selectTestPlanById(this.planId)).subscribe((plan) => {
+      this.store.select(selectTestPlanById(this.planId)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((plan) => {
         if (plan) {
           this.form.patchValue({
             name: plan.name,
@@ -89,6 +97,8 @@ export class TestPlanFormComponent implements OnInit {
 
   onSubmit(): void {
     if (this.form.invalid) return;
+    this.dirty = false;
+    this.saving = true;
 
     const targetDate = this.form.value.targetDate
       ? this.formatDate(this.form.value.targetDate)
@@ -122,6 +132,14 @@ export class TestPlanFormComponent implements OnInit {
         })
       );
     }
+  }
+
+  markDirty(): void {
+    this.dirty = true;
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.dirty && !this.saving;
   }
 
   private formatDate(date: Date): string {

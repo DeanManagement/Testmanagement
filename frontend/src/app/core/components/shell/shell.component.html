@@ -1,23 +1,23 @@
 <mat-sidenav-container class="app-container">
-  <mat-sidenav #sidenav mode="side" opened class="sidenav">
+  <mat-sidenav #sidenav [mode]="(isMobile$ | async) ? 'over' : 'side'" [opened]="!(isMobile$ | async)" class="sidenav">
     <div class="sidenav-brand">
       <mat-icon class="brand-icon">science</mat-icon>
       <span class="brand-text">TestMgmt</span>
     </div>
-    <mat-nav-list>
-      <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link" data-test-id="nav-dashboard">
+    <mat-nav-list role="navigation" aria-label="Main navigation">
+      <a mat-list-item routerLink="/dashboard" routerLinkActive="active-link" data-test-id="nav-dashboard" (click)="closeMobileSidenav()">
         <mat-icon matListItemIcon>dashboard</mat-icon>
         <span matListItemTitle>{{ 'nav.dashboard' | translate }}</span>
       </a>
-      <a mat-list-item routerLink="/projects" routerLinkActive="active-link" data-test-id="nav-projects">
+      <a mat-list-item routerLink="/projects" routerLinkActive="active-link" data-test-id="nav-projects" (click)="closeMobileSidenav()">
         <mat-icon matListItemIcon>folder</mat-icon>
         <span matListItemTitle>{{ 'nav.projects' | translate }}</span>
       </a>
     </mat-nav-list>
     @if (isAdmin$ | async) {
       <mat-divider></mat-divider>
-      <mat-nav-list>
-        <a mat-list-item routerLink="/settings" routerLinkActive="active-link" data-test-id="nav-settings">
+      <mat-nav-list role="navigation" aria-label="Admin settings">
+        <a mat-list-item routerLink="/settings" routerLinkActive="active-link" data-test-id="nav-settings" (click)="closeMobileSidenav()">
           <mat-icon matListItemIcon>settings</mat-icon>
           <span matListItemTitle>{{ 'nav.settings' | translate }}</span>
         </a>
@@ -30,12 +30,21 @@
 
   <mat-sidenav-content>
     <mat-toolbar class="app-toolbar">
-      <button mat-icon-button (click)="sidenav.toggle()" data-test-id="sidenav-toggle">
+      <button mat-icon-button (click)="sidenav.toggle()" data-test-id="sidenav-toggle" aria-label="Toggle navigation menu">
         <mat-icon>menu</mat-icon>
       </button>
       <span class="toolbar-title">{{ 'app.title' | translate }}</span>
       <span class="spacer"></span>
-      <button mat-icon-button [matMenuTriggerFor]="langMenu" class="toolbar-action" data-test-id="language-menu-trigger">
+      <button mat-icon-button
+              (click)="openCommandPalette()"
+              class="toolbar-action"
+              data-test-id="open-command-palette"
+              [matTooltip]="'commandPalette.openHint' | translate"
+              aria-label="Open command palette">
+        <mat-icon>search</mat-icon>
+      </button>
+      <app-notification-bell></app-notification-bell>
+      <button mat-icon-button [matMenuTriggerFor]="langMenu" class="toolbar-action" data-test-id="language-menu-trigger" aria-label="Change language">
         <mat-icon>language</mat-icon>
       </button>
       <mat-menu #langMenu="matMenu">
@@ -43,7 +52,7 @@
         <button mat-menu-item (click)="switchLanguage('de')" data-test-id="lang-de">Deutsch</button>
       </mat-menu>
       @if (user$ | async; as user) {
-        <button mat-button [matMenuTriggerFor]="profileMenu" class="toolbar-action" data-test-id="profile-menu-trigger">
+        <button mat-button [matMenuTriggerFor]="profileMenu" class="toolbar-action" data-test-id="profile-menu-trigger" [attr.aria-label]="'User menu for ' + user.displayName">
           <mat-icon>account_circle</mat-icon>
           <span class="user-display">{{ user.displayName }}</span>
         </button>
@@ -53,17 +62,21 @@
             <div class="profile-email">{{ user.email }}</div>
           </div>
           <mat-divider></mat-divider>
-          <a mat-menu-item routerLink="/my-test-runs" data-test-id="nav-my-test-runs">
+          <a mat-menu-item routerLink="/my-test-runs" data-test-id="nav-my-test-runs" (click)="closeMobileSidenav()">
             <mat-icon>play_circle</mat-icon>
             <span>{{ 'nav.myTestRuns' | translate }}</span>
           </a>
-          <a mat-menu-item routerLink="/my-bugs" data-test-id="nav-my-bugs">
+          <a mat-menu-item routerLink="/my-bugs" data-test-id="nav-my-bugs" (click)="closeMobileSidenav()">
             <mat-icon>bug_report</mat-icon>
             <span>{{ 'nav.myBugs' | translate }}</span>
           </a>
-          <a mat-menu-item routerLink="/my-watched" data-test-id="nav-my-watched">
+          <a mat-menu-item routerLink="/my-watched" data-test-id="nav-my-watched" (click)="closeMobileSidenav()">
             <mat-icon>bookmark</mat-icon>
             <span>{{ 'nav.myWatched' | translate }}</span>
+          </a>
+          <a mat-menu-item routerLink="/notification-settings" data-test-id="nav-notification-settings" (click)="closeMobileSidenav()">
+            <mat-icon>notifications</mat-icon>
+            <span>{{ 'notification.prefs.title' | translate }}</span>
           </a>
           <mat-divider></mat-divider>
           <button mat-menu-item (click)="logout()" data-test-id="logout-btn">
@@ -74,7 +87,7 @@
       }
     </mat-toolbar>
 
-    <main class="app-content">
+    <main class="app-content" role="main">
       <router-outlet />
     </main>
   </mat-sidenav-content>

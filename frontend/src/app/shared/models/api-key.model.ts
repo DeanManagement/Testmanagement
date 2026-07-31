@@ -5,6 +5,9 @@ export interface ApiKey {
   revoked: boolean;
   lastUsedAt: string | null;
   createdAt: string;
+  /** PRD-021: null for legacy/global keys. */
+  projectId: string | null;
+  projectName: string | null;
 }
 
 export interface ApiKeyCreated {
@@ -13,8 +16,11 @@ export interface ApiKeyCreated {
   keyPrefix: string;
   rawKey: string;
   createdAt: string;
+  projectId: string;
+  projectName: string;
 }
 
 export interface CreateApiKeyRequest {
   name: string;
+  projectId: string;
 }

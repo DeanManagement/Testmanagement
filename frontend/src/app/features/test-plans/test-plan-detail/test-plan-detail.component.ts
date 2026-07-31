@@ -1,4 +1,5 @@
-import { ChangeDetectorRef, Component, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, DecimalPipe, LowerCasePipe } from '@angular/common';
@@ -7,8 +8,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
+import { take } from 'rxjs/operators';
 import {
   Chart,
   DoughnutController,
@@ -58,6 +60,8 @@ export class TestPlanDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly testPlanApi = inject(TestPlanApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('resultDoughnut') resultDoughnutCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('runStatusBar') runStatusBarCanvas!: ElementRef<HTMLCanvasElement>;
@@ -78,10 +82,15 @@ export class TestPlanDetailComponent implements OnInit {
     this.planId = this.route.snapshot.paramMap.get('planId') ?? '';
 
     if (this.projectId && this.planId) {
-      this.store.dispatch(TestPlanActions.loadTestPlans({ projectId: this.projectId }));
+      this.store.dispatch(TestPlanActions.loadTestPlan({ projectId: this.projectId, id: this.planId }));
       this.testPlan$ = this.store.select(selectTestPlanById(this.planId));
       this.loadSummary();
     }
+    this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.summary) {
+        this.renderCharts();
+      }
+    });
   }
 
   deleteTestPlan(id: string): void {
@@ -89,7 +98,7 @@ export class TestPlanDetailComponent implements OnInit {
   }
 
   private loadSummary(): void {
-    this.testPlanApi.getSummary(this.projectId, this.planId).subscribe((summary) => {
+    this.testPlanApi.getSummary(this.projectId, this.planId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((summary) => {
       this.summary = summary;
       this.cdr.detectChanges();
       this.renderCharts();
@@ -112,7 +121,13 @@ export class TestPlanDetailComponent implements OnInit {
     this.resultDoughnutChart = new Chart(this.resultDoughnutCanvas.nativeElement, {
       type: 'doughnut',
       data: {
-        labels: ['Passed', 'Failed', 'Blocked', 'Skipped', 'Pending'],
+        labels: [
+          this.translate.instant('resultStatus.PASSED'),
+          this.translate.instant('resultStatus.FAILED'),
+          this.translate.instant('resultStatus.BLOCKED'),
+          this.translate.instant('resultStatus.SKIPPED'),
+          this.translate.instant('resultStatus.PENDING'),
+        ],
         datasets: [{
           data: [passed, failed, blocked, skipped, pending],
           backgroundColor: ['#4caf50', '#f44336', '#ff9800', '#9e9e9e', '#2196f3'],
@@ -148,7 +163,7 @@ export class TestPlanDetailComponent implements OnInit {
     this.runStatusBarChart = new Chart(this.runStatusBarCanvas.nativeElement, {
       type: 'bar',
       data: {
-        labels: Object.keys(statusCounts),
+        labels: Object.keys(statusCounts).map(k => this.translate.instant('testRun.status.' + k)),
         datasets: [{
           data: Object.values(statusCounts),
           backgroundColor: Object.keys(statusCounts).map(k => statusColors[k] || '#9e9e9e'),
@@ -177,7 +192,7 @@ export class TestPlanDetailComponent implements OnInit {
       data: {
         labels: runs.map(r => r.name),
         datasets: [{
-          label: 'Pass Rate %',
+          label: this.translate.instant('testPlan.detail.passRate'),
           data: runs.map(r => Math.round(r.passed * 10000 / r.total) / 100),
           backgroundColor: '#4caf50',
         }],

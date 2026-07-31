@@ -1,13 +1,18 @@
-import { Component, inject } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { take } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 import { Clipboard } from '@angular/cdk/clipboard';
 import { ApiKeyCreated } from '../../../shared/models/api-key.model';
+import { Project } from '../../../shared/models/project.model';
+import { ProjectApiService } from '../../../core/services/project-api.service';
 
 @Component({
   selector: 'app-create-api-key-dialog',
@@ -18,6 +23,7 @@ import { ApiKeyCreated } from '../../../shared/models/api-key.model';
     MatButtonModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatIconModule,
     TranslateModule,
   ],
@@ -29,10 +35,19 @@ import { ApiKeyCreated } from '../../../shared/models/api-key.model';
           <mat-label>{{ 'settings.apiKeys.name' | translate }}</mat-label>
           <input matInput [(ngModel)]="name" required data-test-id="api-key-name-input" />
         </mat-form-field>
+        <!-- PRD-021: every key is bound to one project -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'settings.apiKeys.project' | translate }}</mat-label>
+          <mat-select [(ngModel)]="projectId" required data-test-id="api-key-project-select">
+            @for (project of projects; track project.id) {
+              <mat-option [value]="project.id">{{ project.name }} ({{ project.key }})</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-button (click)="onCancel()">{{ 'common.cancel' | translate }}</button>
-        <button mat-flat-button color="primary" [disabled]="!name.trim()" (click)="onCreate()"
+        <button mat-flat-button color="primary" [disabled]="!name.trim() || !projectId" (click)="onCreate()"
                 data-test-id="api-key-create-confirm">
           {{ 'settings.apiKeys.create' | translate }}
         </button>
@@ -57,7 +72,7 @@ import { ApiKeyCreated } from '../../../shared/models/api-key.model';
   `,
   styles: [`
     .full-width { width: 100%; }
-    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: 450px; }
+    mat-dialog-content { display: flex; flex-direction: column; gap: 8px; min-width: min(90vw, 450px); }
     .warning-text { color: var(--tm-danger, #d32f2f); font-size: 14px; margin-bottom: 8px; }
     .key-display {
       display: flex;
@@ -75,20 +90,28 @@ import { ApiKeyCreated } from '../../../shared/models/api-key.model';
     }
   `],
 })
-export class CreateApiKeyDialogComponent {
+export class CreateApiKeyDialogComponent implements OnInit {
   private readonly dialogRef = inject(MatDialogRef<CreateApiKeyDialogComponent>);
   private readonly clipboard = inject(Clipboard);
+  private readonly projectApi = inject(ProjectApiService);
+  private readonly destroyRef = inject(DestroyRef);
 
   name = '';
+  projectId: string | null = null;
+  projects: Project[] = [];
   createdKey: ApiKeyCreated | null = null;
   copied = false;
+
+  ngOnInit(): void {
+    this.projectApi.getAll().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((projects) => (this.projects = projects));
+  }
 
   onCancel(): void {
     this.dialogRef.close();
   }
 
   onCreate(): void {
-    this.dialogRef.close({ action: 'create', name: this.name.trim() });
+    this.dialogRef.close({ action: 'create', name: this.name.trim(), projectId: this.projectId });
   }
 
   setCreatedKey(key: ApiKeyCreated): void {

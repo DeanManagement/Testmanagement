@@ -1,11 +1,14 @@
-import { ChangeDetectorRef, Component, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { DatePipe, LowerCasePipe, DecimalPipe } from '@angular/common';
+import { take } from 'rxjs/operators';
+import { LowerCasePipe, DecimalPipe } from '@angular/common';
+import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Chart, DoughnutController, ArcElement, Tooltip, Legend } from 'chart.js';
 import { TestSuiteReport } from '../../../shared/models/test-suite.model';
 import { TestSuiteApiService } from '../../../core/services/test-suite-api.service';
@@ -16,7 +19,7 @@ Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
   selector: 'app-test-suite-report',
   standalone: true,
   imports: [
-    DatePipe,
+    LocalizedDatePipe,
     LowerCasePipe,
     DecimalPipe,
     RouterLink,
@@ -33,6 +36,8 @@ export class TestSuiteReportComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly testSuiteApi = inject(TestSuiteApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
+  private readonly destroyRef = inject(DestroyRef);
 
   @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
@@ -44,27 +49,35 @@ export class TestSuiteReportComponent implements OnInit {
   private chart: Chart | null = null;
 
   ngOnInit(): void {
+    // Chart.js keeps canvas/resize handlers alive unless destroyed explicitly.
+    this.destroyRef.onDestroy(() => this.chart?.destroy());
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.suiteId = this.route.snapshot.paramMap.get('suiteId') ?? '';
     if (this.projectId && this.suiteId) {
-      this.testSuiteApi.getReport(this.projectId, this.suiteId).subscribe(report => {
-        this.report = report;
-        this.cdr.detectChanges();
-        this.renderChart();
-      });
+      this.testSuiteApi.getReport(this.projectId, this.suiteId)
+        .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe(report => {
+          this.report = report;
+          this.cdr.detectChanges();
+          this.renderChart();
+        });
     }
+    this.translate.onLangChange
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.renderChart());
   }
 
   downloadPdf(): void {
     this.downloading = true;
-    this.testSuiteApi.downloadReportPdf(this.projectId, this.suiteId).subscribe({
+    this.testSuiteApi.downloadReportPdf(this.projectId, this.suiteId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         a.download = `test-suite-report-${this.report?.name ?? this.suiteId}.pdf`;
         a.click();
-        URL.revokeObjectURL(url);
+        // Revoke on the next macrotask so the browser has started the download.
+        setTimeout(() => URL.revokeObjectURL(url));
         this.downloading = false;
       },
       error: () => {
@@ -80,7 +93,13 @@ export class TestSuiteReportComponent implements OnInit {
     this.chart = new Chart(this.chartCanvas.nativeElement, {
       type: 'doughnut',
       data: {
-        labels: ['Passed', 'Failed', 'Blocked', 'Skipped', 'Untested'],
+        labels: [
+          this.translate.instant('report.passed'),
+          this.translate.instant('report.failed'),
+          this.translate.instant('report.blocked'),
+          this.translate.instant('report.skipped'),
+          this.translate.instant('report.untested'),
+        ],
         datasets: [{
           data: [
             this.report.passed,

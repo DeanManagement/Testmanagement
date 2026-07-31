@@ -95,6 +95,16 @@
           data-test-id="project-settings-bug-reports-toggle">
         </mat-slide-toggle>
       </div>
+      <div class="setting-item">
+        <div class="setting-info">
+          <h4>{{ 'webhook.title' | translate }}</h4>
+          <p class="setting-description">{{ 'webhook.description' | translate }}</p>
+        </div>
+        <a mat-stroked-button [routerLink]="['/projects', project.id, 'webhooks']" data-test-id="project-settings-webhooks-link">
+          <mat-icon>webhook</mat-icon>
+          {{ 'webhook.manage' | translate }}
+        </a>
+      </div>
     </div>
     }
 
