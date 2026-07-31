@@ -1,0 +1,221 @@
+.sso-container {
+  padding: 24px;
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.back-link {
+  color: var(--tm-text-secondary);
+}
+
+.page-hint {
+  color: var(--tm-text-secondary);
+  margin: 0 0 24px;
+}
+
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 48px;
+}
+
+.form-card {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 24px;
+
+  h2 {
+    margin-top: 0;
+  }
+
+  h3 {
+    margin: 16px 0 8px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--tm-text-secondary);
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+.field-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  mat-form-field {
+    flex: 1 1 200px;
+  }
+}
+
+.callback-hint {
+  background: var(--tm-subtle-bg);
+  border-radius: var(--tm-radius);
+  padding: 12px;
+  margin-bottom: 16px;
+
+  .callback-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--tm-text-secondary);
+    display: block;
+    margin-bottom: 4px;
+  }
+
+  code {
+    word-break: break-all;
+  }
+
+  p {
+    margin: 6px 0 0;
+    font-size: 13px;
+    color: var(--tm-text-secondary);
+  }
+}
+
+.toggle-row {
+  margin: 8px 0 16px;
+
+  .setting-description {
+    color: var(--tm-text-secondary);
+    font-size: 13px;
+    margin: 6px 0 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+// The email-trust switch is an account-takeover boundary, so it is visually distinct from the
+// preferences around it rather than being one more toggle in a list.
+.toggle-row--warning {
+  border-left: 3px solid var(--tm-warn);
+  padding-left: 12px;
+
+  .warn-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    color: var(--tm-warn);
+    flex-shrink: 0;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.provider-card {
+  padding: 16px 20px;
+}
+
+.provider-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+
+  h3 {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+}
+
+.provider-issuer {
+  margin: 4px 0 0;
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.provider-actions {
+  display: flex;
+  flex-shrink: 0;
+}
+
+.provider-meta {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+  margin: 12px 0 0;
+  font-size: 13px;
+
+  dt {
+    color: var(--tm-text-secondary);
+  }
+
+  dd {
+    margin: 0;
+    word-break: break-all;
+  }
+}
+
+.provider-error {
+  display: flex;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px;
+  border-radius: var(--tm-radius);
+  background: var(--tm-tint-danger-bg);
+  color: var(--tm-tint-danger-fg);
+
+  mat-icon {
+    flex-shrink: 0;
+  }
+
+  p {
+    margin: 0;
+    word-break: break-word;
+  }
+
+  small {
+    opacity: 0.8;
+  }
+}
+
+.local-login-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px;
+  margin-top: 24px;
+
+  h3 {
+    margin: 0;
+  }
+
+  .setting-description {
+    color: var(--tm-text-secondary);
+    font-size: 13px;
+    margin: 6px 0 0;
+  }
+}
+
+.local-login-note {
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+  margin: 8px 0 0;
+}

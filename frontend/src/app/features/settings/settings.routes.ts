@@ -25,6 +25,13 @@ export const settingsRoutes: Routes = [
             (m) => m.UserListComponent
           ),
       },
+      {
+        path: 'sso',
+        loadComponent: () =>
+          import('../sso-settings/sso-settings.component').then(
+            (m) => m.SsoSettingsComponent
+          ),
+      },
     ],
   },
 ];

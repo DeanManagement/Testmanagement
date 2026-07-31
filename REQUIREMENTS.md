@@ -631,7 +631,7 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 |---|---|---|
 | ~~Issue-tracker integration (§13.9)~~ — ✅ shipped | [PRD-010](docs/prd/PRD-010-issue-tracker-integration.md) | M |
 | Test case versioning (§13.1) | [PRD-011](docs/prd/PRD-011-test-case-versioning.md) | L |
-| OIDC / Keycloak (§13.5) | [PRD-012](docs/prd/PRD-012-oidc-sso.md) | M |
+| ~~OIDC / Keycloak (§13.5)~~ — ✅ shipped | [PRD-012](docs/prd/PRD-012-oidc-sso.md) | M |
 | ~~Dark mode / theming (§13.7)~~ — ✅ shipped | [PRD-013](docs/prd/PRD-013-dark-mode-theming.md) | S |
 | Traceability matrix (§13.2) | [PRD-014](docs/prd/PRD-014-traceability-matrix.md) | M |
 | Parameterized cases (§13.3) | [PRD-015](docs/prd/PRD-015-parameterized-test-cases.md) | M |
@@ -667,7 +667,16 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 - Dashboard widget showing top flaky tests per project.
 - Optional label auto-applied to flaky test cases.
 
-### 13.5 OIDC / Keycloak Support (Optional) — [PRD-012](docs/prd/PRD-012-oidc-sso.md)
+### 13.5 SSO via OpenID Connect — ✅ shipped ([PRD-012](docs/prd/PRD-012-oidc-sso.md))
+
+Shipped 2026-07-31, wider than originally specified: any number of OIDC providers, stored in the
+database and managed by system admins in the UI without a restart, running alongside local password
+login rather than instead of it. Client secrets encrypted (`APP_ENCRYPTION_KEY`). Account linking to
+an existing local user requires both a per-provider trust flag and a verified email from the IdP;
+unknown users are provisioned with no project access. Local password login can be disabled, with
+system admins retaining it as a break-glass. Project roles stay local.
+
+Original scope:
 
 - Add Spring Security OIDC alongside existing local auth.
 - Configuration toggle: `app.auth.mode=local|oidc`.

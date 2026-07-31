@@ -1,0 +1,220 @@
+<div class="sso-container">
+  <div class="page-header">
+    <div class="page-header-left">
+      <a mat-button routerLink="/settings" class="back-link" data-test-id="sso-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <h1 data-test-id="sso-title">{{ 'sso.title' | translate }}</h1>
+    </div>
+    @if (!formOpen) {
+      <button mat-flat-button (click)="openCreate()" data-test-id="sso-add-btn">
+        <mat-icon>add</mat-icon>
+        {{ 'sso.addProvider' | translate }}
+      </button>
+    }
+  </div>
+
+  <p class="page-hint">{{ 'sso.description' | translate }}</p>
+
+  @if (loading) {
+    <div class="loading-state"><mat-spinner diameter="32"></mat-spinner></div>
+  } @else {
+
+    @if (formOpen) {
+      <div class="tm-card form-card" data-test-id="sso-form">
+        <h2>{{ (editingId ? 'sso.editTitle' : 'sso.createTitle') | translate }}</h2>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'sso.displayName' | translate }}</mat-label>
+          <input matInput [(ngModel)]="formDisplayName" data-test-id="sso-display-name-input">
+          <mat-hint>{{ 'sso.displayNameHint' | translate }}</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'sso.slug' | translate }}</mat-label>
+          <input matInput [(ngModel)]="formSlug" [disabled]="!!editingId" data-test-id="sso-slug-input">
+          <mat-hint>{{ (editingId ? 'sso.slugLockedHint' : 'sso.slugHint') | translate }}</mat-hint>
+        </mat-form-field>
+
+        <div class="callback-hint" data-test-id="sso-callback-url">
+          <span class="callback-label">{{ 'sso.callbackUrl' | translate }}</span>
+          <code>{{ callbackUrl(formSlug) }}</code>
+          <p>{{ 'sso.callbackUrlHint' | translate }}</p>
+        </div>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'sso.issuerUri' | translate }}</mat-label>
+          <input matInput [(ngModel)]="formIssuerUri"
+                 placeholder="https://keycloak.example.com/realms/acme"
+                 data-test-id="sso-issuer-input">
+          <mat-hint>{{ 'sso.issuerUriHint' | translate }}</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'sso.clientId' | translate }}</mat-label>
+          <input matInput [(ngModel)]="formClientId" data-test-id="sso-client-id-input">
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ (editingSecretSet ? 'sso.clientSecretReplace' : 'sso.clientSecret') | translate }}</mat-label>
+          <input matInput type="password" autocomplete="off" [(ngModel)]="formClientSecret"
+                 data-test-id="sso-client-secret-input">
+          <mat-hint>
+            {{ (editingSecretSet ? 'sso.clientSecretStoredHint' : 'sso.clientSecretHint') | translate }}
+          </mat-hint>
+        </mat-form-field>
+
+        <h3>{{ 'sso.claimMapping' | translate }}</h3>
+        <div class="field-row">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'sso.scopes' | translate }}</mat-label>
+            <input matInput [(ngModel)]="formScopes" data-test-id="sso-scopes-input">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'sso.emailClaim' | translate }}</mat-label>
+            <input matInput [(ngModel)]="formEmailClaim" data-test-id="sso-email-claim-input">
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'sso.nameClaim' | translate }}</mat-label>
+            <input matInput [(ngModel)]="formNameClaim" data-test-id="sso-name-claim-input">
+          </mat-form-field>
+        </div>
+
+        <div class="field-row">
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'sso.adminClaim' | translate }}</mat-label>
+            <input matInput [(ngModel)]="formAdminClaim" placeholder="groups" data-test-id="sso-admin-claim-input">
+            <mat-hint>{{ 'sso.adminClaimHint' | translate }}</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>{{ 'sso.adminClaimValue' | translate }}</mat-label>
+            <input matInput [(ngModel)]="formAdminClaimValue" data-test-id="sso-admin-claim-value-input">
+          </mat-form-field>
+        </div>
+
+        <h3>{{ 'sso.accountHandling' | translate }}</h3>
+        <div class="toggle-row">
+          <mat-slide-toggle [(ngModel)]="formAutoProvision" data-test-id="sso-auto-provision-toggle">
+            {{ 'sso.autoProvision' | translate }}
+          </mat-slide-toggle>
+          <p class="setting-description">{{ 'sso.autoProvisionHint' | translate }}</p>
+        </div>
+
+        <div class="toggle-row toggle-row--warning">
+          <mat-slide-toggle [(ngModel)]="formTrustEmail" data-test-id="sso-trust-email-toggle">
+            {{ 'sso.trustEmail' | translate }}
+          </mat-slide-toggle>
+          <p class="setting-description">
+            <mat-icon class="warn-icon">warning</mat-icon>
+            {{ 'sso.trustEmailHint' | translate }}
+          </p>
+        </div>
+
+        <div class="toggle-row">
+          <mat-slide-toggle [(ngModel)]="formActive" data-test-id="sso-active-toggle">
+            {{ 'sso.active' | translate }}
+          </mat-slide-toggle>
+          <p class="setting-description">{{ 'sso.activeHint' | translate }}</p>
+        </div>
+
+        <div class="form-actions">
+          <button mat-button (click)="closeForm()" data-test-id="sso-cancel-btn">
+            {{ 'common.cancel' | translate }}
+          </button>
+          <button mat-flat-button [disabled]="!canSave || saving" (click)="save()" data-test-id="sso-save-btn">
+            {{ (saving ? 'common.saving' : 'common.save') | translate }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (providers.length === 0 && !formOpen) {
+      <div class="empty-state" data-test-id="sso-empty">
+        <mat-icon>key</mat-icon>
+        <p>{{ 'sso.noProviders' | translate }}</p>
+      </div>
+    } @else {
+      <div class="provider-list">
+        @for (provider of providers; track provider.id) {
+          <div class="tm-card provider-card" [attr.data-test-id]="'sso-provider-' + provider.slug">
+            <div class="provider-head">
+              <div>
+                <h3>
+                  {{ provider.displayName }}
+                  @if (!provider.active) {
+                    <span class="badge badge--draft badge--small">{{ 'sso.inactive' | translate }}</span>
+                  }
+                </h3>
+                <p class="provider-issuer">{{ provider.issuerUri }}</p>
+              </div>
+              <div class="provider-actions">
+                <button mat-icon-button
+                        [disabled]="testingId === provider.id"
+                        (click)="test(provider)"
+                        [matTooltip]="'sso.testConnection' | translate"
+                        [attr.data-test-id]="'sso-test-' + provider.slug">
+                  <mat-icon>network_check</mat-icon>
+                </button>
+                <button mat-icon-button (click)="openEdit(provider)"
+                        [matTooltip]="'common.edit' | translate"
+                        [attr.data-test-id]="'sso-edit-' + provider.slug">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button color="warn" (click)="remove(provider)"
+                        [matTooltip]="'common.delete' | translate"
+                        [attr.data-test-id]="'sso-delete-' + provider.slug">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
+
+            <dl class="provider-meta">
+              <dt>{{ 'sso.callbackUrl' | translate }}</dt>
+              <dd><code>{{ callbackUrl(provider.slug) }}</code></dd>
+              <dt>{{ 'sso.accountHandling' | translate }}</dt>
+              <dd>
+                {{ (provider.autoProvision ? 'sso.summaryAutoProvision' : 'sso.summaryInviteOnly') | translate }}
+                @if (provider.trustEmailForLinking) {
+                  · <strong>{{ 'sso.summaryTrustsEmail' | translate }}</strong>
+                }
+              </dd>
+              @if (provider.adminClaim) {
+                <dt>{{ 'sso.adminClaim' | translate }}</dt>
+                <dd><code>{{ provider.adminClaim }} = {{ provider.adminClaimValue }}</code></dd>
+              }
+            </dl>
+
+            @if (provider.lastError) {
+              <div class="provider-error" [attr.data-test-id]="'sso-error-' + provider.slug">
+                <mat-icon>error_outline</mat-icon>
+                <div>
+                  <p>{{ provider.lastError }}</p>
+                  @if (provider.lastErrorAt) {
+                    <small>{{ provider.lastErrorAt | localizedDate: 'medium' }}</small>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <div class="tm-card local-login-card" data-test-id="sso-local-login-card">
+      <div class="setting-info">
+        <h3>{{ 'sso.localLogin' | translate }}</h3>
+        <p class="setting-description">{{ 'sso.localLoginHint' | translate }}</p>
+      </div>
+      <mat-slide-toggle
+        [checked]="localLoginEnabled"
+        [disabled]="!hasActiveProvider && localLoginEnabled"
+        (change)="toggleLocalLogin($event.checked)"
+        data-test-id="sso-local-login-toggle">
+      </mat-slide-toggle>
+    </div>
+    @if (!hasActiveProvider) {
+      <p class="local-login-note">{{ 'sso.localLoginNeedsProvider' | translate }}</p>
+    }
+  }
+</div>

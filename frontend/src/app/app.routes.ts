@@ -18,6 +18,13 @@ export const routes: Routes = [
       import('./features/login/login.routes').then((m) => m.loginRoutes),
   },
   {
+    // Public and outside the shell: the browser lands here straight from the IdP, before any
+    // token exists (PRD-012 §3.3).
+    path: 'login/callback',
+    loadComponent: () =>
+      import('./features/login/sso-callback.component').then((m) => m.SsoCallbackComponent),
+  },
+  {
     path: 'change-password',
     canActivate: [authGuard],
     loadChildren: () =>

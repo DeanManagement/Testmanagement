@@ -16,6 +16,14 @@
        data-test-id="settings-nav-users">
       {{ 'settings.users.title' | translate }}
     </a>
+    <a mat-tab-link
+       routerLink="sso"
+       routerLinkActive
+       #ssoActive="routerLinkActive"
+       [active]="ssoActive.isActive"
+       data-test-id="settings-nav-sso">
+      {{ 'sso.title' | translate }}
+    </a>
   </nav>
   <mat-tab-nav-panel #tabPanel>
     <router-outlet />

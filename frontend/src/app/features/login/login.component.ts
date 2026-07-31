@@ -11,6 +11,8 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthService } from '../../core/services/auth.service';
+import { SsoApiService } from '../../core/services/sso-api.service';
+import { AuthConfig } from '../../shared/models/sso.model';
 import { selectIsAuthenticated, selectAuthLoading, selectAuthError } from '../../store/auth/auth.selectors';
 
 @Component({
@@ -35,6 +37,7 @@ export class LoginComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly authService = inject(AuthService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly ssoApi = inject(SsoApiService);
 
   loading$ = this.store.select(selectAuthLoading);
   error$ = this.store.select(selectAuthError);
@@ -42,15 +45,34 @@ export class LoginComponent implements OnInit {
   email = '';
   password = '';
 
+  /**
+   * Starts optimistic: local login is shown until the server says otherwise, so a slow or failed
+   * config call leaves people with a usable form rather than a dead screen.
+   */
+  authConfig: AuthConfig = { localLoginEnabled: true, providers: [] };
+
   ngOnInit(): void {
     this.store.select(selectIsAuthenticated).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((isAuth) => {
       if (isAuth) {
         this.router.navigate(['/dashboard']);
       }
     });
+
+    this.ssoApi.getAuthConfig().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (config) => (this.authConfig = config),
+      error: () => undefined,
+    });
   }
 
   onLogin(): void {
     this.authService.login(this.email, this.password);
+  }
+
+  /**
+   * A full page navigation, not an XHR: the authorization-code flow needs the browser itself to
+   * follow redirects to the IdP and back.
+   */
+  signInWith(slug: string): void {
+    window.location.href = `/oauth2/authorization/${encodeURIComponent(slug)}`;
   }
 }

@@ -44,6 +44,29 @@ export class AuthService {
     });
   }
 
+  /**
+   * Adopts a token minted by the backend after an SSO login (PRD-012 §3.3). The token arrives in
+   * the URL fragment, which the caller has already read and cleared.
+   */
+  adoptSsoToken(token: string): void {
+    if (this.isExpired(token)) {
+      this.store.dispatch(AuthActions.loginFailure({ error: 'Sign-in expired. Please try again.' }));
+      return;
+    }
+    localStorage.setItem(this.TOKEN_KEY, token);
+    this.scheduleExpiryLogout(token);
+    this.http.get<AuthUser>('/api/auth/me').subscribe({
+      next: (user) => {
+        this.store.dispatch(AuthActions.loginSuccess({ user }));
+        this.router.navigate(['/dashboard']);
+      },
+      error: () => {
+        localStorage.removeItem(this.TOKEN_KEY);
+        this.store.dispatch(AuthActions.loginFailure({ error: 'Sign-in failed. Please try again.' }));
+      },
+    });
+  }
+
   login(email: string, password: string): void {
     this.store.dispatch(AuthActions.login());
     this.http.post<LoginResponse>('/api/auth/login', { email, password }).subscribe({

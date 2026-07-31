@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | In progress (rewritten 2026-07-31) |
+| **Status** | ✅ Implemented (2026-07-31) |
 | **Author** | Engineering review (Claude) |
 | **Created** | 2026-06-09 |
 | **Revised** | 2026-07-31 — scope changed from one property-configured issuer to multiple providers managed at runtime |
@@ -141,10 +141,53 @@ An existing local user keeps their password; linking does not remove it.
   explicitly rather than only the happy path.
 
 ## 7. Acceptance Criteria
-- [ ] A system admin can add, edit, test, deactivate and delete OIDC providers in the UI, no restart.
-- [ ] Login screen offers a button per active provider; local login still works.
-- [ ] Linking follows §4.1 exactly, including refusing the unverified-email case.
-- [ ] Unknown users are provisioned with no project access and no admin flag.
-- [ ] Local login can be disabled while system admins retain access.
-- [ ] Client secrets are encrypted at rest and never returned.
-- [ ] Project roles and `@RequireProjectRole` behave identically for SSO and local users.
+- [x] A system admin can add, edit, test, deactivate and delete OIDC providers in the UI, no restart.
+- [x] Login screen offers a button per active provider; local login still works.
+- [x] Linking follows §4.1 exactly, including refusing the unverified-email case.
+- [x] Unknown users are provisioned with no project access and no admin flag.
+- [x] Local login can be disabled while system admins retain access.
+- [x] Client secrets are encrypted at rest and never returned.
+- [x] Project roles and `@RequireProjectRole` behave identically for SSO and local users.
+
+## 8. As Built (2026-07-31)
+
+**Backend.** `sso_providers`, `sso_identities` and a single-row `auth_settings` (V43).
+`DynamicClientRegistrationRepository` serves Spring's registrations from the database, caching
+discovery per slug and invalidating on every provider mutation. `SsoSecurityConfig` adds an
+`@Order(1)` chain matching only `/oauth2/authorization/**` and `/login/oauth2/code/**`, so no
+existing route changes how it authenticates; sessions are allowed there because the
+authorization-code flow needs somewhere for `state` and the PKCE verifier, and end at the callback.
+`SsoLoginService` implements §4.1; `SsoAuthenticationSuccessHandler` mints the app JWT via
+`AuthService.issueToken`.
+
+**Break-glass.** `AuthService` consults a `LocalLoginPolicy` seam rather than importing the SSO
+module — authentication is the lower layer and must work whether or not SSO is configured. The check
+runs *after* password verification, so it cannot be used as an oracle for which addresses are admins.
+Disabling local login is refused unless an active provider exists.
+
+**Admin claim.** Applied only when the provider actually maps one, so a provider with no admin claim
+never demotes someone granted the flag locally. Array claims (`groups`) count membership as a match.
+
+**Frontend.** Settings → Single sign-on lists providers with their redirect URI (shown so it cannot
+be mistyped when registering at the IdP), a test-connection action, and the recorded last error. The
+email-trust switch is visually separated with a warning because it is a security boundary rather
+than a preference. The login screen renders a button per active provider and hides the password form
+when local login is off. `/login/callback` is public and outside the shell.
+
+**Shared extractions.** A third feature needing both prompted `AesGcmCipher` (one key,
+`app.security.encryption-key`, with the issue-tracker key kept as a fallback so existing deployments
+keep working) and `OutboundUrlValidator`, now used by webhooks, issue trackers and issuers alike.
+
+**Tests: 35 backend, 6 frontend.** Linking covers every refusal — untrusted provider, unverified
+email, absent `email_verified`, a second subject for an already-linked account — plus adoption when
+both conditions hold, provisioning with no access, email lower-casing, admin grant/revoke from
+scalar and array claims, and a provider without an admin claim leaving a local admin alone.
+Break-glass covers admin-in, non-admin-out, and that the disabled message only appears after correct
+credentials. The callback spec asserts the fragment is wiped and that a rejected token is not left
+in storage.
+
+### Deferred
+- SAML and non-OIDC OAuth2 (GitHub) — both need a different token/userinfo path.
+- Admin-driven manual linking of an existing user to an SSO identity: today the route is to enable
+  email trust on a provider you control. Worth adding if the refusal proves noisy in practice.
+- IdP-initiated and back-channel logout.
