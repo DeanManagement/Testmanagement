@@ -1,71 +1,150 @@
-# PRD-012 — OIDC / Keycloak Support
+# PRD-012 — SSO via OpenID Connect (multi-provider, admin-configurable)
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | In progress (rewritten 2026-07-31) |
 | **Author** | Engineering review (Claude) |
 | **Created** | 2026-06-09 |
+| **Revised** | 2026-07-31 — scope changed from one property-configured issuer to multiple providers managed at runtime |
 | **Priority** | P3 — v2.0, enterprise driver-dependent |
 | **Target** | v2.0 |
-| **Related** | REQUIREMENTS.md §13.5 (was PRD-009 §2.3); interacts with PRD-001 |
+| **Related** | REQUIREMENTS.md §13.5; interacts with PRD-001 (roles), PRD-020 (token lifecycle), PRD-010 (secret encryption pattern) |
 
 ---
 
 ## 1. Summary
 
-Authentication is currently local (email/password → JWT issued by the app). Enterprises with an existing IdP (Keycloak, Azure AD, Okta, etc.) want SSO. This PRD adds Spring Security OIDC **alongside** local auth, selected by `app.auth.mode=local|oidc`, so air-gapped installs keep local accounts and enterprises can federate — without forking the codebase.
+Authentication is local today: email/password, and the app mints its own JWT. This PRD adds SSO
+against any OpenID Connect provider, **alongside** local auth rather than instead of it.
 
-Crucially, **project authorization stays local**: OIDC establishes *identity*; project roles remain `ProjectMember` rows (PRD-001). System-admin can still be granted locally or mapped from a configurable claim/group.
+The original draft of this PRD assumed a single issuer configured in `application.yml` and
+explicitly ruled out running local and SSO auth together. Both assumptions are dropped: providers
+are rows in the database, added and edited by system admins in the UI without a restart, and any
+number of them can be active at once while local login continues to work.
+
+**Project authorization stays local.** OIDC establishes *identity*; project roles remain
+`ProjectMember` rows (PRD-001). System admin can be granted locally or mapped from a claim.
 
 ## 2. Goals & Non-Goals
 
 **Goals**
-- `app.auth.mode=oidc` enabling Authorization Code + PKCE login against a configured issuer.
-- Just-in-time user provisioning: on first OIDC login, create/update a `User` from token claims (email, display name, subject).
-- Map a configurable claim/group to the `systemAdmin` flag (optional).
-- `local` mode unchanged and remains the default.
+- Multiple OIDC providers, stored in the database, managed from a system-admin screen.
+- Authorization Code + PKCE login against each, discovered from the issuer URL.
+- Just-in-time provisioning: unknown users get an account with **no project access**.
+- Safe account linking (see §4.1) between an SSO identity and an existing local user.
+- Optional claim → `systemAdmin` mapping, per provider.
+- Local password login can be disabled, with a break-glass for system admins.
 
 **Non-Goals**
 - SAML.
-- Per-project role mapping from IdP groups (roles stay local in v1 of this feature; could extend later).
-- Removing local auth.
+- Non-OIDC OAuth2 (GitHub and similar have no `id_token`; a separate userinfo path would be needed).
+- Per-project role mapping from IdP groups — roles stay local.
+- IdP-initiated logout / back-channel logout.
+- Removing local auth entirely.
 
 ## 3. Proposed Design
 
-### 3.1 Config
-- `app.auth.mode` (`local` default | `oidc`).
-- Standard Spring `spring.security.oauth2.client.*` / `...resourceserver.*` registration for the issuer.
-- `app.auth.oidc.admin-claim` / `admin-claim-value` (optional) to grant `systemAdmin`.
-- `app.auth.oidc.unique-claim` (default `sub`) to key the local user.
+### 3.1 Sessions stay local — the important decision
 
-### 3.2 Backend
-- Add a second `SecurityFilterChain` activated under `oidc` mode (`@ConditionalOnProperty`), validating IdP-issued JWTs (resource-server) for `/api/**`; the existing local JWT chain is active under `local`. The API-key chain (`/api/external/**`) is unchanged in both modes.
-- `OidcUserSyncService`: on authenticated request with no matching local user, JIT-create a `User` (email, displayName from claims, `systemAdmin` from admin-claim) keyed by `unique-claim`; subsequent logins update profile fields.
-- The principal remains the local `User.id` (so `@RequireProjectRole`, `/api/me/*`, audit `userId` all keep working unchanged) — resolve/My-create the local user early in the chain and set the principal name to the local UUID.
+The original draft proposed a second `SecurityFilterChain` running as an OAuth2 **resource server**,
+validating IdP-issued access tokens on every `/api/**` call. This rewrite does not do that. OIDC is
+used **only to authenticate the login**; on success the app mints its own existing JWT for the
+resolved local user.
 
-### 3.3 Frontend
-- Login screen branches on a public `GET /api/auth/config` returning `{ mode, oidcAuthorizeUrl? }`: local shows the password form; oidc shows a "Sign in with SSO" button that starts the auth-code flow and handles the redirect callback.
-- Token storage/refresh handled per the OIDC flow; the rest of the app is auth-mode-agnostic.
+The reason is that everything downstream is already built on that token: `@RequireProjectRole` reads
+the local user id from the principal, audit rows record it, and PRD-020's `token_version` bump gives
+server-side logout and password-change invalidation. Accepting IdP tokens directly would mean
+re-plumbing all of it, losing server-side revocation (we cannot invalidate someone else's token),
+and — because a resource server is configured per issuer — would make "many providers at once"
+awkward. Minting our own token after an OIDC login keeps one session model regardless of how the
+user proved who they are, and makes mixed mode fall out for free.
+
+Trade-off: the app's JWT lifetime is its own, so revoking a user at the IdP does not immediately
+kill an active session — it stops the *next* login. With a 12h token that is an acceptable window;
+an admin can force it to zero by deactivating the user, which bumps `token_version`.
+
+### 3.2 Data model (migration V43)
+- `sso_providers`: `id`, `slug` (unique, used in the callback URL), `display_name`, `issuer_uri`,
+  `client_id`, `client_secret_encrypted`, `scopes`, `email_claim` (default `email`),
+  `name_claim` (default `name`), `admin_claim`, `admin_claim_value`, `trust_email_for_linking`,
+  `auto_provision`, `active`, `last_error`, `last_error_at`, timestamps.
+- `sso_identities`: `id`, `user_id` FK, `provider_id` FK, `subject`, `created_at`, `last_login_at`.
+  Unique `(provider_id, subject)` and `(provider_id, user_id)`.
+- `auth_settings`: single row — `local_login_enabled`.
+
+The identity table is what makes linking safe: the durable key is `(provider, sub)`, never the email.
+
+### 3.3 Login flow
+1. `GET /api/auth/config` (public) → `{ localLoginEnabled, providers: [{slug, displayName}] }`.
+2. The login screen renders a button per provider pointing at `/oauth2/authorization/{slug}`.
+3. Spring Security runs Authorization Code + PKCE, using a **database-backed
+   `ClientRegistrationRepository`**. Discovery (`ClientRegistrations.fromIssuerLocation`) is a
+   network call, so registrations are cached and the cache is invalidated when a provider row is
+   saved or deleted.
+4. On success a custom handler resolves the local user (§4.1), mints the app JWT, and redirects to
+   the frontend callback with the token in the URL **fragment** — a fragment is not sent to the
+   server, so it stays out of access logs and `Referer` headers.
+5. The frontend stores the token, clears the fragment, and proceeds as after a local login.
+
+### 3.4 Security
+- Client secrets encrypted at rest with the shared AES-GCM cipher (same construction as PRD-010).
+- The issuer URL is admin-supplied, so it is SSRF-validated exactly like webhook and tracker URLs:
+  https required, private/loopback/link-local rejected.
+- The post-login redirect target is derived from server configuration, never from a request
+  parameter — otherwise the callback becomes an open redirect that leaks the freshly minted token.
+- Client secret is never returned by any endpoint; the DTO exposes `secretSet: boolean`.
 
 ## 4. Edge Cases
-- Email collision: an OIDC user whose email matches an existing local user → link by `unique-claim`, not email, to avoid takeover; document the migration path.
-- IdP down → login fails gracefully; existing sessions honor token expiry.
-- Mixed mode (some local, some OIDC) is **not** supported simultaneously — one mode per deployment (keeps it simple).
-- Air-gap: `local` remains default; no IdP calls unless configured.
+
+### 4.1 Account linking — the security-critical path
+On successful OIDC authentication:
+
+1. **Known identity** — `(provider, sub)` matches an `sso_identities` row → log in as that user.
+   Profile fields are refreshed from claims.
+2. **Unknown identity, email matches an existing user** →
+   - Link **only if** the provider is flagged `trust_email_for_linking` **and** the token asserts
+     `email_verified: true`. Otherwise **refuse the login** with a message telling the user to ask an
+     admin to link the account.
+   - This is the account-takeover surface: an IdP where users can set an arbitrary email would
+     otherwise let anyone claim an existing admin account. The flag is off by default and per
+     provider, so trusting a corporate Keycloak does not mean trusting a public IdP.
+3. **Unknown identity, no matching email** → if `auto_provision`, create a user with **no project
+   memberships and no admin flag**; they can log in but see nothing until an admin adds them.
+   Otherwise refuse.
+
+An existing local user keeps their password; linking does not remove it.
+
+### 4.2 Others
+- **Local login disabled** — the password form is hidden and `POST /api/auth/login` rejects
+  non-admins. System admins can still log in locally, so a broken IdP is recoverable.
+- **IdP down / discovery fails** — saving a provider records the error and the provider is shown as
+  needing attention; login attempts fail with a clear message rather than a stack trace.
+- **Provider deactivated or deleted** — existing `sso_identities` rows are kept, so re-adding the
+  provider re-links the same people. Users who can only log in via that provider lose access, which
+  is the intended effect.
+- **Air-gap** — no providers configured means no outbound calls, as today.
 
 ## 5. Testing
-- `local` mode unchanged (existing auth tests green).
-- `oidc` mode (test profile with a mock issuer / signed test JWTs): JIT user creation, profile update on second login, admin-claim → systemAdmin mapping.
-- `@RequireProjectRole` and `/api/me/*` work with an OIDC principal mapped to a local user.
-- `GET /api/auth/config` returns the active mode.
+- Linking: known identity; unverified email refused; verified email with the flag off refused;
+  verified email with the flag on linked; no match auto-provisioned with no access; auto-provision
+  off refused.
+- Admin-claim mapping grants and revokes `systemAdmin`.
+- Break-glass: with local login disabled, an admin can still authenticate locally and a
+  non-admin cannot.
+- Client secret never present in any response; issuer SSRF rejection.
+- The existing local auth suite stays green.
 
 ## 6. Effort & Risk
-- **Effort:** ~2 weeks (dual chains, JIT sync, frontend flow, tests).
-- **Risk:** Medium — security-sensitive; the dual-chain + principal-mapping is the tricky part. Mitigated by keeping authorization fully local and gating everything behind `app.auth.mode`.
+- **Effort:** ~2 weeks (data model, dynamic registrations, linking rules, admin UI, tests).
+- **Risk:** High — this is the authentication path. Mitigated by keeping the session model
+  unchanged (§3.1), defaulting every permissive switch to off, and testing the takeover cases
+  explicitly rather than only the happy path.
 
 ## 7. Acceptance Criteria
-- [ ] `app.auth.mode=local` (default) behaves exactly as today.
-- [ ] `app.auth.mode=oidc` authenticates via the IdP and JIT-provisions/updates local users.
-- [ ] Project roles and system-admin still resolve from local data (optionally seeded from a claim).
-- [ ] `/api/external/**` API-key auth works in both modes.
-- [ ] Local + OIDC auth tests pass; identity maps to a stable local `User.id`.
+- [ ] A system admin can add, edit, test, deactivate and delete OIDC providers in the UI, no restart.
+- [ ] Login screen offers a button per active provider; local login still works.
+- [ ] Linking follows §4.1 exactly, including refusing the unverified-email case.
+- [ ] Unknown users are provisioned with no project access and no admin flag.
+- [ ] Local login can be disabled while system admins retain access.
+- [ ] Client secrets are encrypted at rest and never returned.
+- [ ] Project roles and `@RequireProjectRole` behave identically for SSO and local users.

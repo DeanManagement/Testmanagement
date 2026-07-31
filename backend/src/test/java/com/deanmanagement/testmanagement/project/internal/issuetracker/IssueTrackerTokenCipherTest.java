@@ -17,8 +17,11 @@ class IssueTrackerTokenCipherTest {
             .encodeToString("test-issue-tracker-key-32-bytes!".getBytes());
 
     private static IssueTrackerTokenCipher cipher(String key) {
+        // Exercised through the feature key, which is the fallback path; the shared key follows the
+        // same code in AesGcmCipher.
         return new IssueTrackerTokenCipher(
-                new IssueTrackerProperties(key, false, null, null, null, null, null, null));
+                new IssueTrackerProperties(key, false, null, null, null, null, null, null),
+                new com.deanmanagement.testmanagement.shared.crypto.AesGcmCipher(null, "app.security.encryption-key"));
     }
 
     @Test

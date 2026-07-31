@@ -72,6 +72,11 @@
             <groupId>org.springframework.security</groupId>
             <artifactId>spring-security-oauth2-jose</artifactId>
         </dependency>
+        <!-- PRD-012: Authorization Code + PKCE login against configured OIDC providers. -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
 
         <!-- PostgreSQL -->
         <dependency>

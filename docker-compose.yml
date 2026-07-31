@@ -31,9 +31,12 @@ services:
       # is generated and printed ONCE to the backend log at first start.
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost,http://localhost:8012,https://testmanagement.klopsch.org}
-      # Optional (PRD-010): only needed to connect a project to an issue tracker. Unset
-      # means the integration refuses to store a token rather than saving it in plaintext.
+      # Optional (PRD-010, PRD-012): needed to store issue-tracker tokens or OIDC client
+      # secrets. Unset means those features refuse to store a secret rather than saving it
+      # in plaintext.
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
       ISSUE_TRACKER_ENCRYPTION_KEY: ${ISSUE_TRACKER_ENCRYPTION_KEY:-}
+      SSO_CALLBACK_URL: ${SSO_CALLBACK_URL:-/login/callback}
     # PRD-019: fixed — Spring listens on 8089 in-container (the old 8089:8080 mapping
     # pointed at nothing; traffic only worked via the frontend proxy).
     ports:

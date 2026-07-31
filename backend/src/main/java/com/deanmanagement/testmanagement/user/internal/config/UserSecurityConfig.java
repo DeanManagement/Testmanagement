@@ -42,6 +42,9 @@ public class UserSecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
+                        // PRD-012: the login screen must know which SSO buttons to draw
+                        // before anyone has a token. Exposes only slugs and labels.
+                        .requestMatchers(HttpMethod.GET, "/api/auth/config").permitAll()
                         // PRD-018: Allure report view is rendered in a sandboxed (opaque-origin)
                         // iframe that cannot send credentials. Access is authenticated inside the
                         // controller via a short-lived single-report view token in the path.

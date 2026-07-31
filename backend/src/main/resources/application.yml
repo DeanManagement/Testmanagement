@@ -76,6 +76,17 @@ app:
     # Optional watcher email notifications. Off by default (air-gap safe).
     enabled: ${MAIL_ENABLED:false}
     from: ${MAIL_FROM:no-reply@testmanagement.local}
+  security:
+    # AES key (base64, 16/24/32 bytes) for secrets the app stores and later replays:
+    # issue-tracker API tokens and OIDC client secrets. Unset means those features refuse
+    # to store a secret rather than keeping it in plaintext.
+    encryption-key: ${APP_ENCRYPTION_KEY:}
+  sso:
+    # Where the browser lands after an SSO login. Configuration only, never a request
+    # parameter: the callback carries a session token (PRD-012 §3.4).
+    frontend-callback-url: ${SSO_CALLBACK_URL:/login/callback}
+    # SSRF guard for admin-supplied issuer URLs.
+    allow-private-issuers: ${SSO_ALLOW_PRIVATE_ISSUERS:false}
   issuetracker:
     # AES key (base64, 16/24/32 bytes) for stored tracker API tokens. Unset means the
     # integration refuses to store a token rather than keeping it in plaintext (PRD-010).

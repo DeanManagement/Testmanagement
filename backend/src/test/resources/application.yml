@@ -7,6 +7,12 @@ spring:
 app:
   search:
     full-text: false
+  security:
+    encryption-key: dGVzdC1zaGFyZWQtc2VjcmV0LWtleS0zMi1ieXRlcyE=
+  sso:
+    frontend-callback-url: http://localhost:4200/login/callback
+    allow-private-issuers: true
+    require-https: false
   issuetracker:
     # Fixed 32-byte test key; the poller is pushed far out so it never fires during a test run.
     encryption-key: dGVzdC1pc3N1ZS10cmFja2VyLWtleS0zMi1ieXRlcyE=

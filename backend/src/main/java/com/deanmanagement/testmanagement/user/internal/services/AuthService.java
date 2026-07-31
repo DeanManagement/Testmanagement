@@ -31,6 +31,12 @@ public class AuthService {
     private final LoginThrottleService loginThrottle;
 
     /**
+     * Read through a supplier rather than injecting the SSO service: authentication must not
+     * depend on the SSO module being present, and this keeps the wiring one-directional.
+     */
+    private final java.util.function.BooleanSupplier localLoginEnabled;
+
+    /**
      * PRD-020: verified against when the email is unknown, so "unknown user" and "wrong
      * password" take the same BCrypt time — no user-enumeration timing oracle.
      */
@@ -38,12 +44,14 @@ public class AuthService {
 
     public AuthService(UserRepository userRepository, JwtEncoder jwtEncoder,
                        BCryptPasswordEncoder passwordEncoder, JwtConfig jwtConfig,
-                       LoginThrottleService loginThrottle) {
+                       LoginThrottleService loginThrottle,
+                       LocalLoginPolicy localLoginPolicy) {
         this.userRepository = userRepository;
         this.jwtEncoder = jwtEncoder;
         this.passwordEncoder = passwordEncoder;
         this.jwtConfig = jwtConfig;
         this.loginThrottle = loginThrottle;
+        this.localLoginEnabled = localLoginPolicy::isLocalLoginEnabled;
         this.dummyHash = passwordEncoder.encode(UUID.randomUUID().toString());
     }
 
@@ -59,10 +67,23 @@ public class AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
+        // Break-glass (PRD-012 §4.2): when local login is switched off, system admins may still
+        // use a password. The check happens after credential verification so it cannot be used to
+        // discover which accounts are admins.
+        if (!localLoginAllowed(user)) {
+            loginThrottle.recordFailure(request.email(), remoteIp);
+            throw new BadCredentialsException(
+                    "Password sign-in is disabled. Use one of the single sign-on options.");
+        }
+
         loginThrottle.recordSuccess(request.email(), remoteIp);
         String token = generateToken(user);
         UserResponse userResponse = toUserResponse(user);
         return new LoginResponse(token, userResponse, user.isForcePasswordChange());
+    }
+
+    private boolean localLoginAllowed(User user) {
+        return user.isSystemAdmin() || localLoginEnabled.getAsBoolean();
     }
 
     /**
@@ -102,6 +123,16 @@ public class AuthService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new BadCredentialsException("User not found"));
         return toUserResponse(user);
+    }
+
+    /**
+     * Mints a session token for a user who has already proved their identity some other way —
+     * currently an SSO login (PRD-012). Deliberately package-visible in spirit but public because
+     * the SSO handler lives in a sibling package: it must never be reachable without prior
+     * authentication, so nothing calls it from a controller.
+     */
+    public String issueToken(User user) {
+        return generateToken(user);
     }
 
     private String generateToken(User user) {
