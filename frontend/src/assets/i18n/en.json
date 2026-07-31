@@ -470,7 +470,8 @@
       "COMMENT": "comment",
       "TEST_PLAN": "test plan",
       "BUG_REPORT": "bug report",
-      "TEST_CASE_FOLDER": "test case folder"
+      "TEST_CASE_FOLDER": "test case folder",
+      "REQUIREMENT": "requirement"
     }
   },
   "projectDashboard": {

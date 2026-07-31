@@ -470,7 +470,8 @@
       "COMMENT": "Kommentar",
       "TEST_PLAN": "Testplan",
       "BUG_REPORT": "Fehlermeldung",
-      "TEST_CASE_FOLDER": "Testfall-Ordner"
+      "TEST_CASE_FOLDER": "Testfall-Ordner",
+      "REQUIREMENT": "Anforderung"
     }
   },
   "projectDashboard": {
