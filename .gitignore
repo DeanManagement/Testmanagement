@@ -5,6 +5,13 @@
 .mtj.tmp/
 hs_err_pid*
 replay_pid*
+.attach_pid*
+
+# Filesystem debris
+.fuse_hidden*
+
+# Agent/tooling workspaces
+.claude/
 
 # Maven
 backend/target/

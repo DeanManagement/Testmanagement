@@ -17,3 +17,7 @@ spring:
 app:
   jwt:
     secret: dev-secret-key-for-local-development-only
+  admin:
+    # Convenience default for LOCAL DEV ONLY — prod (default profile) has no
+    # default password and generates a random one (PRD-019).
+    password: ${ADMIN_PASSWORD:admin}

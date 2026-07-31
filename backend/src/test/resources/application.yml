@@ -1,4 +1,20 @@
+spring:
+  data:
+    web:
+      pageable:
+        default-page-size: 50
+        max-page-size: 200
 app:
+  search:
+    full-text: false
+  webhooks:
+    allow-private-targets: true
+    require-https: false
+    max-attempts: 3
+    backoff-minutes: 1,5,30
+    connect-timeout-ms: 2000
+    read-timeout-ms: 3000
+    retry-poll-ms: 3600000
   jwt:
     secret: test-secret-key-for-unit-tests-at-least-32-chars
     expiration-ms: 86400000
