@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | ✅ Implemented (2026-07-31) |
 | **Author** | Engineering review (Claude) |
 | **Created** | 2026-06-09 |
 | **Priority** | P3 — v2.0, compliance-driven |
@@ -71,3 +71,42 @@ Test cases are edited in place; the prior wording of steps/expected results is l
 - [ ] History tab lists versions and shows side-by-side diffs.
 - [ ] Backfill assigns v1 to all existing cases and results.
 - [ ] Versioning, stamping, and backfill tests pass; edit latency unaffected.
+
+
+## 8. As Built (2026-07-31)
+
+**Snapshot-before-edit.** `TestCaseVersionService.snapshotBeforeEdit` is called from
+`TestCaseService.update` before any field is touched, inside the same transaction. That ordering is
+the whole feature: it makes "version N" name the wording that results stamped N executed. Snapshot
+*after* the edit and every historical result silently points one version off.
+
+**The live case is the current version.** Only superseded states get a row, so a case at
+`current_version = 3` has snapshots 1 and 2 and version 3 is synthesised from the case itself.
+Duplicating the live state into a row on every save would double every write and leave two copies to
+keep in step.
+
+**Backfill deviates from §3.3 deliberately.** The spec said set existing
+`test_results.executed_version = 1`. It is left NULL instead. v1 would be reconstructed from each
+case's *current* text, so stamping an old result v1 asserts it executed wording it may never have
+seen — precisely the claim an audit would test and find false. Existing cases do start at
+`current_version = 1` (that part is true by construction); results recorded before this feature
+existed read as "version not recorded". A gap you can explain beats a confident wrong answer.
+
+**Steps are a JSON column**, per §3.1: versions are written once and read rarely, so a per-version
+child table would add joins and cascade rules for nothing.
+
+**Diff is per field and per step**, not character-level. The audit question is "what did this test
+say when that run executed it", and knowing which step changed answers it; a word-level diff of
+prose adds noise without changing what a reviewer concludes. Steps compare by position, so an
+inserted step shifts the ones after it — itself a change worth showing rather than hiding behind
+smarter alignment.
+
+**Tests: 14.** Version numbering from creation through repeated edits, snapshots capturing steps and
+labels rather than just fields, old snapshots staying inert across later edits, cross-project
+isolation, cascade on delete — plus four on the audit property itself: a result records its version,
+later edits do not rewrite it, results after an edit carry the new number, and pre-versioning results
+stay unrecorded.
+
+### Deferred
+- Restoring an old version (§2 non-goal) — would be a normal edit copying a version forward.
+- Pruning policy for high-churn cases; storage is a single row per edit and fine at this scale.

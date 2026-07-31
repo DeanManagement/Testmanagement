@@ -52,6 +52,13 @@ public class TestCase extends BaseEntity {
     @Column(nullable = false, length = 20)
     private TestCaseStatus status;
 
+    /**
+     * The version the live state represents (PRD-011). Snapshots exist for 1..currentVersion-1;
+     * the case itself is the current version.
+     */
+    @Column(name = "current_version", nullable = false)
+    private int currentVersion = 1;
+
     @ElementCollection
     @CollectionTable(name = "test_case_labels", joinColumns = @JoinColumn(name = "test_case_id"))
     @Column(name = "label", nullable = false)

@@ -765,5 +765,19 @@
     "explanation": "Der Wert zählt, wie oft aufeinanderfolgende Durchläufe unterschiedlich ausfielen — nicht wie oft der Test fehlschlug. Ein Test, der immer fehlschlägt, ist defekt und nicht instabil; er erhält 0 %.",
     "scoreLabel": "{{score}} % instabil",
     "runsLabel": "{{runs}} Durchläufe berücksichtigt"
+  },
+  "version": {
+    "title": "Versionsverlauf",
+    "hint": "Jede Änderung sichert den vorherigen Stand, damit nachvollziehbar bleibt, was ein früherer Durchlauf tatsächlich ausgeführt hat.",
+    "noHistory": "Dieser Testfall wurde noch nicht bearbeitet, es gibt nichts zu vergleichen.",
+    "label": "v{{number}}",
+    "current": "aktuell",
+    "compareFrom": "Vergleichen von",
+    "compareTo": "mit",
+    "identical": "Diese beiden Versionen sind identisch.",
+    "changeCount": "{{count}} Feld(er) geändert",
+    "step": "Schritt",
+    "executedVersion": "Ausgeführt: v{{number}}",
+    "executedVersionUnknown": "Version nicht erfasst"
   }
 }

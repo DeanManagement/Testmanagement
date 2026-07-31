@@ -1,0 +1,64 @@
+<div class="versions" data-test-id="test-case-versions">
+  @if (loading) {
+    <mat-spinner diameter="24"></mat-spinner>
+  } @else if (versions.length < 2) {
+    <p class="no-versions">{{ 'version.noHistory' | translate }}</p>
+  } @else {
+    <div class="version-pickers">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'version.compareFrom' | translate }}</mat-label>
+        <mat-select [(ngModel)]="leftVersion" (selectionChange)="compare()" data-test-id="version-left-select">
+          @for (version of versions; track version.versionNumber) {
+            <mat-option [value]="version.versionNumber">
+              {{ 'version.label' | translate: { number: version.versionNumber } }}
+              @if (version.current) { · {{ 'version.current' | translate }} }
+              · {{ version.versionAt | localizedDate: 'short' }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+
+      <mat-icon class="compare-arrow">arrow_forward</mat-icon>
+
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'version.compareTo' | translate }}</mat-label>
+        <mat-select [(ngModel)]="rightVersion" (selectionChange)="compare()" data-test-id="version-right-select">
+          @for (version of versions; track version.versionNumber) {
+            <mat-option [value]="version.versionNumber">
+              {{ 'version.label' | translate: { number: version.versionNumber } }}
+              @if (version.current) { · {{ 'version.current' | translate }} }
+              · {{ version.versionAt | localizedDate: 'short' }}
+            </mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    @if (comparing) {
+      <mat-spinner diameter="24"></mat-spinner>
+    } @else if (left && right) {
+      @if (changedCount === 0) {
+        <p class="no-changes" data-test-id="version-no-changes">{{ 'version.identical' | translate }}</p>
+      } @else {
+        <p class="change-count">{{ 'version.changeCount' | translate: { count: changedCount } }}</p>
+      }
+
+      <div class="diff-table" data-test-id="version-diff">
+        @for (row of rows; track $index) {
+          <div class="diff-row" [class.diff-row--changed]="row.changed">
+            <div class="diff-label">
+              {{ row.labelKey | translate }}
+              @if (row.position) { {{ row.position }} }
+            </div>
+            <div class="diff-side diff-side--left" [class.diff-side--removed]="row.changed">
+              @if (row.left) { {{ row.left }} } @else { <span class="diff-empty">—</span> }
+            </div>
+            <div class="diff-side diff-side--right" [class.diff-side--added]="row.changed">
+              @if (row.right) { {{ row.right }} } @else { <span class="diff-empty">—</span> }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

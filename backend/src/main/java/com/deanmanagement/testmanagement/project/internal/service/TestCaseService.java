@@ -45,6 +45,7 @@ public class TestCaseService {
     private final ProjectRepository projectRepository;
     private final TestCaseMapper testCaseMapper;
     private final AuditService auditService;
+    private final TestCaseVersionService versionService;
     private final TestResultRepository testResultRepository;
     private final ProjectSequenceService projectSequenceService;
 
@@ -91,6 +92,10 @@ public class TestCaseService {
         TestCase tc = testCaseRepository.findById(id)
                 .filter(t -> t.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestCase", id));
+
+        // Snapshot before mutating, in this transaction: "version N" must name the wording that
+        // results stamped N actually executed (PRD-011).
+        versionService.snapshotBeforeEdit(tc);
 
         tc.setTitle(request.title());
         tc.setDescription(request.description());

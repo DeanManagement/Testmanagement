@@ -58,6 +58,7 @@ public class ExternalTestRunService {
             TestResult result = new TestResult();
             result.setTestRun(run);
             result.setTestCase(testCase);
+            result.setExecutedVersion(testCase.getCurrentVersion());
             result.setStatus(resultReq.status());
             result.setComment(resultReq.comment());
             result.setDefectLink(resultReq.defectLink());

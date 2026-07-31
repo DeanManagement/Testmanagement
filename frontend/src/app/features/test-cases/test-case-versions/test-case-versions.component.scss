@@ -1,0 +1,91 @@
+.versions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.no-versions,
+.no-changes {
+  color: var(--tm-text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+.change-count {
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+  margin: 0;
+}
+
+.version-pickers {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  mat-form-field {
+    flex: 1 1 220px;
+  }
+}
+
+.compare-arrow {
+  color: var(--tm-text-secondary);
+  flex-shrink: 0;
+}
+
+.diff-table {
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-radius);
+  overflow: hidden;
+}
+
+.diff-row {
+  display: grid;
+  grid-template-columns: 140px 1fr 1fr;
+  gap: 12px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--tm-border);
+  font-size: 14px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+// Unchanged rows stay visible but recede, so the eye lands on what actually differs.
+.diff-row:not(.diff-row--changed) {
+  opacity: 0.55;
+}
+
+.diff-label {
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+}
+
+.diff-side {
+  white-space: pre-wrap;
+  word-break: break-word;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.diff-side--removed {
+  background: var(--tm-tint-danger-bg);
+  color: var(--tm-tint-danger-fg);
+}
+
+.diff-side--added {
+  background: var(--tm-tint-success-bg);
+  color: var(--tm-tint-success-fg);
+}
+
+.diff-empty {
+  color: var(--tm-text-secondary);
+}
+
+@media (max-width: 720px) {
+  .diff-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+}

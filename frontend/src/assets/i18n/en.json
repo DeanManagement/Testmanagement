@@ -765,5 +765,19 @@
     "explanation": "The score counts how often consecutive runs disagreed, not how often the test failed. A test that always fails is broken, not flaky, and scores 0%.",
     "scoreLabel": "{{score}}% flaky",
     "runsLabel": "{{runs}} runs considered"
+  },
+  "version": {
+    "title": "Version history",
+    "hint": "Every edit snapshots the previous wording, so you can see what a past run actually executed.",
+    "noHistory": "This test case has not been edited yet, so there is nothing to compare.",
+    "label": "v{{number}}",
+    "current": "current",
+    "compareFrom": "Compare from",
+    "compareTo": "to",
+    "identical": "These two versions are identical.",
+    "changeCount": "{{count}} field(s) changed",
+    "step": "Step",
+    "executedVersion": "Executed v{{number}}",
+    "executedVersionUnknown": "Version not recorded"
   }
 }

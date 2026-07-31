@@ -92,6 +92,12 @@
       }
     </div>
 
+    <div class="versions-section tm-card" data-test-id="test-case-versions-section">
+      <h3>{{ 'version.title' | translate }}</h3>
+      <p class="section-hint">{{ 'version.hint' | translate }}</p>
+      <app-test-case-versions [projectId]="projectId" [testCaseId]="testCaseId"></app-test-case-versions>
+    </div>
+
     <div class="history-section tm-card" data-test-id="test-case-history-section">
       <h3>{{ 'history.title' | translate }}</h3>
       <app-entity-history [projectId]="projectId" [entityId]="testCaseId"></app-entity-history>

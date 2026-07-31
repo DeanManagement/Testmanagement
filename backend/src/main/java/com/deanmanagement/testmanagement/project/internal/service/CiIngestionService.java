@@ -77,6 +77,7 @@ public class CiIngestionService {
             TestResult result = new TestResult();
             result.setTestRun(run);
             result.setTestCase(testCase);
+            result.setExecutedVersion(testCase.getCurrentVersion());
             result.setStatus(ciResult.status());
             result.setComment(ciResult.message());
             run.getResults().add(result);

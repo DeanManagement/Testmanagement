@@ -35,6 +35,14 @@ public class TestResult extends BaseEntity {
 
     private String defectLink;
 
+    /**
+     * Which version of the test case this result executed (PRD-011). Null for results recorded
+     * before versioning existed — the wording they ran against was never captured, and claiming
+     * they ran v1 would be a false audit record.
+     */
+    @Column(name = "executed_version")
+    private Integer executedVersion;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_run_id", nullable = false)
     private TestRun testRun;

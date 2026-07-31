@@ -36,7 +36,7 @@ Fixes for the findings in [`docs/CODE_REVIEW_2026-06-09.md`](../CODE_REVIEW_2026
 | PRD | Title | Size | Status |
 |---|---|---|---|
 | [010](PRD-010-issue-tracker-integration.md) | Native Issue-Tracker Integration | M | ✅ Implemented (GitLab + Forgejo) |
-| [011](PRD-011-test-case-versioning.md) | Test Case Versioning / History | L | Proposed |
+| [011](PRD-011-test-case-versioning.md) | Test Case Versioning / History | L | ✅ Implemented |
 | [012](PRD-012-oidc-sso.md) | SSO via OpenID Connect (multi-provider) | M | ✅ Implemented |
 | [013](PRD-013-dark-mode-theming.md) | Dark Mode / Theming | S | ✅ Implemented |
 | [014](PRD-014-traceability-matrix.md) | Requirements & Traceability Matrix | M | Proposed |

@@ -226,6 +226,9 @@ public class TestRunService {
                 TestResult result = new TestResult();
                 result.setTestRun(run);
                 result.setTestCase(tc);
+                // Stamp the version being executed (PRD-011). Later edits to the case bump its
+                // current version but must not rewrite what this result ran against.
+                result.setExecutedVersion(tc.getCurrentVersion());
                 result.setStatus(TestResultStatus.PENDING);
                 run.getResults().add(result);
 
@@ -396,6 +399,7 @@ public class TestRunService {
         TestResult result = new TestResult();
         result.setTestRun(run);
         result.setTestCase(testCase);
+        result.setExecutedVersion(testCase.getCurrentVersion());
         result.setStatus(request.status());
         result.setComment(request.comment());
         result.setDefectLink(request.defectLink());
