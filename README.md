@@ -41,7 +41,8 @@ A self-hosted test management tool for simple organisations. Manage test cases, 
 │              PostgreSQL 16 (db container)                     │
 └──────────────────────────────────────────────────────────────┘
 
-External:  Keycloak (OIDC provider, not included in docker-compose)
+Auth: local email/password + JWT (HS256). OIDC/Keycloak SSO is a proposed
+v2 feature (see docs/prd/PRD-012).
 ```
 
 ## Quick Start
@@ -49,23 +50,26 @@ External:  Keycloak (OIDC provider, not included in docker-compose)
 ### Prerequisites
 
 - Docker and Docker Compose
-- A Keycloak instance with an OIDC realm configured (not needed for dev mode)
 
 ### Production (Docker Compose)
 
 ```bash
-# Set environment variables
-export DB_PASSWORD=your_secure_password
-export KEYCLOAK_ISSUER_URI=https://keycloak.example.com/realms/testmanagement
-export KEYCLOAK_JWK_SET_URI=https://keycloak.example.com/realms/testmanagement/protocol/openid-connect/certs
+# 1. Configure secrets (compose refuses to start without them)
+cp .env.example .env
+#    - DB_PASSWORD: any strong value
+#    - JWT_SECRET:  openssl rand -base64 48
+#    - ADMIN_PASSWORD: optional — leave empty to get a generated admin
+#      password printed once in the backend log at first start
 
-# Start all services
+# 2. Start all services
 docker compose up --build
 ```
 
-The application is available at `http://localhost`.
+The application is available at `http://localhost:8012`. Log in as
+`admin@localhost.ch` with your `ADMIN_PASSWORD` (or the generated one from
+`docker compose logs testmanagement-backend`); you'll be asked to change it.
 
-### Development (no Keycloak required)
+### Development
 
 ```bash
 # Terminal 1 — Backend (H2 in-memory DB, auth disabled)

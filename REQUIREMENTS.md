@@ -8,15 +8,15 @@
 
 ## 2. Technology Stack
 
-| Layer        | Technology                                   |
-|--------------|----------------------------------------------|
-| Backend      | Java 21, Spring Boot 3.5.x, Maven           |
-| Frontend     | Angular 19, Angular Material, NgRx 19, Chart.js |
-| Database     | PostgreSQL 16, Flyway migrations             |
-| Auth         | Local email/password + JWT (HS256)           |
-| Packaging    | Docker, docker-compose                       |
-| API Style    | REST (JSON)                                  |
-| i18n         | ngx-translate (EN, DE)                       |
+| Layer        | Technology                                                     |
+|--------------|----------------------------------------------------------------|
+| Backend      | Java 25, Spring Boot 4.0.x, Spring Modulith 2.0.x, Maven       |
+| Frontend     | Angular 21 (standalone, zoneless), Angular Material, NgRx 21, Chart.js |
+| Database     | PostgreSQL 16, Flyway migrations (V1–V33)                      |
+| Auth         | Local email/password + JWT (HS256)                             |
+| Packaging    | Docker, docker-compose                                         |
+| API Style    | REST (JSON)                                                    |
+| i18n         | ngx-translate (EN, DE)                                         |
 
 ---
 
@@ -34,8 +34,9 @@
 
 - A **Test Case** belongs to a project.
 - Fields: `testCaseKey` (auto-generated), title, description, preconditions, priority (Low/Medium/High/Critical), status (Draft/Active/Deprecated).
-- A test case contains an ordered list of **Test Steps**, each with an action, an expected result, and an order index.
+- A test case contains an ordered list of **Test Steps**, each with an action, an expected result, an order index, optional test data, and an optional **reference image** (`StepImage`, stored as BYTEA, served with 365-day immutable cache headers).
 - Test cases can be tagged with labels (string set) for filtering.
+- Test cases can be organised into **Test Case Folders** (hierarchical tree, per project, see §3.12).
 
 ### 3.3 Test Suites
 
@@ -47,11 +48,12 @@
 ### 3.4 Test Runs / Executions
 
 - A **Test Run** executes a set of test cases (from a suite or ad-hoc selection).
-- Each run tracks: name, environment info, executor (user), start/end time, overall status (Planned/In Progress/Completed/Aborted).
+- Each run tracks: name, auto-generated `key` (e.g., `PROJ-R-3`, see V24), environment info, executor (user), start/end time, overall status (Planned/In Progress/Completed/Aborted), and an optional `testPlanId` link.
 - Runs can be cloned (copy structure with fresh pending results).
-- Runs can be reopened after completion (with a mandatory reason).
+- Runs can be reopened after completion (with a mandatory reason; `completedBy` and `reopenReason` persisted, V17).
 - Each test case in a run produces a **Test Result**: Passed / Failed / Blocked / Skipped / Pending, with optional comment and defect link.
 - Each test step in a result produces a **Step Result**: status, actual result text, and optional screenshot.
+- Completed runs can have an **Allure report** ZIP uploaded (see §3.13).
 
 ### 3.5 Screenshots
 
@@ -76,6 +78,8 @@
   - **Tester**: create/edit test cases, execute test runs.
   - **Viewer**: read-only access.
 - A global **System Admin** flag exists for managing users, API keys, and system settings.
+- Users can be marked `force_password_change` (V31) to require a new password on next login.
+- Role enforcement ([PRD-001](docs/prd/PRD-001-rbac-access-control.md), shipped): project roles are enforced server-side via the `@RequireProjectRole` annotation + `ProjectRoleAspect`, backed by `ProjectAccessService`. Every project-scoped endpoint confirms membership before any read and enforces the minimum role (`ADMIN > TESTER > VIEWER`) for writes; system admins bypass. Object-reference endpoints (screenshots, step images) enforce the same via a service-layer backstop. `ProjectService.create` now adds the creator as an `ADMIN` member, and a startup check logs any project lacking an `ADMIN` owner.
 
 ### 3.8 API Key Authentication
 
@@ -97,14 +101,61 @@
 - **Test run reports**: per-run breakdown of results by status (Passed/Failed/Blocked/Skipped/Pending) with doughnut chart (Chart.js).
 - **Test suite reports**: pass rate calculations, test coverage metrics, doughnut chart.
 - **Completion info endpoint**: returns counts of total/passed/failed/blocked/skipped/pending per run.
-- No PDF export yet (see v1.1).
+- **PDF export** (implemented in v1.1): `GET /api/projects/{id}/test-runs/{trId}/report/pdf` and `…/test-suites/{tsId}/report/pdf` return tabular PDF reports via `PdfReportService` (openhtmltopdf).
 
 ### 3.11 Dashboard
 
-- The dashboard displays a list of projects the authenticated user has access to.
-- Each project is shown as a card.
-- Create project button available.
-- No analytics/trend charts yet (see v1.1).
+- Home dashboard lists the projects the authenticated user can access.
+- Each project is shown as a card with quick stats.
+- Project dashboard endpoint `GET /api/projects/{id}/dashboard` returns `testCasesByStatus`, `testCasesByPriority`, `recentTestRuns`, `passRateTrend`, and totals (implemented in v1.1, see `DashboardService`).
+
+### 3.12 Test Case Folders
+
+- Hierarchical, per-project folder tree for organising test cases (`test_case_folders` table, V27).
+- Endpoints under `/api/projects/{id}/test-case-folders` support CRUD, reorder, and bulk move of test cases between folders.
+- Test cases can sit at the project root (`rootOnly=true`) or inside any folder.
+
+### 3.13 Allure Report Integration
+
+- `AllureReport` entity (V23) stores a ZIP-uploaded Allure report associated with a test run.
+- Endpoints under `/api/projects/{id}/test-runs/{runId}/allure-report` accept ZIP upload (both JWT and API-key auth paths exist).
+- The report is served at `/allure-report/view/**`, with file-level access control gated by `projectMemberRepository.existsByUserIdAndProjectId`.
+
+### 3.14 Bug Reports
+
+- Built-in lightweight bug tracking (`bug_reports` table, V25). Each project has a per-project `bugReportsEnabled` toggle.
+- A `BugReport` has: id, key (e.g., `PROJ-B-12`), title, description, status (`OPEN` / `IN_PROGRESS` / `RESOLVED` / `DUPLICATE` / `WONT_FIX`), reporter, optional assignee, optional links to a `TestResult` and `TestRun`.
+- Status changes are auditable and require a reason.
+- Endpoints: `/api/projects/{id}/bug-reports` for CRUD; `/api/my-bug-reports/assigned-to-me` for the assignee view.
+
+### 3.15 Entity Watchers / Notifications (foundation)
+
+- `entity_watchers` table (V30) stores `(userId, entityType, entityId)` subscriptions. Supported entity types (`WatchableEntityType`): `TEST_PLAN`, `TEST_RUN`, `BUG_REPORT`. (Test cases are not currently watchable.)
+- Endpoints under `/api/watchers` allow watching/unwatching and listing "my watched items" across entity types.
+- _Delivery_ shipped via [PRD-006](docs/prd/PRD-006-watcher-notifications.md): `AuditService.log` fans out to watchers (actor excluded, per-action opt-out, dedup) into a `notifications` table, surfaced by an in-app bell; optional email is off by default.
+
+### 3.16 Activity / Audit Log
+
+- `audit_entries` table (V18, indexed by `(project_id, created_at DESC)`; author index added V33).
+- Services explicitly call `auditService.log(...)` after mutations — not driven by JPA listeners — so the action set is precise and stable.
+- Endpoint `GET /api/projects/{id}/activity?page=0&size=20&entityId={optional}` returns a paginated `Page<AuditEntryResponse>` newest-first.
+
+### 3.17 Comments
+
+- Threaded comments on test cases and test results (`comments` table, V19, V33).
+- Endpoints under `/api/projects/{id}/test-cases/{tcId}/comments` and `…/test-runs/{runId}/results/{resultId}/comments`.
+- Authors can edit/delete their own comments; project admins and system admins can delete any.
+
+### 3.18 Test Plans / Milestones
+
+- `test_plans` table (V20, with assignee added in V30).
+- Group test runs under a release/milestone; optional `targetDate`; status `OPEN`/`IN_PROGRESS`/`COMPLETED`/`CANCELLED`.
+- Endpoint `GET /api/projects/{id}/test-plans/{tpId}/summary` returns aggregated stats across the runs in the plan.
+
+### 3.19 Bulk Operations
+
+- `POST /api/projects/{id}/test-cases/bulk-status` and `bulk-delete`; `POST /api/projects/{id}/test-suites/{tsId}/bulk-add` and `bulk-remove`.
+- Limit: 100 IDs per request. All IDs must belong to the named project.
 
 ---
 
@@ -351,11 +402,11 @@ All endpoints (except `/api/external/**` and `/api/auth/login`) require a valid 
 
 ---
 
-## 11. v1.1 — Polish the Core
+## 11. v1.1 — Polish the Core (Done)
 
-Target: complete the v1 promise and improve daily usability.
+Target: complete the v1 promise and improve daily usability. **All four items below shipped.**
 
-### 11.1 PDF Report Export
+### 11.1 PDF Report Export — ✓ Done
 
 **Goal**: Allow users to download test run and test suite reports as PDF files.
 
@@ -377,7 +428,7 @@ Target: complete the v1 promise and improve daily usability.
 - Trigger a file download via the browser's blob/download mechanism.
 - Show a loading spinner while the PDF is being generated.
 
-### 11.2 Project Dashboard with Analytics
+### 11.2 Project Dashboard with Analytics — ✓ Done
 
 **Goal**: Replace the simple project card list with an analytics-rich project dashboard.
 
@@ -401,9 +452,7 @@ Target: complete the v1 promise and improve daily usability.
   - Summary cards: total test cases, total suites, total runs, overall pass rate.
 - All charts rendered with Chart.js (already a dependency).
 
-### 11.3 Bulk Operations
-
-**Goal**: Enable users to perform actions on multiple test cases at once.
+### 11.3 Bulk Operations — ✓ Done
 
 **Backend**:
 - New endpoints:
@@ -420,12 +469,10 @@ Target: complete the v1 promise and improve daily usability.
 - Confirmation dialog for destructive operations (delete).
 - Select all / deselect all toggle.
 
-### 11.4 Activity / Audit Log
-
-**Goal**: Track who changed what, when. Provide a per-project activity feed.
+### 11.4 Activity / Audit Log — ✓ Done
 
 **Backend**:
-- New entity: `AuditEntry` — `id`, `projectId`, `userId`, `action` (enum: CREATED, UPDATED, DELETED, STATUS_CHANGED, MEMBER_ADDED, MEMBER_REMOVED, RUN_COMPLETED, RUN_REOPENED), `entityType` (enum: TEST_CASE, TEST_SUITE, TEST_RUN, TEST_RESULT, PROJECT_MEMBER), `entityId`, `entityName`, `details` (JSON string for old/new values), `createdAt`.
+- New entity: `AuditEntry` — `id`, `projectId`, `userId`, `action` (enum `AuditAction`: CREATED, UPDATED, DELETED, STATUS_CHANGED, COMPLETED, REOPENED, CLONED, MOVED), `entityType` (`AuditEntityType`), `entityId`, `entityName`, `details` (JSON string for old/new values), `createdAt`.
 - New table: `audit_entries` with index on `(project_id, created_at DESC)`.
 - New endpoint: `GET /api/projects/{id}/activity?page=0&size=20` — paginated, sorted newest first.
 - Audit entries are written by services (not via JPA listeners — keep it explicit).
@@ -439,11 +486,12 @@ Target: complete the v1 promise and improve daily usability.
 
 ---
 
-## 12. v1.2 — Collaboration & Integration
+## 12. v1.2 — Collaboration & Integration (Mostly Done)
 
 Target: enable team collaboration and external system integration.
+**Shipped:** Comments (§12.1), Test Plans (§12.2). **Still pending:** Webhooks (§12.3) and CSV/JSON import-export (§12.4) — these have been retargeted into v1.3 below.
 
-### 12.1 Comments
+### 12.1 Comments — ✓ Done
 
 **Goal**: Lightweight discussion threads on test cases and test results.
 
@@ -465,9 +513,7 @@ Target: enable team collaboration and external system integration.
 - Comments show: author name, timestamp, content. Edit/delete actions on own comments.
 - NgRx: new `comment` store slice with entity adapter.
 
-### 12.2 Test Plans / Milestones
-
-**Goal**: Group test runs under a release or milestone to track overall progress.
+### 12.2 Test Plans / Milestones — ✓ Done
 
 **Backend**:
 - New entity: `TestPlan` — `id`, `name`, `description`, `projectId` (FK), `status` (OPEN, IN_PROGRESS, COMPLETED, CANCELLED), `targetDate` (optional), `createdAt`, `updatedAt`.
@@ -485,7 +531,7 @@ Target: enable team collaboration and external system integration.
 - Project detail page gains a "Test Plans" tab.
 - Test run creation dialog gains an optional "Test Plan" dropdown.
 
-### 12.3 Webhook Notifications
+### 12.3 Webhook Notifications — ✗ Not yet implemented (carried to v1.3)
 
 **Goal**: Fire HTTP callbacks on key events so external systems (Slack, Teams, email relays) can react.
 
@@ -509,7 +555,7 @@ Target: enable team collaboration and external system integration.
 - `WebhookFormComponent` — URL, event checkboxes, secret field.
 - "Test" button sends a test payload and shows the response status.
 
-### 12.4 Import / Export
+### 12.4 Import / Export — ✗ Not yet implemented (carried to v1.3)
 
 **Goal**: Allow migration from spreadsheets and backup/transfer of test case data.
 
@@ -534,11 +580,64 @@ Target: enable team collaboration and external system integration.
 
 ---
 
+## 12.5 Implemented Beyond the Original v1.2 Plan
+
+Several features were added on top of the documented v1.2 scope. They are described above in §3.12–§3.19. For completeness:
+
+- **Test case folders** (§3.12) — hierarchical organisation.
+- **Allure report upload** (§3.13) — ZIP per test run, both JWT and API-key paths.
+- **Bug reports** (§3.14) — built-in lightweight tracker with status workflow.
+- **Entity watchers** (§3.15) — subscription rows ready to drive notifications later.
+- **Step reference images** — separate from execution screenshots; immutable, cached.
+- **Test run keys** (V24) — human-readable keys like `PROJ-R-3` for CI integration.
+- **Force password change** flag (V31) — admin-controlled prompt on next login.
+
+---
+
+## 12.6 v1.3 — Speed & Integrations (Next)
+
+Focus per the May 2026 review (`REVIEW_AND_PROPOSALS.md`): make daily use faster and close the integration gap.
+
+**Shipped in the May 2026 sprint:**
+
+- **Keyboard shortcuts for test run execution** — `j`/`k` navigate results, `p`/`f`/`b`/`s` set result status, `Shift+P` cascades Pass to all steps, `c` focuses the comment field, `?` shows a cheatsheet. Inputs/textareas/open dialogs disable the listener.
+- **Resume to first PENDING result** — when re-opening an `IN_PROGRESS` run, the active selection lands on the first unfinished case instead of the first case overall.
+- **Per-result comment & bug-report cache** — `CommentResponse` now exposes `entityType`/`entityId`; the comment store keeps every result's comments and the run-detail view filters by `entityId`. Switching between results within a run no longer re-fetches.
+- **Cmd-K / Ctrl-K command palette** — fuzzy search over loaded projects, test cases, test runs, and bug reports. Triggered from anywhere inside the authenticated shell.
+- **"My queue" dashboard widget** — single endpoint `GET /api/me/queue` aggregates due test plans, in-progress runs, stale OPEN bug reports, and long-stale DRAFT test cases I authored.
+- **i18n** — Chart.js status labels and "My queue" copy now translated EN/DE.
+
+**Still pending — now specified as PRDs (see [`docs/prd/`](docs/prd/README.md)):**
+
+The June 2026 review broke the remaining work into individual PRDs with designs, edge cases, and acceptance criteria. Priority order:
+
+| # | Item | Priority | PRD |
+|---|------|----------|-----|
+| 1 | ✅ **Project role enforcement & access control** — RBAC aspect + membership checks (shipped). | **P0** | [PRD-001](docs/prd/PRD-001-rbac-access-control.md) |
+| 2 | ✅ **Backend filters + pagination** — `?q=`, `?status=`, `?priority=`, `?label=`, `Pageable` on test case/run/suite list endpoints; URL-bound filters + paginator on the frontend (shipped). | P1 | [PRD-002](docs/prd/PRD-002-backend-filtering-pagination.md) |
+| 3 | ✅ **§12.3 Webhooks** — outbound HTTP callbacks (HMAC signed, async, bounded retry, SSRF-guarded) with admin UI + delivery log (shipped). | P1 | [PRD-003](docs/prd/PRD-003-webhooks.md) |
+| 4 | ✅ **§12.4 Import / Export** — CSV + JSON round-trip for test cases, with dry-run import + per-row error report (shipped). | P1 | [PRD-004](docs/prd/PRD-004-import-export.md) |
+| 5 | ✅ **JUnit XML / Cucumber JSON ingestion** — extra CI submission formats with auto-created `ci-imported` cases (shipped). | P2 | [PRD-005](docs/prd/PRD-005-ci-result-ingestion.md) |
+
+**Usability & tech-debt backlog:** ✅ shipped — bulk result actions in a run, URL-persisted list filters, density toggle, chart-label i18n (relabel on language switch), responsive execution screen, and streaming blob downloads are all delivered (list virtual-scroll de-scoped, made moot by pagination). See [PRD-008](docs/prd/PRD-008-usability-and-polish.md).
+
+---
+
 ## 13. v2.0 — Advanced Features (Future)
 
-These are identified as valuable but not yet designed in detail.
+These are valuable but lower-urgency. Each now has its own full PRD — see [PRD-009](docs/prd/PRD-009-v2-future-backlog.md) (the v2.0 index) for the set and the suggested order. Notifications (PRD-006) and global search (PRD-007) already shipped in v1.3.
 
-### 13.1 Test Case Versioning / History
+| Area | PRD | Size |
+|---|---|---|
+| Issue-tracker integration (§13.9) | [PRD-010](docs/prd/PRD-010-issue-tracker-integration.md) | M |
+| Test case versioning (§13.1) | [PRD-011](docs/prd/PRD-011-test-case-versioning.md) | L |
+| OIDC / Keycloak (§13.5) | [PRD-012](docs/prd/PRD-012-oidc-sso.md) | M |
+| Dark mode / theming (§13.7) | [PRD-013](docs/prd/PRD-013-dark-mode-theming.md) | S |
+| Traceability matrix (§13.2) | [PRD-014](docs/prd/PRD-014-traceability-matrix.md) | M |
+| Parameterized cases (§13.3) | [PRD-015](docs/prd/PRD-015-parameterized-test-cases.md) | M |
+| Flaky detection (§13.4) | [PRD-016](docs/prd/PRD-016-flaky-test-detection.md) | M |
+
+### 13.1 Test Case Versioning / History — [PRD-011](docs/prd/PRD-011-test-case-versioning.md)
 
 - Track changes to test cases over time as immutable snapshots.
 - When a test case is edited, the previous version is preserved.
@@ -546,7 +645,7 @@ These are identified as valuable but not yet designed in detail.
 - Version history viewer on the test case detail page showing diffs.
 - Enables regulatory compliance and traceability.
 
-### 13.2 Traceability Matrix
+### 13.2 Traceability Matrix — [PRD-014](docs/prd/PRD-014-traceability-matrix.md)
 
 - Link test cases to external requirement identifiers (free-text IDs or URLs).
 - New entity: `Requirement` — id, externalId, title, projectId.
@@ -554,21 +653,21 @@ These are identified as valuable but not yet designed in detail.
 - Matrix view: requirements on rows, test cases on columns, cells show latest result status.
 - Coverage report: which requirements have test coverage, which don't.
 
-### 13.3 Parameterized / Data-Driven Test Cases
+### 13.3 Parameterized / Data-Driven Test Cases — [PRD-015](docs/prd/PRD-015-parameterized-test-cases.md)
 
 - Define test cases with variable placeholders in steps (e.g., `{username}`, `{password}`).
 - Create parameter sets (rows of values) for each test case.
 - When added to a test run, the test case is expanded into N results (one per parameter set).
 - Useful for boundary value testing and combinatorial testing.
 
-### 13.4 Flaky Test Detection
+### 13.4 Flaky Test Detection — [PRD-016](docs/prd/PRD-016-flaky-test-detection.md)
 
 - Automatically flag test cases that alternate between pass and fail across recent runs.
 - Flaky score: percentage of status changes in last N executions.
 - Dashboard widget showing top flaky tests per project.
 - Optional label auto-applied to flaky test cases.
 
-### 13.5 OIDC / Keycloak Support (Optional)
+### 13.5 OIDC / Keycloak Support (Optional) — [PRD-012](docs/prd/PRD-012-oidc-sso.md)
 
 - Add Spring Security OIDC alongside existing local auth.
 - Configuration toggle: `app.auth.mode=local|oidc`.
@@ -576,54 +675,76 @@ These are identified as valuable but not yet designed in detail.
 - In local mode: existing email/password + JWT (unchanged).
 - Allows enterprises with existing Keycloak to integrate without changing their auth infrastructure.
 
-### 13.6 Notifications
+### 13.6 Notifications — ✅ shipped ([PRD-006](docs/prd/PRD-006-watcher-notifications.md))
 
-- In-app notification bell with unread count.
-- Notification triggers: assigned as executor, test run completed, test failure on a watched test case.
-- Notification preferences per user (which events to receive).
-- Optional email delivery (SMTP configuration).
+- Fan-out off audit events to watchers of TEST_PLAN/TEST_RUN/BUG_REPORT (actor excluded, dedup), stored in a `notifications` table.
+- In-app notification bell with unread count, dropdown, and mark-(all-)read.
+- Per-user, per-action notification preferences (in-app/email).
+- Optional email delivery (SMTP), off by default for air-gap.
 
-### 13.7 Dark Mode / Theming
+### 13.7 Dark Mode / Theming — [PRD-013](docs/prd/PRD-013-dark-mode-theming.md)
 
 - Angular Material theme switching (prebuilt light and dark themes).
 - User preference stored in localStorage.
 - Toggle in the navigation header.
 
-### 13.8 Global Search
+### 13.8 Global Search — ✅ shipped ([PRD-007](docs/prd/PRD-007-server-side-search.md))
 
-- Search across all projects the user has access to.
-- Indexed entities: projects (by name/key), test cases (by key/title/labels), test suites (by name), test runs (by name).
-- Backend: `GET /api/search?q={query}` returning grouped results by entity type.
-- Frontend: search bar in the top navigation with typeahead dropdown.
+- Membership-scoped search across test cases, test runs, bug reports, and projects.
+- `GET /api/search?q=&types=&projectId=&limit=` returns grouped, ranked results; Postgres `tsvector` + GIN (`ts_rank`) with a portable `LIKE` fallback for non-Postgres/H2.
+- The Cmd-K / Ctrl-K command palette now tops up its instant local fuzzy match with debounced server results when local hits are sparse.
+
+### 13.9 Native Issue-Tracker Integration — [PRD-010](docs/prd/PRD-010-issue-tracker-integration.md)
+
+- Optional per-project connection to GitHub/GitLab/Jira/Linear (start single-provider); encrypted API token, project-admin only.
+- Search issues, link to results, and create a templated issue from a failure; live OPEN/CLOSED status pill via a bounded poll.
+- Keeps the free-text `TestResult.defectLink` as a fallback; opt-in and air-gap safe.
 
 ---
 
 ## 14. Database Schema Summary
 
-**11 tables (v1, migrations V1–V17):**
+**Current schema: migrations V1–V38** (V34–V35 webhooks + deliveries/events, V36–V37 notifications + preferences, V38 Postgres search vectors under `db/specific/postgresql`). Added since the v1 core: `webhooks`, `webhook_events`, `webhook_deliveries`, `notifications`, `notification_preferences`. v2.0 PRDs (PRD-010..016) introduce further tables when picked up.
+
+### v1 core tables (V1–V17)
 
 | Table                    | Key Columns                                      |
 |--------------------------|--------------------------------------------------|
 | `users`                  | id, email, display_name, password_hash, system_admin |
-| `projects`               | id, name, project_key, description, next_test_case_number |
+| `projects`               | id, name, project_key, description, next_test_case_number, bug_reports_enabled |
 | `project_members`        | id, user_id (FK), project_id (FK), role          |
-| `test_cases`             | id, test_case_key, title, description, preconditions, priority, status, project_id (FK) |
+| `test_cases`             | id, test_case_key, title, description, preconditions, priority, status, project_id (FK), folder_id (FK, nullable) |
 | `test_case_labels`       | test_case_id (FK), label                         |
-| `test_steps`             | id, action, expected_result, order_index, test_case_id (FK) |
+| `test_steps`             | id, action, expected_result, test_data, order_index, test_case_id (FK), image_id (FK, nullable) |
 | `test_suites`            | id, name, description, project_id (FK)           |
 | `test_suite_test_cases`  | test_suite_id (FK), test_case_id (FK)            |
-| `test_runs`              | id, name, environment, start_time, end_time, status, project_id (FK), executor_id (FK), completed_by_id (FK), reopen_reason |
+| `test_runs`              | id, key, name, environment, start_time, end_time, status, project_id (FK), executor_id (FK), completed_by_id (FK), reopen_reason, test_plan_id (FK, nullable) |
 | `test_results`           | id, status, comment, defect_link, test_run_id (FK), test_case_id (FK) |
-| `step_results`           | id, status, actual_result, test_result_id (FK), test_step_id (FK) |
+| `step_results`           | id, status, actual_result, test_result_id (FK), test_step_id (FK, nullable since V28) |
 | `screenshots`            | id, file_name, content_type, data (BYTEA), step_result_id (FK) |
 | `api_keys`               | id, name, key_hash, key_prefix, revoked, last_used_at |
 
-**New tables planned for v1.1–v1.2:**
+### v1.1 / v1.2 / additional features (V18–V33)
 
-| Table                    | Version | Purpose                                          |
+| Table                    | Version  | Purpose                                          |
+|--------------------------|----------|--------------------------------------------------|
+| `audit_entries`          | V18, V33 | Activity / audit log; indexed by `(project_id, created_at DESC)` and author |
+| `comments`               | V19      | Discussion threads on test cases and test results |
+| `test_plans`             | V20, V30 | Milestone grouping for test runs; assignee added in V30 |
+| `step_images`            | V21      | Reference images attached to test step definitions (separate from execution screenshots) |
+| `audit_entries` (extras) | V22      | `created_by` / `updated_by` author tracking      |
+| `allure_reports`         | V23      | Allure ZIP archives per test run                  |
+| `test_runs.key`          | V24      | Human-readable test-run keys (`PROJ-R-N`)         |
+| `bug_reports`            | V25      | Built-in lightweight bug tracker                  |
+| `test_case_folders`      | V27      | Hierarchical organisation of test cases           |
+| `entity_watchers`        | V30      | Per-user watch subscriptions for follow-on notifications |
+| `users.force_password_change` | V31 | Admin-driven forced password rotation on next login |
+| _various unique indexes_ | V29, V32 | Performance / consistency indexes                 |
+
+### Planned, not yet created
+
+| Table                    | Target  | Purpose                                          |
 |--------------------------|---------|--------------------------------------------------|
-| `audit_entries`          | v1.1    | Activity / audit log                             |
-| `comments`               | v1.2    | Discussion threads on test cases and results     |
-| `test_plans`             | v1.2    | Milestone grouping for test runs                 |
-| `webhooks`               | v1.2    | Outbound webhook configuration                   |
-| `webhook_deliveries`     | v1.2    | Delivery attempt log for debugging               |
+| `webhooks`               | v1.3    | Outbound webhook configuration                   |
+| `webhook_deliveries`     | v1.3    | Delivery attempt log for debugging               |
+| `notifications`          | v2.0    | In-app notification queue per user               |
