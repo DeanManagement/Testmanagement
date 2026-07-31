@@ -133,6 +133,39 @@ a {
   }
 }
 
+// -- Error state --
+.error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  color: var(--tm-text-secondary);
+  text-align: center;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    color: var(--tm-danger);
+    opacity: 0.6;
+  }
+
+  p {
+    font-size: 16px;
+    margin: 0 0 24px;
+  }
+
+  button mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    margin-bottom: 0;
+    opacity: 1;
+  }
+}
+
 // -- Table styling --
 .mat-mdc-table {
   background: var(--tm-surface) !important;

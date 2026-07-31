@@ -2,6 +2,84 @@
   "app": {
     "title": "Test Management"
   },
+  "notification": {
+    "title": "Notifications",
+    "markAllRead": "Mark all read",
+    "empty": "No notifications yet.",
+    "someone": "Someone",
+    "action": {
+      "CREATED": "created",
+      "UPDATED": "updated",
+      "DELETED": "deleted",
+      "STATUS_CHANGED": "changed the status of",
+      "COMPLETED": "completed",
+      "REOPENED": "reopened",
+      "CLONED": "cloned",
+      "MOVED": "moved"
+    },
+    "type": {
+      "TEST_RUN": "test run",
+      "TEST_PLAN": "test plan",
+      "BUG_REPORT": "bug report"
+    },
+    "prefs": {
+      "title": "Notification settings",
+      "hint": "Choose how you're notified about activity on items you watch.",
+      "event": "Event",
+      "inApp": "In-app",
+      "email": "Email",
+      "saved": "Notification preferences saved."
+    }
+  },
+  "import": {
+    "button": "Import",
+    "export": "Export",
+    "csvExcel": "CSV (Excel)",
+    "title": "Import test cases",
+    "hint": "Upload a CSV or JSON file. Required column: title. Optional: description, preconditions, priority, status, labels (semicolon-separated), steps (action|expected pairs joined by ;;).",
+    "preview": "Preview (dry run)",
+    "confirm": "Import",
+    "imported": "Imported",
+    "skipped": "Skipped",
+    "dryRunBadge": "Dry run — nothing saved",
+    "row": "Row",
+    "error": "Error",
+    "done": "Import complete: {{imported}} imported, {{skipped}} skipped."
+  },
+  "webhook": {
+    "title": "Webhooks",
+    "description": "Send signed HTTP callbacks to external systems when key events happen.",
+    "manage": "Manage webhooks",
+    "add": "Add webhook",
+    "createTitle": "New webhook",
+    "editTitle": "Edit webhook",
+    "url": "Payload URL (https)",
+    "secret": "Signing secret",
+    "secretEdit": "Signing secret (leave blank to keep current)",
+    "events": "Events",
+    "active": "Active",
+    "empty": "No webhooks configured yet.",
+    "test": "Send test",
+    "deliveries": "View deliveries",
+    "deleteConfirm": "Delete this webhook?",
+    "testSuccess": "Test delivered (HTTP {{status}}).",
+    "testFailed": "Test delivery failed (HTTP {{status}}).",
+    "delivered": "Delivered",
+    "failed": "Failed",
+    "pending": "Pending retry",
+    "noDeliveries": "No deliveries yet.",
+    "statusColumn": "Status",
+    "attempt": "Attempt",
+    "time": "Time",
+    "event": {
+      "RUN_STARTED": "Run started",
+      "RUN_COMPLETED": "Run completed",
+      "RUN_FAILED": "Run failed",
+      "TEST_FAILED": "Test failed",
+      "PLAN_COMPLETED": "Plan completed",
+      "BUG_REPORT_CREATED": "Bug report created"
+    }
+  },
   "nav": {
     "dashboard": "Dashboard",
     "projects": "Projects",
@@ -45,7 +123,20 @@
   },
   "auth": {
     "email": "Email",
-    "password": "Password"
+    "password": "Password",
+    "changePassword": "Change Password",
+    "changePasswordRequired": "You must change your password before continuing.",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "confirmPassword": "Confirm New Password",
+    "updatePassword": "Update Password",
+    "passwordMinLength": "Password must be at least 8 characters",
+    "passwordMismatch": "Passwords do not match",
+    "forbidden": "You don't have permission to perform this action.",
+    "notProjectMember": "You're not a member of this project.",
+    "sessionExpired": "Session expired. Please sign in again.",
+    "sessionExpiring": "Your session is about to expire. Please sign in again.",
+    "tooManyAttempts": "Too many failed login attempts. Please try again later."
   },
   "login": {
     "title": "Welcome Back",
@@ -64,6 +155,28 @@
       "title": "Your Projects",
       "open": "Open",
       "empty": "No projects yet. Create your first project to get started."
+    }
+  },
+  "myQueue": {
+    "title": "Your queue",
+    "duePlans": "Test plans due soon",
+    "inProgressRuns": "Test runs in progress",
+    "staleBugs": "Bug reports without recent activity",
+    "oldDrafts": "Old draft test cases"
+  },
+  "commandPalette": {
+    "placeholder": "Search projects, test cases, runs, bug reports…",
+    "openHint": "Search (Ctrl/Cmd + K)",
+    "noResults": "No matches in what's already loaded. Open a project to broaden the search.",
+    "hint": "Type to search across what you have open. Press Esc to close.",
+    "navigate": "navigate",
+    "open": "open",
+    "close": "close",
+    "types": {
+      "project": "Project",
+      "testCase": "Test case",
+      "testRun": "Test run",
+      "bugReport": "Bug report"
     }
   },
   "project": {
@@ -170,7 +283,8 @@
       "noExecutor": "Unassigned",
       "filterByFolder": "Filter by folder",
       "allFolders": "All folders",
-      "pickerHint": "Select test cases to include in this run."
+      "pickerHint": "Select test cases to include in this run.",
+      "searchTestCases": "Search test cases..."
     },
     "status": {
       "PLANNED": "Planned",
@@ -213,6 +327,19 @@
       "view": "Allure Report",
       "upload": "Upload Allure Report",
       "delete": "Remove Allure Report"
+    },
+    "shortcuts": {
+      "title": "Keyboard shortcuts",
+      "hint": "Press ? for keyboard shortcuts",
+      "nextResult": "Next test result",
+      "prevResult": "Previous test result",
+      "markPassed": "Mark current result Passed",
+      "markFailed": "Mark current result Failed",
+      "markBlocked": "Mark current result Blocked",
+      "markSkipped": "Mark current result Skipped",
+      "allStepsPassed": "Mark every step Passed (and the result)",
+      "focusComment": "Focus the comment field",
+      "showHelp": "Show this help"
     }
   },
   "testPlan": {
@@ -292,7 +419,9 @@
       "active": "Active",
       "revoked": "Revoked",
       "never": "Never",
-      "empty": "No API keys yet. Create one to allow external tools to submit test results."
+      "empty": "No API keys yet. Create one to allow external tools to submit test results.",
+      "project": "Project",
+      "globalKey": "All projects (legacy)"
     },
     "users": {
       "title": "Users",
@@ -358,6 +487,9 @@
   },
   "bulk": {
     "selected": "{{count}} selected",
+    "select": "Select",
+    "setStatus": "Set status",
+    "cascadeSteps": "Also set steps",
     "updateStatus": "Update Status",
     "delete": "Delete",
     "addToSuite": "Add to Suite",
@@ -365,6 +497,7 @@
     "selectSuite": "Select Suite",
     "confirmDelete": "Are you sure you want to delete {{count}} test cases?",
     "deleteWarning": "This action cannot be undone.",
+    "selectionLimit": "Selection limited to {{max}} items",
     "statusUpdated": "Status updated for {{count}} test cases.",
     "deleted": "{{count}} test cases deleted.",
     "addedToSuite": "Test cases added to suite.",
@@ -481,7 +614,8 @@
     "status": "Status",
     "priority": "Priority",
     "allStatuses": "All Statuses",
-    "allPriorities": "All Priorities"
+    "allPriorities": "All Priorities",
+    "density": "Toggle row density"
   },
   "watcher": {
     "myWatched": "My Watched Items",
@@ -500,6 +634,17 @@
     "confirm": "Confirm",
     "loading": "Loading...",
     "actions": "Actions",
-    "noResults": "No results found."
+    "noResults": "No results found.",
+    "savedSuccessfully": "Saved successfully",
+    "deletedSuccessfully": "Deleted successfully",
+    "close": "Close",
+    "unsavedChangesWarning": "You have unsaved changes. Are you sure you want to leave?",
+    "loadError": "Failed to load data. Please try again.",
+    "retry": "Retry",
+    "ok": "OK"
+  },
+  "errors": {
+    "server": "A server error occurred. Please try again later.",
+    "network": "Unable to reach the server. Please check your connection."
   }
 }

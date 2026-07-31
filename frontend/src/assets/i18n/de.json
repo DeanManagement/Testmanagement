@@ -2,6 +2,84 @@
   "app": {
     "title": "Testmanagement"
   },
+  "notification": {
+    "title": "Benachrichtigungen",
+    "markAllRead": "Alle als gelesen markieren",
+    "empty": "Noch keine Benachrichtigungen.",
+    "someone": "Jemand",
+    "action": {
+      "CREATED": "erstellte",
+      "UPDATED": "aktualisierte",
+      "DELETED": "löschte",
+      "STATUS_CHANGED": "änderte den Status von",
+      "COMPLETED": "schloss ab",
+      "REOPENED": "öffnete erneut",
+      "CLONED": "klonte",
+      "MOVED": "verschob"
+    },
+    "type": {
+      "TEST_RUN": "Testlauf",
+      "TEST_PLAN": "Testplan",
+      "BUG_REPORT": "Fehlerbericht"
+    },
+    "prefs": {
+      "title": "Benachrichtigungseinstellungen",
+      "hint": "Lege fest, wie du über Aktivitäten zu beobachteten Elementen benachrichtigt wirst.",
+      "event": "Ereignis",
+      "inApp": "In-App",
+      "email": "E-Mail",
+      "saved": "Benachrichtigungseinstellungen gespeichert."
+    }
+  },
+  "import": {
+    "button": "Importieren",
+    "export": "Exportieren",
+    "csvExcel": "CSV (Excel)",
+    "title": "Testfälle importieren",
+    "hint": "Lade eine CSV- oder JSON-Datei hoch. Pflichtspalte: title. Optional: description, preconditions, priority, status, labels (durch Semikolon getrennt), steps (action|expected-Paare, verbunden mit ;;).",
+    "preview": "Vorschau (Probelauf)",
+    "confirm": "Importieren",
+    "imported": "Importiert",
+    "skipped": "Übersprungen",
+    "dryRunBadge": "Probelauf – nichts gespeichert",
+    "row": "Zeile",
+    "error": "Fehler",
+    "done": "Import abgeschlossen: {{imported}} importiert, {{skipped}} übersprungen."
+  },
+  "webhook": {
+    "title": "Webhooks",
+    "description": "Sende signierte HTTP-Callbacks an externe Systeme, wenn wichtige Ereignisse eintreten.",
+    "manage": "Webhooks verwalten",
+    "add": "Webhook hinzufügen",
+    "createTitle": "Neuer Webhook",
+    "editTitle": "Webhook bearbeiten",
+    "url": "Payload-URL (https)",
+    "secret": "Signatur-Geheimnis",
+    "secretEdit": "Signatur-Geheimnis (leer lassen, um es beizubehalten)",
+    "events": "Ereignisse",
+    "active": "Aktiv",
+    "empty": "Noch keine Webhooks konfiguriert.",
+    "test": "Test senden",
+    "deliveries": "Zustellungen anzeigen",
+    "deleteConfirm": "Diesen Webhook löschen?",
+    "testSuccess": "Test zugestellt (HTTP {{status}}).",
+    "testFailed": "Testzustellung fehlgeschlagen (HTTP {{status}}).",
+    "delivered": "Zugestellt",
+    "failed": "Fehlgeschlagen",
+    "pending": "Wiederholung ausstehend",
+    "noDeliveries": "Noch keine Zustellungen.",
+    "statusColumn": "Status",
+    "attempt": "Versuch",
+    "time": "Zeit",
+    "event": {
+      "RUN_STARTED": "Testlauf gestartet",
+      "RUN_COMPLETED": "Testlauf abgeschlossen",
+      "RUN_FAILED": "Testlauf fehlgeschlagen",
+      "TEST_FAILED": "Test fehlgeschlagen",
+      "PLAN_COMPLETED": "Plan abgeschlossen",
+      "BUG_REPORT_CREATED": "Fehlerbericht erstellt"
+    }
+  },
   "nav": {
     "dashboard": "Dashboard",
     "projects": "Projekte",
@@ -45,7 +123,20 @@
   },
   "auth": {
     "email": "E-Mail",
-    "password": "Passwort"
+    "password": "Passwort",
+    "changePassword": "Passwort ändern",
+    "changePasswordRequired": "Sie müssen Ihr Passwort ändern, bevor Sie fortfahren können.",
+    "currentPassword": "Aktuelles Passwort",
+    "newPassword": "Neues Passwort",
+    "confirmPassword": "Neues Passwort bestätigen",
+    "updatePassword": "Passwort aktualisieren",
+    "passwordMinLength": "Passwort muss mindestens 8 Zeichen lang sein",
+    "passwordMismatch": "Passwörter stimmen nicht überein",
+    "forbidden": "Sie haben keine Berechtigung für diese Aktion.",
+    "notProjectMember": "Sie sind kein Mitglied dieses Projekts.",
+    "sessionExpired": "Sitzung abgelaufen. Bitte erneut anmelden.",
+    "sessionExpiring": "Ihre Sitzung läuft gleich ab. Bitte melden Sie sich erneut an.",
+    "tooManyAttempts": "Zu viele fehlgeschlagene Anmeldeversuche. Bitte später erneut versuchen."
   },
   "login": {
     "title": "Willkommen zurück",
@@ -64,6 +155,28 @@
       "title": "Ihre Projekte",
       "open": "Öffnen",
       "empty": "Noch keine Projekte. Erstellen Sie Ihr erstes Projekt."
+    }
+  },
+  "myQueue": {
+    "title": "Ihre Liste",
+    "duePlans": "Bald fällige Testpläne",
+    "inProgressRuns": "Laufende Testdurchläufe",
+    "staleBugs": "Bug-Meldungen ohne aktuelle Aktivität",
+    "oldDrafts": "Alte Testfall-Entwürfe"
+  },
+  "commandPalette": {
+    "placeholder": "Projekte, Testfälle, Durchläufe, Bugs suchen…",
+    "openHint": "Suchen (Strg/Cmd + K)",
+    "noResults": "Keine Treffer in den geladenen Daten. Öffnen Sie ein Projekt, um mehr zu durchsuchen.",
+    "hint": "Tippen, um in geöffneten Bereichen zu suchen. Esc zum Schließen.",
+    "navigate": "navigieren",
+    "open": "öffnen",
+    "close": "schließen",
+    "types": {
+      "project": "Projekt",
+      "testCase": "Testfall",
+      "testRun": "Testdurchlauf",
+      "bugReport": "Bug-Meldung"
     }
   },
   "project": {
@@ -170,7 +283,8 @@
       "noExecutor": "Nicht zugewiesen",
       "filterByFolder": "Nach Ordner filtern",
       "allFolders": "Alle Ordner",
-      "pickerHint": "Wählen Sie die Testfälle für diesen Lauf aus."
+      "pickerHint": "Wählen Sie die Testfälle für diesen Lauf aus.",
+      "searchTestCases": "Testfälle suchen..."
     },
     "status": {
       "PLANNED": "Geplant",
@@ -213,6 +327,19 @@
       "view": "Allure-Bericht",
       "upload": "Allure-Bericht hochladen",
       "delete": "Allure-Bericht entfernen"
+    },
+    "shortcuts": {
+      "title": "Tastenkürzel",
+      "hint": "Drücken Sie ? für Tastenkürzel",
+      "nextResult": "Nächstes Testergebnis",
+      "prevResult": "Vorheriges Testergebnis",
+      "markPassed": "Aktuelles Ergebnis als Bestanden markieren",
+      "markFailed": "Aktuelles Ergebnis als Fehlgeschlagen markieren",
+      "markBlocked": "Aktuelles Ergebnis als Blockiert markieren",
+      "markSkipped": "Aktuelles Ergebnis als Übersprungen markieren",
+      "allStepsPassed": "Alle Schritte als Bestanden markieren (auch das Ergebnis)",
+      "focusComment": "Kommentarfeld fokussieren",
+      "showHelp": "Diese Hilfe anzeigen"
     }
   },
   "testPlan": {
@@ -292,7 +419,9 @@
       "active": "Aktiv",
       "revoked": "Widerrufen",
       "never": "Nie",
-      "empty": "Noch keine API-Schlüssel. Erstellen Sie einen, um externen Tools das Übermitteln von Testergebnissen zu ermöglichen."
+      "empty": "Noch keine API-Schlüssel. Erstellen Sie einen, um externen Tools das Übermitteln von Testergebnissen zu ermöglichen.",
+      "project": "Projekt",
+      "globalKey": "Alle Projekte (Altbestand)"
     },
     "users": {
       "title": "Benutzer",
@@ -358,6 +487,9 @@
   },
   "bulk": {
     "selected": "{{count}} ausgewählt",
+    "select": "Auswählen",
+    "setStatus": "Status setzen",
+    "cascadeSteps": "Auch Schritte setzen",
     "updateStatus": "Status ändern",
     "delete": "Löschen",
     "addToSuite": "Zu Suite hinzufügen",
@@ -365,6 +497,7 @@
     "selectSuite": "Suite auswählen",
     "confirmDelete": "Möchten Sie {{count}} Testfälle wirklich löschen?",
     "deleteWarning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "selectionLimit": "Auswahl auf {{max}} Einträge begrenzt",
     "statusUpdated": "Status für {{count}} Testfälle aktualisiert.",
     "deleted": "{{count}} Testfälle gelöscht.",
     "addedToSuite": "Testfälle zur Suite hinzugefügt.",
@@ -481,7 +614,8 @@
     "status": "Status",
     "priority": "Priorität",
     "allStatuses": "Alle Status",
-    "allPriorities": "Alle Prioritäten"
+    "allPriorities": "Alle Prioritäten",
+    "density": "Zeilendichte umschalten"
   },
   "watcher": {
     "myWatched": "Meine beobachteten Elemente",
@@ -500,6 +634,17 @@
     "confirm": "Bestätigen",
     "loading": "Laden...",
     "actions": "Aktionen",
-    "noResults": "Keine Ergebnisse gefunden."
+    "noResults": "Keine Ergebnisse gefunden.",
+    "savedSuccessfully": "Erfolgreich gespeichert",
+    "deletedSuccessfully": "Erfolgreich gelöscht",
+    "close": "Schließen",
+    "unsavedChangesWarning": "Sie haben ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?",
+    "loadError": "Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
+    "retry": "Erneut versuchen",
+    "ok": "OK"
+  },
+  "errors": {
+    "server": "Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
+    "network": "Server nicht erreichbar. Bitte prüfen Sie Ihre Verbindung."
   }
 }
