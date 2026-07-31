@@ -42,14 +42,15 @@ class ApiKeyControllerTest {
     private ApiKeyService apiKeyService;
 
     private static final UUID KEY_ID = UUID.randomUUID();
+    private static final UUID PROJECT_ID = UUID.randomUUID();
     private static final Instant NOW = Instant.now();
 
     private ApiKeyResponse sampleResponse() {
-        return new ApiKeyResponse(KEY_ID, "CI Pipeline", "tm_abc12", false, null, NOW);
+        return new ApiKeyResponse(KEY_ID, "CI Pipeline", "tm_abc12", false, null, NOW, PROJECT_ID, "Demo Project");
     }
 
     private ApiKeyCreatedResponse sampleCreatedResponse() {
-        return new ApiKeyCreatedResponse(KEY_ID, "CI Pipeline", "tm_abc12", "tm_abc123456789abcdef", NOW);
+        return new ApiKeyCreatedResponse(KEY_ID, "CI Pipeline", "tm_abc12", "tm_abc123456789abcdef", NOW, PROJECT_ID, "Demo Project");
     }
 
     @Test
@@ -78,7 +79,7 @@ class ApiKeyControllerTest {
     @Test
     @WithMockUser
     void create_returnsCreatedWithRawKey() throws Exception {
-        var request = new CreateApiKeyRequest("CI Pipeline");
+        var request = new CreateApiKeyRequest("CI Pipeline", PROJECT_ID);
         when(apiKeyService.create(any())).thenReturn(sampleCreatedResponse());
 
         mockMvc.perform(post("/api/api-keys")
@@ -94,7 +95,7 @@ class ApiKeyControllerTest {
     @Test
     @WithMockUser
     void create_blankName_returns400() throws Exception {
-        var request = new CreateApiKeyRequest("");
+        var request = new CreateApiKeyRequest("", PROJECT_ID);
 
         mockMvc.perform(post("/api/api-keys")
                         .with(csrf())

@@ -14,17 +14,33 @@ import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 
+import jakarta.annotation.PostConstruct;
+
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 
 @Configuration
 public class JwtConfig {
 
+    private static final int MIN_SECRET_LENGTH = 32;
+
     @Value("${app.jwt.secret}")
     private String secret;
 
     @Value("${app.jwt.expiration-ms:86400000}")
     private long expirationMs;
+
+    @PostConstruct
+    public void validateSecret() {
+        if (secret == null || secret.isBlank()) {
+            throw new IllegalStateException(
+                    "JWT secret is not configured. Set the JWT_SECRET environment variable (minimum " + MIN_SECRET_LENGTH + " characters).");
+        }
+        if (secret.length() < MIN_SECRET_LENGTH) {
+            throw new IllegalStateException(
+                    "JWT secret is too short (" + secret.length() + " chars). Minimum length is " + MIN_SECRET_LENGTH + " characters.");
+        }
+    }
 
     @Bean
     public JwtEncoder jwtEncoder() {

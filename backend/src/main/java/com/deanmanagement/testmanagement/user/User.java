@@ -25,4 +25,14 @@ public class User extends BaseEntity {
 
     @Column(nullable = false)
     private boolean systemAdmin;
+
+    @Column(name = "force_password_change", nullable = false)
+    private boolean forcePasswordChange;
+
+    /**
+     * PRD-020: embedded as a JWT claim and checked on every request; incrementing it
+     * invalidates all outstanding tokens (server-side logout, password change).
+     */
+    @Column(name = "token_version", nullable = false)
+    private int tokenVersion;
 }

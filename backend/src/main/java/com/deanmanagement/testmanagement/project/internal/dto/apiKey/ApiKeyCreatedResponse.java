@@ -8,6 +8,8 @@ public record ApiKeyCreatedResponse(
         String name,
         String keyPrefix,
         String rawKey,
-        Instant createdAt
+        Instant createdAt,
+        UUID projectId,
+        String projectName
 ) {
 }

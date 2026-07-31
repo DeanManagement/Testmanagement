@@ -1,10 +1,13 @@
 package com.deanmanagement.testmanagement.user.internal.config;
 
+import com.deanmanagement.testmanagement.user.internal.repository.UserRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,10 +22,14 @@ import java.util.List;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-    private final JwtDecoder jwtDecoder;
+    private static final Logger log = LoggerFactory.getLogger(JwtAuthenticationFilter.class);
 
-    public JwtAuthenticationFilter(JwtDecoder jwtDecoder) {
+    private final JwtDecoder jwtDecoder;
+    private final UserRepository userRepository;
+
+    public JwtAuthenticationFilter(JwtDecoder jwtDecoder, UserRepository userRepository) {
         this.jwtDecoder = jwtDecoder;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -37,24 +44,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                                     FilterChain filterChain) throws ServletException, IOException {
         String authHeader = request.getHeader("Authorization");
 
-        String token;
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            token = authHeader.substring(7);
-        } else if (request.getRequestURI().contains("/allure-report/view/")) {
-            token = resolveAllureToken(request);
-            if (token == null) {
-                filterChain.doFilter(request, response);
-                return;
-            }
-        } else {
+        // PRD-018: the former allure_session cookie path is gone — Allure report viewing now
+        // uses short-lived view tokens validated in AllureReportController.
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
             return;
         }
+        String token = authHeader.substring(7);
 
         try {
             Jwt jwt = jwtDecoder.decode(token);
             String userId = jwt.getSubject();
             Boolean systemAdmin = jwt.getClaim("systemAdmin");
+
+            // PRD-020: reject tokens minted before the user's last logout / password change.
+            // Tokens issued before this feature carry no claim and are treated as version 0.
+            Long claimedVersion = jwt.getClaim("tokenVersion");
+            int currentVersion = userRepository.findById(java.util.UUID.fromString(userId))
+                    .map(com.deanmanagement.testmanagement.user.User::getTokenVersion)
+                    .orElse(-1);
+            if (currentVersion < 0 || (claimedVersion == null ? 0 : claimedVersion) != currentVersion) {
+                throw new JwtException("Token has been invalidated");
+            }
 
             List<SimpleGrantedAuthority> authorities = new ArrayList<>();
             authorities.add(new SimpleGrantedAuthority("ROLE_USER"));
@@ -66,25 +77,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(userId, jwt, authorities);
             SecurityContextHolder.getContext().setAuthentication(authentication);
         } catch (JwtException e) {
-            // Invalid token — continue without authentication
+            log.warn("JWT authentication failed for {} {}: {}",
+                    request.getMethod(), request.getRequestURI(), e.getMessage());
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"message\":\"Invalid or expired token\"}");
+            return;
         }
 
         filterChain.doFilter(request, response);
-    }
-
-    private String resolveAllureToken(HttpServletRequest request) {
-        String queryToken = request.getParameter("token");
-        if (queryToken != null) {
-            return queryToken;
-        }
-        Cookie[] cookies = request.getCookies();
-        if (cookies != null) {
-            for (Cookie cookie : cookies) {
-                if ("allure_session".equals(cookie.getName())) {
-                    return cookie.getValue();
-                }
-            }
-        }
-        return null;
     }
 }

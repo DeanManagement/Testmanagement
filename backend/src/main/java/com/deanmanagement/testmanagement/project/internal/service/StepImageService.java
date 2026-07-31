@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.access.ProjectAccessService;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.StepImage;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
@@ -18,11 +20,13 @@ public class StepImageService {
 
     private final StepImageRepository stepImageRepository;
     private final TestStepRepository testStepRepository;
+    private final ProjectAccessService projectAccessService;
 
     @Transactional
     public StepImage upload(UUID testStepId, String fileName, String contentType, byte[] data) {
         TestStep testStep = testStepRepository.findById(testStepId)
                 .orElseThrow(() -> new ResourceNotFoundException("TestStep", testStepId));
+        projectAccessService.requireRoleForCurrentUser(projectIdOf(testStep), ProjectRole.TESTER);
 
         stepImageRepository.findByTestStepId(testStepId)
                 .ifPresent(stepImageRepository::delete);
@@ -30,21 +34,28 @@ public class StepImageService {
         StepImage image = new StepImage();
         image.setTestStep(testStep);
         image.setFileName(fileName);
-        image.setContentType(contentType);
+        image.setContentType(ImageMediaTypes.requireAllowed(contentType));
         image.setData(data);
 
         return stepImageRepository.save(image);
     }
 
     public StepImage findById(UUID id) {
-        return stepImageRepository.findById(id)
+        StepImage image = stepImageRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("StepImage", id));
+        projectAccessService.requireRoleForCurrentUser(projectIdOf(image.getTestStep()), ProjectRole.VIEWER);
+        return image;
     }
 
     @Transactional
     public void delete(UUID id) {
         StepImage image = stepImageRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("StepImage", id));
+        projectAccessService.requireRoleForCurrentUser(projectIdOf(image.getTestStep()), ProjectRole.TESTER);
         stepImageRepository.delete(image);
+    }
+
+    private UUID projectIdOf(TestStep testStep) {
+        return testStep.getTestCase().getProject().getId();
     }
 }

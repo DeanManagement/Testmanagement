@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.AllureRepor
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -26,6 +28,10 @@ public class AllureReportService {
 
     private final AllureReportRepository allureReportRepository;
     private final TestRunRepository testRunRepository;
+
+    /** PRD-018: bound decompression cost — a high-ratio zip must not inflate unbounded. */
+    static final long MAX_ENTRY_DECOMPRESSED_BYTES = 20L * 1024 * 1024; // 20 MB per entry
+    static final int MAX_ZIP_ENTRIES = 5_000;
 
     private static final Map<String, String> CONTENT_TYPE_MAP = Map.ofEntries(
             Map.entry("html", "text/html"),
@@ -76,12 +82,22 @@ public class AllureReportService {
             String basePath = detectBasePath(zipFile);
             String fullEntryName = basePath + normalizedPath;
 
+            // Validate path traversal: ensure resolved path stays within base path.
+            // Note: when index.html sits at the zip root, basePath is "" and
+            // Path("x").startsWith(Path("")) is false — handle that case explicitly.
+            Path basePathObj = Path.of(basePath);
+            Path resolvedPath = basePathObj.resolve(normalizedPath).normalize();
+            boolean escapes = resolvedPath.isAbsolute()
+                    || (basePath.isEmpty()
+                            ? resolvedPath.startsWith("..")
+                            : !resolvedPath.startsWith(basePathObj));
+            if (escapes) {
+                throw new IOException("Zip entry is outside of the target dir: " + fullEntryName);
+            }
+
             ZipEntry entry = zipFile.getEntry(fullEntryName);
             if (entry != null && !entry.isDirectory()) {
-                byte[] content;
-                try (InputStream is = zipFile.getInputStream(entry)) {
-                    content = is.readAllBytes();
-                }
+                byte[] content = readBounded(zipFile, entry);
                 String contentType = detectContentType(normalizedPath);
                 return new AllureReportFile(content, contentType);
             }
@@ -103,18 +119,48 @@ public class AllureReportService {
     private void validateZipContainsIndexHtml(byte[] data) {
         Path tempFile = writeTempZip(data);
         try (ZipFile zipFile = new ZipFile(tempFile.toFile())) {
+            boolean hasIndex = false;
+            int count = 0;
             Enumeration<? extends ZipEntry> entries = zipFile.entries();
             while (entries.hasMoreElements()) {
                 ZipEntry entry = entries.nextElement();
+                if (++count > MAX_ZIP_ENTRIES) {
+                    throw new IllegalArgumentException(
+                            "ZIP contains too many entries (max " + MAX_ZIP_ENTRIES + ")");
+                }
                 if (entry.getName().endsWith("index.html")) {
-                    return;
+                    hasIndex = true;
                 }
             }
-            throw new IllegalArgumentException("ZIP must contain an index.html file");
+            if (!hasIndex) {
+                throw new IllegalArgumentException("ZIP must contain an index.html file");
+            }
         } catch (IOException e) {
             throw new IllegalArgumentException("Invalid ZIP file", e);
         } finally {
             deleteTempFile(tempFile);
+        }
+    }
+
+    /**
+     * Reads a zip entry with a hard decompressed-size cap (PRD-018). The entry's declared
+     * size cannot be trusted, so the stream itself is bounded while copying.
+     */
+    private byte[] readBounded(ZipFile zipFile, ZipEntry entry) throws IOException {
+        try (InputStream is = zipFile.getInputStream(entry);
+             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+            byte[] buffer = new byte[8192];
+            long total = 0;
+            int read;
+            while ((read = is.read(buffer)) != -1) {
+                total += read;
+                if (total > MAX_ENTRY_DECOMPRESSED_BYTES) {
+                    throw new IllegalArgumentException("Report file too large (max "
+                            + (MAX_ENTRY_DECOMPRESSED_BYTES / (1024 * 1024)) + " MB per entry)");
+                }
+                out.write(buffer, 0, read);
+            }
+            return out.toByteArray();
         }
     }
 
@@ -132,11 +178,8 @@ public class AllureReportService {
     }
 
     private String normalizeFilePath(String filePath) {
-        if (filePath.contains("..")) {
-            throw new IllegalArgumentException("Invalid file path");
-        }
         if (filePath.startsWith("/")) {
-            return filePath.substring(1);
+            filePath = filePath.substring(1);
         }
         return filePath;
     }
@@ -154,7 +197,8 @@ public class AllureReportService {
     private void deleteTempFile(Path path) {
         try {
             Files.deleteIfExists(path);
-        } catch (IOException ignored) {
+        } catch (IOException e) {
+            log.warn("Failed to delete temp file {}: {}", path, e.getMessage());
         }
     }
 

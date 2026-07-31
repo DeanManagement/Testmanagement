@@ -4,8 +4,10 @@ import com.deanmanagement.testmanagement.project.internal.dto.apiKey.ApiKeyCreat
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.ApiKeyResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.ApiKey;
+import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ApiKeyRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -30,10 +32,14 @@ class ApiKeyServiceTest {
     @Mock
     private ApiKeyRepository apiKeyRepository;
 
+    @Mock
+    private ProjectRepository projectRepository;
+
     @InjectMocks
     private ApiKeyService apiKeyService;
 
     private static final UUID KEY_ID = UUID.randomUUID();
+    private static final UUID PROJECT_ID = UUID.randomUUID();
     private static final Instant NOW = Instant.now();
 
     private ApiKey sampleApiKey() {
@@ -49,7 +55,12 @@ class ApiKeyServiceTest {
 
     @Test
     void create_generatesKeyAndSaves() {
-        var request = new CreateApiKeyRequest("CI Pipeline");
+        var request = new CreateApiKeyRequest("CI Pipeline", PROJECT_ID);
+        Project project = new Project();
+        project.setId(PROJECT_ID);
+        project.setName("Demo");
+        project.setKey("DEMO");
+        when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
 
         when(apiKeyRepository.save(any(ApiKey.class))).thenAnswer(invocation -> {
             ApiKey saved = invocation.getArgument(0);
@@ -72,6 +83,7 @@ class ApiKeyServiceTest {
         assertThat(saved.getKeyHash()).isNotBlank();
         assertThat(saved.getKeyHash()).hasSize(64); // SHA-256 hex = 64 chars
         assertThat(saved.isRevoked()).isFalse();
+        assertThat(saved.getProject().getId()).isEqualTo(PROJECT_ID); // PRD-021: project-bound
     }
 
     @Test
@@ -116,10 +128,11 @@ class ApiKeyServiceTest {
 
         when(apiKeyRepository.findByKeyHash(hash)).thenReturn(Optional.of(key));
 
-        Optional<ApiKey> result = apiKeyService.validateKey(rawKey);
+        Optional<ApiKeyService.ValidatedKey> result = apiKeyService.validateKey(rawKey);
 
         assertThat(result).isPresent();
-        assertThat(result.get().getName()).isEqualTo("CI Pipeline");
+        assertThat(result.get().name()).isEqualTo("CI Pipeline");
+        assertThat(result.get().projectKey()).isNull(); // sample key is legacy/global
     }
 
     @Test
@@ -132,7 +145,7 @@ class ApiKeyServiceTest {
 
         when(apiKeyRepository.findByKeyHash(hash)).thenReturn(Optional.of(key));
 
-        Optional<ApiKey> result = apiKeyService.validateKey(rawKey);
+        Optional<ApiKeyService.ValidatedKey> result = apiKeyService.validateKey(rawKey);
 
         assertThat(result).isEmpty();
     }
@@ -144,7 +157,7 @@ class ApiKeyServiceTest {
 
         when(apiKeyRepository.findByKeyHash(hash)).thenReturn(Optional.empty());
 
-        Optional<ApiKey> result = apiKeyService.validateKey(rawKey);
+        Optional<ApiKeyService.ValidatedKey> result = apiKeyService.validateKey(rawKey);
 
         assertThat(result).isEmpty();
     }

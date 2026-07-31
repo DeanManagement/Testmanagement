@@ -9,6 +9,9 @@ public record ApiKeyResponse(
         String keyPrefix,
         boolean revoked,
         Instant lastUsedAt,
-        Instant createdAt
+        Instant createdAt,
+        // PRD-021 §4.2: null for legacy/global keys.
+        UUID projectId,
+        String projectName
 ) {
 }

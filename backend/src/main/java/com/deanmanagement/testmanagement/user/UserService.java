@@ -11,7 +11,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -37,6 +40,18 @@ public class UserService {
 
     public Optional<User> findEntityById(UUID id) {
         return userRepository.findById(id);
+    }
+
+    /** Batch variant of {@link #findEntityById} for resolving display names without per-row queries. */
+    public Map<UUID, String> findDisplayNamesByIds(Collection<UUID> ids) {
+        if (ids.isEmpty()) {
+            return Map.of();
+        }
+        Map<UUID, String> names = new HashMap<>();
+        for (User user : userRepository.findAllById(ids)) {
+            names.put(user.getId(), user.getDisplayName());
+        }
+        return names;
     }
 
     @Transactional

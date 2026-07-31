@@ -1,9 +1,12 @@
 package com.deanmanagement.testmanagement.user.internal.config;
 
+import com.deanmanagement.testmanagement.user.internal.repository.UserRepository;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -14,12 +17,15 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class UserSecurityConfig {
 
     private final JwtDecoder jwtDecoder;
+    private final UserRepository userRepository;
 
-    public UserSecurityConfig(JwtDecoder jwtDecoder) {
+    public UserSecurityConfig(JwtDecoder jwtDecoder, UserRepository userRepository) {
         this.jwtDecoder = jwtDecoder;
+        this.userRepository = userRepository;
     }
 
     @Bean
@@ -30,12 +36,17 @@ public class UserSecurityConfig {
                 .cors(Customizer.withDefaults())
                 .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(new JwtAuthenticationFilter(jwtDecoder),
+                .addFilterBefore(new JwtAuthenticationFilter(jwtDecoder, userRepository),
                         UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
+                        // PRD-018: Allure report view is rendered in a sandboxed (opaque-origin)
+                        // iframe that cannot send credentials. Access is authenticated inside the
+                        // controller via a short-lived single-report view token in the path.
+                        .requestMatchers(HttpMethod.GET,
+                                "/api/projects/*/test-runs/*/allure-report/view/**").permitAll()
                         .requestMatchers("/api/external/**").hasRole("API_KEY")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().denyAll());
