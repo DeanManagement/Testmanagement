@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, Injector, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -13,8 +13,11 @@ export class AuthService {
   private readonly http = inject(HttpClient);
   private readonly store = inject(Store);
   private readonly router = inject(Router);
-  private readonly snackBar = inject(MatSnackBar);
-  private readonly translate = inject(TranslateService);
+  // MatSnackBar and TranslateService are resolved lazily, never as fields: constructing
+  // TranslateService immediately loads the fallback language over HttpClient, and the HTTP
+  // interceptors inject AuthService — injecting it here would close that loop into an NG0200
+  // circular dependency at bootstrap. Both are only needed inside the expiry timer anyway.
+  private readonly injector = inject(Injector);
   private readonly TOKEN_KEY = 'auth_token';
 
   private expiryTimer: ReturnType<typeof setTimeout> | null = null;
@@ -156,11 +159,12 @@ export class AuthService {
     }
     const fireIn = Math.max(0, exp - Date.now() - 60_000); // 1 min before expiry
     this.expiryTimer = setTimeout(() => {
-      this.snackBar.open(
-        this.translate.instant('auth.sessionExpiring'),
-        this.translate.instant('common.ok'),
-        { duration: 8000 }
-      );
+      const translate = this.injector.get(TranslateService);
+      this.injector
+        .get(MatSnackBar)
+        .open(translate.instant('auth.sessionExpiring'), translate.instant('common.ok'), {
+          duration: 8000,
+        });
       this.clearLocalSession();
       this.router.navigate(['/login']);
     }, fireIn);
