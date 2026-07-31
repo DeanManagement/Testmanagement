@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 🚧 Backend implemented (2026-07-31, GitLab) — frontend pending |
+| **Status** | 🚧 Backend implemented (2026-07-31, GitLab + Forgejo) — frontend pending |
 | **Author** | Engineering review (Claude) |
 | **Created** | 2026-06-09 |
 | **Priority** | P3 — v2.0, highest value in the v2 set |
@@ -80,10 +80,30 @@ Ship **one provider first** (GitHub or GitLab — REST, token auth, simple) and 
 
 ## 8. As Built — backend (2026-07-31)
 
-**Provider:** GitLab first, per §1. `IssueTrackerProvider` exposes search/create/get/testConnection;
-`IssueTrackerProviderRegistry` resolves the adapter from the config's provider enum. Adding GitHub,
-Jira or Linear means adding one bean — no service or controller changes. The enum already declares
-all four so stored rows survive a later adapter without a migration.
+**Providers:** GitLab first per §1, then Forgejo (which also covers Gitea, the project it forked
+from, and Codeberg, which runs it). `IssueTrackerProvider` exposes search/create/get/testConnection;
+`IssueTrackerProviderRegistry` resolves the adapter from the config's provider enum, and
+`GET /issue-tracker/providers` reports which ones have an adapter so the UI cannot offer a dead
+option. Adding GitHub, Jira or Linear means adding one bean — no service or controller changes. The
+enum declares all five so stored rows survive a later adapter without a migration.
+
+`HttpIssueProviderSupport` holds the shared HTTP mechanics: client construction, the
+status-to-exception mapping, and JSON helpers. The failure taxonomy lives there deliberately —
+the service layer and the poller's backoff both depend on "token rejected", "project missing" and
+"rate limited" being distinguishable whichever tracker produced them. Adding Forgejo took one
+subclass supplying its auth header and URL shapes.
+
+**Forgejo specifics.** Two things differ from GitLab and are worth knowing before adding a third
+adapter. Repos are addressed as two path segments (`/repos/{owner}/{repo}`) rather than one encoded
+path, so `owner/repo` is split and each half encoded separately — a nested GitLab-style
+`group/sub/project` is rejected up front rather than 404-ing later. And its issues endpoint returns
+pull requests alongside issues unless `type=issues` is passed; the adapter passes it *and* skips
+anything carrying a `pull_request` payload, because a merge request must never be linkable as a
+defect. Field names differ too: `number`/`html_url`/`body` against GitLab's `iid`/`web_url`/
+`description`, and state is `open` rather than `opened`.
+
+Path segments are encoded with `encodePath`, not `URLEncoder.encode` directly: the latter is form
+encoding, where a space becomes `+`, but in a path `+` is a literal plus.
 
 **Data model:** V42 adds `issue_tracker_configs` (unique per project) and `issue_links` (unique per
 result + external id). Provider and URL are denormalised onto the link so previously filed defects
@@ -115,12 +135,13 @@ and keeps the cached state — a stale pill beats an error page on the result vi
 **Endpoints:** config GET/PUT/DELETE and `POST /issue-tracker/test` (ADMIN); `GET /issues/search`
 (any member); list and `POST .../issues/refresh` (any member); link/create and unlink (TESTER).
 
-**Tests (54 new, 277 total green):** GitLab adapter against a stub v4 API including auth failure,
-404, rate limiting, malformed JSON, unreachable host and project-ref URL encoding; cipher round
-trip, IV uniqueness, tamper detection, wrong key, fail-closed and key-length validation; URL
-validator including the cloud metadata address; config authz, token-never-returned and
-encrypted-at-rest; link/create/unlink/refresh end to end with templated-body assertions,
-cross-project isolation and VIEWER/TESTER split; poller batching and stop-on-auth-failure.
+**Tests (71 new, 294 total green):** both adapters against stub APIs covering auth failure, 404,
+rate limiting, malformed JSON, unreachable host and path encoding, plus Forgejo's pull-request
+exclusion and owner/repo validation; cipher round trip, IV uniqueness, tamper detection, wrong key,
+fail-closed and key-length validation; URL validator including the cloud metadata address; config
+authz, token-never-returned and encrypted-at-rest; link/create/unlink/refresh end to end with
+templated-body assertions, cross-project isolation and VIEWER/TESTER split; poller batching and
+stop-on-auth-failure.
 
 **Note:** `CreateIssueLinkRequest.create` is boxed rather than primitive — Jackson rejects a record
 whose primitive component is absent from the body, which made "link an existing issue" 400. The same

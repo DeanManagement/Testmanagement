@@ -3,18 +3,11 @@ package com.deanmanagement.testmanagement.project.internal.issuetracker;
 import com.deanmanagement.testmanagement.project.internal.entity.IssueState;
 import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerProviderType;
 import com.deanmanagement.testmanagement.shared.exception.UpstreamServiceException;
-import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -29,20 +22,28 @@ import java.util.Map;
  * project with only {@code api} rights.
  */
 @Component
-@RequiredArgsConstructor
-public class GitLabIssueProvider implements IssueTrackerProvider {
+public class GitLabIssueProvider extends HttpIssueProviderSupport implements IssueTrackerProvider {
 
     private static final int SEARCH_PAGE_SIZE = 20;
-    private static final int MAX_RESPONSE_BYTES = 2 * 1024 * 1024;
+    private static final int MAX_TITLE_LENGTH = 500;
 
-    private final IssueTrackerProperties properties;
-    private final ObjectMapper objectMapper;
-
-    private volatile HttpClient httpClient;
+    public GitLabIssueProvider(IssueTrackerProperties properties, ObjectMapper objectMapper) {
+        super(properties, objectMapper);
+    }
 
     @Override
     public IssueTrackerProviderType type() {
         return IssueTrackerProviderType.GITLAB;
+    }
+
+    @Override
+    protected String providerName() {
+        return "GitLab";
+    }
+
+    @Override
+    protected HttpRequest.Builder authenticate(HttpRequest.Builder builder, String token) {
+        return builder.header("PRIVATE-TOKEN", token);
     }
 
     @Override
@@ -65,19 +66,13 @@ public class GitLabIssueProvider implements IssueTrackerProvider {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("title", draft.title());
         payload.put("description", draft.body());
-
-        HttpRequest request = baseRequest(config, projectApi(config) + "/issues")
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(serialize(payload), StandardCharsets.UTF_8))
-                .build();
-
-        return toIssue(config, send(request, config));
+        return toIssue(config, postJson(config, projectApi(config) + "/issues", payload));
     }
 
     @Override
     public Issue get(DecryptedConfig config, String externalId) {
-        String iid = internalId(externalId);
-        return toIssue(config, getJson(config, projectApi(config) + "/issues/" + encode(iid)));
+        String iid = issueNumber(externalId);
+        return toIssue(config, getJson(config, projectApi(config) + "/issues/" + encodePath(iid)));
     }
 
     @Override
@@ -88,87 +83,10 @@ public class GitLabIssueProvider implements IssueTrackerProvider {
         getJson(config, projectApi(config));
     }
 
-    // ---- HTTP -------------------------------------------------------------
-
-    private HttpClient client() {
-        HttpClient local = httpClient;
-        if (local == null) {
-            synchronized (this) {
-                local = httpClient;
-                if (local == null) {
-                    local = HttpClient.newBuilder()
-                            .connectTimeout(Duration.ofMillis(properties.connectTimeoutMs()))
-                            // A redirect would re-send the PRIVATE-TOKEN header to whatever host the
-                            // tracker names, so redirects are never followed.
-                            .followRedirects(HttpClient.Redirect.NEVER)
-                            .build();
-                    httpClient = local;
-                }
-            }
-        }
-        return local;
-    }
-
-    private HttpRequest.Builder baseRequest(DecryptedConfig config, String url) {
-        return HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .timeout(Duration.ofMillis(properties.readTimeoutMs()))
-                .header("PRIVATE-TOKEN", config.token())
-                .header("Accept", "application/json");
-    }
-
-    private JsonNode getJson(DecryptedConfig config, String url) {
-        return send(baseRequest(config, url).GET().build(), config);
-    }
-
-    private JsonNode send(HttpRequest request, DecryptedConfig config) {
-        HttpResponse<String> response;
-        try {
-            response = client().send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new UpstreamServiceException("Interrupted while calling GitLab");
-        } catch (Exception e) {
-            // The message may contain the host but never the token, which lives only in a header.
-            throw new UpstreamServiceException("Could not reach GitLab at " + config.baseUrl(), e);
-        }
-
-        int status = response.statusCode();
-        if (status == 401 || status == 403) {
-            throw new UpstreamServiceException(
-                    "GitLab rejected the configured access token (HTTP " + status + ")");
-        }
-        if (status == 404) {
-            throw new UpstreamServiceException(
-                    "GitLab project '" + config.projectRef() + "' was not found, or the token cannot see it");
-        }
-        if (status == 429) {
-            throw new UpstreamServiceException("GitLab rate limit reached; try again shortly");
-        }
-        if (status < 200 || status >= 300) {
-            throw new UpstreamServiceException("GitLab returned HTTP " + status);
-        }
-
-        String body = response.body();
-        if (body == null || body.isBlank()) {
-            throw new UpstreamServiceException("GitLab returned an empty response");
-        }
-        if (body.length() > MAX_RESPONSE_BYTES) {
-            throw new UpstreamServiceException("GitLab response was too large to process");
-        }
-        try {
-            return objectMapper.readTree(body);
-        } catch (Exception e) {
-            throw new UpstreamServiceException("GitLab returned a malformed response");
-        }
-    }
-
-    // ---- Mapping ----------------------------------------------------------
-
     private String projectApi(DecryptedConfig config) {
         // GitLab addresses projects by URL-encoded path, so "group/sub/project" becomes
         // "group%2Fsub%2Fproject"; a numeric id passes through unchanged.
-        return trimTrailingSlash(config.baseUrl()) + "/api/v4/projects/" + encode(config.projectRef());
+        return trimTrailingSlash(config.baseUrl()) + "/api/v4/projects/" + encodePath(config.projectRef());
     }
 
     private Issue toIssue(DecryptedConfig config, JsonNode node) {
@@ -180,7 +98,7 @@ public class GitLabIssueProvider implements IssueTrackerProvider {
         return new Issue(
                 config.projectRef() + "#" + iid.asString(),
                 webUrl != null ? webUrl : trimTrailingSlash(config.baseUrl()),
-                text(node, "title"),
+                truncate(text(node, "title"), MAX_TITLE_LENGTH),
                 mapState(text(node, "state")));
     }
 
@@ -194,36 +112,5 @@ public class GitLabIssueProvider implements IssueTrackerProvider {
             case "closed", "locked" -> IssueState.CLOSED;
             default -> IssueState.UNKNOWN;
         };
-    }
-
-    /** Strips the {@code projectRef#} prefix the tool stores, leaving GitLab's per-project iid. */
-    private static String internalId(String externalId) {
-        int hash = externalId.lastIndexOf('#');
-        String iid = hash >= 0 ? externalId.substring(hash + 1) : externalId;
-        if (iid.isBlank() || !iid.chars().allMatch(Character::isDigit)) {
-            throw new IllegalArgumentException("Not a valid GitLab issue reference: " + externalId);
-        }
-        return iid;
-    }
-
-    private static String text(JsonNode node, String field) {
-        JsonNode value = node.get(field);
-        return value == null || value.isNull() ? null : value.asString();
-    }
-
-    private String serialize(Map<String, Object> payload) {
-        try {
-            return objectMapper.writeValueAsString(payload);
-        } catch (Exception e) {
-            throw new UpstreamServiceException("Could not build the GitLab request body");
-        }
-    }
-
-    private static String encode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8);
-    }
-
-    private static String trimTrailingSlash(String url) {
-        return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
     }
 }

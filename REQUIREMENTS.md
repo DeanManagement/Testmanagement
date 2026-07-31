@@ -700,7 +700,8 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 
 ### 13.9 Native Issue-Tracker Integration — 🚧 backend shipped, UI pending ([PRD-010](docs/prd/PRD-010-issue-tracker-integration.md))
 
-Backend landed 2026-07-31 for GitLab: per-project config with an AES-GCM encrypted token (never
+Backend landed 2026-07-31 for GitLab and Forgejo (which also covers Gitea and Codeberg):
+per-project config with an AES-GCM encrypted token (never
 returned by the API), issue search, link an existing issue or file a templated one from a failed
 result, cached OPEN/CLOSED state with a bounded poller that stays silent unless a tracker is
 configured. Requires `ISSUE_TRACKER_ENCRYPTION_KEY`. The config form and result-detail UI are the

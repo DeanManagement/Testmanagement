@@ -201,6 +201,26 @@ class IssueTrackerApiTest {
     }
 
     @Test
+    void supportedProvidersListsOnlyTrackersWithAnAdapter() throws Exception {
+        mockMvc.perform(get(configUrl(projectId) + "/providers").with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.containsInAnyOrder("GITLAB", "FORGEJO")));
+    }
+
+    @Test
+    void forgejoCanBeConfigured() throws Exception {
+        mockMvc.perform(put(configUrl(projectId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"provider\":\"FORGEJO\",\"baseUrl\":\"https://codeberg.org\","
+                                + "\"projectRef\":\"acme/webshop\",\"apiToken\":\"" + TOKEN + "\"}")
+                        .with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.provider").value("FORGEJO"))
+                .andExpect(jsonPath("$.projectRef").value("acme/webshop"))
+                .andExpect(jsonPath("$.tokenSet").value(true));
+    }
+
+    @Test
     void unsupportedProviderIsRejectedUntilItHasAnAdapter() throws Exception {
         mockMvc.perform(put(configUrl(projectId))
                         .contentType(MediaType.APPLICATION_JSON)
