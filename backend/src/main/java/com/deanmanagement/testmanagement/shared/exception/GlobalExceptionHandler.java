@@ -58,6 +58,12 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of("TOO_MANY_REQUESTS", ex.getMessage()));
     }
 
+    @ExceptionHandler(UpstreamServiceException.class)
+    public ResponseEntity<ErrorResponse> handleUpstreamService(UpstreamServiceException ex) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(ErrorResponse.of("UPSTREAM_UNAVAILABLE", ex.getMessage()));
+    }
+
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)

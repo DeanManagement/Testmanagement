@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | 🚧 Backend implemented (2026-07-31, GitLab) — frontend pending |
 | **Author** | Engineering review (Claude) |
 | **Created** | 2026-06-09 |
 | **Priority** | P3 — v2.0, highest value in the v2 set |
@@ -72,8 +72,61 @@ Ship **one provider first** (GitHub or GitLab — REST, token auth, simple) and 
 - **Risk:** Medium — outbound auth + token security + provider API variance. Mitigated by single-provider start, the existing webhook HTTP/SSRF patterns, and opt-in design.
 
 ## 7. Acceptance Criteria
-- [ ] Project admin configures a provider with an encrypted token (never returned).
-- [ ] Tester searches issues and links one to a result; can create a templated issue from a failure.
-- [ ] Linked issues show an OPEN/CLOSED pill refreshed within the poll window.
-- [ ] No outbound calls when no tracker is configured; non-HTTPS/private base URLs rejected.
-- [ ] `defectLink` remains usable; provider/adapter/authz tests pass.
+- [x] Project admin configures a provider with an encrypted token (never returned).
+- [x] Tester searches issues and links one to a result; can create a templated issue from a failure. *(API only — UI pending.)*
+- [x] Linked issues show an OPEN/CLOSED pill refreshed within the poll window. *(State cached and polled; pill pending.)*
+- [x] No outbound calls when no tracker is configured; non-HTTPS/private base URLs rejected.
+- [x] `defectLink` remains usable; provider/adapter/authz tests pass.
+
+## 8. As Built — backend (2026-07-31)
+
+**Provider:** GitLab first, per §1. `IssueTrackerProvider` exposes search/create/get/testConnection;
+`IssueTrackerProviderRegistry` resolves the adapter from the config's provider enum. Adding GitHub,
+Jira or Linear means adding one bean — no service or controller changes. The enum already declares
+all four so stored rows survive a later adapter without a migration.
+
+**Data model:** V42 adds `issue_tracker_configs` (unique per project) and `issue_links` (unique per
+result + external id). Provider and URL are denormalised onto the link so previously filed defects
+stay visible and clickable after a config is deleted or switched.
+
+**Token security:** AES-GCM with a fresh random IV per encryption, key from
+`app.issuetracker.encryption-key`. With no key configured the cipher refuses to encrypt rather than
+falling back to plaintext — a tracker token grants write access to the customer's tracker, so it
+fails closed. The token has no field in any response DTO, not even masked; `tokenSet` is a boolean.
+Omitting the token on update keeps the stored one, so changing the project ref does not require
+re-pasting the secret.
+
+**SSRF:** `IssueTrackerUrlValidator` mirrors the webhook validator — https required, loopback,
+private, link-local and any-local rejected — with independent switches. Redirects are never
+followed, since a redirect would re-send the `PRIVATE-TOKEN` header to a host the tracker chooses.
+
+**Polling:** `IssueStatePoller` returns immediately unless some project has an active config, so an
+air-gapped install makes no outbound calls at all. Only links on `PLANNED`/`IN_PROGRESS` runs are
+considered; each pass is capped at `poll-batch-size`, oldest-checked first. On an upstream error the
+project's batch stops after the first failure rather than repeating a rejected call per link, and
+the error is recorded on the config for the settings UI. The refresh logic lives in a separate
+`IssueStateRefresher` bean because `@Transactional` is proxy-applied and would not take effect on a
+self-invoked method.
+
+**Errors:** new `UpstreamServiceException` → 502, so "the tracker is down" is distinguishable from
+a bad request (400) or an authorization failure (403). On-demand refresh swallows provider failures
+and keeps the cached state — a stale pill beats an error page on the result view.
+
+**Endpoints:** config GET/PUT/DELETE and `POST /issue-tracker/test` (ADMIN); `GET /issues/search`
+(any member); list and `POST .../issues/refresh` (any member); link/create and unlink (TESTER).
+
+**Tests (54 new, 277 total green):** GitLab adapter against a stub v4 API including auth failure,
+404, rate limiting, malformed JSON, unreachable host and project-ref URL encoding; cipher round
+trip, IV uniqueness, tamper detection, wrong key, fail-closed and key-length validation; URL
+validator including the cloud metadata address; config authz, token-never-returned and
+encrypted-at-rest; link/create/unlink/refresh end to end with templated-body assertions,
+cross-project isolation and VIEWER/TESTER split; poller batching and stop-on-auth-failure.
+
+**Note:** `CreateIssueLinkRequest.create` is boxed rather than primitive — Jackson rejects a record
+whose primitive component is absent from the body, which made "link an existing issue" 400. The same
+latent bug was fixed in `GrantTestCasePermissionRequest.canEdit`.
+
+### Still to do
+- Frontend: project-settings config form with test-connection button; link/create UI and OPEN/CLOSED
+  pill on result detail (§3.5).
+- Screenshot links in the templated body (§2) — deferred until the UI exists to exercise them.

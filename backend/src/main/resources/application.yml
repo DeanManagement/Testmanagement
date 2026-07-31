@@ -76,6 +76,18 @@ app:
     # Optional watcher email notifications. Off by default (air-gap safe).
     enabled: ${MAIL_ENABLED:false}
     from: ${MAIL_FROM:no-reply@testmanagement.local}
+  issuetracker:
+    # AES key (base64, 16/24/32 bytes) for stored tracker API tokens. Unset means the
+    # integration refuses to store a token rather than keeping it in plaintext (PRD-010).
+    encryption-key: ${ISSUE_TRACKER_ENCRYPTION_KEY:}
+    # SSRF guard for self-hosted tracker base URLs.
+    allow-private-targets: ${ISSUE_TRACKER_ALLOW_PRIVATE_TARGETS:false}
+    connect-timeout-ms: 5000
+    read-timeout-ms: 10000
+    # Status poll. No-ops entirely while no project has an active config.
+    poll-interval-ms: 300000
+    poll-batch-size: 50
+    poll-min-age-ms: 240000
   webhooks:
     # SSRF guard: only allow loopback/private targets if explicitly enabled.
     allow-private-targets: ${WEBHOOKS_ALLOW_PRIVATE_TARGETS:false}

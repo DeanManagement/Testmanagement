@@ -7,6 +7,15 @@ spring:
 app:
   search:
     full-text: false
+  issuetracker:
+    # Fixed 32-byte test key; the poller is pushed far out so it never fires during a test run.
+    encryption-key: dGVzdC1pc3N1ZS10cmFja2VyLWtleS0zMi1ieXRlcyE=
+    allow-private-targets: true
+    require-https: false
+    connect-timeout-ms: 2000
+    read-timeout-ms: 3000
+    poll-interval-ms: 3600000
+    poll-min-age-ms: 0
   webhooks:
     allow-private-targets: true
     require-https: false

@@ -61,12 +61,12 @@ public class TestCasePermissionService {
                     return created;
                 });
         boolean isNew = permission.getId() == null;
-        permission.setCanEdit(request.canEdit());
+        permission.setCanEdit(request.isCanEdit());
         permission = permissionRepository.save(permission);
 
         auditService.log(projectId, actorId, isNew ? AuditAction.CREATED : AuditAction.UPDATED,
                 AuditEntityType.TEST_CASE, testCase.getId(), testCase.getTitle(),
-                (request.canEdit() ? "Granted edit" : "Granted view-only") + " to user " + request.userId());
+                (request.isCanEdit() ? "Granted edit" : "Granted view-only") + " to user " + request.userId());
 
         return toResponse(permission);
     }

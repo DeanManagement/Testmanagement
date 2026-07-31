@@ -629,7 +629,7 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 
 | Area | PRD | Size |
 |---|---|---|
-| Issue-tracker integration (§13.9) | [PRD-010](docs/prd/PRD-010-issue-tracker-integration.md) | M |
+| Issue-tracker integration (§13.9) — 🚧 backend shipped | [PRD-010](docs/prd/PRD-010-issue-tracker-integration.md) | M |
 | Test case versioning (§13.1) | [PRD-011](docs/prd/PRD-011-test-case-versioning.md) | L |
 | OIDC / Keycloak (§13.5) | [PRD-012](docs/prd/PRD-012-oidc-sso.md) | M |
 | ~~Dark mode / theming (§13.7)~~ — ✅ shipped | [PRD-013](docs/prd/PRD-013-dark-mode-theming.md) | S |
@@ -698,7 +698,15 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 - `GET /api/search?q=&types=&projectId=&limit=` returns grouped, ranked results; Postgres `tsvector` + GIN (`ts_rank`) with a portable `LIKE` fallback for non-Postgres/H2.
 - The Cmd-K / Ctrl-K command palette now tops up its instant local fuzzy match with debounced server results when local hits are sparse.
 
-### 13.9 Native Issue-Tracker Integration — [PRD-010](docs/prd/PRD-010-issue-tracker-integration.md)
+### 13.9 Native Issue-Tracker Integration — 🚧 backend shipped, UI pending ([PRD-010](docs/prd/PRD-010-issue-tracker-integration.md))
+
+Backend landed 2026-07-31 for GitLab: per-project config with an AES-GCM encrypted token (never
+returned by the API), issue search, link an existing issue or file a templated one from a failed
+result, cached OPEN/CLOSED state with a bounded poller that stays silent unless a tracker is
+configured. Requires `ISSUE_TRACKER_ENCRYPTION_KEY`. The config form and result-detail UI are the
+remaining work.
+
+Original scope:
 
 - Optional per-project connection to GitHub/GitLab/Jira/Linear (start single-provider); encrypted API token, project-admin only.
 - Search issues, link to results, and create a templated issue from a failure; live OPEN/CLOSED status pill via a bounded poll.
