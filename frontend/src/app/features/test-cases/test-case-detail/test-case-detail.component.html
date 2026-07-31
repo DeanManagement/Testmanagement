@@ -92,6 +92,16 @@
       }
     </div>
 
+    <div class="parameters-section tm-card" data-test-id="test-case-parameters-section">
+      <h3>{{ 'parameter.title' | translate }}</h3>
+      <p class="section-hint">{{ 'parameter.hint' | translate }}</p>
+      <app-test-case-parameters
+        [projectId]="projectId"
+        [testCaseId]="testCaseId"
+        [steps]="tc.steps"
+        [canEdit]="true"></app-test-case-parameters>
+    </div>
+
     <div class="versions-section tm-card" data-test-id="test-case-versions-section">
       <h3>{{ 'version.title' | translate }}</h3>
       <p class="section-hint">{{ 'version.hint' | translate }}</p>

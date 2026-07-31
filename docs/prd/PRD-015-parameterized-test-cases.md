@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | ✅ Implemented (2026-07-31) |
 | **Author** | Engineering review (Claude) |
 | **Created** | 2026-06-09 |
 | **Priority** | P3 — v2.0, build on real demand |
@@ -65,3 +65,41 @@ This adds modelling complexity, so weigh it against the "small, simple, fast" ba
 - [ ] Step text shows substituted values; unknown placeholders are preserved and flagged.
 - [ ] Each result records its set name + values; the substituted view is reproducible.
 - [ ] Parameter-set CRUD is role-gated; expansion/substitution tests pass.
+
+
+## 8. As Built (2026-07-31)
+
+**Zero sets means zero change.** This touches run creation, the most load-bearing flow in the tool,
+so the first assertion in the test suite is the negative one: a case with no parameter sets produces
+exactly one result with null parameter fields, and its step results are unchanged. Expansion is a
+branch that only runs when sets exist.
+
+**Values are copied onto the result, not looked up.** Editing or deleting a set afterwards must not
+change what a past execution says it ran with — the same reasoning as PRD-011's executed version,
+and the two together make a historical result fully reproducible: the wording came from version N,
+the data from the stored values.
+
+**An unknown placeholder stays literal.** Blanking `{password}` produces "enter " — a step that
+looks finished and is quietly wrong, which is the more dangerous failure in a document someone
+follows by hand. Leaving the placeholder makes the gap obvious, and the editor flags it explicitly.
+
+**Placeholder keys are identifier-shaped** (`[A-Za-z0-9_.-]+`) so braces in ordinary prose — "press
+{the enter key}" — are not mistaken for parameters. Keys that could never match are rejected on
+save, rather than silently producing an unreachable value.
+
+**Capped at 50 sets per case.** Expansion multiplies results in every run the case appears in, so an
+accidental bulk paste would otherwise turn one run into thousands of executions.
+
+**Substitution is duplicated in the frontend** for the live preview. The pattern and the
+unknown-placeholder rule are deliberately identical; a preview that promised something the
+execution screen did not deliver would be worse than no preview.
+
+**Tests: 23.** Eleven on substitution — every occurrence, several keys, unknown left literal, prose
+in braces ignored, `$` and `\` in values treated as text rather than regex metacharacters, null and
+empty inputs. Twelve on expansion — zero sets producing one result and its step results, N sets
+producing N, per-result values, mixed runs, reverting when sets are removed, values surviving set
+deletion, name uniqueness, key validation and the cap.
+
+### Deferred
+- Generated data and combinatorial expansion (§2 non-goals).
+- Shared parameter libraries across cases.

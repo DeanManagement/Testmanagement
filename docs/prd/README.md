@@ -40,7 +40,7 @@ Fixes for the findings in [`docs/CODE_REVIEW_2026-06-09.md`](../CODE_REVIEW_2026
 | [012](PRD-012-oidc-sso.md) | SSO via OpenID Connect (multi-provider) | M | ✅ Implemented |
 | [013](PRD-013-dark-mode-theming.md) | Dark Mode / Theming | S | ✅ Implemented |
 | [014](PRD-014-traceability-matrix.md) | Requirements & Traceability Matrix | M | ✅ Implemented |
-| [015](PRD-015-parameterized-test-cases.md) | Parameterized / Data-Driven Test Cases | M | Proposed |
+| [015](PRD-015-parameterized-test-cases.md) | Parameterized / Data-Driven Test Cases | M | ✅ Implemented |
 | [016](PRD-016-flaky-test-detection.md) | Flaky Test Detection | M (≈S) | ✅ Implemented |
 
 ## What shipped
@@ -52,9 +52,13 @@ The entire v1.3 backlog (PRD-001 through PRD-008) is implemented and tested. Hig
 Driver-dependent — see [PRD-009](PRD-009-v2-future-backlog.md) §3 for the recommended order:
 ~~dark mode (013)~~ → issue-tracker (010) → OIDC (012) → flaky detection (016) → traceability (014) + versioning (011) → parameterized cases (015).
 
-Dark mode (013), issue-tracker integration (010, GitLab + Forgejo), SSO (012) and flaky detection
-(016) all shipped on 2026-07-31. **Traceability ([PRD-014](PRD-014-traceability-matrix.md)) is
-next**, then versioning (011), then parameterized cases (015).
+**The entire v2.0 backlog shipped on 2026-07-31.** Dark mode (013), issue-tracker integration
+(010, GitLab + Forgejo), SSO (012), flaky detection (016), versioning (011), traceability (014) and
+parameterized cases (015).
+
+Note that 011, 014 and 015 were originally gated on a driver appearing — compliance for the first
+two, real demand for the third — and were built on request rather than because that driver arrived.
+Worth revisiting if any of them turns out to be carried complexity rather than used capability.
 
 ## Status legend
-v1.3, v1.4, PRD-010, PRD-012, PRD-013 and PRD-016 are **Implemented**. The remaining v2.0 PRDs are **Proposed**; update the status field as work is picked up and reflect shipped features in `REQUIREMENTS.md`.
+Every PRD in this directory is **Implemented**. New work should get a new PRD rather than extending a shipped one.

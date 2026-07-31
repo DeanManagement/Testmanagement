@@ -248,6 +248,21 @@
                 }
               }
 
+              @if (result.parameterSetName || result.executedVersion) {
+                <div class="result-provenance" data-test-id="result-provenance">
+                  @if (result.parameterSetName) {
+                    <span class="provenance-chip provenance-chip--param">
+                      {{ 'parameter.resultLabel' | translate: { name: result.parameterSetName } }}
+                    </span>
+                  }
+                  @if (result.executedVersion) {
+                    <span class="provenance-chip">
+                      {{ 'version.executedVersion' | translate: { number: result.executedVersion } }}
+                    </span>
+                  }
+                </div>
+              }
+
               @if (issueTrackerConfigured) {
                 <app-issue-links
                   [projectId]="projectId"

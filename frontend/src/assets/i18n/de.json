@@ -819,5 +819,23 @@
       "UNTESTED": "Ein Test ist verknüpft, wurde aber nie ausgeführt — die Anforderung ist damit noch nicht belegt.",
       "UNCOVERED": "Dieser Anforderung ist kein Testfall zugeordnet."
     }
+  },
+  "parameter": {
+    "title": "Parameter",
+    "hint": "Mit Datensätzen läuft dieser Testfall einmal pro Satz, wobei {Platzhalter} in den Schritten ersetzt werden.",
+    "empty": "Keine Parametersätze — dieser Testfall läuft wie gewohnt einmal.",
+    "add": "Parametersatz hinzufügen",
+    "setName": "Name des Satzes",
+    "setNameHint": "Wird bei jedem erzeugten Ergebnis angezeigt, z. B. „Minimum“ oder „ungültige E-Mail“.",
+    "key": "Name",
+    "value": "Wert",
+    "addValue": "Wert hinzufügen",
+    "preview": "Vorschau",
+    "previewSet": "Mit Satz",
+    "unresolved": "Kein Wert für {{keys}} — der Schritt zeigt den Platzhalter unverändert an.",
+    "deleteTitle": "Diesen Parametersatz entfernen?",
+    "deleteMessage": "{{name}} wird entfernt und in künftigen Durchläufen nicht mehr berücksichtigt.",
+    "deleteKeepsResults": "Bereits erfasste Ergebnisse behalten die Werte, mit denen sie ausgeführt wurden.",
+    "resultLabel": "Satz: {{name}}"
   }
 }

@@ -43,6 +43,20 @@ public class TestResult extends BaseEntity {
     @Column(name = "executed_version")
     private Integer executedVersion;
 
+    /**
+     * Which parameter set this result executed, when the case is parameterized (PRD-015). Null for
+     * an ordinary case, which is the overwhelmingly common shape.
+     */
+    @Column(name = "parameter_set_name", length = 200)
+    private String parameterSetName;
+
+    /**
+     * The values used, stored on the result rather than looked up. Editing or deleting the set
+     * afterwards must not change what a past execution says it ran with.
+     */
+    @Column(name = "parameter_values_json", columnDefinition = "TEXT")
+    private String parameterValuesJson;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_run_id", nullable = false)
     private TestRun testRun;

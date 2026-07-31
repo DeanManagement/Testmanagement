@@ -819,5 +819,23 @@
       "UNTESTED": "A test is linked but has never been executed, so nothing proves this requirement yet.",
       "UNCOVERED": "No test case is linked to this requirement."
     }
+  },
+  "parameter": {
+    "title": "Parameters",
+    "hint": "Give this case data sets and it runs once per set, with {placeholder} values substituted into the steps.",
+    "empty": "No parameter sets — this case runs once, as normal.",
+    "add": "Add parameter set",
+    "setName": "Set name",
+    "setNameHint": "Shown on each expanded result, e.g. \"minimum\" or \"invalid email\".",
+    "key": "Name",
+    "value": "Value",
+    "addValue": "Add value",
+    "preview": "Preview",
+    "previewSet": "Using set",
+    "unresolved": "No value for {{keys}} — the step will show the placeholder as written.",
+    "deleteTitle": "Remove this parameter set?",
+    "deleteMessage": "{{name}} will be removed and future runs will no longer include it.",
+    "deleteKeepsResults": "Results already recorded keep the values they ran with.",
+    "resultLabel": "Set: {{name}}"
   }
 }

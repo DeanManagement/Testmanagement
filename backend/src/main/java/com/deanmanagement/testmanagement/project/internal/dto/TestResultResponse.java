@@ -13,6 +13,10 @@ public record TestResultResponse(
         TestResultStatus status,
         String comment,
         String defectLink,
+        /** Which version of the test case this executed (PRD-011); null for pre-versioning results. */
+        Integer executedVersion,
+        /** Which parameter set this executed (PRD-015); null for an ordinary case. */
+        String parameterSetName,
         List<StepResultResponse> stepResults,
         Instant createdAt,
         Instant updatedAt,

@@ -1,0 +1,120 @@
+<div class="parameters" data-test-id="test-case-parameters">
+  @if (loading) {
+    <mat-spinner diameter="24"></mat-spinner>
+  } @else {
+
+    @if (sets.length === 0 && !formOpen) {
+      <p class="no-sets">{{ 'parameter.empty' | translate }}</p>
+    }
+
+    @if (sets.length > 0) {
+      <div class="set-list">
+        @for (set of sets; track set.id) {
+          <div class="set-card" [attr.data-test-id]="'parameter-set-' + set.name">
+            <div class="set-head">
+              <span class="set-name">{{ set.name }}</span>
+              @if (canEdit) {
+                <span class="set-actions">
+                  <button mat-icon-button (click)="openEdit(set)" [matTooltip]="'common.edit' | translate">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button color="warn" (click)="remove(set)" [matTooltip]="'common.delete' | translate">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </span>
+              }
+            </div>
+            <div class="set-values">
+              @for (entry of valueEntries(set); track entry.key) {
+                <span class="value-chip"><code>{{ entry.key }}</code> = {{ entry.value }}</span>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @if (canEdit && !formOpen) {
+      <button mat-stroked-button (click)="openCreate()" data-test-id="parameter-add-btn">
+        <mat-icon>add</mat-icon>
+        {{ 'parameter.add' | translate }}
+      </button>
+    }
+
+    @if (formOpen) {
+      <div class="set-form" data-test-id="parameter-form">
+        <mat-form-field appearance="outline" class="set-name-field">
+          <mat-label>{{ 'parameter.setName' | translate }}</mat-label>
+          <input matInput [(ngModel)]="formName" placeholder="minimum" data-test-id="parameter-name-input">
+          <mat-hint>{{ 'parameter.setNameHint' | translate }}</mat-hint>
+        </mat-form-field>
+
+        <div class="kv-grid">
+          @for (row of rows; track trackByIndex($index)) {
+            <div class="kv-row">
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'parameter.key' | translate }}</mat-label>
+                <input matInput [(ngModel)]="row.key" [attr.data-test-id]="'parameter-key-' + $index">
+              </mat-form-field>
+              <mat-form-field appearance="outline">
+                <mat-label>{{ 'parameter.value' | translate }}</mat-label>
+                <input matInput [(ngModel)]="row.value" [attr.data-test-id]="'parameter-value-' + $index">
+              </mat-form-field>
+              <button mat-icon-button (click)="removeRow($index)" [matTooltip]="'common.delete' | translate">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          }
+        </div>
+
+        <div class="form-actions">
+          <button mat-button (click)="addRow()" data-test-id="parameter-add-row-btn">
+            <mat-icon>add</mat-icon>
+            {{ 'parameter.addValue' | translate }}
+          </button>
+          <span class="spacer"></span>
+          <button mat-button (click)="closeForm()">{{ 'common.cancel' | translate }}</button>
+          <button mat-flat-button [disabled]="!canSave || saving" (click)="save()" data-test-id="parameter-save-btn">
+            {{ (saving ? 'common.saving' : 'common.save') | translate }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (sets.length > 0 && steps.length > 0) {
+      <div class="preview" data-test-id="parameter-preview">
+        <div class="preview-head">
+          <h4>{{ 'parameter.preview' | translate }}</h4>
+          <mat-form-field appearance="outline" class="preview-picker">
+            <mat-label>{{ 'parameter.previewSet' | translate }}</mat-label>
+            <mat-select [(ngModel)]="previewSetId" data-test-id="parameter-preview-select">
+              @for (set of sets; track set.id) {
+                <mat-option [value]="set.id">{{ set.name }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <ol class="preview-steps">
+          @for (step of previewSteps; track $index) {
+            <li>
+              <p class="preview-action">{{ step.action }}</p>
+              @if (step.expectedResult) {
+                <p class="preview-expected">→ {{ step.expectedResult }}</p>
+              }
+              @if (step.testData) {
+                <p class="preview-data">{{ step.testData }}</p>
+              }
+              @if (step.unresolved.length > 0) {
+                <p class="preview-unresolved" [attr.data-test-id]="'parameter-unresolved-' + $index">
+                  <mat-icon>warning</mat-icon>
+                  {{ 'parameter.unresolved' | translate: { keys: step.unresolved.join(', ') } }}
+                </p>
+              }
+            </li>
+          }
+        </ol>
+      </div>
+    }
+  }
+</div>

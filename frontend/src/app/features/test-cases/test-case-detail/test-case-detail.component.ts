@@ -21,6 +21,7 @@ import { CommentFormComponent } from '../../../shared/components/comment-form/co
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
 import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 import { TestCaseVersionsComponent } from '../test-case-versions/test-case-versions.component';
+import { TestCaseParametersComponent } from '../test-case-parameters/test-case-parameters.component';
 
 @Component({
   selector: 'app-test-case-detail',
@@ -39,6 +40,7 @@ import { TestCaseVersionsComponent } from '../test-case-versions/test-case-versi
     StepSpecCardComponent,
     EntityHistoryComponent,
     TestCaseVersionsComponent,
+    TestCaseParametersComponent,
   ],
   templateUrl: './test-case-detail.component.html',
   styleUrl: './test-case-detail.component.scss',

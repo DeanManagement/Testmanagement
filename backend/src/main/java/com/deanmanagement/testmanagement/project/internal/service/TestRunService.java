@@ -19,6 +19,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.spec.TestRu
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.StepResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCaseParameterSet;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
@@ -72,6 +73,7 @@ public class TestRunService {
     private final TestRunMapper testRunMapper;
     private final UserService userService;
     private final AuditService auditService;
+    private final ParameterSetService parameterSetService;
     private final ApplicationEventPublisher eventPublisher;
     private final ProjectSequenceService projectSequenceService;
 
@@ -223,22 +225,15 @@ public class TestRunService {
         if (request.testCaseIds() != null && !request.testCaseIds().isEmpty()) {
             List<TestCase> testCases = testCaseRepository.findAllById(request.testCaseIds());
             for (TestCase tc : testCases) {
-                TestResult result = new TestResult();
-                result.setTestRun(run);
-                result.setTestCase(tc);
-                // Stamp the version being executed (PRD-011). Later edits to the case bump its
-                // current version but must not rewrite what this result ran against.
-                result.setExecutedVersion(tc.getCurrentVersion());
-                result.setStatus(TestResultStatus.PENDING);
-                run.getResults().add(result);
-
-                // Create step results for each test step
-                for (TestStep step : tc.getSteps()) {
-                    StepResult stepResult = new StepResult();
-                    stepResult.setTestResult(result);
-                    stepResult.setTestStep(step);
-                    stepResult.setStatus(TestResultStatus.PENDING);
-                    result.getStepResults().add(stepResult);
+                // A parameterized case expands into one result per set (PRD-015); a case with no
+                // sets yields exactly one result, byte-for-byte as before this feature existed.
+                List<TestCaseParameterSet> parameterSets = parameterSetService.setsFor(tc.getId());
+                if (parameterSets.isEmpty()) {
+                    run.getResults().add(newPendingResult(run, tc, null));
+                } else {
+                    for (TestCaseParameterSet set : parameterSets) {
+                        run.getResults().add(newPendingResult(run, tc, set));
+                    }
                 }
             }
         }
@@ -247,6 +242,34 @@ public class TestRunService {
         auditService.log(projectId, userId, AuditAction.CREATED,
                 AuditEntityType.TEST_RUN, run.getId(), run.getName(), null);
         return testRunMapper.toResponse(run);
+    }
+
+    /**
+     * One pending result with its step results. {@code set} is null for an ordinary case; when
+     * present, the set's name and values are copied onto the result so the execution stays
+     * reproducible after the template or the set is edited.
+     */
+    private TestResult newPendingResult(TestRun run, TestCase tc, TestCaseParameterSet set) {
+        TestResult result = new TestResult();
+        result.setTestRun(run);
+        result.setTestCase(tc);
+        // Stamp the version being executed (PRD-011). Later edits to the case bump its
+        // current version but must not rewrite what this result ran against.
+        result.setExecutedVersion(tc.getCurrentVersion());
+        result.setStatus(TestResultStatus.PENDING);
+        if (set != null) {
+            result.setParameterSetName(set.getName());
+            result.setParameterValuesJson(set.getValuesJson());
+        }
+
+        for (TestStep step : tc.getSteps()) {
+            StepResult stepResult = new StepResult();
+            stepResult.setTestResult(result);
+            stepResult.setTestStep(step);
+            stepResult.setStatus(TestResultStatus.PENDING);
+            result.getStepResults().add(stepResult);
+        }
+        return result;
     }
 
     @Transactional

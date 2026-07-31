@@ -630,14 +630,20 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 | Area | PRD | Size |
 |---|---|---|
 | ~~Issue-tracker integration (§13.9)~~ — ✅ shipped | [PRD-010](docs/prd/PRD-010-issue-tracker-integration.md) | M |
-| Test case versioning (§13.1) | [PRD-011](docs/prd/PRD-011-test-case-versioning.md) | L |
+| ~~Test case versioning (§13.1)~~ — ✅ shipped | [PRD-011](docs/prd/PRD-011-test-case-versioning.md) | L |
 | ~~OIDC / Keycloak (§13.5)~~ — ✅ shipped | [PRD-012](docs/prd/PRD-012-oidc-sso.md) | M |
 | ~~Dark mode / theming (§13.7)~~ — ✅ shipped | [PRD-013](docs/prd/PRD-013-dark-mode-theming.md) | S |
-| Traceability matrix (§13.2) | [PRD-014](docs/prd/PRD-014-traceability-matrix.md) | M |
-| Parameterized cases (§13.3) | [PRD-015](docs/prd/PRD-015-parameterized-test-cases.md) | M |
+| ~~Traceability matrix (§13.2)~~ — ✅ shipped | [PRD-014](docs/prd/PRD-014-traceability-matrix.md) | M |
+| ~~Parameterized cases (§13.3)~~ — ✅ shipped | [PRD-015](docs/prd/PRD-015-parameterized-test-cases.md) | M |
 | ~~Flaky detection (§13.4)~~ — ✅ shipped | [PRD-016](docs/prd/PRD-016-flaky-test-detection.md) | M |
 
-### 13.1 Test Case Versioning / History — [PRD-011](docs/prd/PRD-011-test-case-versioning.md)
+### 13.1 Test Case Versioning / History — ✅ shipped ([PRD-011](docs/prd/PRD-011-test-case-versioning.md))
+
+Shipped 2026-07-31. Every edit snapshots the prior state before mutating, results record the version
+they executed, and a History section compares any two versions. Results predating the feature are
+left unrecorded rather than claimed as v1.
+
+Original scope:
 
 - Track changes to test cases over time as immutable snapshots.
 - When a test case is edited, the previous version is preserved.
@@ -645,7 +651,12 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 - Version history viewer on the test case detail page showing diffs.
 - Enables regulatory compliance and traceability.
 
-### 13.2 Traceability Matrix — [PRD-014](docs/prd/PRD-014-traceability-matrix.md)
+### 13.2 Traceability Matrix — ✅ shipped ([PRD-014](docs/prd/PRD-014-traceability-matrix.md))
+
+Shipped 2026-07-31. Requirements link many-to-many to test cases; coverage counts requirements whose
+linked tests have *passed*, and UNTESTED is distinct from UNCOVERED.
+
+Original scope:
 
 - Link test cases to external requirement identifiers (free-text IDs or URLs).
 - New entity: `Requirement` — id, externalId, title, projectId.
@@ -653,7 +664,13 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 - Matrix view: requirements on rows, test cases on columns, cells show latest result status.
 - Coverage report: which requirements have test coverage, which don't.
 
-### 13.3 Parameterized / Data-Driven Test Cases — [PRD-015](docs/prd/PRD-015-parameterized-test-cases.md)
+### 13.3 Parameterized / Data-Driven Test Cases — ✅ shipped ([PRD-015](docs/prd/PRD-015-parameterized-test-cases.md))
+
+Shipped 2026-07-31. A case with parameter sets expands to one result per set on run creation; a case
+with no sets behaves exactly as before. Values are stored on the result so past executions stay
+reproducible.
+
+Original scope:
 
 - Define test cases with variable placeholders in steps (e.g., `{username}`, `{password}`).
 - Create parameter sets (rows of values) for each test case.

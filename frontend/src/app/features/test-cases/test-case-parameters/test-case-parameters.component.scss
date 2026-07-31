@@ -1,0 +1,125 @@
+.parameters {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.no-sets {
+  color: var(--tm-text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
+.set-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.set-card {
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-radius);
+  padding: 10px 12px;
+}
+
+.set-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.set-name { font-weight: 600; }
+
+.set-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.value-chip {
+  background: var(--tm-subtle-bg);
+  border-radius: 12px;
+  padding: 2px 10px;
+  font-size: 13px;
+}
+
+.set-form {
+  border: 1px solid var(--tm-border);
+  border-radius: var(--tm-radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+}
+
+.set-name-field { max-width: 320px; }
+
+.kv-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  mat-form-field { flex: 1 1 160px; }
+}
+
+.form-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.spacer { flex: 1; }
+
+.preview {
+  border-top: 1px solid var(--tm-border);
+  padding-top: 12px;
+}
+
+.preview-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+
+  h4 { margin: 0; }
+}
+
+.preview-picker { max-width: 220px; }
+
+.preview-steps {
+  margin: 8px 0 0;
+  padding-left: 20px;
+
+  li { margin-bottom: 10px; }
+}
+
+.preview-action { margin: 0; }
+
+.preview-expected,
+.preview-data {
+  margin: 2px 0 0;
+  color: var(--tm-text-secondary);
+  font-size: 13px;
+}
+
+// An unresolved placeholder means the step will read "{key}" during execution — worth flagging
+// while the author can still fix it.
+.preview-unresolved {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--tm-tint-warn-fg);
+  background: var(--tm-tint-warn-bg);
+  border-radius: var(--tm-radius);
+  padding: 4px 8px;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
