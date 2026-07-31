@@ -75,16 +75,16 @@
     color: var(--tm-primary);
   }
   &--in_progress {
-    background: #fff3cd;
-    color: #856404;
+    background: var(--tm-tint-warn-bg);
+    color: var(--tm-tint-warn-fg);
   }
   &--completed {
-    background: #d4edda;
-    color: #155724;
+    background: var(--tm-tint-success-bg);
+    color: var(--tm-tint-success-fg);
   }
   &--cancelled {
-    background: #f8d7da;
-    color: #721c24;
+    background: var(--tm-tint-danger-bg);
+    color: var(--tm-tint-danger-fg);
   }
 }
 
@@ -115,8 +115,8 @@
   font-weight: 700;
   color: var(--tm-text);
 
-  &--passed { color: #155724; }
-  &--failed { color: #721c24; }
+  &--passed { color: var(--tm-tint-success-fg); }
+  &--failed { color: var(--tm-tint-danger-fg); }
 }
 
 .stat-label {
@@ -182,8 +182,8 @@
 }
 
 .secondary-cell { color: var(--tm-text-secondary); }
-.passed-cell { color: #155724; font-weight: 600; }
-.failed-cell { color: #721c24; font-weight: 600; }
+.passed-cell { color: var(--tm-tint-success-fg); font-weight: 600; }
+.failed-cell { color: var(--tm-tint-danger-fg); font-weight: 600; }
 
 .empty-hint {
   color: var(--tm-text-secondary);

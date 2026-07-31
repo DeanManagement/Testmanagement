@@ -74,16 +74,16 @@
     color: var(--tm-primary);
   }
   &--in_progress {
-    background: #fff3cd;
-    color: #856404;
+    background: var(--tm-tint-warn-bg);
+    color: var(--tm-tint-warn-fg);
   }
   &--completed {
-    background: #d4edda;
-    color: #155724;
+    background: var(--tm-tint-success-bg);
+    color: var(--tm-tint-success-fg);
   }
   &--cancelled {
-    background: #f8d7da;
-    color: #721c24;
+    background: var(--tm-tint-danger-bg);
+    color: var(--tm-tint-danger-fg);
   }
 }
 

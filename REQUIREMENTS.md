@@ -632,7 +632,7 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 | Issue-tracker integration (§13.9) | [PRD-010](docs/prd/PRD-010-issue-tracker-integration.md) | M |
 | Test case versioning (§13.1) | [PRD-011](docs/prd/PRD-011-test-case-versioning.md) | L |
 | OIDC / Keycloak (§13.5) | [PRD-012](docs/prd/PRD-012-oidc-sso.md) | M |
-| Dark mode / theming (§13.7) | [PRD-013](docs/prd/PRD-013-dark-mode-theming.md) | S |
+| ~~Dark mode / theming (§13.7)~~ — ✅ shipped | [PRD-013](docs/prd/PRD-013-dark-mode-theming.md) | S |
 | Traceability matrix (§13.2) | [PRD-014](docs/prd/PRD-014-traceability-matrix.md) | M |
 | Parameterized cases (§13.3) | [PRD-015](docs/prd/PRD-015-parameterized-test-cases.md) | M |
 | Flaky detection (§13.4) | [PRD-016](docs/prd/PRD-016-flaky-test-detection.md) | M |
@@ -682,11 +682,15 @@ These are valuable but lower-urgency. Each now has its own full PRD — see [PRD
 - Per-user, per-action notification preferences (in-app/email).
 - Optional email delivery (SMTP), off by default for air-gap.
 
-### 13.7 Dark Mode / Theming — [PRD-013](docs/prd/PRD-013-dark-mode-theming.md)
+### 13.7 Dark Mode / Theming — ✅ shipped ([PRD-013](docs/prd/PRD-013-dark-mode-theming.md))
 
-- Angular Material theme switching (prebuilt light and dark themes).
-- User preference stored in localStorage.
-- Toggle in the navigation header.
+- Light/dark/system toggle in the toolbar; `system` follows the OS and keeps tracking it.
+- Preference stored in `localStorage`, applied before first paint; private browsing falls back to
+  `system` instead of failing.
+- Dark palette defined as overrides of the existing `--tm-*` tokens plus semantic tint tokens, so
+  components re-theme without per-component dark rules.
+- Charts re-render on theme change with theme-derived axis, legend and tooltip colors; PDF/print
+  output stays light.
 
 ### 13.8 Global Search — ✅ shipped ([PRD-007](docs/prd/PRD-007-server-side-search.md))
 

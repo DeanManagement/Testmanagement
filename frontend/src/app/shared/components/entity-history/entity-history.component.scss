@@ -29,7 +29,7 @@
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--tm-subtle-bg);
   flex-shrink: 0;
 
   mat-icon {
@@ -64,12 +64,12 @@
 .history-details {
   margin: 2px 0 0;
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--tm-text-secondary);
 }
 
 .history-time {
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--tm-text-secondary);
   display: block;
   margin-top: 2px;
 }

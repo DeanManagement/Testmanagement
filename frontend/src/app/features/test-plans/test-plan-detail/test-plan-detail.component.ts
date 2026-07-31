@@ -26,6 +26,8 @@ import { TestPlanActions } from '../../../store/test-plan/test-plan.actions';
 import { selectTestPlanById } from '../../../store/test-plan/test-plan.selectors';
 import { TestPlan, TestPlanSummary } from '../../../shared/models/test-plan.model';
 import { TestPlanApiService } from '../../../core/services/test-plan-api.service';
+import { ThemeService } from '../../../core/services/theme.service';
+import { applyChartDefaults } from '../../../core/utils/chart-theme';
 import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
 
@@ -62,6 +64,7 @@ export class TestPlanDetailComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly themeService = inject(ThemeService);
 
   @ViewChild('resultDoughnut') resultDoughnutCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('runStatusBar') runStatusBarCanvas!: ElementRef<HTMLCanvasElement>;
@@ -91,6 +94,11 @@ export class TestPlanDetailComponent implements OnInit {
         this.renderCharts();
       }
     });
+    this.themeService.resolvedChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.summary) {
+        this.renderCharts();
+      }
+    });
   }
 
   deleteTestPlan(id: string): void {
@@ -106,6 +114,7 @@ export class TestPlanDetailComponent implements OnInit {
   }
 
   private renderCharts(): void {
+    applyChartDefaults(Chart);
     this.renderResultDoughnut();
     this.renderRunStatusBar();
     this.renderPassRateBar();

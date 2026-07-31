@@ -62,8 +62,8 @@ h2 {
 }
 
 .login-error {
-  background: #fde8e8;
-  color: #c53030;
+  background: var(--tm-tint-danger-bg);
+  color: var(--tm-tint-danger-fg);
   padding: 10px 16px;
   border-radius: 6px;
   font-size: 13px;

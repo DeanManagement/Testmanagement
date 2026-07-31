@@ -646,5 +646,11 @@
   "errors": {
     "server": "A server error occurred. Please try again later.",
     "network": "Unable to reach the server. Please check your connection."
+  },
+  "theme": {
+    "tooltip": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
   }
 }

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | Proposed |
+| **Status** | ✅ Implemented (2026-07-31) |
 | **Author** | Engineering review (Claude) |
 | **Created** | 2026-06-09 |
 | **Priority** | P3 — v2.0, low effort / high satisfaction (do first) |
@@ -49,7 +49,31 @@ A light/dark theme toggle. Frontend-only, no backend, self-contained — the che
 - **Risk:** Low — frontend-only; main effort is finding hardcoded colors. Reuses the chart re-render hook from PRD-008.
 
 ## 7. Acceptance Criteria
-- [ ] Light/dark/system toggle in the header; choice persists across reloads.
-- [ ] First visit honors the OS preference.
-- [ ] No unreadable (hardcoded-color) elements in dark mode; charts re-theme on switch.
-- [ ] Theme service unit test passes; build clean.
+- [x] Light/dark/system toggle in the header; choice persists across reloads.
+- [x] First visit honors the OS preference.
+- [x] No unreadable (hardcoded-color) elements in dark mode; charts re-theme on switch.
+- [x] Theme service unit test passes; build clean.
+
+## 8. As Built
+
+- `ThemeService` (`core/services/theme.service.ts`) holds the `light|dark|system` preference in
+  `localStorage` under `tm-theme`, resolves `system` through `matchMedia` and keeps listening for OS
+  changes while that preference is active. It toggles `.tm-dark` and `color-scheme` on `<html>`, and
+  publishes `resolvedChanges` for consumers that must re-render.
+- Applied from `provideAppInitializer`, so the theme is on the document before the first paint.
+- `styles.scss` defines the dark palette as overrides of the existing `--tm-*` tokens, so every
+  component already using those variables re-themes without changes. Angular Material gets
+  `mat.all-component-colors($dark-theme)` under `html.tm-dark` — colors only, since density and
+  typography are theme-independent and re-emitting them would double the stylesheet.
+- Added semantic tint tokens (`--tm-tint-{neutral,success,warn,danger,info}-{bg,fg}`, `--tm-subtle-bg`)
+  and moved the hardcoded banner, chip and status-cell colors in eleven component stylesheets onto
+  them. Status badges keep explicit per-theme pairs, because there the tint itself carries meaning.
+- Charts re-render on `resolvedChanges`; `core/utils/chart-theme.ts` points Chart.js's global
+  defaults at the current CSS variables so ticks, legends, grids and tooltips follow the theme, while
+  dataset colors — which encode status — stay fixed.
+- Contrast: every dark foreground/background pair used for text measures at least 5.6:1, above the
+  4.5:1 AA threshold.
+- Print styles force the light palette, so PDF output is unaffected by the active theme.
+- Tests: six `ThemeService` cases covering default resolution, persistence, OS tracking before and
+  after an explicit choice, change de-duplication, and the private-browsing path where
+  `localStorage` throws.

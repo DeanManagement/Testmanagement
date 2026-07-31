@@ -16,6 +16,7 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { AuthService } from '../../services/auth.service';
+import { ThemePreference, ThemeService } from '../../services/theme.service';
 import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
 import { CommandPaletteComponent } from '../../../shared/components/command-palette/command-palette.component';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
@@ -50,6 +51,7 @@ export class ShellComponent {
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly authService = inject(AuthService);
+  private readonly themeService = inject(ThemeService);
   private readonly breakpointObserver = inject(BreakpointObserver);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
@@ -63,8 +65,20 @@ export class ShellComponent {
     map(result => result.matches)
   );
 
+  themePreference = this.themeService.preference;
+  resolvedTheme = this.themeService.resolved;
+
   switchLanguage(lang: string): void {
     this.translate.use(lang);
+  }
+
+  setTheme(preference: ThemePreference): void {
+    this.themeService.setPreference(preference);
+  }
+
+  /** Icon for the toolbar button: reflects what is on screen, not the stored preference. */
+  themeIcon(): string {
+    return this.resolvedTheme() === 'dark' ? 'dark_mode' : 'light_mode';
   }
 
   logout(): void {

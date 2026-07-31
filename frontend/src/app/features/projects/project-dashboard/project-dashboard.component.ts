@@ -24,6 +24,8 @@ import {
   Legend,
 } from 'chart.js';
 import { ProjectApiService } from '../../../core/services/project-api.service';
+import { ThemeService } from '../../../core/services/theme.service';
+import { applyChartDefaults } from '../../../core/utils/chart-theme';
 import { ProjectDashboard } from '../../../shared/models/dashboard.model';
 
 Chart.register(
@@ -56,6 +58,7 @@ export class ProjectDashboardComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly themeService = inject(ThemeService);
 
   @ViewChild('statusChart') statusChartCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('priorityChart') priorityChartCanvas!: ElementRef<HTMLCanvasElement>;
@@ -92,9 +95,15 @@ export class ProjectDashboardComponent implements OnInit {
         this.renderCharts();
       }
     });
+    this.themeService.resolvedChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.dashboard) {
+        this.renderCharts();
+      }
+    });
   }
 
   private renderCharts(): void {
+    applyChartDefaults(Chart);
     this.renderStatusChart();
     this.renderPriorityChart();
     this.renderResultsChart();

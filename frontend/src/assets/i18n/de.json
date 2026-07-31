@@ -646,5 +646,11 @@
   "errors": {
     "server": "Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
     "network": "Server nicht erreichbar. Bitte prüfen Sie Ihre Verbindung."
+  },
+  "theme": {
+    "tooltip": "Design",
+    "light": "Hell",
+    "dark": "Dunkel",
+    "system": "System"
   }
 }

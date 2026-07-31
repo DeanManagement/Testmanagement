@@ -12,6 +12,8 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Chart, DoughnutController, ArcElement, Tooltip, Legend } from 'chart.js';
 import { TestSuiteReport } from '../../../shared/models/test-suite.model';
 import { TestSuiteApiService } from '../../../core/services/test-suite-api.service';
+import { ThemeService } from '../../../core/services/theme.service';
+import { applyChartDefaults } from '../../../core/utils/chart-theme';
 
 Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
 
@@ -38,6 +40,7 @@ export class TestSuiteReportComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly themeService = inject(ThemeService);
 
   @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
 
@@ -65,6 +68,9 @@ export class TestSuiteReportComponent implements OnInit {
     this.translate.onLangChange
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.renderChart());
+    this.themeService.resolvedChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.renderChart());
   }
 
   downloadPdf(): void {
@@ -87,6 +93,7 @@ export class TestSuiteReportComponent implements OnInit {
   }
 
   private renderChart(): void {
+    applyChartDefaults(Chart);
     if (!this.chartCanvas || !this.report) return;
     this.chart?.destroy();
 

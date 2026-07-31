@@ -1,4 +1,4 @@
-import { ApplicationConfig, provideZonelessChangeDetection, isDevMode } from '@angular/core';
+import { ApplicationConfig, inject, provideAppInitializer, provideZonelessChangeDetection, isDevMode } from '@angular/core';
 import { provideRouter } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
@@ -13,6 +13,7 @@ import localeDe from '@angular/common/locales/de';
 registerLocaleData(localeDe);
 
 import { routes } from './app.routes';
+import { ThemeService } from './core/services/theme.service';
 import { authInterceptor } from './core/interceptors/auth.interceptor';
 import { errorInterceptor } from './core/interceptors/error.interceptor';
 import { authReducer } from './store/auth/auth.reducer';
@@ -42,6 +43,8 @@ import { WatcherEffects } from './store/watcher/watcher.effects';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
+    // Apply the stored theme before the first render so there is no light-mode flash.
+    provideAppInitializer(() => inject(ThemeService).init()),
     provideRouter(routes),
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideAnimationsAsync(),

@@ -118,6 +118,6 @@
 }
 
 .badge--untested {
-  background: #f5f5f5;
-  color: #757575;
+  background: var(--tm-tint-neutral-bg);
+  color: var(--tm-tint-neutral-fg);
 }

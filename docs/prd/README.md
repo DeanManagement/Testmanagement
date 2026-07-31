@@ -38,7 +38,7 @@ Fixes for the findings in [`docs/CODE_REVIEW_2026-06-09.md`](../CODE_REVIEW_2026
 | [010](PRD-010-issue-tracker-integration.md) | Native Issue-Tracker Integration | M | Proposed |
 | [011](PRD-011-test-case-versioning.md) | Test Case Versioning / History | L | Proposed |
 | [012](PRD-012-oidc-sso.md) | OIDC / Keycloak SSO | M | Proposed |
-| [013](PRD-013-dark-mode-theming.md) | Dark Mode / Theming | S | Proposed |
+| [013](PRD-013-dark-mode-theming.md) | Dark Mode / Theming | S | ✅ Implemented |
 | [014](PRD-014-traceability-matrix.md) | Requirements & Traceability Matrix | M | Proposed |
 | [015](PRD-015-parameterized-test-cases.md) | Parameterized / Data-Driven Test Cases | M | Proposed |
 | [016](PRD-016-flaky-test-detection.md) | Flaky Test Detection | M (≈S) | Proposed |
@@ -50,7 +50,9 @@ The entire v1.3 backlog (PRD-001 through PRD-008) is implemented and tested. Hig
 ## Suggested sequencing (v2.0)
 
 Driver-dependent — see [PRD-009](PRD-009-v2-future-backlog.md) §3 for the recommended order:
-dark mode (013) → issue-tracker (010) → OIDC (012) → flaky detection (016) → traceability (014) + versioning (011) → parameterized cases (015).
+~~dark mode (013)~~ → issue-tracker (010) → OIDC (012) → flaky detection (016) → traceability (014) + versioning (011) → parameterized cases (015).
+
+Dark mode shipped on 2026-07-31. **Issue-tracker integration ([PRD-010](PRD-010-issue-tracker-integration.md)) is next.**
 
 ## Status legend
-v1.3 PRDs are **Implemented**. v1.4 and v2.0 PRDs are **Proposed**; update the status field as work is picked up and reflect shipped features in `REQUIREMENTS.md`.
+v1.3, v1.4 and PRD-013 are **Implemented**. The remaining v2.0 PRDs are **Proposed**; update the status field as work is picked up and reflect shipped features in `REQUIREMENTS.md`.

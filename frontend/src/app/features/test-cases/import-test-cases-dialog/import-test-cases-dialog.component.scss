@@ -25,12 +25,12 @@
   font-size: 0.8rem;
   padding: 0.2rem 0.6rem;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.06);
+  background: var(--tm-subtle-bg);
 }
 
 .summary-ok {
   background: rgba(46, 125, 50, 0.12);
-  color: #2e7d32;
+  color: var(--tm-success);
 }
 
 .summary-skip {

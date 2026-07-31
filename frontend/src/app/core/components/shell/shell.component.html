@@ -44,6 +44,31 @@
         <mat-icon>search</mat-icon>
       </button>
       <app-notification-bell></app-notification-bell>
+      <button mat-icon-button
+              [matMenuTriggerFor]="themeMenu"
+              class="toolbar-action"
+              data-test-id="theme-menu-trigger"
+              [matTooltip]="'theme.tooltip' | translate"
+              [attr.aria-label]="'theme.tooltip' | translate">
+        <mat-icon>{{ themeIcon() }}</mat-icon>
+      </button>
+      <mat-menu #themeMenu="matMenu">
+        <button mat-menu-item (click)="setTheme('light')" data-test-id="theme-light">
+          <mat-icon>light_mode</mat-icon>
+          <span>{{ 'theme.light' | translate }}</span>
+          @if (themePreference() === 'light') { <mat-icon>check</mat-icon> }
+        </button>
+        <button mat-menu-item (click)="setTheme('dark')" data-test-id="theme-dark">
+          <mat-icon>dark_mode</mat-icon>
+          <span>{{ 'theme.dark' | translate }}</span>
+          @if (themePreference() === 'dark') { <mat-icon>check</mat-icon> }
+        </button>
+        <button mat-menu-item (click)="setTheme('system')" data-test-id="theme-system">
+          <mat-icon>brightness_auto</mat-icon>
+          <span>{{ 'theme.system' | translate }}</span>
+          @if (themePreference() === 'system') { <mat-icon>check</mat-icon> }
+        </button>
+      </mat-menu>
       <button mat-icon-button [matMenuTriggerFor]="langMenu" class="toolbar-action" data-test-id="language-menu-trigger" aria-label="Change language">
         <mat-icon>language</mat-icon>
       </button>

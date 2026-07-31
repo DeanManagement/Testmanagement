@@ -18,6 +18,56 @@
   --tm-radius: 8px;
   --tm-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.06);
   --tm-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.06);
+  --tm-row-hover: #f8fafc;
+  --tm-scrollbar-thumb: #cbd5e1;
+  --tm-chart-grid: rgba(0, 0, 0, 0.1);
+  // Semantic tints for inline banners, pills and status chips. Paired background/foreground so
+  // components never hardcode a light background that a dark theme cannot recover from.
+  --tm-tint-neutral-bg: #f1f5f9;
+  --tm-tint-neutral-fg: #64748b;
+  --tm-tint-success-bg: #d4edda;
+  --tm-tint-success-fg: #155724;
+  --tm-tint-warn-bg: #fff3cd;
+  --tm-tint-warn-fg: #856404;
+  --tm-tint-danger-bg: #f8d7da;
+  --tm-tint-danger-fg: #721c24;
+  --tm-tint-info-bg: #dbeafe;
+  --tm-tint-info-fg: #1e40af;
+  --tm-subtle-bg: rgba(0, 0, 0, 0.05);
+}
+
+// -- Dark theme (PRD-013). ThemeService toggles .tm-dark on <html>. --
+// Same token names, so every component that already uses var(--tm-*) re-themes for free.
+.tm-dark {
+  --tm-primary: #c9d1d9;
+  --tm-primary-light: #8b98a5;
+  --tm-primary-lighter: #21262d;
+  --tm-accent: #ff6b7a;
+  --tm-accent-light: #3d1f24;
+  --tm-success: #6ee787;
+  --tm-danger: #ff7b72;
+  --tm-warn: #ffa657;
+  --tm-bg: #14181d;
+  --tm-surface: #1c2128;
+  --tm-text: #e6edf3;
+  --tm-text-secondary: #9aa7b4;
+  --tm-border: #30363d;
+  --tm-shadow: 0 1px 3px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --tm-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.5), 0 2px 4px rgba(0, 0, 0, 0.4);
+  --tm-row-hover: #242b33;
+  --tm-scrollbar-thumb: #3d4653;
+  --tm-chart-grid: rgba(255, 255, 255, 0.12);
+  --tm-tint-neutral-bg: #262d36;
+  --tm-tint-neutral-fg: #9aa7b4;
+  --tm-tint-success-bg: #14351f;
+  --tm-tint-success-fg: #7ee2a0;
+  --tm-tint-warn-bg: #3b2c10;
+  --tm-tint-warn-fg: #f5c26b;
+  --tm-tint-danger-bg: #3d1f24;
+  --tm-tint-danger-fg: #ff9d95;
+  --tm-tint-info-bg: #16273f;
+  --tm-tint-info-fg: #7cb3f5;
+  --tm-subtle-bg: rgba(255, 255, 255, 0.06);
 }
 
 html, body {
@@ -42,8 +92,25 @@ $theme: mat.define-theme((
   ),
 ));
 
+$dark-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$red-palette,
+    tertiary: mat.$violet-palette,
+  ),
+  density: (
+    scale: -1,
+  ),
+));
+
 html {
   @include mat.all-component-themes($theme);
+}
+
+// Only the color tokens differ between themes; re-emitting density/typography would
+// duplicate the whole stylesheet for no benefit.
+html.tm-dark {
+  @include mat.all-component-colors($dark-theme);
 }
 
 // -- Global overrides --
@@ -84,6 +151,27 @@ a {
   &--medium    { background: #dbeafe; color: #1e40af; }
   &--high      { background: #fef3c7; color: #92400e; }
   &--critical  { background: #fee2e2; color: #991b1b; }
+}
+
+// Badges are the one place with hardcoded pairs, because the tint carries meaning.
+// Dark mode keeps the same hues but inverts the relationship: dim ground, bright text.
+.tm-dark .badge {
+  &--planned   { background: #2b3441; color: #b6c2d1; }
+  &--pending   { background: #262d36; color: #9aa7b4; }
+  &--draft     { background: #2b3441; color: #b6c2d1; }
+  &--active    { background: #14351f; color: #7ee2a0; }
+  &--deprecated { background: #3d1f24; color: #ff9d95; }
+  &--passed    { background: #14351f; color: #7ee2a0; }
+  &--failed    { background: #3d1f24; color: #ff9d95; }
+  &--blocked   { background: #3b2c10; color: #f5c26b; }
+  &--skipped   { background: #2b3441; color: #b6c2d1; }
+  &--in_progress { background: #16273f; color: #7cb3f5; }
+  &--completed { background: #14351f; color: #7ee2a0; }
+  &--aborted   { background: #3d1f24; color: #ff9d95; }
+  &--low       { background: #2b3441; color: #b6c2d1; }
+  &--medium    { background: #16273f; color: #7cb3f5; }
+  &--high      { background: #3b2c10; color: #f5c26b; }
+  &--critical  { background: #3d1f24; color: #ff9d95; }
 }
 
 // -- Card styling --
@@ -186,7 +274,7 @@ a {
   }
 
   .mat-mdc-row:hover {
-    background: #f8fafc;
+    background: var(--tm-row-hover);
   }
 }
 
@@ -219,6 +307,18 @@ a {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: var(--tm-scrollbar-thumb);
   border-radius: 3px;
+}
+
+// -- Print / PDF: always light, regardless of the active theme --
+@media print {
+  html.tm-dark {
+    --tm-bg: #ffffff;
+    --tm-surface: #ffffff;
+    --tm-text: #1e2328;
+    --tm-text-secondary: #5f6b7a;
+    --tm-border: #dfe3e8;
+    --tm-row-hover: #f8fafc;
+  }
 }
