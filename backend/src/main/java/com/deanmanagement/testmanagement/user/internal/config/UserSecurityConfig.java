@@ -40,6 +40,12 @@ public class UserSecurityConfig {
                         UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/health").permitAll()
+                        // Spring re-dispatches unhandled statuses (404/405/500) to /error, and
+                        // that dispatch is authorized too. Without this it falls through to
+                        // denyAll below and every such response is rewritten to an empty 403,
+                        // which hides the real cause — a wrong URL looks like a rejected key.
+                        // The error body carries no message or stack trace by default.
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
                         // PRD-012: the login screen must know which SSO buttons to draw
