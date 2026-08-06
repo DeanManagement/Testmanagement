@@ -77,7 +77,7 @@ Repeat for `test_runs` (key, name, environment), `bug_reports` (key, title, desc
 
 ## 8. Implementation Notes (as shipped)
 
-- **Migration:** `db/specific/postgresql/V38__add_search_vectors.sql` adds generated `tsvector` columns + GIN indexes on `test_cases`, `test_runs`, `bug_reports`, `projects` (bug reports have no key, so their vector is title+description). It lives in a **sibling** vendor path (not under `db/migration`, which Flyway scans recursively) and is selected via `spring.flyway.locations=classpath:db/migration,classpath:db/specific/{vendor}` — so H2 (`db/specific/h2`, absent) skips it.
+- **Migration:** `db/specific/postgresql/V47__add_search_vectors.sql` adds generated `tsvector` columns + GIN indexes on `test_cases`, `test_runs`, `bug_reports`, `projects` (bug reports have no key, so their vector is title+description). It lives in a **sibling** vendor path (not under `db/migration`, which Flyway scans recursively) and is selected via `spring.flyway.locations=classpath:db/migration,classpath:db/specific/{vendor}` — so H2 (`db/specific/h2`, absent) skips it.
 - **Service:** `SearchService` (EntityManager) runs Postgres full-text (`plainto_tsquery('simple', …)` ranked by `ts_rank`) when `app.search.full-text=true`, otherwise a portable membership-scoped `LIKE` query (the H2 dev/test path). Results are grouped by type, scoped to the caller's project membership (system admins see all), with `types`/`projectId` filters, a min-2-char guard, and a 50-cap.
 - **Endpoint:** `GET /api/search?q=&types=&projectId=&limit=`.
 - **Frontend:** the Cmd-K palette keeps its instant local fuzzy match and, when fewer than 5 local hits, debounces a `GET /api/search` call and appends de-duplicated server hits below the local ones.

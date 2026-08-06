@@ -1,5 +1,10 @@
 -- Postgres-only full-text search indexes (PRD-007). Applied only when the DB vendor is postgresql
 -- (Flyway {vendor} location); H2 dev/test uses the LIKE fallback and skips this migration.
+--
+-- Numbered V47, not V38, and the version must stay unique ACROSS BOTH locations: Flyway resolves
+-- db/migration and db/specific/{vendor} into one timeline, so a vendor migration reusing a version
+-- from db/migration aborts startup with "Found more than one migration with version N". That is
+-- exactly what a V38 here did — invisibly, because the dev profile used to load only db/migration.
 -- Generated tsvector columns keep the index maintenance-free; 'simple' config is language-tolerant.
 
 ALTER TABLE test_cases ADD COLUMN search_vector tsvector GENERATED ALWAYS AS (

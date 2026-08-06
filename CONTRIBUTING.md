@@ -23,8 +23,10 @@ must be trusted as privileged on the server.
 - [ ] Backend tests green (`./mvnw test`), frontend tests + build green
 - [ ] New endpoints enforce project authorization (`@RequireProjectRole` or a service-level
       check — see `docs/prd/PRD-001`)
-- [ ] New Flyway migration numbered after the highest existing `V{n}` (check `db/migration/`);
-      Postgres-only SQL goes in `db/specific/postgresql/`
+- [ ] New Flyway migration numbered after the highest existing `V{n}` **across both
+      `db/migration/` and `db/specific/*/`** — Flyway merges them into one timeline, so a version
+      reused between the two aborts startup. `MigrationVersionsTest` enforces this. Postgres-only
+      SQL goes in `db/specific/postgresql/`
 - [ ] New user-facing strings added to **both** `frontend/src/assets/i18n/en.json` and `de.json`
 - [ ] Frontend subscriptions lifecycle-bound (`takeUntilDestroyed` / `take(1)` / `selectSignal`)
 - [ ] Colours use an existing `--tm-*` token (see Theming below) — no hex literals, no `--mat-sys-*`

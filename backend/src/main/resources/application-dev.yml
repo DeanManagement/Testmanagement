@@ -8,8 +8,15 @@ spring:
       ddl-auto: validate
     open-in-view: false
   flyway:
+    # Deliberately the SAME locations as the default profile. Dev used to load only
+    # db/migration, which meant the vendor-specific migrations never ran here — so dev silently
+    # had no full-text search indexes, and a version collision between the two locations could
+    # not be seen until a production container tried to start. Dev runs on PostgreSQL, so
+    # {vendor} resolves the same way it does in production; tests run on H2 and resolve to the
+    # db/specific/h2 placeholder.
     enabled: true
-    locations: classpath:db/migration
+    locations: classpath:db/migration,classpath:db/specific/{vendor}
+    fail-on-missing-locations: true
   h2:
     console:
       enabled: true
