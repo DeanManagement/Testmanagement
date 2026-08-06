@@ -29,6 +29,10 @@ must be trusted as privileged on the server.
       SQL goes in `db/specific/postgresql/`
 - [ ] New user-facing strings added to **both** `frontend/src/assets/i18n/en.json` and `de.json`
 - [ ] Frontend subscriptions lifecycle-bound (`takeUntilDestroyed` / `take(1)` / `selectSignal`)
+- [ ] Component state written from an async callback is a **signal**, not a plain field. The app is
+      zoneless: an HTTP callback assigning `this.foo = …` notifies nothing, so the view is never
+      re-checked and the old value stays on screen — a spinner that never clears, an image that
+      never appears. Signal writes schedule change detection themselves
 - [ ] Colours use an existing `--tm-*` token (see Theming below) — no hex literals, no `--mat-sys-*`
 - [ ] Checked in **both** light and dark mode
 - [ ] No external CDN references (fonts, scripts, styles). The app must run air-gapped, and its
