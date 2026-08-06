@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router } from '@angular/router';
 import { take } from 'rxjs/operators';
@@ -34,8 +34,11 @@ export class ChangePasswordComponent {
   currentPassword = '';
   newPassword = '';
   confirmPassword = '';
-  loading = false;
-  error: string | null = null;
+  // Signals, not plain fields: the app is zoneless, so the HTTP callbacks below would otherwise
+  // write these without notifying anything — leaving a wrong-password attempt with no visible
+  // error and a button stuck in its loading state.
+  readonly loading = signal(false);
+  readonly error = signal<string | null>(null);
 
   get passwordMismatch(): boolean {
     return this.newPassword !== this.confirmPassword && this.confirmPassword.length > 0;
@@ -46,17 +49,17 @@ export class ChangePasswordComponent {
       return;
     }
 
-    this.loading = true;
-    this.error = null;
+    this.loading.set(true);
+    this.error.set(null);
 
     this.authService.changePassword(this.currentPassword, this.newPassword).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
-        this.loading = false;
+        this.loading.set(false);
         this.router.navigate(['/dashboard']);
       },
       error: (err) => {
-        this.loading = false;
-        this.error = err.error?.message || 'Failed to change password';
+        this.loading.set(false);
+        this.error.set(err.error?.message || 'Failed to change password');
       },
     });
   }

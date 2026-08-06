@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -49,7 +49,7 @@ export class LoginComponent implements OnInit {
    * Starts optimistic: local login is shown until the server says otherwise, so a slow or failed
    * config call leaves people with a usable form rather than a dead screen.
    */
-  authConfig: AuthConfig = { localLoginEnabled: true, providers: [] };
+  readonly authConfig = signal<AuthConfig>({ localLoginEnabled: true, providers: [] });
 
   ngOnInit(): void {
     this.store.select(selectIsAuthenticated).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((isAuth) => {
@@ -59,7 +59,7 @@ export class LoginComponent implements OnInit {
     });
 
     this.ssoApi.getAuthConfig().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (config) => (this.authConfig = config),
+      next: (config) => this.authConfig.set(config),
       error: () => undefined,
     });
   }

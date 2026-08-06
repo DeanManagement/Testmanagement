@@ -12,7 +12,7 @@
       <div class="login-error" data-test-id="login-error">{{ error }}</div>
     }
 
-    @if (authConfig.localLoginEnabled) {
+    @if (authConfig().localLoginEnabled) {
     <form (ngSubmit)="onLogin()" class="login-form">
       <mat-form-field appearance="outline" class="login-field">
         <mat-label>{{ 'auth.email' | translate }}</mat-label>
@@ -44,12 +44,12 @@
     </form>
     }
 
-    @if (authConfig.providers.length > 0) {
-      @if (authConfig.localLoginEnabled) {
+    @if (authConfig().providers.length > 0) {
+      @if (authConfig().localLoginEnabled) {
         <div class="login-divider"><span>{{ 'login.or' | translate }}</span></div>
       }
       <div class="sso-buttons" data-test-id="login-sso-buttons">
-        @for (provider of authConfig.providers; track provider.slug) {
+        @for (provider of authConfig().providers; track provider.slug) {
           <button mat-stroked-button
                   type="button"
                   class="sso-btn"
@@ -62,7 +62,7 @@
       </div>
     }
 
-    @if (!authConfig.localLoginEnabled && authConfig.providers.length === 0) {
+    @if (!authConfig().localLoginEnabled && authConfig().providers.length === 0) {
       <p class="login-no-methods" data-test-id="login-no-methods">
         {{ 'login.noMethods' | translate }}
       </p>
