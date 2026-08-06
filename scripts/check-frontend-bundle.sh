@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Asserts things about the PRODUCTION frontend build that no unit test can see, because they only
 # exist in the built output. Both CI pipelines call this so the two cannot drift apart.
 #
@@ -12,9 +12,12 @@
 #      with critical CSS only — with no error anywhere.
 #   3. The SPA has to actually be in the build, or the jar serves nothing.
 #
+# POSIX sh on purpose: the Woodpecker frontend step runs on node:*-alpine, which is BusyBox and
+# has no bash. `pipefail` is left out for the same reason — it is not in POSIX and dash lacks it.
+#
 # Usage: ./scripts/check-frontend-bundle.sh [DIST_DIR]
 #   DIST_DIR  default frontend/dist/frontend/browser
-set -euo pipefail
+set -eu
 
 DIST="${1:-frontend/dist/frontend/browser}"
 INDEX="$DIST/index.html"
@@ -50,7 +53,7 @@ grep -qi '<app-root' "$INDEX" || bad "index.html has no <app-root> — this is n
 grep -qi '<link[^>]*rel="stylesheet"' "$INDEX" || bad "index.html links no stylesheet"
 
 # 4. The icon font ships with us rather than being fetched at runtime.
-if find "$DIST" -name 'material-icons*.woff2' -print -quit | grep -q .; then
+if find "$DIST" -name 'material-icons*.woff2' | head -n 1 | grep -q .; then
   ok "Material Icons font is bundled"
 else
   bad "no bundled Material Icons woff2 — the icon font must not come from a CDN"

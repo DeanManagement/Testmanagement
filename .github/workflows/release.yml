@@ -30,7 +30,7 @@ jobs:
       - run: npm ci && npx ng test --watch=false && npx ng build
         working-directory: frontend
       - name: Check the built bundle
-        run: bash scripts/check-frontend-bundle.sh
+        run: sh scripts/check-frontend-bundle.sh
 
   publish:
     name: Build + push images

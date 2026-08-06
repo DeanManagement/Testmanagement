@@ -44,7 +44,7 @@ jobs:
       # deferred stylesheet behind an inline handler both pass every unit test and then break
       # under the app's CSP at runtime. Shared with the Woodpecker pipeline.
       - name: Check the built bundle
-        run: bash scripts/check-frontend-bundle.sh
+        run: sh scripts/check-frontend-bundle.sh
 
   docker:
     name: Docker build + scan

@@ -70,7 +70,8 @@ steps:
       # the CSP-breaking output bugs live (external font link, deferred stylesheet), and until
       # this existed a broken production build was only discovered by the main-only image step.
       - npx ng build
-      - cd .. && bash scripts/check-frontend-bundle.sh
+      # sh, not bash: the node:*-alpine image is BusyBox and has no bash.
+      - cd .. && sh scripts/check-frontend-bundle.sh
 
   - name: publish-reports
     image: curlimages/curl
