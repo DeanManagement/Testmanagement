@@ -15,7 +15,11 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class SecretCipherConfig {
 
-    public static final String KEY_PROPERTY = "app.security.encryption-key";
+    /**
+     * Carries the environment variable alongside the property because this string is only ever
+     * shown to an operator, and in a container deployment the env var is the thing they can act on.
+     */
+    public static final String KEY_PROPERTY = "app.security.encryption-key (env APP_ENCRYPTION_KEY)";
 
     @Bean
     public AesGcmCipher secretCipher(@Value("${app.security.encryption-key:}") String key) {

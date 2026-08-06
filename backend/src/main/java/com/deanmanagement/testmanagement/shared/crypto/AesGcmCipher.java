@@ -85,7 +85,10 @@ public final class AesGcmCipher {
 
     private void requireKey() {
         if (key == null) {
-            throw new IllegalArgumentException("This feature requires " + keyPropertyName + " to be set");
+            // Names the environment variable and how to make one. The property name alone sent an
+            // operator looking for a config file that does not exist in a container deployment.
+            throw new IllegalArgumentException("This feature requires " + keyPropertyName
+                    + " to be set. Generate one with: openssl rand -base64 32");
         }
     }
 

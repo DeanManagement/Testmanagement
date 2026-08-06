@@ -43,7 +43,7 @@ services:
       # Optional (PRD-010, PRD-012): needed to store issue-tracker tokens or OIDC client
       # secrets. Unset means those features refuse to store a secret rather than saving it
       # in plaintext.
-      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-}
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:-88cd45c541ebb6d8d61c97dcdbbe0763f45ad2d3}
       ISSUE_TRACKER_ENCRYPTION_KEY: ${ISSUE_TRACKER_ENCRYPTION_KEY:-}
       SSO_CALLBACK_URL: ${SSO_CALLBACK_URL:-/login/callback}
     # 8012 kept as the published port so existing bookmarks and reverse-proxy rules still work;

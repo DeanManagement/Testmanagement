@@ -15,7 +15,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class IssueTrackerTokenCipher {
 
-    private static final String LEGACY_KEY_PROPERTY = "app.issuetracker.encryption-key";
+    private static final String LEGACY_KEY_PROPERTY =
+            "app.issuetracker.encryption-key (env ISSUE_TRACKER_ENCRYPTION_KEY)";
 
     private final AesGcmCipher delegate;
 
