@@ -31,6 +31,8 @@ must be trusted as privileged on the server.
 - [ ] Frontend subscriptions lifecycle-bound (`takeUntilDestroyed` / `take(1)` / `selectSignal`)
 - [ ] Colours use an existing `--tm-*` token (see Theming below) — no hex literals, no `--mat-sys-*`
 - [ ] Checked in **both** light and dark mode
+- [ ] No external CDN references (fonts, scripts, styles). The app must run air-gapped, and its
+      own CSP allows `'self'` only — an external reference is silently dropped at runtime
 - [ ] No secrets, credentials, or environment-specific config committed
 
 ## Theming

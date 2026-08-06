@@ -1,5 +1,9 @@
 @use '@angular/material' as mat;
 
+// Self-hosted Material Icons. Deliberately not the fonts.googleapis.com stylesheet the Angular
+// starter ships: this app is meant to run air-gapped, and its CSP allows font-src 'self' only.
+@use 'material-icons/iconfont/filled.css';
+
 // -- Brand tokens (Akros-inspired: red #E33244 + charcoal #32373c) --
 :root {
   --tm-primary: #32373c;

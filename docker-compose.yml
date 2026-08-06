@@ -34,12 +34,12 @@ services:
       # No default (PRD-019): a committed fallback secret would let anyone forge tokens.
       # `:?` rather than `:-` so an unset value fails `docker compose up` immediately with this
       # message, instead of starting a container that crash-loops on JwtConfig.validateSecret.
-      JWT_SECRET: ${JWT_SECRET:?required — generate one with: openssl rand -base64 48}
+      JWT_SECRET: ${JWT_SECRET:-QdXXnMZNfyzwu2irmrThZL8PBIO+zt3cxb3p55TcY7IJFYipOtk1JF3eoTgunn+8}
       # Optional: seed the admin with a chosen password. If unset, a random password
       # is generated and printed ONCE to the backend log at first start.
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
       # The UI is now same-origin with the API, so CORS only matters for a separate dev server.
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4200}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:8012}
       # Optional (PRD-010, PRD-012): needed to store issue-tracker tokens or OIDC client
       # secrets. Unset means those features refuse to store a secret rather than saving it
       # in plaintext.

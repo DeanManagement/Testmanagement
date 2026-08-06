@@ -2,11 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>Frontend</title>
+  <title>Test Management</title>
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+  <!-- Material Icons is self-hosted (see styles.scss). It must NOT be pulled from
+       fonts.googleapis.com: this application is meant to run air-gapped, and its own CSP
+       correctly refuses an external font-src, so a CDN link leaves every icon unrendered. -->
 </head>
 <body>
   <app-root></app-root>
