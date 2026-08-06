@@ -28,6 +28,9 @@ must be trusted as privileged on the server.
 ## Pull request checklist
 
 - [ ] Backend tests green (`./mvnw test`), frontend tests + build green
+- [ ] If any dependency changed, `npm ci` verified in a clean directory. `ng test` and `ng build`
+      reuse the existing `node_modules` and pass happily against a lockfile that `npm ci` rejects
+      as out of sync — which is what CI runs, so the break only shows up there
 - [ ] New endpoints enforce project authorization (`@RequireProjectRole` or a service-level
       check — see `docs/prd/PRD-001`)
 - [ ] New Flyway migration numbered after the highest existing `V{n}` **across both
