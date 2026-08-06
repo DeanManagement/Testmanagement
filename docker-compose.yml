@@ -32,7 +32,9 @@ services:
       DB_USERNAME: testmanagement
       DB_PASSWORD: ${DB_PASSWORD:-testmanagement}
       # No default (PRD-019): a committed fallback secret would let anyone forge tokens.
-      JWT_SECRET: ${JWT_SECRET:-}
+      # `:?` rather than `:-` so an unset value fails `docker compose up` immediately with this
+      # message, instead of starting a container that crash-loops on JwtConfig.validateSecret.
+      JWT_SECRET: ${JWT_SECRET:?required — generate one with: openssl rand -base64 48}
       # Optional: seed the admin with a chosen password. If unset, a random password
       # is generated and printed ONCE to the backend log at first start.
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}

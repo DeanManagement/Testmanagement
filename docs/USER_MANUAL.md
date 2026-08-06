@@ -873,6 +873,11 @@ is exposed.
 
 ## 17. Troubleshooting
 
+**The container exits with "JWT secret is not configured".** `JWT_SECRET` is unset or shorter than
+32 characters. There is deliberately no fallback. If you deploy the compose file from somewhere
+that does not read the repository's `.env` — a Portainer stack, for instance — the variable has to
+be supplied by that environment instead.
+
 **I can't sign in.** If password sign-in has been disabled organisation-wide, use the SSO button.
 System administrators can always use a password. After too many failed attempts, sign-in is
 throttled for a while — wait, rather than retrying harder.
