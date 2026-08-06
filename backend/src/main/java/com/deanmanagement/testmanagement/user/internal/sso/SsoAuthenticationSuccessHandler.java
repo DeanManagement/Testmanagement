@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
-import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 
@@ -51,8 +51,9 @@ public class SsoAuthenticationSuccessHandler implements AuthenticationSuccessHan
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
                                         Authentication authentication) throws IOException {
+        // OidcUser extends OAuth2User, so this accepts both an OIDC login and a GitHub one.
         if (!(authentication instanceof OAuth2AuthenticationToken token)
-                || !(token.getPrincipal() instanceof OidcUser oidcUser)) {
+                || !(token.getPrincipal() instanceof OAuth2User principal)) {
             redirectWithError(response, "Unsupported authentication response");
             return;
         }
@@ -66,7 +67,7 @@ public class SsoAuthenticationSuccessHandler implements AuthenticationSuccessHan
         }
 
         try {
-            User user = loginService.resolveUser(provider, oidcUser);
+            User user = loginService.resolveUser(provider, principal);
             String jwt = authService.issueToken(user);
             response.sendRedirect(callbackUrl() + "#token=" + URLEncoder.encode(jwt, StandardCharsets.UTF_8));
         } catch (SsoLoginException e) {

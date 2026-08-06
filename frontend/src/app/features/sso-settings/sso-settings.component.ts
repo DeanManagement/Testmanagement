@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -19,10 +20,19 @@ import {
   ConfirmDialogComponent,
   ConfirmDialogData,
 } from '../../shared/components/confirm-dialog/confirm-dialog.component';
-import { SaveSsoProviderRequest, SsoProvider } from '../../shared/models/sso.model';
+import { SaveSsoProviderRequest, SsoProtocol, SsoProvider } from '../../shared/models/sso.model';
 
 /**
- * System-admin screen for OpenID Connect providers (PRD-012 §3.3).
+ * The scopes each protocol cannot work without. The backend adds these regardless; prefilling them
+ * means an admin sees what will be requested rather than discovering it after the fact.
+ */
+const DEFAULT_SCOPES: Record<SsoProtocol, string> = {
+  OIDC: 'openid,profile,email',
+  GITHUB: 'read:user,user:email',
+};
+
+/**
+ * System-admin screen for single sign-on providers (PRD-012 §3.3).
  *
  * <p>Two fields here are security switches rather than preferences, and the form labels them as
  * such: trusting a provider's email for account linking, and disabling password sign-in.
@@ -39,6 +49,7 @@ import { SaveSsoProviderRequest, SsoProvider } from '../../shared/models/sso.mod
     MatSlideToggleModule,
     MatFormFieldModule,
     MatInputModule,
+    MatSelectModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
     TranslateModule,
@@ -66,10 +77,11 @@ export class SsoSettingsComponent implements OnInit {
 
   formSlug = '';
   formDisplayName = '';
+  formProtocol: SsoProtocol = 'OIDC';
   formIssuerUri = '';
   formClientId = '';
   formClientSecret = '';
-  formScopes = 'openid,profile,email';
+  formScopes = DEFAULT_SCOPES.OIDC;
   formEmailClaim = 'email';
   formNameClaim = 'name';
   formAdminClaim = '';
@@ -108,6 +120,24 @@ export class SsoSettingsComponent implements OnInit {
     return this.providers.some((p) => p.active);
   }
 
+  get isGitHub(): boolean {
+    return this.formProtocol === 'GITHUB';
+  }
+
+  /**
+   * Swaps the prefilled scopes when the protocol changes. Only while creating: the protocol of a
+   * saved provider is fixed, because an OIDC subject and a GitHub user id are not the same kind of
+   * identifier and reinterpreting stored identities under the other one would mislink accounts.
+   */
+  onProtocolChange(protocol: SsoProtocol): void {
+    this.formProtocol = protocol;
+    this.formScopes = DEFAULT_SCOPES[protocol];
+    if (protocol === 'GITHUB') {
+      this.formAdminClaim = '';
+      this.formAdminClaimValue = '';
+    }
+  }
+
   get canSave(): boolean {
     if (!this.formSlug.trim() || !this.formDisplayName.trim()
       || !this.formIssuerUri.trim() || !this.formClientId.trim()) {
@@ -123,10 +153,11 @@ export class SsoSettingsComponent implements OnInit {
     this.editingSecretSet = false;
     this.formSlug = '';
     this.formDisplayName = '';
+    this.formProtocol = 'OIDC';
     this.formIssuerUri = '';
     this.formClientId = '';
     this.formClientSecret = '';
-    this.formScopes = 'openid,profile,email';
+    this.formScopes = DEFAULT_SCOPES.OIDC;
     this.formEmailClaim = 'email';
     this.formNameClaim = 'name';
     this.formAdminClaim = '';
@@ -142,6 +173,7 @@ export class SsoSettingsComponent implements OnInit {
     this.editingSecretSet = provider.secretSet;
     this.formSlug = provider.slug;
     this.formDisplayName = provider.displayName;
+    this.formProtocol = provider.protocol;
     this.formIssuerUri = provider.issuerUri;
     this.formClientId = provider.clientId;
     // Never prefilled: the API does not return it, and a placeholder would be saved back verbatim.
@@ -171,13 +203,15 @@ export class SsoSettingsComponent implements OnInit {
     const request: SaveSsoProviderRequest = {
       slug: this.formSlug.trim(),
       displayName: this.formDisplayName.trim(),
+      protocol: this.formProtocol,
       issuerUri: this.formIssuerUri.trim(),
       clientId: this.formClientId.trim(),
       scopes: this.formScopes.trim(),
       emailClaim: this.formEmailClaim.trim(),
       nameClaim: this.formNameClaim.trim(),
-      adminClaim: this.formAdminClaim.trim() || undefined,
-      adminClaimValue: this.formAdminClaimValue.trim() || undefined,
+      // GitHub has no claims to match, and the backend rejects an admin claim on it outright.
+      adminClaim: this.isGitHub ? undefined : this.formAdminClaim.trim() || undefined,
+      adminClaimValue: this.isGitHub ? undefined : this.formAdminClaimValue.trim() || undefined,
       trustEmailForLinking: this.formTrustEmail,
       autoProvision: this.formAutoProvision,
       active: this.formActive,

@@ -1,7 +1,14 @@
+/**
+ * OIDC covers any provider with a discovery document — Keycloak, Entra ID, GitLab, Forgejo.
+ * GitHub is separate because it has neither a discovery document nor an ID token.
+ */
+export type SsoProtocol = 'OIDC' | 'GITHUB';
+
 export interface SsoProvider {
   id: string;
   slug: string;
   displayName: string;
+  protocol: SsoProtocol;
   issuerUri: string;
   clientId: string;
   /** The client secret is never returned; this only says whether one is stored. */
@@ -22,6 +29,7 @@ export interface SsoProvider {
 export interface SaveSsoProviderRequest {
   slug: string;
   displayName: string;
+  protocol: SsoProtocol;
   issuerUri: string;
   clientId: string;
   /** Omit to keep the stored secret — the backend treats absent as "unchanged". */

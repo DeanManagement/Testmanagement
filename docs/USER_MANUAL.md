@@ -584,8 +584,18 @@ trail.
 
 ### Single sign-on
 
-**Settings → Single sign-on** (system administrators only). Any OpenID Connect provider works —
-Keycloak, Authentik, Auth0, Okta, Entra ID, Google.
+**Settings → Single sign-on** (system administrators only).
+
+Pick a **protocol** first, because it decides what the rest of the form means:
+
+- **OpenID Connect** — almost everything. Keycloak, Authentik, Auth0, Okta, Entra ID, Google,
+  **GitLab** and **Forgejo/Gitea** are all OIDC providers and need no special handling.
+- **GitHub** — the exception. GitHub's user sign-in is plain OAuth 2.0: no ID token, and no
+  `/.well-known/openid-configuration` to discover. Identity is fetched from its API instead.
+
+The protocol cannot be changed after the provider is saved. An OIDC subject and a GitHub numeric
+user id are different kinds of identifier, and reinterpreting already-linked accounts under the
+other one could match a stored subject to a different person.
 
 Per provider you configure:
 
@@ -593,17 +603,60 @@ Per provider you configure:
 |---|---|
 | Display name | The label on the sign-in button |
 | Slug | Lowercase letters, digits and hyphens. Appears in the callback URL and cannot be changed afterwards, because your provider already knows it |
-| Issuer URL | The OIDC discovery root. Must be HTTPS; private and loopback addresses are rejected |
+| Issuer URL / GitHub URL | For OIDC, the discovery root. For GitHub, `https://github.com` or your GitHub Enterprise Server address. Must be HTTPS; private and loopback addresses are rejected |
 | Client ID / Client secret | From your provider. The secret is stored encrypted and requires `APP_ENCRYPTION_KEY` on the server. On edit, leaving it blank keeps the stored one |
-| Scopes | Defaults to `openid,profile,email`; `openid` is always included |
-| Email / name claim | Default `email` and `name` |
-| Admin claim + value | Optional. A match grants the system administrator flag. Group and array claims match on membership |
+| Scopes | OIDC defaults to `openid,profile,email` and always includes `openid`. GitHub uses `read:user,user:email` |
+| Email / name claim | OIDC only; defaults `email` and `name`. GitHub has no claims, so the fields are hidden |
+| Admin claim + value | OIDC only. A match grants the system administrator flag; group and array claims match on membership. GitHub returns no claims, so grant system administrator on the user instead |
 
 **Redirect URI** — the screen shows the exact URL to register with your provider. It has the shape
 `https://your-host/login/oauth2/code/<slug>`.
 
-**Test connection** fetches the discovery document and reports what went wrong if it fails. Recent
-errors are kept on the provider row.
+**Test connection** fetches the discovery document, or for GitHub asks the API whether it is
+reachable. Recent errors are kept on the provider row.
+
+#### Setting up GitHub
+
+1. On GitHub: **Settings → Developer settings → OAuth Apps → New OAuth App**. (An OAuth App, not
+   a GitHub App — a GitHub App authenticates an installation, not a person.)
+2. Set **Authorization callback URL** to the redirect URI shown on the provider form. It must
+   match exactly.
+3. Copy the Client ID, generate a client secret, and paste both into the provider form with
+   protocol **GitHub** and URL `https://github.com`.
+
+The account's **primary verified email** is what gets used. A profile email that GitHub has not
+verified is deliberately ignored — anyone can type any address into their public profile, so
+honouring it would let a stranger have an account created under someone else's address. A user
+with no verified email cannot sign in; they must verify one on GitHub first.
+
+The display name falls back to the GitHub login when the account has no name set.
+
+#### Setting up GitLab or Forgejo
+
+Both are full OIDC providers, so use protocol **OpenID Connect**:
+
+- **GitLab** — issuer `https://gitlab.com`, or your own instance's root URL. Create the client
+  under **Applications** with scopes `openid profile email` and the redirect URI from the form.
+- **Forgejo / Gitea** — issuer is the instance root. Create the client under **Site
+  administration → Applications → OAuth2 Applications**.
+
+Self-hosted instances have one recurring trap: **the discovery document must advertise the same
+public URL you typed into the issuer field.** Both GitLab and Forgejo build that document from
+their configured root URL, so an instance still set to an internal address publishes endpoints
+nobody outside can reach, and the login is rejected before it starts with a mismatched-issuer
+error. Check with:
+
+```bash
+curl -s https://your-instance/.well-known/openid-configuration | head -5
+```
+
+If `issuer` and the endpoints do not read as your public HTTPS URL, fix it at the source —
+`ROOT_URL` in Forgejo's `app.ini`, or `external_url` in GitLab's `gitlab.rb` — rather than
+pointing this app at the internal address. Endpoints on a private address only work from inside
+the network, and over plain HTTP the authorization code and token cross the wire in clear text.
+
+An instance genuinely only reachable on a private network needs `SSO_ALLOW_PRIVATE_ISSUERS=true`,
+which relaxes an SSRF guard. Set it only if that is really the situation.
 
 Two settings decide how accounts are handled:
 

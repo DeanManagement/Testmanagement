@@ -9,6 +9,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.security.oauth2.core.oidc.user.DefaultOidcUser;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.DefaultOAuth2User;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -306,6 +308,55 @@ class SsoLoginServiceTest {
         loginService.resolveUser(mapped, oidcUser("exadmin-subject", claims));
 
         assertThat(userRepository.findById(admin.getId()).orElseThrow().isSystemAdmin()).isFalse();
+    }
+
+    // ---- a GitHub principal goes through the identical rules ---------------
+
+    @Test
+    void gitHubPrincipalIsProvisionedAndKeyedOnItsNumericId() {
+        SsoProvider gitHub = saveProvider(p -> p.setProtocol(SsoProtocol.GITHUB));
+
+        User created = loginService.resolveUser(gitHub, gitHubUser("4711", "octo@example.com", true));
+
+        assertThat(created.getEmail()).isEqualTo("octo@example.com");
+        // The subject stored is the id, not the login: a login can be renamed and reclaimed.
+        assertThat(identityRepository.findByProviderIdAndSubject(gitHub.getId(), "4711")).isPresent();
+    }
+
+    @Test
+    void gitHubPrincipalStillCannotAdoptAnAccountOnAnUntrustedProvider() {
+        // The whole reason resolveUser takes an OAuth2User rather than branching per protocol:
+        // the takeover boundary must not have a second, weaker path through it.
+        SsoProvider gitHub = saveProvider(p -> p.setProtocol(SsoProtocol.GITHUB));
+        saveUser("ghvictim@example.com", true);
+
+        assertThatThrownBy(() ->
+                loginService.resolveUser(gitHub, gitHubUser("9001", "ghvictim@example.com", true)))
+                .isInstanceOf(SsoLoginException.class)
+                .hasMessageContaining("Ask an administrator to link it");
+    }
+
+    @Test
+    void gitHubPrincipalWithoutAVerifiedEmailCannotBeProvisioned() {
+        // GitHubOAuth2UserService drops an unverified address, so this is what reaches the service.
+        SsoProvider gitHub = saveProvider(p -> p.setProtocol(SsoProtocol.GITHUB));
+
+        assertThatThrownBy(() -> loginService.resolveUser(gitHub, gitHubUser("9002", null, false)))
+                .isInstanceOf(SsoLoginException.class)
+                .hasMessageContaining("did not return an email address");
+    }
+
+    /** The attribute shape {@code GitHubOAuth2UserService} produces: no ID token, keyed on "id". */
+    private OAuth2User gitHubUser(String id, String email, boolean emailVerified) {
+        Map<String, Object> attributes = new HashMap<>();
+        attributes.put("id", id);
+        attributes.put("login", "octocat");
+        attributes.put("name", "The Octocat");
+        attributes.put("email_verified", emailVerified);
+        if (email != null) {
+            attributes.put("email", email);
+        }
+        return new DefaultOAuth2User(List.of(), attributes, "id");
     }
 
     @Test

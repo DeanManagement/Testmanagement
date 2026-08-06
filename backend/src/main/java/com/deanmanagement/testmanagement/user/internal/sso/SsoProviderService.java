@@ -30,6 +30,7 @@ import java.util.stream.Collectors;
 public class SsoProviderService {
 
     private static final String ISSUER_LABEL = "Issuer URL";
+    private static final String GITHUB_LABEL = "GitHub URL";
     private static final int MAX_ERROR_LENGTH = 500;
 
     private final SsoProviderRepository providerRepository;
@@ -37,6 +38,7 @@ public class SsoProviderService {
     private final AesGcmCipher secretCipher;
     private final SsoProperties properties;
     private final DynamicClientRegistrationRepository registrationRepository;
+    private final GitHubInstanceProbe gitHubProbe;
 
     public List<SsoProviderResponse> findAll() {
         return providerRepository.findAllByOrderByDisplayNameAsc().stream()
@@ -105,11 +107,17 @@ public class SsoProviderService {
         SsoProvider provider = require(id);
         try {
             registrationRepository.buildRegistration(provider);
+            if (provider.getProtocol() == SsoProtocol.GITHUB) {
+                // Building a GitHub registration is pure string work, so on its own it would
+                // "succeed" against a URL that does not resolve. Ask the instance directly.
+                gitHubProbe.probe(provider.getIssuerUri());
+            }
             clearError(provider);
         } catch (RuntimeException e) {
             recordError(provider, e.getMessage());
-            throw new UpstreamServiceException(
-                    "Could not read the OpenID configuration from " + provider.getIssuerUri());
+            throw new UpstreamServiceException(provider.getProtocol() == SsoProtocol.GITHUB
+                    ? "Could not reach GitHub at " + provider.getIssuerUri()
+                    : "Could not read the OpenID configuration from " + provider.getIssuerUri());
         }
     }
 
@@ -152,13 +160,22 @@ public class SsoProviderService {
     // ---- internals --------------------------------------------------------
 
     private void apply(SsoProvider provider, SaveSsoProviderRequest request) {
-        OutboundUrlValidator.validate(request.issuerUri(), ISSUER_LABEL,
+        SsoProtocol protocol = request.protocol() == null ? SsoProtocol.OIDC : request.protocol();
+        if (provider.getId() != null && provider.getProtocol() != protocol) {
+            // The protocol decides what a subject means — an OIDC `sub` and a GitHub numeric id are
+            // not interchangeable. Switching it under existing sso_identities rows would orphan
+            // every linked account and, worse, could match a stored subject to a different person.
+            throw new IllegalArgumentException(
+                    "The protocol of an existing provider cannot be changed. Add a new provider instead.");
+        }
+        OutboundUrlValidator.validate(request.issuerUri(), label(protocol),
                 properties.requireHttps(), properties.allowPrivateIssuers());
 
+        provider.setProtocol(protocol);
         provider.setDisplayName(request.displayName().trim());
         provider.setIssuerUri(trimTrailingSlash(request.issuerUri().trim()));
         provider.setClientId(request.clientId().trim());
-        provider.setScopes(normaliseScopes(request.scopes()));
+        provider.setScopes(normaliseScopes(request.scopes(), protocol));
         provider.setEmailClaim(defaulted(request.emailClaim(), "email"));
         provider.setNameClaim(defaulted(request.nameClaim(), "name"));
         provider.setAdminClaim(emptyToNull(request.adminClaim()));
@@ -176,22 +193,45 @@ public class SsoProviderService {
         if (provider.getAdminClaim() != null && provider.getAdminClaimValue() == null) {
             throw new IllegalArgumentException("An admin claim needs the value that grants admin");
         }
+        if (protocol == SsoProtocol.GITHUB && provider.getAdminClaim() != null) {
+            // Silently ignoring it would be worse: an admin would configure a rule, see it stored,
+            // and believe system-admin was being granted when nothing evaluates it.
+            throw new IllegalArgumentException(
+                    "GitHub returns no claims to match, so an admin claim cannot be evaluated. "
+                            + "Grant system administrator on the user instead.");
+        }
     }
 
-    /** {@code openid} is mandatory for OIDC, so it is added rather than left to the admin. */
-    private static String normaliseScopes(String scopes) {
+    /**
+     * Fills in the scopes each protocol cannot work without, so an admin does not have to know them.
+     *
+     * <p>They do not overlap at all. OIDC requires {@code openid} — without it the provider runs a
+     * plain OAuth2 flow and returns no ID token. GitHub has no such scope and needs
+     * {@code user:email}, without which {@code /user/emails} returns 403 and no account can be
+     * provisioned.
+     */
+    private static String normaliseScopes(String scopes, SsoProtocol protocol) {
         Set<String> values = new LinkedHashSet<>();
-        values.add("openid");
+        if (protocol == SsoProtocol.GITHUB) {
+            values.add("read:user");
+            values.add("user:email");
+        } else {
+            values.add("openid");
+        }
         if (scopes != null && !scopes.isBlank()) {
             values.addAll(Arrays.stream(scopes.split(","))
                     .map(String::trim)
                     .filter(s -> !s.isEmpty())
                     .collect(Collectors.toCollection(LinkedHashSet::new)));
-        } else {
+        } else if (protocol != SsoProtocol.GITHUB) {
             values.add("profile");
             values.add("email");
         }
         return String.join(",", values);
+    }
+
+    private static String label(SsoProtocol protocol) {
+        return protocol == SsoProtocol.GITHUB ? GITHUB_LABEL : ISSUER_LABEL;
     }
 
     private AuthSettings settings() {
@@ -221,6 +261,7 @@ public class SsoProviderService {
                 provider.getId(),
                 provider.getSlug(),
                 provider.getDisplayName(),
+                provider.getProtocol(),
                 provider.getIssuerUri(),
                 provider.getClientId(),
                 provider.getClientSecretEncrypted() != null && !provider.getClientSecretEncrypted().isBlank(),

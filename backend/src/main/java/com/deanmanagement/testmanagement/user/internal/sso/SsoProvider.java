@@ -3,6 +3,8 @@ package com.deanmanagement.testmanagement.user.internal.sso;
 import com.deanmanagement.testmanagement.shared.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -11,8 +13,8 @@ import lombok.Setter;
 import java.time.Instant;
 
 /**
- * One configured OpenID Connect provider (PRD-012). Rows are managed by system admins at runtime;
- * there is no restart and no property file involved.
+ * One configured single sign-on provider (PRD-012) — an OpenID Connect issuer, or GitHub. Rows are
+ * managed by system admins at runtime; there is no restart and no property file involved.
  *
  * <p>The client secret is stored encrypted and never leaves the server.
  */
@@ -30,7 +32,16 @@ public class SsoProvider extends BaseEntity {
     @Column(name = "display_name", nullable = false, length = 100)
     private String displayName;
 
-    /** Discovery root, e.g. {@code https://keycloak.example.com/realms/acme}. */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private SsoProtocol protocol = SsoProtocol.OIDC;
+
+    /**
+     * For {@link SsoProtocol#OIDC} the discovery root, e.g.
+     * {@code https://keycloak.example.com/realms/acme}. For {@link SsoProtocol#GITHUB} the instance
+     * root — {@code https://github.com}, or your GitHub Enterprise Server host — from which the
+     * authorize, token and API endpoints are derived.
+     */
     @Column(name = "issuer_uri", nullable = false, length = 500)
     private String issuerUri;
 

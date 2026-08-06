@@ -722,8 +722,18 @@
     "slugLockedHint": "Die Kennung kann nicht geändert werden — der Anbieter kennt die Callback-URL bereits.",
     "callbackUrl": "Redirect-URI",
     "callbackUrlHint": "Genau diese URL beim Identity Provider hinterlegen.",
+    "protocol": "Protokoll",
+    "protocolHint": "OpenID Connect deckt fast alles ab. GitHub ist die Ausnahme — es veröffentlicht kein Discovery-Dokument.",
+    "protocolLockedHint": "Das Protokoll kann nicht geändert werden — die bereits verknüpften Konten hängen davon ab.",
+    "protocols": {
+      "OIDC": "OpenID Connect",
+      "GITHUB": "GitHub"
+    },
     "issuerUri": "Issuer-URL",
     "issuerUriHint": "Die Discovery-Basis. Muss https verwenden; private und Loopback-Adressen werden abgelehnt.",
+    "gitHubUrl": "GitHub-URL",
+    "gitHubUrlHint": "https://github.com oder die Adresse eures GitHub Enterprise Server.",
+    "gitHubMappingNote": "GitHub liefert keine Claims. E-Mail und Name werden über die API gelesen, und Systemadministrator muss direkt am Benutzer gesetzt werden. Die Callback-URL eurer OAuth-App muss exakt der oben angezeigten entsprechen.",
     "clientId": "Client-ID",
     "clientSecret": "Client-Secret",
     "clientSecretReplace": "Client-Secret ersetzen",

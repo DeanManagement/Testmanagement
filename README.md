@@ -308,7 +308,7 @@ The backend serves individual files from the stored ZIP with correct MIME types,
 | Backend | Java 25, Spring Boot 4.0, Maven |
 | Frontend | Angular 21 (standalone, zoneless), Angular Material, NgRx, Chart.js |
 | Database | PostgreSQL 16, Flyway migrations |
-| Auth | Local email/password + JWT; optional multi-provider OIDC SSO |
+| Auth | Local email/password + JWT; optional multi-provider SSO (any OIDC issuer, plus GitHub) |
 | Packaging | Docker (one image: SPA baked into the jar), docker-compose |
 | i18n | ngx-translate (English, German) |
 

@@ -4,7 +4,9 @@ import com.deanmanagement.testmanagement.shared.crypto.AesGcmCipher;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.ClientRegistrations;
+import org.springframework.security.oauth2.core.AuthenticationMethod;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.stereotype.Component;
 
 import java.util.Arrays;
@@ -70,7 +72,11 @@ public class DynamicClientRegistrationRepository implements ClientRegistrationRe
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toCollection(java.util.LinkedHashSet::new));
 
-        return ClientRegistrations.fromIssuerLocation(provider.getIssuerUri())
+        ClientRegistration.Builder builder = provider.getProtocol() == SsoProtocol.GITHUB
+                ? gitHubBuilder(provider)
+                : ClientRegistrations.fromIssuerLocation(provider.getIssuerUri());
+
+        return builder
                 .registrationId(provider.getSlug())
                 .clientId(provider.getClientId())
                 .clientSecret(secretCipher.decrypt(provider.getClientSecretEncrypted()))
@@ -81,5 +87,23 @@ public class DynamicClientRegistrationRepository implements ClientRegistrationRe
                 .redirectUri("{baseUrl}/login/oauth2/code/{registrationId}")
                 .scope(scopes)
                 .build();
+    }
+
+    /**
+     * GitHub, assembled by hand because it publishes no discovery document.
+     *
+     * <p>{@code userNameAttributeName} is the numeric {@code id}, not {@code login}. A login is
+     * renameable and, once released, claimable by someone else — keying identities on it would let
+     * a stranger inherit an account by taking a freed username. The numeric id is permanent.
+     */
+    private static ClientRegistration.Builder gitHubBuilder(SsoProvider provider) {
+        GitHubEndpoints endpoints = GitHubEndpoints.forBaseUrl(provider.getIssuerUri());
+        return ClientRegistration.withRegistrationId(provider.getSlug())
+                .authorizationUri(endpoints.authorizationUri())
+                .tokenUri(endpoints.tokenUri())
+                .userInfoUri(endpoints.userInfoUri())
+                .userInfoAuthenticationMethod(AuthenticationMethod.HEADER)
+                .userNameAttributeName("id")
+                .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC);
     }
 }

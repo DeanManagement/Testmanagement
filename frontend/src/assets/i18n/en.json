@@ -722,8 +722,18 @@
     "slugLockedHint": "The slug cannot change — your provider already knows the callback URL.",
     "callbackUrl": "Redirect URI",
     "callbackUrlHint": "Register this exact URL with your identity provider.",
+    "protocol": "Protocol",
+    "protocolHint": "OpenID Connect covers almost everything. GitHub is the exception — it publishes no discovery document.",
+    "protocolLockedHint": "The protocol cannot change — the accounts already linked to this provider depend on it.",
+    "protocols": {
+      "OIDC": "OpenID Connect",
+      "GITHUB": "GitHub"
+    },
     "issuerUri": "Issuer URL",
     "issuerUriHint": "The discovery root. Must use https; private and loopback addresses are rejected.",
+    "gitHubUrl": "GitHub URL",
+    "gitHubUrlHint": "https://github.com, or your GitHub Enterprise Server address.",
+    "gitHubMappingNote": "GitHub returns no claims, so email and name are read from its API and system administrator has to be granted on the user. Your OAuth app's callback URL must match the one above exactly.",
     "clientId": "Client ID",
     "clientSecret": "Client secret",
     "clientSecretReplace": "Replace client secret",

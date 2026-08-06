@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.oauth2.core.oidc.user.OidcUser;
+import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,7 +16,12 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Turns a successful OIDC authentication into a local {@link User} (PRD-012 §4.1).
+ * Turns a successful SSO authentication into a local {@link User} (PRD-012 §4.1).
+ *
+ * <p>Takes an {@link OAuth2User} rather than an {@code OidcUser} so an OIDC login and a GitHub
+ * login are subject to one identical set of rules. Everything below reads from the principal's
+ * attributes, and {@code GitHubOAuth2UserService} is responsible for making GitHub's response look
+ * like a claim set — including only ever presenting an email GitHub has verified.
  *
  * <p>This is the security-critical part of the feature, so the rules are spelled out rather than
  * inferred:
@@ -48,13 +54,13 @@ public class SsoLoginService {
      * @throws SsoLoginException when the login must be refused; the message is shown to the user
      */
     @Transactional
-    public User resolveUser(SsoProvider provider, OidcUser oidcUser) {
-        String subject = oidcUser.getSubject();
+    public User resolveUser(SsoProvider provider, OAuth2User principal) {
+        String subject = subjectOf(principal);
         if (subject == null || subject.isBlank()) {
             throw new SsoLoginException("The identity provider did not return a subject claim");
         }
 
-        Map<String, Object> claims = oidcUser.getClaims();
+        Map<String, Object> claims = principal.getAttributes();
         String email = normaliseEmail(claimAsString(claims, provider.getEmailClaim()));
         String displayName = firstNonBlank(
                 claimAsString(claims, provider.getNameClaim()),
@@ -199,6 +205,19 @@ public class SsoLoginService {
             return false;
         }
         return provider.getAdminClaimValue().equals(String.valueOf(value));
+    }
+
+    /**
+     * The stable, provider-scoped identifier this login is keyed on.
+     *
+     * <p>For OIDC that is the {@code sub} claim, which the spec guarantees is never reassigned. For
+     * a plain OAuth2 principal it is {@code getName()}, which resolves to whatever the registration
+     * named as its username attribute — GitHub's immutable numeric {@code id}, deliberately not the
+     * renameable {@code login}. Both are read through the principal rather than the attribute map so
+     * neither can be spoofed by an attribute of the same name.
+     */
+    private static String subjectOf(OAuth2User principal) {
+        return principal instanceof OidcUser oidcUser ? oidcUser.getSubject() : principal.getName();
     }
 
     private static boolean isEmailVerified(Map<String, Object> claims) {

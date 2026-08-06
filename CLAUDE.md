@@ -9,7 +9,7 @@
 - **Backend:** Java 25, Spring Boot 4.0.x, Maven
 - **Frontend:** Angular 21, Angular Material, NgRx, Chart.js
 - **Database:** PostgreSQL 16
-- **Auth:** Local username/password with JWT, plus optional multi-provider OIDC SSO configured at runtime by an admin (PRD-012)
+- **Auth:** Local username/password with JWT, plus optional multi-provider SSO configured at runtime by an admin (PRD-012) — any OIDC issuer, and GitHub, which has no discovery document and is handled separately
 - **Packaging:** Docker, docker-compose
 
 ## Repository Structure

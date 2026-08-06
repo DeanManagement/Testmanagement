@@ -15,6 +15,9 @@ public record SaveSsoProviderRequest(
                 message = "Slug may contain only lowercase letters, digits and hyphens")
         String slug,
         @NotBlank @Size(max = 100) String displayName,
+        /* Null means OIDC, so a client written against the pre-GitHub API keeps working. */
+        SsoProtocol protocol,
+        /* The OIDC discovery root, or for GitHub the instance root. */
         @NotBlank @Size(max = 500) String issuerUri,
         @NotBlank @Size(max = 300) String clientId,
         @Size(max = 500) String clientSecret,

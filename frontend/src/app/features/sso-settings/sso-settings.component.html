@@ -44,11 +44,21 @@
         </div>
 
         <mat-form-field appearance="outline" class="full-width">
-          <mat-label>{{ 'sso.issuerUri' | translate }}</mat-label>
+          <mat-label>{{ 'sso.protocol' | translate }}</mat-label>
+          <mat-select [ngModel]="formProtocol" (ngModelChange)="onProtocolChange($event)"
+                      [disabled]="!!editingId" data-test-id="sso-protocol-select">
+            <mat-option value="OIDC">{{ 'sso.protocols.OIDC' | translate }}</mat-option>
+            <mat-option value="GITHUB">{{ 'sso.protocols.GITHUB' | translate }}</mat-option>
+          </mat-select>
+          <mat-hint>{{ (editingId ? 'sso.protocolLockedHint' : 'sso.protocolHint') | translate }}</mat-hint>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ (isGitHub ? 'sso.gitHubUrl' : 'sso.issuerUri') | translate }}</mat-label>
           <input matInput [(ngModel)]="formIssuerUri"
-                 placeholder="https://keycloak.example.com/realms/acme"
+                 [placeholder]="isGitHub ? 'https://github.com' : 'https://keycloak.example.com/realms/acme'"
                  data-test-id="sso-issuer-input">
-          <mat-hint>{{ 'sso.issuerUriHint' | translate }}</mat-hint>
+          <mat-hint>{{ (isGitHub ? 'sso.gitHubUrlHint' : 'sso.issuerUriHint') | translate }}</mat-hint>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">
@@ -71,27 +81,36 @@
             <mat-label>{{ 'sso.scopes' | translate }}</mat-label>
             <input matInput [(ngModel)]="formScopes" data-test-id="sso-scopes-input">
           </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'sso.emailClaim' | translate }}</mat-label>
-            <input matInput [(ngModel)]="formEmailClaim" data-test-id="sso-email-claim-input">
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'sso.nameClaim' | translate }}</mat-label>
-            <input matInput [(ngModel)]="formNameClaim" data-test-id="sso-name-claim-input">
-          </mat-form-field>
+          @if (!isGitHub) {
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'sso.emailClaim' | translate }}</mat-label>
+              <input matInput [(ngModel)]="formEmailClaim" data-test-id="sso-email-claim-input">
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'sso.nameClaim' | translate }}</mat-label>
+              <input matInput [(ngModel)]="formNameClaim" data-test-id="sso-name-claim-input">
+            </mat-form-field>
+          }
         </div>
 
-        <div class="field-row">
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'sso.adminClaim' | translate }}</mat-label>
-            <input matInput [(ngModel)]="formAdminClaim" placeholder="groups" data-test-id="sso-admin-claim-input">
-            <mat-hint>{{ 'sso.adminClaimHint' | translate }}</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>{{ 'sso.adminClaimValue' | translate }}</mat-label>
-            <input matInput [(ngModel)]="formAdminClaimValue" data-test-id="sso-admin-claim-value-input">
-          </mat-form-field>
-        </div>
+        @if (isGitHub) {
+          <p class="setting-description" data-test-id="sso-github-note">
+            <mat-icon class="warn-icon">info</mat-icon>
+            {{ 'sso.gitHubMappingNote' | translate }}
+          </p>
+        } @else {
+          <div class="field-row">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'sso.adminClaim' | translate }}</mat-label>
+              <input matInput [(ngModel)]="formAdminClaim" placeholder="groups" data-test-id="sso-admin-claim-input">
+              <mat-hint>{{ 'sso.adminClaimHint' | translate }}</mat-hint>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'sso.adminClaimValue' | translate }}</mat-label>
+              <input matInput [(ngModel)]="formAdminClaimValue" data-test-id="sso-admin-claim-value-input">
+            </mat-form-field>
+          </div>
+        }
 
         <h3>{{ 'sso.accountHandling' | translate }}</h3>
         <div class="toggle-row">

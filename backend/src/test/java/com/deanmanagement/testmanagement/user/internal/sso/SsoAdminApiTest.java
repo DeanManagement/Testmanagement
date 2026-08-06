@@ -124,6 +124,68 @@ class SsoAdminApiTest {
                 .andExpect(jsonPath("$.scopes").value("openid,profile,email"));
     }
 
+    // ---- GitHub, which is not an OIDC issuer ------------------------------
+
+    @Test
+    void providerDefaultsToOidcWhenTheProtocolIsOmitted() throws Exception {
+        // Every client written before GitHub existed sends no protocol; those must keep working.
+        mockMvc.perform(post("/api/admin/sso/providers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body("legacy", SECRET))
+                        .with(as(admin, true)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.protocol").value("OIDC"));
+    }
+
+    @Test
+    void gitHubGetsItsOwnScopesAndNotOpenid() throws Exception {
+        // `openid` is meaningless to GitHub, and without user:email the /user/emails call is
+        // refused, which leaves every login with no address to provision an account from.
+        mockMvc.perform(post("/api/admin/sso/providers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"slug\":\"gh\",\"displayName\":\"GitHub\",\"protocol\":\"GITHUB\","
+                                + "\"issuerUri\":\"https://github.com\",\"clientId\":\"c\","
+                                + "\"clientSecret\":\"" + SECRET + "\"}")
+                        .with(as(admin, true)))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.scopes").value("read:user,user:email"));
+    }
+
+    @Test
+    void gitHubRejectsAnAdminClaimItCannotEvaluate() throws Exception {
+        // Storing it silently would leave an admin believing a rule is in force when nothing
+        // reads it.
+        mockMvc.perform(post("/api/admin/sso/providers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"slug\":\"gh2\",\"displayName\":\"GitHub\",\"protocol\":\"GITHUB\","
+                                + "\"issuerUri\":\"https://github.com\",\"clientId\":\"c\","
+                                + "\"clientSecret\":\"" + SECRET + "\",\"adminClaim\":\"groups\","
+                                + "\"adminClaimValue\":\"admins\"}")
+                        .with(as(admin, true)))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void protocolCannotBeChangedOnAnExistingProvider() throws Exception {
+        mockMvc.perform(post("/api/admin/sso/providers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(body("switcheroo", SECRET))
+                        .with(as(admin, true)))
+                .andExpect(status().isCreated());
+        UUID id = providerRepository.findBySlug("switcheroo").orElseThrow().getId();
+
+        // An OIDC `sub` and a GitHub numeric id are different kinds of identifier. Reinterpreting
+        // stored sso_identities rows under the other one could match a subject to a different
+        // person entirely.
+        mockMvc.perform(put("/api/admin/sso/providers/" + id)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"slug\":\"switcheroo\",\"displayName\":\"Acme SSO\","
+                                + "\"protocol\":\"GITHUB\",\"issuerUri\":\"https://github.com\","
+                                + "\"clientId\":\"tm-client\"}")
+                        .with(as(admin, true)))
+                .andExpect(status().isBadRequest());
+    }
+
     @Test
     void firstSaveRequiresASecret() throws Exception {
         mockMvc.perform(post("/api/admin/sso/providers")

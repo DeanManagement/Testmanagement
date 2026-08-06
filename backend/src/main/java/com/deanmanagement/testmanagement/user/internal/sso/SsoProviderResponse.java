@@ -11,6 +11,7 @@ public record SsoProviderResponse(
         UUID id,
         String slug,
         String displayName,
+        SsoProtocol protocol,
         String issuerUri,
         String clientId,
         boolean secretSet,
