@@ -1,4 +1,4 @@
-import { Pipe, PipeTransform, inject, OnDestroy } from '@angular/core';
+import { ChangeDetectorRef, Pipe, PipeTransform, inject, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { BehaviorSubject } from 'rxjs';
@@ -28,6 +28,10 @@ function evictOldest(): void {
 export class AuthImagePipe implements PipeTransform, OnDestroy {
   private readonly http = inject(HttpClient);
   private readonly sanitizer = inject(DomSanitizer);
+  // Impure pipes are only re-evaluated when the view is checked. The blob arrives on an HTTP
+  // callback, which under zoneless change detection schedules nothing on its own, so without
+  // this the image URL is computed but never rendered and the <img> keeps an empty src.
+  private readonly cdr = inject(ChangeDetectorRef);
 
   private currentUrl: string | null = null;
   private localBlobUrl: string | null = null;
@@ -66,6 +70,7 @@ export class AuthImagePipe implements PipeTransform, OnDestroy {
           this.localBlobUrl = null;
           this.result$.next(safeUrl);
           this.loading = false;
+          this.cdr.markForCheck();
         },
         error: () => {
           this.loading = false;
