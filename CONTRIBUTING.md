@@ -45,6 +45,10 @@ must be trusted as privileged on the server.
 - [ ] No external CDN references (fonts, scripts, styles). The app must run air-gapped, and its
       own CSP allows `'self'` only — an external reference is silently dropped at runtime
 - [ ] No secrets, credentials, or environment-specific config committed
+- [ ] Test fixtures standing in for credentials do **not** imitate a real provider's format. A
+      `glpat-` prefix followed by exactly 20 token-characters is indistinguishable from a live
+      GitLab token, and GitHub push protection rejected the whole branch over one. Use something
+      obviously fake — the code under test only ever sees an opaque string
 
 ## Theming
 
