@@ -64,8 +64,11 @@ jobs:
           docker rm "$id" > /dev/null
           unzip -l /tmp/app.jar | grep -q 'BOOT-INF/classes/static/index.html' \
             || { echo "app.jar has no bundled SPA" >&2; exit 1; }
+      # The tag is v-prefixed. trivy-action tagged releases WITHOUT the `v` up to 0.35.0 and
+      # switched at 0.36.0, so `@0.36.0` looks right, matches the old convention, and fails at
+      # job setup with "unable to find version 0.36.0".
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@0.36.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: testmanagement:ci
           severity: CRITICAL
