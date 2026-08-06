@@ -94,7 +94,7 @@ class IssueStateRefresherTest {
         config.setProvider(IssueTrackerProviderType.GITLAB);
         config.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort());
         config.setProjectRef("group/project");
-        config.setApiTokenEncrypted(tokenCipher.encrypt("glpat-test"));
+        config.setApiTokenEncrypted(tokenCipher.encrypt("not-a-real-token-fixture"));
         config.setActive(true);
         config = configRepository.save(config);
     }

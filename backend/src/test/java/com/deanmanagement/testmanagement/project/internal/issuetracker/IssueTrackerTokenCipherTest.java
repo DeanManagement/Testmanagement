@@ -27,7 +27,7 @@ class IssueTrackerTokenCipherTest {
     @Test
     void roundTripsAToken() {
         IssueTrackerTokenCipher cipher = cipher(KEY);
-        String token = "glpat-ExampleTokenValue123";
+        String token = "not-a-real-token-fixture";
 
         assertThat(cipher.decrypt(cipher.encrypt(token))).isEqualTo(token);
     }
@@ -47,7 +47,7 @@ class IssueTrackerTokenCipherTest {
 
     @Test
     void storedFormNeverContainsThePlaintext() {
-        assertThat(cipher(KEY).encrypt("glpat-secret")).doesNotContain("glpat-secret");
+        assertThat(cipher(KEY).encrypt("not-a-real-token-fixture")).doesNotContain("not-a-real-token-fixture");
     }
 
     @Test

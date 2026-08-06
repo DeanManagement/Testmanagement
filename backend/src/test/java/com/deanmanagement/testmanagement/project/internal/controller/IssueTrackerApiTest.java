@@ -51,7 +51,7 @@ class IssueTrackerApiTest {
     @Autowired
     private IssueTrackerConfigRepository configRepository;
 
-    private static final String TOKEN = "glpat-SuperSecretTokenValue";
+    private static final String TOKEN = "not-a-real-token-fixture";
 
     private String admin;
     private String tester;
