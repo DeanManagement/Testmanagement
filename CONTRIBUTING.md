@@ -19,7 +19,34 @@ compose-level smoke test on every push and PR. A red pipeline blocks merging.
       Postgres-only SQL goes in `db/specific/postgresql/`
 - [ ] New user-facing strings added to **both** `frontend/src/assets/i18n/en.json` and `de.json`
 - [ ] Frontend subscriptions lifecycle-bound (`takeUntilDestroyed` / `take(1)` / `selectSignal`)
+- [ ] Colours use an existing `--tm-*` token (see Theming below) — no hex literals, no `--mat-sys-*`
+- [ ] Checked in **both** light and dark mode
 - [ ] No secrets, credentials, or environment-specific config committed
+
+## Theming
+
+`styles.scss` defines `--tm-*` custom properties on `:root`; `.tm-dark` redefines the same
+names, and `ThemeService` toggles that class on `<html>`. Any component that uses the tokens
+re-themes for free. Three rules, each of which has already been broken once:
+
+1. **Never write a hex literal in a component stylesheet.** A hardcoded light background is
+   the one thing dark mode cannot recover from.
+2. **Never reference a `--mat-sys-*` variable.** This app applies `mat.all-component-colors`,
+   which does not emit the Material 3 system tokens — so `var(--mat-sys-surface, #fff)`
+   silently resolves to the *fallback* and paints a white panel in dark mode. If a Material
+   component needs overriding, use its `--mat-<component>-*` token and verify in the browser
+   that it actually resolves.
+3. **Watch the direction a token points.** `--tm-primary` is a *foreground* colour and
+   inverts between themes. For a dark surface carrying light text in both themes use
+   `--tm-brand-surface` / `--tm-brand-surface-2`. For a label drawn on a solid accent or
+   success fill use `--tm-on-accent` / `--tm-on-success`, which flip to dark text where the
+   fill gets lighter.
+
+Status badges in `styles.scss` are the deliberate exception: they keep explicit per-theme
+pairs, because the tint itself carries the meaning. A new status needs adding to both blocks.
+
+Chart.js: call `applyChartDefaults(Chart)` from `core/utils/chart-theme.ts` in any render
+method and re-render on `ThemeService.resolvedChanges`.
 
 ## Releases
 

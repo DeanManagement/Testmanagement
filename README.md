@@ -6,33 +6,44 @@ A self-hosted test management tool for simple organisations. Manage test cases, 
 
 ## Features
 
-- **Projects** — organise test artifacts under projects with short keys (e.g. `PROJ`)
-- **Test Cases** — define test cases with steps, expected results, priorities, labels
+- **Projects** — organise test artifacts under projects with short keys (e.g. `PROJ`), with per-project roles (Admin / Tester / Viewer)
+- **Test Cases** — steps, expected results, priorities, labels, folders, full version history, and parameter sets that expand one case into several data-driven runs
 - **Test Suites** — group test cases into suites for organised execution
-- **Test Runs** — execute test suites across environments, track pass/fail per step
+- **Test Runs** — execute across environments, track pass/fail per step, with keyboard-driven execution
+- **Test Plans** — group runs under a milestone and track release progress
+- **Requirements** — link requirements to the cases that prove them and see a traceability matrix and coverage
+- **Bug Reports** — built-in bug tracking, pre-filled from a failed result
+- **Flaky Test Detection** — scores cases by how often consecutive runs disagree, not by failure count
 - **Screenshots** — attach screenshots to individual step results
 - **Allure Reports** — upload Allure HTML report ZIPs to test runs and view them in the browser
-- **External API** — accept completed test runs from CI/CD pipelines via API key authentication
-- **Settings** — manage API keys for external integrations from the UI
+- **Import / Export** — CSV and JSON test case import with a dry run, CSV/JSON export, PDF run and suite reports
+- **External API** — accept completed test runs from CI/CD pipelines via API key authentication (JUnit XML, Cucumber JSON, or native JSON)
+- **Webhooks** — signed outbound callbacks on run and bug events
+- **Issue Tracker** — link or file GitLab / Forgejo issues straight from a failed result
+- **Notifications** — watch plans, runs and bug reports; in-app always, email optional
+- **SSO** — optional multi-provider OpenID Connect, configured at runtime in the admin UI
+- **Dark mode** — light, dark, or follow the operating system
 - **i18n** — English and German language support with runtime switching
+
+Full walkthrough: **[docs/USER_MANUAL.md](docs/USER_MANUAL.md)**.
 
 ## Architecture
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
 │                        Browser                               │
-│                  Angular 19 + Material                       │
+│                  Angular 21 + Material                       │
 └──────────────────┬───────────────────────────────────────────┘
-                   │ HTTP (port 80)
+                   │ HTTP (port 8012)
 ┌──────────────────▼───────────────────────────────────────────┐
 │              Nginx (frontend container)                       │
 │         Serves static files + reverse proxies /api/*         │
 └──────────────────┬───────────────────────────────────────────┘
-                   │ /api/* (port 8080)
+                   │ /api/* (port 8089)
 ┌──────────────────▼───────────────────────────────────────────┐
-│            Spring Boot 3.5 (backend container)               │
+│            Spring Boot 4.0 (backend container)               │
 │    ┌─────────────────────────────────────────────────┐       │
-│    │  /api/**           OIDC (Keycloak JWT)          │       │
+│    │  /api/**           Local JWT, or OIDC SSO       │       │
 │    │  /api/external/**  API Key (X-API-Key header)   │       │
 │    └─────────────────────────────────────────────────┘       │
 └──────────────────┬───────────────────────────────────────────┘
@@ -41,8 +52,9 @@ A self-hosted test management tool for simple organisations. Manage test cases, 
 │              PostgreSQL 16 (db container)                     │
 └──────────────────────────────────────────────────────────────┘
 
-Auth: local email/password + JWT (HS256). OIDC/Keycloak SSO is a proposed
-v2 feature (see docs/prd/PRD-012).
+Auth: local email/password + JWT (HS256). Multi-provider OpenID Connect SSO is
+optional and configured at runtime by an admin (see docs/prd/PRD-012) — any OIDC
+provider works, and no identity provider is needed to run the app.
 ```
 
 ## Quick Start
@@ -72,17 +84,17 @@ The application is available at `http://localhost:8012`. Log in as
 ### Development
 
 ```bash
-# Terminal 1 — Backend (H2 in-memory DB, auth disabled)
-cd backend
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev
+# 1. Database — the dev profile expects a real PostgreSQL 16
+docker compose up -d testmanagement-db
 
-# Terminal 2 — Frontend (proxies to backend on :8080)
-cd frontend
-npm install
-npx ng serve
+# 2. Backend + frontend together, with prefixed logs (Ctrl-C stops both)
+./scripts/dev.sh
 ```
 
-The application is available at `http://localhost:4200`.
+`./scripts/dev.sh backend` or `./scripts/dev.sh frontend` runs just one of them.
+
+The application is available at `http://localhost:4200`, the API on `:8089`.
+Log in as `admin@localhost.ch` / `admin` (dev-profile default; `ADMIN_PASSWORD` overrides).
 
 ## External Test Run API
 
@@ -106,7 +118,7 @@ External tools (CI/CD pipelines, test automation frameworks) can submit complete
          │  │  Store this securely in your CI secrets!              │
          │  └────────────────────────────────────────────────────────┘
          │
-         │ 4. POST /api/external/projects/{projectId}/test-runs
+         │ 4. POST /api/external/projects/{projectRef}/test-runs
          │    Header: X-API-Key: tm_a1b2c3d4e5f6...
          │    Body: { name, environment, results[] }
          │
@@ -140,11 +152,19 @@ Navigate to **Settings > API Keys** in the sidebar and click **Create API Key**.
 
 The raw key is displayed **only once** after creation. Store it securely (e.g. as a CI secret).
 
+A key is scoped to one project and may only be used against that project's URLs; using it elsewhere
+returns `403`.
+
+### Referring to projects and test runs
+
+`{projectRef}` accepts either the project **key** (`TES`) or its UUID. `{testRunRef}` likewise
+accepts the run **key** (`TES-Run-1`, returned as `key` when the run is created) or its UUID.
+
 ### Step 2: Submit a Test Run
 
 ```bash
 curl -X POST \
-  http://localhost:8080/api/external/projects/{projectId}/test-runs \
+  http://localhost:8089/api/external/projects/{projectRef}/test-runs \
   -H "Content-Type: application/json" \
   -H "X-API-Key: tm_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2" \
   -d '{
@@ -152,23 +172,23 @@ curl -X POST \
     "environment": "staging",
     "results": [
       {
-        "testCaseId": "550e8400-e29b-41d4-a716-446655440001",
+        "testCaseKey": "TES-1",
         "status": "PASSED",
         "comment": "All assertions passed"
       },
       {
-        "testCaseId": "550e8400-e29b-41d4-a716-446655440002",
+        "testCaseKey": "TES-2",
         "status": "FAILED",
         "comment": "Assertion failed on line 42",
         "defectLink": "https://issues.example.com/BUG-789",
         "stepResults": [
           {
-            "testStepId": "660e8400-e29b-41d4-a716-446655440001",
+            "stepIndex": 1,
             "status": "PASSED",
             "actualResult": "Login page displayed"
           },
           {
-            "testStepId": "660e8400-e29b-41d4-a716-446655440002",
+            "stepIndex": 2,
             "status": "FAILED",
             "actualResult": "Got 500 error instead of dashboard"
           }
@@ -190,7 +210,7 @@ Each **result**:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `testCaseId` | UUID | Yes | ID of an existing test case in the project |
+| `testCaseKey` | string | Yes | Key of an existing test case in the project (e.g. `TES-1`) |
 | `status` | enum | Yes | `PASSED`, `FAILED`, `BLOCKED`, `SKIPPED`, `PENDING` |
 | `comment` | string | No | Free-text comment |
 | `defectLink` | string | No | Link to an external issue/defect |
@@ -200,7 +220,7 @@ Each **stepResult**:
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `testStepId` | UUID | Yes | ID of a test step belonging to the test case |
+| `stepIndex` | integer | Yes | 1-based position of the step within the test case |
 | `status` | enum | Yes | `PASSED`, `FAILED`, `BLOCKED`, `SKIPPED`, `PENDING` |
 | `actualResult` | string | No | What actually happened |
 
@@ -215,7 +235,8 @@ The endpoint returns a `201 Created` with the full test run object (same format 
 | Status | Meaning |
 |--------|---------|
 | `401` | Missing, invalid, or revoked API key |
-| `404` | Project, test case, or test step not found |
+| `403` | The key is scoped to a different project than the one named in the URL |
+| `404` | Project, test run, test case, or test step not found |
 | `400` | Validation error (empty name, empty results, etc.) |
 
 ### Revoking a Key
@@ -237,9 +258,9 @@ allure generate allure-results -o allure-report
 # Zip the report directory
 zip -r allure-report.zip allure-report/
 
-# Upload to a test run (use the test run ID from the creation response)
+# Upload to a test run (use the "key" from the creation response, e.g. TES-Run-1)
 curl -X POST \
-  http://localhost:8089/api/external/projects/{projectKey}/test-runs/{testRunId}/allure-report \
+  http://localhost:8089/api/external/projects/{projectRef}/test-runs/{testRunRef}/allure-report \
   -H "X-API-Key: tm_a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2" \
   -F "file=@allure-report.zip"
 ```
@@ -273,17 +294,19 @@ The backend serves individual files from the stored ZIP with correct MIME types,
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/external/projects/{key}/test-runs` | Submit a completed test run |
-| POST | `/api/external/projects/{key}/test-runs/{runId}/allure-report` | Upload an Allure report ZIP |
+| POST | `/api/external/projects/{projectRef}/test-runs` | Submit a completed test run |
+| POST | `/api/external/projects/{projectRef}/test-runs/junit` | Import a JUnit XML report |
+| POST | `/api/external/projects/{projectRef}/test-runs/cucumber` | Import a Cucumber JSON report |
+| POST | `/api/external/projects/{projectRef}/test-runs/{testRunRef}/allure-report` | Upload an Allure report ZIP |
 
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| Backend | Java 21, Spring Boot 3.5, Maven |
-| Frontend | Angular 19, Angular Material, NgRx, Chart.js |
+| Backend | Java 25, Spring Boot 4.0, Maven |
+| Frontend | Angular 21 (standalone, zoneless), Angular Material, NgRx, Chart.js |
 | Database | PostgreSQL 16, Flyway migrations |
-| Auth | OIDC via Keycloak (external) |
+| Auth | Local email/password + JWT; optional multi-provider OIDC SSO |
 | Packaging | Docker, docker-compose |
 | i18n | ngx-translate (English, German) |
 
@@ -307,12 +330,18 @@ cd frontend
 npm install       # Install dependencies
 npx ng serve      # Dev server (http://localhost:4200)
 npx ng build      # Production build
-npx ng test       # Run tests
+npx ng test       # Run tests (Vitest + jsdom)
 ```
 
 ### Dev Mode
 
-The `dev` profile uses an H2 in-memory database (PostgreSQL compatibility mode) and disables OIDC authentication. No external services are required.
+The `dev` profile points at the local PostgreSQL container (`docker compose up -d
+testmanagement-db`), sets a throwaway JWT secret and seeds the admin password as
+`admin`. No identity provider is required.
+
+Tests run against H2 in PostgreSQL mode, so `./mvnw test` needs no container.
+Vendor-specific SQL therefore lives in `db/specific/{vendor}/`, never under
+`db/migration/` — Flyway scans that directory recursively.
 
 ## License
 
