@@ -64,11 +64,11 @@
         <p class="section-hint">{{ 'project.detail.dashboardHint' | translate }}</p>
       </a>
       <a class="section-card tm-card" [routerLink]="['/projects', project.id, 'requirements']" data-test-id="section-requirements">
-        <mat-icon>fact_check</mat-icon>
-        <div>
+        <div class="section-header">
+          <mat-icon>fact_check</mat-icon>
           <h3>{{ 'requirement.title' | translate }}</h3>
-          <p>{{ 'requirement.cardHint' | translate }}</p>
         </div>
+        <p class="section-hint">{{ 'requirement.cardHint' | translate }}</p>
       </a>
       <a class="section-card tm-card" [routerLink]="['/projects', project.id, 'activity']" data-test-id="section-activity">
         <div class="section-header">
