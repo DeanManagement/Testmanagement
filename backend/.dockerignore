@@ -1,6 +1,0 @@
-target/
-.git/
-*.env
-.env*
-.m2_repo/
-.tests_failed

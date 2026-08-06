@@ -42,25 +42,17 @@ jobs:
         run: npx ng build
 
   docker:
-    name: Docker builds + scan
+    name: Docker build + scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build backend image
-        run: docker build -t testmanagement-backend:ci backend
-      - name: Build frontend image
-        run: docker build -t testmanagement-frontend:ci frontend
-      - name: Trivy scan backend
+      # One image: the root Dockerfile builds the Angular app and bakes it into the jar.
+      - name: Build image
+        run: docker build -t testmanagement:ci .
+      - name: Trivy scan
         uses: aquasecurity/trivy-action@0.28.0
         with:
-          image-ref: testmanagement-backend:ci
-          severity: CRITICAL
-          ignore-unfixed: true
-          exit-code: '1'
-      - name: Trivy scan frontend
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: testmanagement-frontend:ci
+          image-ref: testmanagement:ci
           severity: CRITICAL
           ignore-unfixed: true
           exit-code: '1'
@@ -86,17 +78,25 @@ jobs:
           fi
       - name: Start stack
         run: docker compose up --build -d
-      - name: Wait for backend health
+      - name: Wait for app health
         run: |
           for i in $(seq 1 60); do
-            if curl -fsS http://localhost:8089/actuator/health | grep -q UP; then exit 0; fi
+            if curl -fsS http://localhost:8012/actuator/health | grep -q UP; then exit 0; fi
             sleep 5
           done
-          echo "backend never became healthy" >&2
-          docker compose logs --tail 100 testmanagement-backend
+          echo "app never became healthy" >&2
+          docker compose logs --tail 100 testmanagement
           exit 1
-      - name: Frontend serves the app
+      # The jar serves the SPA now; this also proves the index.html fallback is wired.
+      - name: App shell is served
         run: curl -fsS http://localhost:8012/ | grep -qi '<app-root'
+      - name: Deep link falls back to the shell
+        run: curl -fsS http://localhost:8012/dashboard | grep -qi '<app-root'
+      - name: A mistyped API path 404s rather than returning the shell
+        run: |
+          status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8012/api/does-not-exist)
+          [ "$status" = "401" ] || [ "$status" = "403" ] || [ "$status" = "404" ] \
+            || { echo "expected an error status, got $status"; exit 1; }
       - name: Login works end to end
         run: |
           status=$(curl -s -o /tmp/login.json -w '%{http_code}' \

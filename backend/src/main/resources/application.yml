@@ -32,6 +32,14 @@ spring:
         max-page-size: 200
 server:
   port: 8089
+  # The jar now serves the Angular app as well as the API, so it does the gzipping that nginx
+  # used to. Note text/javascript AND application/javascript: Tomcat labels .js as the former,
+  # so a list carrying only the latter silently ships the bundle uncompressed — 116 kB instead
+  # of 27 kB for main.js.
+  compression:
+    enabled: true
+    mime-types: text/html,text/css,text/javascript,application/javascript,application/json,image/svg+xml,text/plain
+    min-response-size: 1024
   forward-headers-strategy: native
   tomcat:
     remoteip:

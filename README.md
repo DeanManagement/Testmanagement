@@ -34,15 +34,13 @@ Full walkthrough: **[docs/USER_MANUAL.md](docs/USER_MANUAL.md)**.
 │                        Browser                               │
 │                  Angular 21 + Material                       │
 └──────────────────┬───────────────────────────────────────────┘
-                   │ HTTP (port 8012)
+                   │ HTTP (published on 8012)
 ┌──────────────────▼───────────────────────────────────────────┐
-│              Nginx (frontend container)                       │
-│         Serves static files + reverse proxies /api/*         │
-└──────────────────┬───────────────────────────────────────────┘
-                   │ /api/* (port 8089)
-┌──────────────────▼───────────────────────────────────────────┐
-│            Spring Boot 4.0 (backend container)               │
+│         Spring Boot 4.0 — single app container :8089         │
 │    ┌─────────────────────────────────────────────────┐       │
+│    │  /**               The Angular app, from the    │       │
+│    │                    jar, with an index.html      │       │
+│    │                    fallback for client routes   │       │
 │    │  /api/**           Local JWT, or OIDC SSO       │       │
 │    │  /api/external/**  API Key (X-API-Key header)   │       │
 │    └─────────────────────────────────────────────────┘       │
@@ -51,6 +49,10 @@ Full walkthrough: **[docs/USER_MANUAL.md](docs/USER_MANUAL.md)**.
 ┌──────────────────▼───────────────────────────────────────────┐
 │              PostgreSQL 16 (db container)                     │
 └──────────────────────────────────────────────────────────────┘
+
+The Angular build is baked into the jar and served by Spring, so there is one
+image and one process. nginx is gone; its gzip, security headers and SPA
+fallback now live in the backend.
 
 Auth: local email/password + JWT (HS256). Multi-provider OpenID Connect SSO is
 optional and configured at runtime by an admin (see docs/prd/PRD-012) — any OIDC
@@ -79,7 +81,7 @@ docker compose up --build
 
 The application is available at `http://localhost:8012`. Log in as
 `admin@localhost.ch` with your `ADMIN_PASSWORD` (or the generated one from
-`docker compose logs testmanagement-backend`); you'll be asked to change it.
+`docker compose logs testmanagement`); you'll be asked to change it.
 
 ### Development
 
@@ -307,7 +309,7 @@ The backend serves individual files from the stored ZIP with correct MIME types,
 | Frontend | Angular 21 (standalone, zoneless), Angular Material, NgRx, Chart.js |
 | Database | PostgreSQL 16, Flyway migrations |
 | Auth | Local email/password + JWT; optional multi-provider OIDC SSO |
-| Packaging | Docker, docker-compose |
+| Packaging | Docker (one image: SPA baked into the jar), docker-compose |
 | i18n | ngx-translate (English, German) |
 
 ## Development

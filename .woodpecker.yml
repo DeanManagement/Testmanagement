@@ -1,14 +1,12 @@
 # ── Testmanagement – Test, Build & Push ──
 #
 # Pipeline (DAG):
-#   backend-test ─┬─→ publish-reports        (always, even on test failure)
-#   frontend-test ┴─┬─→ build-push-backend   (main / manual only)
-#                   └─→ build-push-frontend  (main / manual only)
+#   backend-test ─┬─→ publish-reports  (always, even on test failure)
+#   frontend-test ┴─→ build-push        (main / manual only)
 #
-# Tests run on EVERY branch push; the two images are only built & pushed from
-# main (or a manual run). Unlike Revenuelist-ScS this repo ships TWO images —
-# the Spring Boot backend and the nginx-served Angular frontend — each with its
-# own Dockerfile and build context.
+# Tests run on EVERY branch push; the image is only built & pushed from main
+# (or a manual run). One image: the root Dockerfile builds the Angular app and
+# bakes it into the Spring Boot jar, which serves both the SPA and the API.
 #
 # Reports: Woodpecker has no built-in artifact store, so test/coverage reports
 # are uploaded to the Nexus RAW HOSTED repository `ci-reports`.
@@ -103,7 +101,7 @@ steps:
       - 'echo "Backend test report: $BASE/backend/target/reports/surefire.html (or .../target/site/surefire-report.html)"'
       - 'echo "Frontend coverage: $BASE/frontend-coverage/frontend/index.html"'
 
-  - name: build-push-backend
+  - name: build-push
     image: woodpeckerci/plugin-docker-buildx:6.1.0
     depends_on: [backend-test, frontend-test]
     when:
@@ -111,53 +109,26 @@ steps:
         branch: main
       - event: manual
     settings:
-      # registry: full URL WITH scheme (the plugin url-parses it). Plain HTTP Nexus → http://
+      # registry: full URL WITH scheme (the plugin url-parses it). Plain HTTP Nexus -> http://
       registry: http://192.168.1.191:6083
       # repo: image reference, scheme-LESS (host:port/name)
-      repo: 192.168.1.191:6083/testmanagement-backend
-      context: backend
-      dockerfile: backend/Dockerfile
+      repo: 192.168.1.191:6083/testmanagement
+      # Context is the repository root: the Dockerfile builds the Angular app and the jar.
+      dockerfile: Dockerfile
       platforms: linux/amd64
       # Surfaced at /actuator/info so a running container can be traced to a commit.
       build_args:
         - APP_VERSION=${CI_COMMIT_SHA:0:8}
-      # ── Plain-HTTP Nexus on the LAN: TWO daemons must be told it's HTTP ──
-      # 1. `insecure` → adds --insecure-registry to DOCKERD. Required for the
+      # -- Plain-HTTP Nexus on the LAN: TWO daemons must be told it's HTTP --
+      # 1. `insecure` -> adds --insecure-registry to DOCKERD. Required for the
       #    `docker login` step (login.go runs through dockerd); without it the
       #    login fails with "error authenticating".
-      # 2. buildkit_config http=true → the PUSH runs through BUILDKIT (the
+      # 2. buildkit_config http=true -> the PUSH runs through BUILDKIT (the
       #    docker-container driver), which ignores dockerd. Covers build-time
       #    resolves/pulls and layer blobs over HTTP.
-      # 3. registry.insecure=true on the OUTPUT → HTTP for the final image/
+      # 3. registry.insecure=true on the OUTPUT -> HTTP for the final image/
       #    manifest push (the default output has no insecure attr, so the
-      #    export otherwise defaults to HTTPS → "HTTP response to HTTPS client").
-      insecure: true
-      buildkit_config: |
-        [registry."192.168.1.191:6083"]
-          http = true
-          insecure = true
-      output: type=image,push=true,rewrite-timestamp=true,registry.insecure=true
-      tags:
-        - latest
-        - ${CI_COMMIT_SHA:0:8}
-      username:
-        from_secret: nexus_user
-      password:
-        from_secret: nexus_password
-
-  - name: build-push-frontend
-    image: woodpeckerci/plugin-docker-buildx:6.1.0
-    depends_on: [backend-test, frontend-test]
-    when:
-      - event: push
-        branch: main
-      - event: manual
-    settings:
-      registry: http://192.168.1.191:6083
-      repo: 192.168.1.191:6083/testmanagement-frontend
-      context: frontend
-      dockerfile: frontend/Dockerfile
-      platforms: linux/amd64
+      #    export otherwise defaults to HTTPS -> "HTTP response to HTTPS client").
       insecure: true
       buildkit_config: |
         [registry."192.168.1.191:6083"]

@@ -659,6 +659,10 @@ Disconnecting the tracker keeps issues already linked to results; they stay clic
 External tools submit results with an API key in the `X-API-Key` header. No user account is
 involved.
 
+The examples below use `:8089`, the port the application listens on inside the container and when
+you run it directly. A default Docker Compose install publishes it as `:8012` — use whichever
+address your users reach the UI on, since the API is served from the same origin.
+
 Two path segments accept either form:
 
 - `{projectRef}` — the project key (`TES`) **or** its UUID
@@ -749,6 +753,9 @@ neither form is the problem.
 Docker and Docker Compose. Nothing else — no identity provider, no mail server, no external
 services. The application is designed to run air-gapped.
 
+Two containers: the application (one image containing both the API and the web UI) and
+PostgreSQL.
+
 ### Installing
 
 ```bash
@@ -763,19 +770,20 @@ cp .env.example .env
 docker compose up --build -d
 ```
 
-The application is served on `http://localhost:8012`, the API on `:8089`. The backend refuses to
-start without a `JWT_SECRET` rather than falling back to a known default.
+The application is served on `http://localhost:8012` — UI and API on the same origin, from a
+single container. The backend refuses to start without a `JWT_SECRET` rather than falling back to
+a known default.
 
-> **Known gap:** `docker-compose.yml` currently hardcodes the database password instead of reading
-> `DB_PASSWORD` from `.env`, so the value you set there is ignored and the stack comes up with a
-> well-known password. The database is published on loopback only, so it is not reachable from
-> outside the host, but do not treat the compose file as hardened until this is fixed.
+> **Note:** PostgreSQL only applies `DB_PASSWORD` when its data volume is first created. On an
+> existing volume the variable is ignored and the app fails to connect until the password is
+> changed inside the database as well. If you set it after a first run, either recreate the volume
+> or `ALTER USER testmanagement WITH PASSWORD …`.
 
 Sign in as `admin@localhost.ch`. If you left `ADMIN_PASSWORD` empty, a random password is printed
 **once** at first start:
 
 ```bash
-docker compose logs testmanagement-backend | grep -i password
+docker compose logs testmanagement | grep -i password
 ```
 
 You must change it at first login.
@@ -795,7 +803,7 @@ Everything is environment variables on the backend container. Required:
 | Variable | Notes |
 |---|---|
 | `JWT_SECRET` | No default — startup fails without it. `openssl rand -base64 48`. Changing it signs everyone out |
-| `DB_PASSWORD` | Read by the backend when it runs outside Compose. See the known gap above before relying on it under Compose |
+| `DB_PASSWORD` | Used by both the database and the app. See the note above about existing volumes |
 
 Required only for certain features:
 
@@ -811,7 +819,7 @@ Optional, with defaults:
 | `ADMIN_EMAIL` | `admin@localhost.ch` |
 | `ADMIN_PASSWORD` | *(generated and logged once)* |
 | `ADMIN_DISPLAY_NAME` | `Administrator` |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost,http://localhost:8012,…` under Docker Compose; `http://localhost:4200,…` when running the backend directly |
+| `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` — the UI is same-origin with the API now, so this only matters for a separate dev server |
 | `JWT_EXPIRATION_MS` | `43200000` (12 hours) |
 | `SEARCH_FULL_TEXT` | `true` — Postgres full-text search; set `false` on other databases |
 | `MAIL_ENABLED` / `MAIL_FROM` | `false` / `no-reply@testmanagement.local` |
@@ -832,7 +840,8 @@ and the webhook retry schedule.
 
 ### Backups
 
-Everything lives in PostgreSQL, including uploaded screenshots and Allure reports.
+Everything lives in PostgreSQL, including uploaded screenshots and Allure reports. The
+application container holds no state and can be recreated freely.
 
 ```bash
 docker compose exec testmanagement-db \

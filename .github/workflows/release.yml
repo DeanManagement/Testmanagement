@@ -45,16 +45,11 @@ jobs:
       - name: Resolve version
         id: version
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-      - name: Build + push backend
+      - name: Build + push image
         run: |
-          IMG=ghcr.io/${{ github.repository_owner }}/testmanagement-backend
+          IMG=ghcr.io/${{ github.repository_owner }}/testmanagement
           docker build --build-arg APP_VERSION=${{ steps.version.outputs.version }} \
-            -t $IMG:${{ steps.version.outputs.version }} -t $IMG:latest backend
-          docker push --all-tags $IMG
-      - name: Build + push frontend
-        run: |
-          IMG=ghcr.io/${{ github.repository_owner }}/testmanagement-frontend
-          docker build -t $IMG:${{ steps.version.outputs.version }} -t $IMG:latest frontend
+            -t $IMG:${{ steps.version.outputs.version }} -t $IMG:latest .
           docker push --all-tags $IMG
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2

@@ -8,12 +8,19 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configurers.HeadersConfigurer;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.header.writers.CacheControlHeadersWriter;
+import org.springframework.security.web.header.writers.DelegatingRequestMatcherHeaderWriter;
+import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter;
+import org.springframework.security.web.header.writers.frameoptions.XFrameOptionsHeaderWriter.XFrameOptionsMode;
+
+import jakarta.servlet.http.HttpServletRequest;
 
 @Configuration
 @EnableWebSecurity
@@ -34,7 +41,26 @@ public class UserSecurityConfig {
         http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
-                .headers(headers -> headers.frameOptions(frame -> frame.sameOrigin()))
+                // The jar serves the SPA as well as the API, and the two need different header
+                // policies. Spring Security writes its headers when the response commits, so it
+                // wins over any filter — both values therefore have to be decided here.
+                //   X-Frame-Options: SAMEORIGIN on /api so the Allure report can render in its
+                //     sandboxed iframe (PRD-018); DENY on the app shell, as nginx had it.
+                //   Cache-Control: no-store on /api, because responses carry authorization-scoped
+                //     data (PRD-017). Static assets are left to the resource handler's
+                //     ETag/Last-Modified, or the whole hashed bundle is re-fetched every load.
+                .headers(headers -> headers
+                        .frameOptions(HeadersConfigurer.FrameOptionsConfig::disable)
+                        .cacheControl(HeadersConfigurer.CacheControlConfig::disable)
+                        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                                UserSecurityConfig::isApiRequest,
+                                new XFrameOptionsHeaderWriter(XFrameOptionsMode.SAMEORIGIN)))
+                        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                                UserSecurityConfig::isApiRequest,
+                                new CacheControlHeadersWriter()))
+                        .addHeaderWriter(new DelegatingRequestMatcherHeaderWriter(
+                                request -> !isApiRequest(request),
+                                new XFrameOptionsHeaderWriter(XFrameOptionsMode.DENY))))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(new JwtAuthenticationFilter(jwtDecoder, userRepository),
                         UsernamePasswordAuthenticationFilter.class)
@@ -58,7 +84,19 @@ public class UserSecurityConfig {
                                 "/api/projects/*/test-runs/*/allure-report/view/**").permitAll()
                         .requestMatchers("/api/external/**").hasRole("API_KEY")
                         .requestMatchers("/api/**").authenticated()
+                        // Everything above is the API. What is left is the Angular app the jar now
+                        // serves: the shell, its hashed assets, and every client-side route, all of
+                        // which an unauthenticated browser must be able to fetch — the app itself
+                        // decides what to show once it has loaded. Actuator is denied explicitly
+                        // first so that widening its exposure later cannot leak through this rule.
+                        .requestMatchers("/actuator/**").denyAll()
+                        .requestMatchers(HttpMethod.GET, "/**").permitAll()
                         .anyRequest().denyAll());
         return http.build();
+    }
+
+    /** The API and the app shell get different header policies; this is the boundary. */
+    private static boolean isApiRequest(HttpServletRequest request) {
+        return request.getRequestURI().startsWith("/api/");
     }
 }
