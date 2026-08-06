@@ -3,7 +3,7 @@
   align-items: center;
   justify-content: center;
   min-height: 100vh;
-  background: linear-gradient(135deg, var(--tm-primary) 0%, var(--tm-primary-light) 100%);
+  background: linear-gradient(135deg, var(--tm-brand-surface) 0%, var(--tm-brand-surface-2) 100%);
   padding: 24px;
 }
 
@@ -72,7 +72,7 @@ h2 {
 
 .login-btn {
   width: 100%;
-  background: var(--tm-primary) !important;
+  background: var(--tm-brand-surface) !important;
   color: #ffffff !important;
   font-size: 15px;
   font-weight: 600;

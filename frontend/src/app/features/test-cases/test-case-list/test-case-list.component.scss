@@ -24,7 +24,7 @@
 
 .create-btn {
   background: var(--tm-accent) !important;
-  color: #fff !important;
+  color: var(--tm-on-accent) !important;
 }
 
 .content-layout {
@@ -79,7 +79,7 @@
   }
 
   &--selected {
-    background: var(--tm-primary-bg, rgba(25, 118, 210, 0.08));
+    background: var(--tm-subtle-bg);
     color: var(--tm-primary-light);
 
     .folder-icon {
@@ -152,8 +152,8 @@
 }
 
 .drag-over {
-  background: var(--tm-primary-bg, rgba(25, 118, 210, 0.12)) !important;
-  outline: 2px dashed var(--tm-primary-light, #1976d2);
+  background: var(--tm-subtle-bg) !important;
+  outline: 2px dashed var(--tm-primary-light);
   outline-offset: -2px;
 }
 

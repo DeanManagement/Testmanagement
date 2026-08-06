@@ -9,7 +9,7 @@
 
 .notification-empty {
   padding: 1rem;
-  color: var(--mat-sys-on-surface-variant, #5f6368);
+  color: var(--tm-text-secondary);
   text-align: center;
 }
 
@@ -35,5 +35,5 @@
 
 .notification-time {
   font-size: 0.72rem;
-  color: var(--mat-sys-on-surface-variant, #5f6368);
+  color: var(--tm-text-secondary);
 }

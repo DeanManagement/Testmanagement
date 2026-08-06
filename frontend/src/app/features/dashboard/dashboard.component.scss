@@ -4,7 +4,7 @@
 
 // -- Welcome Banner --
 .welcome-banner {
-  background: linear-gradient(135deg, var(--tm-primary) 0%, var(--tm-primary-light) 100%);
+  background: linear-gradient(135deg, var(--tm-brand-surface) 0%, var(--tm-brand-surface-2) 100%);
   border-radius: var(--tm-radius);
   padding: 32px;
   margin-bottom: 24px;
@@ -34,7 +34,7 @@
 
 .action-btn {
   background: var(--tm-accent) !important;
-  color: #ffffff !important;
+  color: var(--tm-on-accent) !important;
 }
 
 // -- Projects Section --

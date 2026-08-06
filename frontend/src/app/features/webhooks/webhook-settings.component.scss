@@ -18,7 +18,7 @@
 }
 
 .page-hint {
-  color: var(--mat-sys-on-surface-variant, #5f6368);
+  color: var(--tm-text-secondary);
   margin: 0.25rem 0 1.25rem;
 }
 
@@ -27,7 +27,7 @@
   border-radius: 12px;
   padding: 1rem 1.25rem;
   margin-bottom: 1rem;
-  background: var(--mat-sys-surface, #fff);
+  background: var(--tm-surface);
 }
 
 .form-card .full-width {
@@ -109,7 +109,7 @@
 }
 
 .response-code {
-  color: var(--mat-sys-on-surface-variant, #5f6368);
+  color: var(--tm-text-secondary);
   margin-left: 0.25rem;
 }
 
@@ -120,7 +120,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 2rem;
-  color: var(--mat-sys-on-surface-variant, #5f6368);
+  color: var(--tm-text-secondary);
 }
 
 .empty-state mat-icon {

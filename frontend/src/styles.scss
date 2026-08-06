@@ -5,8 +5,19 @@
   --tm-primary: #32373c;
   --tm-primary-light: #474d54;
   --tm-primary-lighter: #eef0f1;
+  // Brand surfaces: the sidebar rail, the welcome/hero banners and the solid brand buttons.
+  // These carry white text in BOTH themes, so they must stay dark in both. --tm-primary cannot
+  // serve this role: it doubles as a foreground colour elsewhere and therefore inverts to a
+  // light grey in dark mode, which would leave white text on a near-white surface.
+  --tm-brand-surface: #32373c;
+  --tm-brand-surface-2: #474d54;
   --tm-accent: #e33244;
   --tm-accent-light: #fde8ea;
+  // Text drawn ON a solid --tm-accent / --tm-success surface. The dark theme lightens both so they
+  // stay legible as foregrounds, which leaves white-on-accent buttons at 2.75:1 and white-on-success
+  // at 1.56:1 — so in dark mode the label flips to near-black instead.
+  --tm-on-accent: #ffffff;
+  --tm-on-success: #ffffff;
   --tm-success: #2e7d32;
   --tm-danger: #c62828;
   --tm-warn: #ef6c00;
@@ -42,8 +53,14 @@
   --tm-primary: #c9d1d9;
   --tm-primary-light: #8b98a5;
   --tm-primary-lighter: #21262d;
+  // Deliberately NOT inverted — see the note in :root. Sits a little above --tm-surface so the
+  // rail and banners still read as distinct brand elements against the page background.
+  --tm-brand-surface: #232a33;
+  --tm-brand-surface-2: #2f3843;
   --tm-accent: #ff6b7a;
   --tm-accent-light: #3d1f24;
+  --tm-on-accent: #1e2328;
+  --tm-on-success: #10251a;
   --tm-success: #6ee787;
   --tm-danger: #ff7b72;
   --tm-warn: #ffa657;

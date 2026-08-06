@@ -6,7 +6,7 @@
 
 .allure-toolbar {
   flex-shrink: 0;
-  background: var(--tm-primary);
+  background: var(--tm-brand-surface);
   color: #ffffff;
   box-shadow: var(--tm-shadow-md);
 
@@ -20,7 +20,7 @@
     color: #ffffff;
 
     &:hover {
-      background: var(--tm-primary-light);
+      background: var(--tm-brand-surface-2);
     }
   }
 }

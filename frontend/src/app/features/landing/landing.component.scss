@@ -48,7 +48,7 @@
   justify-content: center;
   text-align: center;
   padding: 96px 32px 80px;
-  background: linear-gradient(135deg, var(--tm-primary) 0%, var(--tm-primary-light) 100%);
+  background: linear-gradient(135deg, var(--tm-brand-surface) 0%, var(--tm-brand-surface-2) 100%);
   color: #ffffff;
 }
 
@@ -69,7 +69,7 @@
 
 .hero-cta {
   background: var(--tm-accent) !important;
-  color: #ffffff !important;
+  color: var(--tm-on-accent) !important;
   font-size: 16px;
   font-weight: 600;
   padding: 8px 32px;

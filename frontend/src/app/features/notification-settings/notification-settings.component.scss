@@ -11,7 +11,7 @@
 }
 
 .page-hint {
-  color: var(--mat-sys-on-surface-variant, #5f6368);
+  color: var(--tm-text-secondary);
   margin: 0.25rem 0 1.25rem;
 }
 
@@ -19,7 +19,7 @@
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 12px;
   padding: 0.5rem 1rem;
-  background: var(--mat-sys-surface, #fff);
+  background: var(--tm-surface);
 }
 
 .prefs-row {
@@ -36,7 +36,7 @@
 
 .prefs-head {
   font-weight: 500;
-  color: var(--mat-sys-on-surface-variant, #5f6368);
+  color: var(--tm-text-secondary);
 }
 
 .prefs-actions {
