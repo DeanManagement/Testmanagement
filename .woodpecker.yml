@@ -1,0 +1,173 @@
+# ── Testmanagement – Test, Build & Push ──
+#
+# Pipeline (DAG):
+#   backend-test ─┬─→ publish-reports        (always, even on test failure)
+#   frontend-test ┴─┬─→ build-push-backend   (main / manual only)
+#                   └─→ build-push-frontend  (main / manual only)
+#
+# Tests run on EVERY branch push; the two images are only built & pushed from
+# main (or a manual run). Unlike Revenuelist-ScS this repo ships TWO images —
+# the Spring Boot backend and the nginx-served Angular frontend — each with its
+# own Dockerfile and build context.
+#
+# Reports: Woodpecker has no built-in artifact store, so test/coverage reports
+# are uploaded to the Nexus RAW HOSTED repository `ci-reports`.
+# Browse at:  <REPORTS_BASE>/testmanagement/<short-sha>/
+#   backend surefire HTML+XML and the frontend vitest coverage report.
+#
+# Required Woodpecker secrets (Repo Settings → Secrets):
+#   nexus_user      – Nexus Docker registry user
+#   nexus_password  – Nexus Docker registry password / token
+#
+# NOTE: the *push* below is authenticated by these Secrets, NOT by any registry
+# registered under Repo Settings → Registries. Woodpecker's registered
+# registries are pull-only ("never exposed to your steps, so they cannot be
+# used to push"); the buildx plugin runs its own buildkit daemon and logs in
+# with username/password. So keep these Secrets even if the registry is also
+# registered for pulls.
+#
+# Required server config (admin, once): the docker-buildx plugin runs its own
+# buildkit daemon and must be trusted as a privileged plugin. Add it to
+#   WOODPECKER_PLUGINS_PRIVILEGED=woodpeckerci/plugin-docker-buildx
+# (or mark it trusted in the repo settings) or the build cannot start dockerd.
+#
+# Maven repo: steps run in separate containers but share the workspace, so the
+# local Maven repo lives inside it (backend/.m2_repo). The image build does its
+# own resolve inside the Dockerfile and does not share this cache.
+#
+# Database: the backend tests run against H2 in PostgreSQL mode, so no service
+# container is needed. Only `db/specific/postgresql/` migrations are skipped
+# there — see CONTRIBUTING.
+
+when:
+  # Run tests on every push to any branch; deploy steps are gated to main below.
+  - event: push
+  # Allow hitting "Run" in the Woodpecker UI on any branch.
+  - event: manual
+
+steps:
+  - name: backend-test
+    image: maven:3.9.12-eclipse-temurin-25
+    directory: backend
+    commands:
+      # Run the tests but defer the failure so the HTML report still gets
+      # generated; the final `test !` re-fails the step if tests failed.
+      - mvn -B -ntp -Dmaven.repo.local=.m2_repo test || touch .tests_failed
+      - mvn -B -ntp -Dmaven.repo.local=.m2_repo surefire-report:report-only
+      - test ! -f .tests_failed
+
+  - name: frontend-test
+    # LTS image: node 25 ships an experimental global localStorage that shadows
+    # jsdom's and breaks browser-API code under test (plus odd versions aren't LTS).
+    image: node:24-alpine
+    directory: frontend
+    commands:
+      - npm ci --no-audit --no-fund
+      # --coverage writes a browsable HTML report to frontend/coverage/frontend/
+      - npm test -- --watch=false --coverage
+
+  - name: publish-reports
+    image: curlimages/curl
+    depends_on: [backend-test, frontend-test]
+    # Publish even when a test step failed — failure reports are the useful ones.
+    when:
+      - status: [success, failure]
+    environment:
+      REPORTS_BASE: http://192.168.1.191:6085/repository/ci-reports
+      NEXUS_USER:
+        from_secret: nexus_user
+      NEXUS_PASSWORD:
+        from_secret: nexus_password
+    commands:
+      - SHA=$(echo "$CI_COMMIT_SHA" | cut -c1-8)
+      - BASE="$REPORTS_BASE/testmanagement/$SHA"
+      # Backend: surefire HTML (target/reports or target/site, depending on plugin version) + raw XML
+      - |
+        cd backend
+        for d in target/reports target/site target/surefire-reports; do
+          [ -d "$d" ] || continue
+          find "$d" -type f | while read -r f; do
+            curl -sf -u "$NEXUS_USER:$NEXUS_PASSWORD" --upload-file "$f" "$BASE/backend/$f" || echo "upload failed: $f"
+          done
+        done
+        cd ..
+      # Frontend: vitest coverage HTML
+      - |
+        if [ -d frontend/coverage ]; then
+          cd frontend/coverage
+          find . -type f | while read -r f; do
+            curl -sf -u "$NEXUS_USER:$NEXUS_PASSWORD" --upload-file "$f" "$BASE/frontend-coverage/$${f#./}" || echo "upload failed: $f"
+          done
+          cd ../..
+        fi
+      - 'echo "Backend test report: $BASE/backend/target/reports/surefire.html (or .../target/site/surefire-report.html)"'
+      - 'echo "Frontend coverage: $BASE/frontend-coverage/frontend/index.html"'
+
+  - name: build-push-backend
+    image: woodpeckerci/plugin-docker-buildx:6.1.0
+    depends_on: [backend-test, frontend-test]
+    when:
+      - event: push
+        branch: main
+      - event: manual
+    settings:
+      # registry: full URL WITH scheme (the plugin url-parses it). Plain HTTP Nexus → http://
+      registry: http://192.168.1.191:6083
+      # repo: image reference, scheme-LESS (host:port/name)
+      repo: 192.168.1.191:6083/testmanagement-backend
+      context: backend
+      dockerfile: backend/Dockerfile
+      platforms: linux/amd64
+      # Surfaced at /actuator/info so a running container can be traced to a commit.
+      build_args:
+        - APP_VERSION=${CI_COMMIT_SHA:0:8}
+      # ── Plain-HTTP Nexus on the LAN: TWO daemons must be told it's HTTP ──
+      # 1. `insecure` → adds --insecure-registry to DOCKERD. Required for the
+      #    `docker login` step (login.go runs through dockerd); without it the
+      #    login fails with "error authenticating".
+      # 2. buildkit_config http=true → the PUSH runs through BUILDKIT (the
+      #    docker-container driver), which ignores dockerd. Covers build-time
+      #    resolves/pulls and layer blobs over HTTP.
+      # 3. registry.insecure=true on the OUTPUT → HTTP for the final image/
+      #    manifest push (the default output has no insecure attr, so the
+      #    export otherwise defaults to HTTPS → "HTTP response to HTTPS client").
+      insecure: true
+      buildkit_config: |
+        [registry."192.168.1.191:6083"]
+          http = true
+          insecure = true
+      output: type=image,push=true,rewrite-timestamp=true,registry.insecure=true
+      tags:
+        - latest
+        - ${CI_COMMIT_SHA:0:8}
+      username:
+        from_secret: nexus_user
+      password:
+        from_secret: nexus_password
+
+  - name: build-push-frontend
+    image: woodpeckerci/plugin-docker-buildx:6.1.0
+    depends_on: [backend-test, frontend-test]
+    when:
+      - event: push
+        branch: main
+      - event: manual
+    settings:
+      registry: http://192.168.1.191:6083
+      repo: 192.168.1.191:6083/testmanagement-frontend
+      context: frontend
+      dockerfile: frontend/Dockerfile
+      platforms: linux/amd64
+      insecure: true
+      buildkit_config: |
+        [registry."192.168.1.191:6083"]
+          http = true
+          insecure = true
+      output: type=image,push=true,rewrite-timestamp=true,registry.insecure=true
+      tags:
+        - latest
+        - ${CI_COMMIT_SHA:0:8}
+      username:
+        from_secret: nexus_user
+      password:
+        from_secret: nexus_password

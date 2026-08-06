@@ -10,6 +10,13 @@
 CI (GitHub Actions) runs all of the above plus Docker builds, a Trivy image scan, and a
 compose-level smoke test on every push and PR. A red pipeline blocks merging.
 
+Woodpecker (`.woodpecker.yml`) runs the same tests on every branch push and, from `main` or a
+manual run, builds and pushes `testmanagement-backend` and `testmanagement-frontend` to Nexus
+tagged `latest` and the short commit SHA. Test and coverage reports are uploaded to the Nexus
+`ci-reports` raw repository under `testmanagement/<short-sha>/`, because Woodpecker has no
+artifact store. It needs two repo secrets, `nexus_user` and `nexus_password`; the buildx plugin
+must be trusted as privileged on the server.
+
 ## Pull request checklist
 
 - [ ] Backend tests green (`./mvnw test`), frontend tests + build green
