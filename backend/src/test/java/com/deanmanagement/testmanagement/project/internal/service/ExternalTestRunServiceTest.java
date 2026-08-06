@@ -12,7 +12,6 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
-import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import org.junit.jupiter.api.Test;
@@ -40,7 +39,7 @@ class ExternalTestRunServiceTest {
     private TestRunRepository testRunRepository;
 
     @Mock
-    private ProjectRepository projectRepository;
+    private ExternalRefResolver refResolver;
 
     @Mock
     private TestCaseRepository testCaseRepository;
@@ -118,7 +117,7 @@ class ExternalTestRunServiceTest {
         );
         var request = new ExternalCreateTestRunRequest("CI Run", "staging", List.of(resultReq));
 
-        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.of(project));
+        when(refResolver.resolveProject(PROJECT_KEY)).thenReturn(project);
         when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.of(testCase));
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));
         when(testRunMapper.toResponse(any(TestRun.class))).thenReturn(sampleRunResponse());
@@ -156,7 +155,7 @@ class ExternalTestRunServiceTest {
         );
         var request = new ExternalCreateTestRunRequest("Auto Run", null, List.of(resultReq));
 
-        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.of(project));
+        when(refResolver.resolveProject(PROJECT_KEY)).thenReturn(project);
         when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.of(testCase));
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));
         when(testRunMapper.toResponse(any(TestRun.class))).thenReturn(sampleRunResponse());
@@ -176,7 +175,8 @@ class ExternalTestRunServiceTest {
 
     @Test
     void createExternalRun_projectNotFound_throwsException() {
-        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.empty());
+        when(refResolver.resolveProject(PROJECT_KEY))
+                .thenThrow(new ResourceNotFoundException("Project", PROJECT_KEY));
 
         var request = new ExternalCreateTestRunRequest("Run", null, List.of(
                 new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
@@ -190,7 +190,7 @@ class ExternalTestRunServiceTest {
     @Test
     void createExternalRun_testCaseNotFound_throwsException() {
         Project project = sampleProject();
-        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.of(project));
+        when(refResolver.resolveProject(PROJECT_KEY)).thenReturn(project);
         when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.empty());
 
         var request = new ExternalCreateTestRunRequest("Run", null, List.of(
@@ -207,7 +207,7 @@ class ExternalTestRunServiceTest {
         Project project = sampleProject();
         TestCase testCase = sampleTestCase();
 
-        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.of(project));
+        when(refResolver.resolveProject(PROJECT_KEY)).thenReturn(project);
         when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.of(testCase));
 
         var stepResults = List.of(
@@ -238,7 +238,7 @@ class ExternalTestRunServiceTest {
                 new ExternalTestResultRequest(testCaseKey2, TestResultStatus.SKIPPED, "Skipped", null, null)
         ));
 
-        when(projectRepository.findByKey(PROJECT_KEY)).thenReturn(Optional.of(project));
+        when(refResolver.resolveProject(PROJECT_KEY)).thenReturn(project);
         when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.of(testCase));
         when(testCaseRepository.findByKeyAndProjectId(testCaseKey2, PROJECT_ID)).thenReturn(Optional.of(testCase2));
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));

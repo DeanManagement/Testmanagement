@@ -54,11 +54,11 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         }
 
         // PRD-021 §4.2: a project-scoped key may only touch its own project. Enforced here,
-        // centrally, so every current and future /api/external/projects/{key}/** endpoint is
+        // centrally, so every current and future /api/external/projects/{ref}/** endpoint is
         // covered. Legacy keys (no scope) pass with a deprecation warning.
         String keyScope = apiKey.get().projectKey();
-        String pathProject = extractProjectKey(request.getRequestURI());
-        if (keyScope != null && pathProject != null && !keyScope.equals(pathProject)) {
+        String pathProject = extractProjectRef(request.getRequestURI());
+        if (keyScope != null && pathProject != null && !matchesScope(apiKey.get(), pathProject)) {
             reject(response, HttpServletResponse.SC_FORBIDDEN,
                     "API key is not authorized for project " + pathProject);
             return;
@@ -81,8 +81,19 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
-    /** @return the {projectKey} segment of /api/external/projects/{projectKey}/…, or null. */
-    static String extractProjectKey(String uri) {
+    /**
+     * The URL may name the project by key or by UUID (both are shown in the UI and in API
+     * responses), so the scope check has to accept either form. The key comparison stays
+     * case-sensitive; only the UUID form is compared loosely, since its canonical text is
+     * lowercase but callers routinely paste it uppercased.
+     */
+    private static boolean matchesScope(ValidatedKey key, String ref) {
+        return ref.equals(key.projectKey())
+                || (key.projectId() != null && key.projectId().toString().equalsIgnoreCase(ref));
+    }
+
+    /** @return the {projectRef} segment of /api/external/projects/{projectRef}/…, or null. */
+    static String extractProjectRef(String uri) {
         if (!uri.startsWith(EXTERNAL_PROJECT_PREFIX)) {
             return null;
         }

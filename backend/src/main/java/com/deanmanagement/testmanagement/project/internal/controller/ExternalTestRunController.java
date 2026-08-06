@@ -5,10 +5,11 @@ import com.deanmanagement.testmanagement.project.internal.ci.JUnitXmlParser;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.ExternalCreateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.AllureReport;
+import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
-import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.project.internal.service.AllureReportService;
 import com.deanmanagement.testmanagement.project.internal.service.CiIngestionService;
+import com.deanmanagement.testmanagement.project.internal.service.ExternalRefResolver;
 import com.deanmanagement.testmanagement.project.internal.service.ExternalTestRunService;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -30,14 +31,14 @@ import java.util.Map;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/api/external/projects/{projectKey}/test-runs")
+@RequestMapping("/api/external/projects/{projectRef}/test-runs")
 @Tag(name = "External Test Runs", description = "External API for submitting completed test runs")
 @RequiredArgsConstructor
 public class ExternalTestRunController {
 
     private final ExternalTestRunService externalTestRunService;
     private final AllureReportService allureReportService;
-    private final TestRunRepository testRunRepository;
+    private final ExternalRefResolver refResolver;
     private final CiIngestionService ciIngestionService;
     private final JUnitXmlParser jUnitXmlParser;
     private final CucumberJsonParser cucumberJsonParser;
@@ -46,33 +47,33 @@ public class ExternalTestRunController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TestRunResponse create(@PathVariable String projectKey,
+    public TestRunResponse create(@PathVariable String projectRef,
                                   @Valid @RequestBody ExternalCreateTestRunRequest request) {
-        return externalTestRunService.createExternalRun(projectKey, request);
+        return externalTestRunService.createExternalRun(projectRef, request);
     }
 
     @PostMapping(value = "/junit", consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.TEXT_XML_VALUE})
     @ResponseStatus(HttpStatus.CREATED)
-    public TestRunResponse importJunit(@PathVariable String projectKey,
+    public TestRunResponse importJunit(@PathVariable String projectRef,
                                        @RequestBody byte[] body,
                                        @RequestParam(required = false) String runName,
                                        @RequestParam(required = false) String environment,
                                        @RequestParam(required = false) UUID testPlanId) {
         checkSize(body);
         String name = runName != null ? runName : "JUnit import";
-        return ciIngestionService.ingest(projectKey, name, environment, testPlanId, jUnitXmlParser.parse(body));
+        return ciIngestionService.ingest(projectRef, name, environment, testPlanId, jUnitXmlParser.parse(body));
     }
 
     @PostMapping(value = "/cucumber", consumes = MediaType.APPLICATION_JSON_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public TestRunResponse importCucumber(@PathVariable String projectKey,
+    public TestRunResponse importCucumber(@PathVariable String projectRef,
                                           @RequestBody byte[] body,
                                           @RequestParam(required = false) String runName,
                                           @RequestParam(required = false) String environment,
                                           @RequestParam(required = false) UUID testPlanId) {
         checkSize(body);
         String name = runName != null ? runName : "Cucumber import";
-        return ciIngestionService.ingest(projectKey, name, environment, testPlanId, cucumberJsonParser.parse(body));
+        return ciIngestionService.ingest(projectRef, name, environment, testPlanId, cucumberJsonParser.parse(body));
     }
 
     private void checkSize(byte[] body) {
@@ -84,13 +85,20 @@ public class ExternalTestRunController {
         }
     }
 
-    @PostMapping(value = "/{testRunKey}/allure-report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PostMapping(value = "/{testRunRef}/allure-report", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, UUID> uploadAllureReport(@PathVariable String projectKey,
-                                                @PathVariable String testRunKey,
+    public Map<String, UUID> uploadAllureReport(@PathVariable String projectRef,
+                                                @PathVariable String testRunRef,
                                                 @RequestParam MultipartFile file) throws IOException {
-        TestRun testRun = testRunRepository.findByKey(testRunKey)
-                .orElseThrow(() -> new ResourceNotFoundException("TestRun", testRunKey));
+        Project project = refResolver.resolveProject(projectRef);
+        TestRun testRun = refResolver.resolveTestRun(testRunRef);
+        // The API-key filter only checks the project segment of the URL, so without this a key
+        // scoped to project A could attach a report to a run belonging to project B by naming A
+        // in the path. Reported as not-found rather than forbidden: to this caller the run in
+        // another project may as well not exist.
+        if (!testRun.getProject().getId().equals(project.getId())) {
+            throw new ResourceNotFoundException("TestRun", testRunRef);
+        }
         AllureReport report = allureReportService.upload(
                 testRun.getId(),
                 file.getOriginalFilename(),

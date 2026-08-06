@@ -13,7 +13,6 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
-import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
@@ -42,18 +41,18 @@ public class CiIngestionService {
     public static final String CI_LABEL = "ci-imported";
     private static final int MAX_TITLE_LENGTH = 255;
 
-    private final ProjectRepository projectRepository;
+    private final ExternalRefResolver refResolver;
     private final TestCaseRepository testCaseRepository;
     private final TestRunRepository testRunRepository;
     private final TestPlanRepository testPlanRepository;
     private final TestRunMapper testRunMapper;
     private final ProjectSequenceService projectSequenceService;
 
+    /** @param projectRef the project key or UUID from the URL. */
     @Transactional
-    public TestRunResponse ingest(String projectKey, String runName, String environment,
+    public TestRunResponse ingest(String projectRef, String runName, String environment,
                                   UUID testPlanId, List<CiResult> results) {
-        Project project = projectRepository.findByKey(projectKey)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", projectKey));
+        Project project = refResolver.resolveProject(projectRef);
 
         Instant now = Instant.now();
         TestRun run = new TestRun();

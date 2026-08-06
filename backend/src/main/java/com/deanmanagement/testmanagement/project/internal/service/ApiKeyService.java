@@ -38,7 +38,11 @@ public class ApiKeyService {
      * A validated key with its scope resolved eagerly — safe to use outside the service
      * transaction (e.g. in the API-key filter). {@code projectKey == null} = legacy/global.
      */
-    public record ValidatedKey(UUID id, String name, String projectKey) {}
+    /**
+     * @param projectId  scoped project's UUID, or null for a legacy global key
+     * @param projectKey scoped project's key, or null for a legacy global key
+     */
+    public record ValidatedKey(UUID id, String name, UUID projectId, String projectKey) {}
 
     @Transactional
     public ApiKeyCreatedResponse create(CreateApiKeyRequest request) {
@@ -92,6 +96,7 @@ public class ApiKeyService {
                 .map(key -> new ValidatedKey(
                         key.getId(),
                         key.getName(),
+                        key.getProject() == null ? null : key.getProject().getId(),
                         key.getProject() == null ? null : key.getProject().getKey()));
     }
 

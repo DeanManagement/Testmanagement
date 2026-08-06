@@ -33,6 +33,8 @@ class ApiKeyAuthenticationFilterTest {
 
     private ApiKeyAuthenticationFilter filter;
 
+    private static final UUID DEMO_ID = UUID.fromString("11111111-2222-3333-4444-555555555555");
+
     @BeforeEach
     void setUp() {
         filter = new ApiKeyAuthenticationFilter(apiKeyService);
@@ -42,7 +44,7 @@ class ApiKeyAuthenticationFilterTest {
     @Test
     void validKey_setsAuthenticationAndContinues() throws ServletException, IOException {
         UUID keyId = UUID.randomUUID();
-        ValidatedKey apiKey = new ValidatedKey(keyId, "CI Key", null); // legacy/global key
+        ValidatedKey apiKey = new ValidatedKey(keyId, "CI Key", null, null); // legacy/global key
 
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/external/projects/123/test-runs");
         request.addHeader("X-API-Key", "tm_validkey123");
@@ -123,7 +125,7 @@ class ApiKeyAuthenticationFilterTest {
         request.addHeader("X-API-Key", "tm_scoped");
         MockHttpServletResponse response = new MockHttpServletResponse();
         when(apiKeyService.validateKey("tm_scoped"))
-                .thenReturn(Optional.of(new ValidatedKey(keyId, "Scoped", "DEMO")));
+                .thenReturn(Optional.of(new ValidatedKey(keyId, "Scoped", DEMO_ID, "DEMO")));
 
         filter.doFilterInternal(request, response, filterChain);
 
@@ -137,7 +139,7 @@ class ApiKeyAuthenticationFilterTest {
         request.addHeader("X-API-Key", "tm_scoped");
         MockHttpServletResponse response = new MockHttpServletResponse();
         when(apiKeyService.validateKey("tm_scoped"))
-                .thenReturn(Optional.of(new ValidatedKey(UUID.randomUUID(), "Scoped", "DEMO")));
+                .thenReturn(Optional.of(new ValidatedKey(UUID.randomUUID(), "Scoped", DEMO_ID, "DEMO")));
 
         filter.doFilterInternal(request, response, filterChain);
 
@@ -148,9 +150,40 @@ class ApiKeyAuthenticationFilterTest {
     }
 
     @Test
-    void extractProjectKey_parsesSegment() {
-        assertThat(ApiKeyAuthenticationFilter.extractProjectKey("/api/external/projects/DEMO/test-runs")).isEqualTo("DEMO");
-        assertThat(ApiKeyAuthenticationFilter.extractProjectKey("/api/external/projects/DEMO")).isEqualTo("DEMO");
-        assertThat(ApiKeyAuthenticationFilter.extractProjectKey("/api/external/other")).isNull();
+    void scopedKey_matchingProjectUuid_passes() throws ServletException, IOException {
+        // The URL may name the project by UUID instead of key; the scope check must accept both.
+        MockHttpServletRequest request = new MockHttpServletRequest(
+                "POST", "/api/external/projects/" + DEMO_ID + "/test-runs");
+        request.addHeader("X-API-Key", "tm_scoped");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        when(apiKeyService.validateKey("tm_scoped"))
+                .thenReturn(Optional.of(new ValidatedKey(UUID.randomUUID(), "Scoped", DEMO_ID, "DEMO")));
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain).doFilter(request, response);
+    }
+
+    @Test
+    void scopedKey_otherProjectUuid_returns403() throws ServletException, IOException {
+        UUID otherId = UUID.randomUUID();
+        MockHttpServletRequest request = new MockHttpServletRequest(
+                "POST", "/api/external/projects/" + otherId + "/test-runs");
+        request.addHeader("X-API-Key", "tm_scoped");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+        when(apiKeyService.validateKey("tm_scoped"))
+                .thenReturn(Optional.of(new ValidatedKey(UUID.randomUUID(), "Scoped", DEMO_ID, "DEMO")));
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(response.getStatus()).isEqualTo(403);
+        verify(filterChain, never()).doFilter(request, response);
+    }
+
+    @Test
+    void extractProjectRef_parsesSegment() {
+        assertThat(ApiKeyAuthenticationFilter.extractProjectRef("/api/external/projects/DEMO/test-runs")).isEqualTo("DEMO");
+        assertThat(ApiKeyAuthenticationFilter.extractProjectRef("/api/external/projects/DEMO")).isEqualTo("DEMO");
+        assertThat(ApiKeyAuthenticationFilter.extractProjectRef("/api/external/other")).isNull();
     }
 }

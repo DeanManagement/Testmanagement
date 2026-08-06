@@ -13,7 +13,6 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
-import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import lombok.RequiredArgsConstructor;
@@ -29,15 +28,15 @@ import java.util.stream.Collectors;
 public class ExternalTestRunService {
 
     private final TestRunRepository testRunRepository;
-    private final ProjectRepository projectRepository;
     private final TestCaseRepository testCaseRepository;
     private final TestRunMapper testRunMapper;
     private final ProjectSequenceService projectSequenceService;
+    private final ExternalRefResolver refResolver;
 
+    /** @param projectRef the project key or UUID from the URL. */
     @Transactional
-    public TestRunResponse createExternalRun(String projectKey, ExternalCreateTestRunRequest request) {
-        Project project = projectRepository.findByKey(projectKey)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", projectKey));
+    public TestRunResponse createExternalRun(String projectRef, ExternalCreateTestRunRequest request) {
+        Project project = refResolver.resolveProject(projectRef);
 
         Instant now = Instant.now();
 
