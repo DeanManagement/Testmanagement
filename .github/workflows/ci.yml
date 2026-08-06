@@ -110,6 +110,27 @@ jobs:
         run: curl -fsS http://localhost:8012/ | grep -qi '<app-root'
       - name: Deep link falls back to the shell
         run: curl -fsS http://localhost:8012/dashboard | grep -qi '<app-root'
+      # "<app-root is served" passes even when EVERY asset request also returns the shell, which
+      # is precisely how a blank page reached production: the browser held a stale index.html,
+      # its asset hashes were gone, each one fell through to the fallback, and the page died on
+      # "Refused to apply style … MIME type ('text/html')". Follow the shell to a real asset.
+      - name: Hashed assets serve as JS, not the shell
+        run: |
+          asset=$(curl -fsS http://localhost:8012/ | grep -oE 'main-[A-Z0-9]+\.js' | head -1)
+          [ -n "$asset" ] || { echo "index.html references no main bundle" >&2; exit 1; }
+          ct=$(curl -s -o /dev/null -w '%{content_type}' "http://localhost:8012/$asset")
+          case "$ct" in
+            *javascript*) ;;
+            *) echo "$asset served as '$ct' — the SPA fallback is swallowing assets" >&2; exit 1 ;;
+          esac
+      # A cacheable shell is what makes the above happen to a returning user after a release.
+      - name: The shell is revalidated, hashed assets are immutable
+        run: |
+          curl -sSI http://localhost:8012/dashboard | grep -qi 'cache-control:.*no-cache' \
+            || { echo "the shell is cacheable — a stale index.html will outlive a release" >&2; exit 1; }
+          asset=$(curl -fsS http://localhost:8012/ | grep -oE 'main-[A-Z0-9]+\.js' | head -1)
+          curl -sSI "http://localhost:8012/$asset" | grep -qi 'cache-control:.*immutable' \
+            || { echo "hashed assets are not cached" >&2; exit 1; }
       - name: A mistyped API path 404s rather than returning the shell
         run: |
           status=$(curl -s -o /dev/null -w '%{http_code}' http://localhost:8012/api/does-not-exist)

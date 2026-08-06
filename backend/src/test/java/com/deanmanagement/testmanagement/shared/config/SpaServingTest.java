@@ -98,6 +98,26 @@ class SpaServingTest {
     }
 
     @Test
+    void theShellIsNeverCached() throws Exception {
+        // Without this the shell goes out with a Last-Modified and no Cache-Control, which makes
+        // it heuristically cacheable. A browser holding yesterday's index.html then requests
+        // asset hashes this jar does not have; each one falls through to the SPA fallback and
+        // returns index.html, and the page dies on "Refused to apply style … MIME type
+        // ('text/html')" with nothing wrong on the server. Deep links matter as much as "/":
+        // they are the shell too, and they are what people bookmark.
+        mockMvc.perform(get("/dashboard"))
+                .andExpect(header().string("Cache-Control", containsString("no-cache")));
+    }
+
+    @Test
+    void hashedAssetsAreCachedForever() throws Exception {
+        // The filename changes with the content, so revalidating is pure waste.
+        mockMvc.perform(get("/main-A1B2C3D4.js"))
+                .andExpect(status().isOk())
+                .andExpect(header().string("Cache-Control", containsString("immutable")));
+    }
+
+    @Test
     void missingAsset_is404_notTheShell() throws Exception {
         // A translation catalogue answering with HTML fails silently inside ngx-translate and
         // surfaces as untranslated keys, so assets must 404 rather than fall back to the shell.

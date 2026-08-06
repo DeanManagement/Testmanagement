@@ -45,6 +45,12 @@ must be trusted as privileged on the server.
       never appears. Signal writes schedule change detection themselves
 - [ ] Colours use an existing `--tm-*` token (see Theming below) — no hex literals, no `--mat-sys-*`
 - [ ] Checked in **both** light and dark mode
+- [ ] Any new static path is either content-hashed (cached immutably) or served `no-cache`.
+      `index.html` names its bundles by content hash, so a shell that outlives a release asks for
+      hashes the new jar does not have, every one falls through to the SPA fallback and comes back
+      as HTML, and the app renders a blank page full of `Refused to apply style … MIME type
+      ('text/html')` — against a perfectly healthy server. `ShellSecurityHeadersFilter` decides
+      this; `SpaServingTest` pins it
 - [ ] No external CDN references (fonts, scripts, styles). The app must run air-gapped, and its
       own CSP allows `'self'` only — an external reference is silently dropped at runtime
 - [ ] No secrets, credentials, or environment-specific config committed
