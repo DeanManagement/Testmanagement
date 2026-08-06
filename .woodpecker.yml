@@ -1,8 +1,11 @@
 # ── Testmanagement – Test, Build & Push ──
 #
 # Pipeline (DAG):
-#   backend-test ─┬─→ publish-reports  (always, even on test failure)
-#   frontend-test ┴─→ build-push        (main / manual only)
+#   backend-test ──┬─→ publish-reports  (always, even on test failure)
+#   frontend-test ─┴─→ build-push        (main / manual only)
+#
+# frontend-test also runs the production build and checks its output — see
+# scripts/check-frontend-bundle.sh, shared with the GitHub workflow.
 #
 # Tests run on EVERY branch push; the image is only built & pushed from main
 # (or a manual run). One image: the root Dockerfile builds the Angular app and
@@ -63,6 +66,11 @@ steps:
       - npm ci --no-audit --no-fund
       # --coverage writes a browsable HTML report to frontend/coverage/frontend/
       - npm test -- --watch=false --coverage
+      # Build on every branch, not just where the image is built. The production build is where
+      # the CSP-breaking output bugs live (external font link, deferred stylesheet), and until
+      # this existed a broken production build was only discovered by the main-only image step.
+      - npx ng build
+      - cd .. && bash scripts/check-frontend-bundle.sh
 
   - name: publish-reports
     image: curlimages/curl

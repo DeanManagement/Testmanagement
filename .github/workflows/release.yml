@@ -29,6 +29,8 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci && npx ng test --watch=false && npx ng build
         working-directory: frontend
+      - name: Check the built bundle
+        run: bash scripts/check-frontend-bundle.sh
 
   publish:
     name: Build + push images
@@ -45,12 +47,22 @@ jobs:
       - name: Resolve version
         id: version
         run: echo "version=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
-      - name: Build + push image
+      - name: Build image
         run: |
           IMG=ghcr.io/${{ github.repository_owner }}/testmanagement
           docker build --build-arg APP_VERSION=${{ steps.version.outputs.version }} \
             -t $IMG:${{ steps.version.outputs.version }} -t $IMG:latest .
-          docker push --all-tags $IMG
+      # Verify before pushing: a tagged release is the worst place to discover that the frontend
+      # stage produced nothing and the jar serves 404s.
+      - name: The image contains the built SPA
+        run: |
+          id=$(docker create ghcr.io/${{ github.repository_owner }}/testmanagement:latest)
+          docker cp "$id:/app/app.jar" /tmp/app.jar
+          docker rm "$id" > /dev/null
+          unzip -l /tmp/app.jar | grep -q 'BOOT-INF/classes/static/index.html' \
+            || { echo "app.jar has no bundled SPA — refusing to publish" >&2; exit 1; }
+      - name: Push image
+        run: docker push --all-tags ghcr.io/${{ github.repository_owner }}/testmanagement
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2
         with:

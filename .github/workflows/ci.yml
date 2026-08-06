@@ -40,6 +40,11 @@ jobs:
       - name: Build
         working-directory: frontend
         run: npx ng build
+      # The production build is the only place these can be seen — an external font link or a
+      # deferred stylesheet behind an inline handler both pass every unit test and then break
+      # under the app's CSP at runtime. Shared with the Woodpecker pipeline.
+      - name: Check the built bundle
+        run: bash scripts/check-frontend-bundle.sh
 
   docker:
     name: Docker build + scan
@@ -49,6 +54,16 @@ jobs:
       # One image: the root Dockerfile builds the Angular app and bakes it into the jar.
       - name: Build image
         run: docker build -t testmanagement:ci .
+      # The whole architecture now rests on the SPA being inside the jar. If the frontend stage
+      # silently produced nothing, every check below still passes and the container serves 404s.
+      - name: The image contains the built SPA
+        run: |
+          # Inspect the jar on the runner: the JRE base image has neither unzip nor jar.
+          id=$(docker create testmanagement:ci)
+          docker cp "$id:/app/app.jar" /tmp/app.jar
+          docker rm "$id" > /dev/null
+          unzip -l /tmp/app.jar | grep -q 'BOOT-INF/classes/static/index.html' \
+            || { echo "app.jar has no bundled SPA" >&2; exit 1; }
       - name: Trivy scan
         uses: aquasecurity/trivy-action@0.28.0
         with:

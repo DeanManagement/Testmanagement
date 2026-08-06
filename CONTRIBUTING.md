@@ -7,8 +7,15 @@
 - Frontend: `cd frontend && npm ci && npx ng test --watch=false`
 - Full stack: `cp .env.example .env` (fill in secrets) then `docker compose up --build`
 
-CI (GitHub Actions) runs all of the above plus Docker builds, a Trivy image scan, and a
-compose-level smoke test on every push and PR. A red pipeline blocks merging.
+CI (GitHub Actions) runs all of the above plus the image build, a Trivy scan, a check that the jar
+actually contains the built SPA, and a compose-level smoke test on every push and PR. A red
+pipeline blocks merging.
+
+`scripts/check-frontend-bundle.sh` inspects the **production build output**, which is where a
+whole class of bug lives that no unit test can see: an external CDN reference, or a stylesheet
+deferred behind an inline `onload` handler. Both pass every test and then break at runtime under
+the app's own CSP. Both pipelines call the same script so they cannot drift; run it yourself with
+`cd frontend && npx ng build && cd .. && bash scripts/check-frontend-bundle.sh`.
 
 Woodpecker (`.woodpecker.yml`) runs the same tests on every branch push and, from `main` or a
 manual run, builds and pushes the `testmanagement` image to Nexus, tagged `latest` and the
