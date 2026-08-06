@@ -65,7 +65,7 @@ jobs:
           unzip -l /tmp/app.jar | grep -q 'BOOT-INF/classes/static/index.html' \
             || { echo "app.jar has no bundled SPA" >&2; exit 1; }
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: testmanagement:ci
           severity: CRITICAL
