@@ -1,5 +1,5 @@
 import { HttpInterceptorFn, HttpErrorResponse } from '@angular/common/http';
-import { inject } from '@angular/core';
+import { EnvironmentInjector, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { catchError, throwError } from 'rxjs';
@@ -7,16 +7,21 @@ import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../services/auth.service';
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
-  const snackBar = inject(MatSnackBar);
   const router = inject(Router);
-  const authService = inject(AuthService);
-  const translate = inject(TranslateService);
+  // Resolved on error, not when the chain is built. Constructing TranslateService loads the
+  // fallback language over HttpClient, so eagerly injecting it here means the very first request
+  // — which is that language load — re-enters this interceptor while TranslateService is still
+  // in its own constructor. Angular throws NG0200, ngx-translate swallows it, and the app boots
+  // with every translation key unresolved.
+  const injector = inject(EnvironmentInjector);
 
-  const show = (key: string) =>
-    snackBar.open(translate.instant(key), translate.instant('common.ok'), {
+  const show = (key: string) => {
+    const translate = injector.get(TranslateService);
+    injector.get(MatSnackBar).open(translate.instant(key), translate.instant('common.ok'), {
       duration: 5000,
       panelClass: 'snackbar-error',
     });
+  };
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -28,7 +33,7 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
       if (error.status === 401) {
         // PRD-020: the token is already dead — clear locally (no doomed server logout
         // call) and never navigate/snackbar when already on the login page (loop guard).
-        authService.clearLocalSession();
+        injector.get(AuthService).clearLocalSession();
         if (!router.url.startsWith('/login')) {
           router.navigate(['/login']);
           show('auth.sessionExpired');
