@@ -166,6 +166,25 @@ class MediaCacheHeadersApiTest {
     }
 
     @Test
+    void imagesDeclareTheirLengthAndReturnEveryByte() throws Exception {
+        // These endpoints used to return a StreamingResponseBody, which sends no Content-Length
+        // and therefore a chunked body. A chunked body that ends early is a stream reset rather
+        // than a short file, and over HTTP/2/3 the browser reports a protocol error on a request
+        // whose status line said 200 — which is exactly what a proxied deployment saw.
+        MvcResult stepImage = mockMvc.perform(get("/api/step-images/{id}", stepImageId).with(user(admin)))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(stepImage.getResponse().getContentAsByteArray()).isEqualTo(new byte[] {1, 2, 3});
+        assertThat(stepImage.getResponse().getHeader("Content-Length")).isEqualTo("3");
+
+        MvcResult screenshot = mockMvc.perform(get("/api/screenshots/{id}", screenshotId).with(user(admin)))
+                .andExpect(status().isOk())
+                .andReturn();
+        assertThat(screenshot.getResponse().getHeader("Content-Length"))
+                .isEqualTo(String.valueOf(screenshot.getResponse().getContentAsByteArray().length));
+    }
+
+    @Test
     void screenshot_etagRevalidationStillReturns304() throws Exception {
         MvcResult first = mockMvc.perform(get("/api/screenshots/{id}", screenshotId).with(user(admin)))
                 .andExpect(status().isOk())

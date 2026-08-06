@@ -21,9 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -51,9 +49,19 @@ public class StepImageController {
         return Map.of("id", image.getId());
     }
 
+    /**
+     * Returns the bytes with an exact {@code Content-Length}.
+     *
+     * <p>This used to hand back a {@code StreamingResponseBody}, which bought nothing — the image
+     * is already fully in memory, having come out of a {@code byte[]} column — and cost a
+     * {@code Content-Length}. A response without one is chunked, and a chunked body that ends
+     * unexpectedly is a stream reset rather than a short file: over HTTP/2 and HTTP/3 the browser
+     * reports {@code ERR_QUIC_PROTOCOL_ERROR} on a request whose status line said 200. Declaring
+     * the length lets every hop frame the body correctly and length-check it.
+     */
     @GetMapping("/{id}")
-    public ResponseEntity<StreamingResponseBody> download(@PathVariable UUID id,
-                                                          @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) String ifNoneMatch) {
+    public ResponseEntity<byte[]> download(@PathVariable UUID id,
+                                           @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) String ifNoneMatch) {
         // findById enforces project access (PRD-001 §4.4) before any bytes are served.
         StepImage image = stepImageService.findById(id);
         String etag = "\"" + image.getUpdatedAt().toEpochMilli() + "\"";
@@ -65,7 +73,6 @@ public class StepImageController {
         }
 
         byte[] data = image.getData();
-        StreamingResponseBody body = out -> new ByteArrayInputStream(data).transferTo(out);
         // Legacy rows may predate the upload allowlist — never echo an unsafe stored type,
         // or an uploaded text/html "image" would execute script in the app origin.
         boolean safeImageType = ImageMediaTypes.isAllowed(image.getContentType());
@@ -83,7 +90,8 @@ public class StepImageController {
                 .header("X-Content-Type-Options", "nosniff")
                 .header("Content-Security-Policy", "sandbox")
                 .contentType(contentType)
-                .body(body);
+                .contentLength(data.length)
+                .body(data);
     }
 
     @DeleteMapping("/{id}")

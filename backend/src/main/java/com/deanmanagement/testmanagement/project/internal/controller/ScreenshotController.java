@@ -21,9 +21,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
@@ -51,9 +49,10 @@ public class ScreenshotController {
         return Map.of("id", screenshot.getId());
     }
 
+    /** Fixed-length rather than streamed, for the reason spelled out on StepImageController. */
     @GetMapping("/{id}")
-    public ResponseEntity<StreamingResponseBody> download(@PathVariable UUID id,
-                                                          @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) String ifNoneMatch) {
+    public ResponseEntity<byte[]> download(@PathVariable UUID id,
+                                           @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) String ifNoneMatch) {
         // findById enforces project access (PRD-001 §4.4) before any bytes are served.
         Screenshot screenshot = screenshotService.findById(id);
         String etag = "\"" + screenshot.getUpdatedAt().toEpochMilli() + "\"";
@@ -65,7 +64,6 @@ public class ScreenshotController {
         }
 
         byte[] data = screenshot.getData();
-        StreamingResponseBody body = out -> new ByteArrayInputStream(data).transferTo(out);
         // Legacy rows may predate the upload allowlist — never echo an unsafe stored type,
         // or an uploaded text/html "screenshot" would execute script in the app origin.
         boolean safeImageType = ImageMediaTypes.isAllowed(screenshot.getContentType());
@@ -84,7 +82,8 @@ public class ScreenshotController {
                 .header("X-Content-Type-Options", "nosniff")
                 .header("Content-Security-Policy", "sandbox")
                 .contentType(contentType)
-                .body(body);
+                .contentLength(data.length)
+                .body(data);
     }
 
     @DeleteMapping("/{id}")
