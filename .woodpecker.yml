@@ -126,8 +126,9 @@ steps:
       dockerfile: Dockerfile
       platforms: linux/amd64
       # Surfaced at /actuator/info so a running container can be traced to a commit.
+      # Quoted for the same reason as the tags below.
       build_args:
-        - APP_VERSION=${CI_COMMIT_SHA:0:8}
+        - "APP_VERSION=${CI_COMMIT_SHA:0:8}"
       # -- Plain-HTTP Nexus on the LAN: TWO daemons must be told it's HTTP --
       # 1. `insecure` -> adds --insecure-registry to DOCKERD. Required for the
       #    `docker login` step (login.go runs through dockerd); without it the
@@ -144,9 +145,16 @@ steps:
           http = true
           insecure = true
       output: type=image,push=true,rewrite-timestamp=true,registry.insecure=true
+      # QUOTED, and it has to stay quoted. Woodpecker substitutes into the YAML text before that
+      # text is parsed, so an all-digit short SHA — 07824272, from commit 0782427 — is read as a
+      # number and reaches the plugin as 7.824272e+06:
+      #   ERROR: invalid tag "…/testmanagement:7.824272e+06": invalid reference format
+      # About 2% of commits have an all-digit short SHA, so unquoted this fails intermittently and
+      # looks like a flaky runner rather than a config bug. `0e123456` would be worse still: that
+      # parses as floating-point exponent notation.
       tags:
         - latest
-        - ${CI_COMMIT_SHA:0:8}
+        - "${CI_COMMIT_SHA:0:8}"
       username:
         from_secret: nexus_user
       password:
