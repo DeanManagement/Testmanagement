@@ -1,7 +1,13 @@
 <div class="list-container">
-  <div class="list-header">
-    <h2>{{ 'bugReport.list.title' | translate }}</h2>
-    <div class="list-actions">
+  <div class="page-header">
+    <div class="page-header-left">
+      <a mat-button [routerLink]="['/projects', projectId]" class="back-link" data-test-id="bug-report-list-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <h1 data-test-id="bug-report-list-title">{{ 'bugReport.list.title' | translate }}</h1>
+    </div>
+    <div class="header-actions">
       <mat-button-toggle-group [(value)]="viewMode" hideSingleSelectionIndicator data-test-id="bug-report-view-toggle">
         <mat-button-toggle value="list">
           <mat-icon>view_list</mat-icon>

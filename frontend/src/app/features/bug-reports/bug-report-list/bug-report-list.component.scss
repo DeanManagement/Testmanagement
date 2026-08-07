@@ -1,16 +1,17 @@
-.list-header {
+.page-header-left {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
   gap: 16px;
+
+  h1 {
+    margin: 0;
+  }
 }
 
-.list-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+// The status filter is a mat-form-field with a subscript strip that would
+// otherwise push the header row's vertical centering off.
+.header-actions ::ng-deep .mat-mdc-form-field-subscript-wrapper {
+  display: none;
 }
 
 .status-filter {
