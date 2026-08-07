@@ -159,3 +159,5 @@ steps:
         from_secret: nexus_user
       password:
         from_secret: nexus_password
+labels:
+  host: nuc
