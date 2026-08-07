@@ -20,6 +20,7 @@ import { ThemePreference, ThemeService } from '../../services/theme.service';
 import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
 import { CommandPaletteComponent } from '../../../shared/components/command-palette/command-palette.component';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
+import packageInfo from '../../../../../package.json';
 
 @Component({
   selector: 'app-shell',
@@ -47,6 +48,9 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
 export class ShellComponent {
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
+  /** Single source of truth is package.json — the footer badge follows releases automatically. */
+  readonly appVersion = packageInfo.version;
+
   private readonly translate = inject(TranslateService);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
@@ -70,6 +74,11 @@ export class ShellComponent {
 
   switchLanguage(lang: string): void {
     this.translate.use(lang);
+  }
+
+  /** Active language for the checkmark in the language menu (mirrors the theme menu). */
+  get currentLanguage(): string {
+    return this.translate.currentLang || this.translate.defaultLang || 'en';
   }
 
   setTheme(preference: ThemePreference): void {

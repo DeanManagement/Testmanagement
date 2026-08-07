@@ -83,6 +83,8 @@ h2 {
   gap: 8px;
 }
 
+// Deliberately richer than the global .back-link: on the standalone login page it is a
+// footer link, not a page-header control.
 .back-link {
   display: inline-block;
   margin-top: 24px;

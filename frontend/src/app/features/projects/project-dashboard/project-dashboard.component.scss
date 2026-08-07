@@ -63,13 +63,19 @@
   height: 200px;
 }
 
+.trend-insufficient {
+  color: var(--tm-text-secondary);
+  font-size: 14px;
+  margin: 0;
+}
+
 .result-passed {
   color: var(--tm-success);
   font-weight: 500;
 }
 
 .result-failed {
-  color: #f44336;
+  color: var(--tm-danger);
   font-weight: 500;
 }
 

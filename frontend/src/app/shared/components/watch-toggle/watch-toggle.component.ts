@@ -27,6 +27,8 @@ import { selectIsWatching } from '../../../store/watcher/watcher.selectors';
       <button mat-icon-button
         (click)="toggleWatch()"
         [matTooltip]="'watcher.unwatch' | translate"
+        [attr.aria-label]="'watcher.unwatch' | translate"
+        [attr.aria-pressed]="true"
         data-test-id="watch-toggle-btn">
         <mat-icon>bookmark</mat-icon>
       </button>
@@ -34,6 +36,8 @@ import { selectIsWatching } from '../../../store/watcher/watcher.selectors';
       <button mat-icon-button
         (click)="toggleWatch()"
         [matTooltip]="'watcher.watch' | translate"
+        [attr.aria-label]="'watcher.watch' | translate"
+        [attr.aria-pressed]="false"
         data-test-id="watch-toggle-btn">
         <mat-icon>bookmark_border</mat-icon>
       </button>

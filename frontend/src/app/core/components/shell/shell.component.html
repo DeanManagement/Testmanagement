@@ -24,7 +24,7 @@
       </mat-nav-list>
     }
     <div class="sidenav-footer">
-      <small>v0.1.0</small>
+      <small>v{{ appVersion }}</small>
     </div>
   </mat-sidenav>
 
@@ -73,8 +73,14 @@
         <mat-icon>language</mat-icon>
       </button>
       <mat-menu #langMenu="matMenu">
-        <button mat-menu-item (click)="switchLanguage('en')" data-test-id="lang-en">English</button>
-        <button mat-menu-item (click)="switchLanguage('de')" data-test-id="lang-de">Deutsch</button>
+        <button mat-menu-item (click)="switchLanguage('en')" data-test-id="lang-en">
+          <span>English</span>
+          @if (currentLanguage === 'en') { <mat-icon>check</mat-icon> }
+        </button>
+        <button mat-menu-item (click)="switchLanguage('de')" data-test-id="lang-de">
+          <span>Deutsch</span>
+          @if (currentLanguage === 'de') { <mat-icon>check</mat-icon> }
+        </button>
       </mat-menu>
       @if (user$ | async; as user) {
         <button mat-button [matMenuTriggerFor]="profileMenu" class="toolbar-action" data-test-id="profile-menu-trigger" [attr.aria-label]="'User menu for ' + user.displayName">

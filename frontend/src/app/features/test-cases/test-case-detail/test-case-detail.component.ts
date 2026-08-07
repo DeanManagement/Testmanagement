@@ -1,4 +1,5 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, LowerCasePipe } from '@angular/common';
@@ -6,8 +7,11 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatDialog } from '@angular/material/dialog';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
+import { take } from 'rxjs/operators';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectTestCaseById } from '../../../store/test-case/test-case.selectors';
 import { TestCase } from '../../../shared/models/test-case.model';
@@ -49,6 +53,8 @@ export class TestCaseDetailComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly testCaseApi = inject(TestCaseApiService);
+  private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
   testCaseId = '';
@@ -79,8 +85,21 @@ export class TestCaseDetailComponent implements OnInit {
     }
   }
 
-  deleteTestCase(id: string): void {
-    this.store.dispatch(TestCaseActions.deleteTestCase({ projectId: this.projectId, id }));
+  deleteTestCase(testCase: TestCase): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titleKey: 'common.delete',
+        messageKey: 'testCase.deleteConfirm',
+        messageParams: { title: testCase.title },
+        secondaryMessageKey: 'common.irreversibleWarning',
+        danger: true,
+      } as ConfirmDialogData,
+    });
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(confirmed => {
+      if (confirmed) {
+        this.store.dispatch(TestCaseActions.deleteTestCase({ projectId: this.projectId, id: testCase.id }));
+      }
+    });
   }
 
   addComment(content: string): void {

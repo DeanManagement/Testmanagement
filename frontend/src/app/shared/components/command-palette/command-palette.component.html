@@ -11,9 +11,9 @@
            data-test-id="command-palette-input" />
   </mat-form-field>
 
-  @if (results.length > 0) {
+  @if (results().length > 0) {
     <ul class="palette-results" data-test-id="command-palette-results">
-      @for (item of results; track $index; let i = $index) {
+      @for (item of results(); track $index; let i = $index) {
         <li class="palette-result"
             [class.palette-result--active]="i === selectedIndex"
             (mouseenter)="selectedIndex = i"
@@ -37,11 +37,19 @@
     </ul>
   } @else {
     <div class="palette-empty">
-      @if (query.trim()) {
+      @if (serverPending()) {
+        {{ 'commandPalette.searching' | translate }}
+      } @else if (query.trim()) {
         {{ 'commandPalette.noResults' | translate }}
       } @else {
         {{ 'commandPalette.hint' | translate }}
       }
+    </div>
+  }
+
+  @if (serverError()) {
+    <div class="palette-error" role="alert" data-test-id="command-palette-error">
+      {{ 'commandPalette.searchError' | translate }}
     </div>
   }
 

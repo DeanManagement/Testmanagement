@@ -170,8 +170,10 @@
   "commandPalette": {
     "placeholder": "Search projects, test cases, runs, bug reports…",
     "openHint": "Search (Ctrl/Cmd + K)",
-    "noResults": "No matches in what's already loaded. Open a project to broaden the search.",
-    "hint": "Type to search across what you have open. Press Esc to close.",
+    "noResults": "No matches found.",
+    "searching": "Searching…",
+    "searchError": "Search request failed. Showing only already-loaded matches.",
+    "hint": "Type to search projects, test cases, runs and bug reports. Press Esc to close.",
     "navigate": "navigate",
     "open": "open",
     "close": "close",
@@ -227,6 +229,7 @@
   },
   "testCase": {
     "key": "Key",
+    "deleteConfirm": "Delete test case \"{{title}}\"?",
     "list": {
       "title": "Test Cases",
       "create": "Create Test Case",
@@ -243,7 +246,7 @@
       "labels": "Labels",
       "labelsHint": "Comma-separated labels",
       "tabDetails": "Details",
-      "tabScript": "Script",
+      "tabScript": "Steps",
       "steps": "Test Steps",
       "stepsEmpty": "No steps yet. Add your first step to define the test script.",
       "addStep": "Add Step",
@@ -272,6 +275,9 @@
   },
   "testRun": {
     "key": "Key",
+    "start": "Start",
+    "completeAction": "Complete",
+    "abort": "Abort",
     "list": {
       "title": "Test Runs",
       "create": "Start Test Run",
@@ -438,7 +444,9 @@
       "user": "User",
       "systemAdminLabel": "System Administrator",
       "newPassword": "New Password (leave blank to keep current)",
-      "empty": "No users yet. Create your first user account."
+      "empty": "No users yet. Create your first user account.",
+      "deleteConfirm": "Delete user \"{{email}}\"?",
+      "cannotDeleteSelf": "You cannot delete your own account."
     }
   },
   "history": {
@@ -486,7 +494,9 @@
     "overallPassRate": "Pass Rate",
     "noCompletedRuns": "No completed runs yet",
     "passRateTrend": "Pass Rate Trend",
+    "trendInsufficient": "Not enough completed runs yet to draw a trend.",
     "recentTestRuns": "Recent Test Runs",
+    "resultsTooltip": "{{passed}} passed, {{failed}} failed, {{total}} total",
     "noData": "No data available yet."
   },
   "bulk": {
@@ -646,7 +656,15 @@
     "loadError": "Failed to load data. Please try again.",
     "retry": "Retry",
     "ok": "OK",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "irreversibleWarning": "This action cannot be undone."
+  },
+  "a11y": {
+    "deselectAll": "Deselect all",
+    "createFolder": "Create folder",
+    "folderActions": "Folder actions",
+    "toggleFolder": "Expand or collapse folder",
+    "deleteScreenshot": "Delete screenshot"
   },
   "errors": {
     "server": "A server error occurred. Please try again later.",
@@ -793,9 +811,9 @@
   },
   "requirement": {
     "title": "Requirements",
-    "cardHint": "Trace requirements to tests and see coverage",
+    "cardHint": "Trace requirements to tests and see coverage.",
     "description": "Link requirements to the test cases that prove them, and see what is actually covered.",
-    "add": "Add requirement",
+    "add": "Add Requirement",
     "createTitle": "Add a requirement",
     "editTitle": "Edit requirement",
     "empty": "No requirements yet.",

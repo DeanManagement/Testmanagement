@@ -1,19 +1,9 @@
-.list-container {
-  padding: 32px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
 .page-header-left {
   display: flex;
   align-items: center;
   gap: 16px;
 
   h1 { margin: 0; }
-}
-
-.back-link {
-  color: var(--tm-text-secondary) !important;
 }
 
 .spinner-container {
@@ -145,6 +135,13 @@
     width: 18px;
     height: 18px;
   }
+}
+
+// Non-interactive stand-in that keeps leaf folder rows aligned with expandable
+// ones without emitting a focusable-but-disabled button into the tab order.
+.toggle-btn--spacer {
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 :host ::ng-deep .mat-tree-node {

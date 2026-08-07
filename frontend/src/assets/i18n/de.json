@@ -170,8 +170,10 @@
   "commandPalette": {
     "placeholder": "Projekte, Testfälle, Durchläufe, Bugs suchen…",
     "openHint": "Suchen (Strg/Cmd + K)",
-    "noResults": "Keine Treffer in den geladenen Daten. Öffnen Sie ein Projekt, um mehr zu durchsuchen.",
-    "hint": "Tippen, um in geöffneten Bereichen zu suchen. Esc zum Schließen.",
+    "noResults": "Keine Treffer gefunden.",
+    "searching": "Suche läuft…",
+    "searchError": "Suchanfrage fehlgeschlagen. Es werden nur bereits geladene Treffer angezeigt.",
+    "hint": "Tippen, um Projekte, Testfälle, Durchläufe und Bugs zu durchsuchen. Esc zum Schließen.",
     "navigate": "navigieren",
     "open": "öffnen",
     "close": "schließen",
@@ -227,6 +229,7 @@
   },
   "testCase": {
     "key": "Schlüssel",
+    "deleteConfirm": "Testfall \"{{title}}\" löschen?",
     "list": {
       "title": "Testfälle",
       "create": "Testfall erstellen",
@@ -243,7 +246,7 @@
       "labels": "Labels",
       "labelsHint": "Kommagetrennte Labels",
       "tabDetails": "Details",
-      "tabScript": "Skript",
+      "tabScript": "Schritte",
       "steps": "Testschritte",
       "stepsEmpty": "Noch keine Schritte. Fügen Sie den ersten Schritt hinzu, um das Testskript zu definieren.",
       "addStep": "Schritt hinzufügen",
@@ -272,6 +275,9 @@
   },
   "testRun": {
     "key": "Schlüssel",
+    "start": "Starten",
+    "completeAction": "Abschließen",
+    "abort": "Abbrechen",
     "list": {
       "title": "Testläufe",
       "create": "Testlauf starten",
@@ -438,7 +444,9 @@
       "user": "Benutzer",
       "systemAdminLabel": "Systemadministrator",
       "newPassword": "Neues Passwort (leer lassen für aktuelles)",
-      "empty": "Noch keine Benutzer. Erstellen Sie Ihr erstes Benutzerkonto."
+      "empty": "Noch keine Benutzer. Erstellen Sie Ihr erstes Benutzerkonto.",
+      "deleteConfirm": "Benutzer \"{{email}}\" löschen?",
+      "cannotDeleteSelf": "Sie können Ihr eigenes Konto nicht löschen."
     }
   },
   "history": {
@@ -486,7 +494,9 @@
     "overallPassRate": "Erfolgsrate",
     "noCompletedRuns": "Noch keine abgeschlossenen Läufe",
     "passRateTrend": "Erfolgsraten-Trend",
+    "trendInsufficient": "Noch nicht genügend abgeschlossene Läufe für einen Trend.",
     "recentTestRuns": "Letzte Testläufe",
+    "resultsTooltip": "{{passed}} bestanden, {{failed}} fehlgeschlagen, {{total}} gesamt",
     "noData": "Noch keine Daten verfügbar."
   },
   "bulk": {
@@ -646,7 +656,15 @@
     "loadError": "Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
     "retry": "Erneut versuchen",
     "ok": "OK",
-    "saving": "Wird gespeichert…"
+    "saving": "Wird gespeichert…",
+    "irreversibleWarning": "Diese Aktion kann nicht rückgängig gemacht werden."
+  },
+  "a11y": {
+    "deselectAll": "Auswahl aufheben",
+    "createFolder": "Ordner erstellen",
+    "folderActions": "Ordneraktionen",
+    "toggleFolder": "Ordner ein- oder ausklappen",
+    "deleteScreenshot": "Screenshot löschen"
   },
   "errors": {
     "server": "Ein Serverfehler ist aufgetreten. Bitte versuchen Sie es später erneut.",
@@ -793,7 +811,7 @@
   },
   "requirement": {
     "title": "Anforderungen",
-    "cardHint": "Anforderungen mit Tests verknüpfen und Abdeckung sehen",
+    "cardHint": "Anforderungen mit Tests verknüpfen und Abdeckung sehen.",
     "description": "Verknüpfe Anforderungen mit den Testfällen, die sie belegen, und sieh, was tatsächlich abgedeckt ist.",
     "add": "Anforderung hinzufügen",
     "createTitle": "Anforderung hinzufügen",

@@ -11,8 +11,6 @@
   margin-bottom: 24px;
 }
 
-.back-link { color: var(--tm-text-secondary) !important; }
-
 .detail-actions {
   display: flex;
   gap: 8px;
@@ -233,6 +231,9 @@ app-step-spec-card {
 }
 
 .step-actual-readonly {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
   margin-bottom: 8px;
 }
 

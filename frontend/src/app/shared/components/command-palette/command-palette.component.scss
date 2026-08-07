@@ -84,6 +84,15 @@
   font-size: 0.9em;
 }
 
+.palette-error {
+  padding: 8px 12px;
+  font-size: 0.8em;
+  color: var(--tm-tint-danger-fg);
+  background: var(--tm-tint-danger-bg);
+  border-radius: 4px;
+  margin: 0 12px 8px;
+}
+
 .palette-footer {
   display: flex;
   gap: 16px;

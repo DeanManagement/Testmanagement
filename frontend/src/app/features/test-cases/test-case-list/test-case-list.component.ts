@@ -37,7 +37,7 @@ import { FolderNameDialogComponent, FolderNameDialogData } from '../folder-name-
 import { TestSuiteApiService } from '../../../core/services/test-suite-api.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
-import { Priority, TestCaseQuery, TestCaseStatus } from '../../../shared/models/test-case.model';
+import { Priority, TestCase, TestCaseQuery, TestCaseStatus } from '../../../shared/models/test-case.model';
 
 interface FlatFolderNode {
   id: string;
@@ -400,8 +400,21 @@ export class TestCaseListComponent implements OnInit {
     });
   }
 
-  deleteTestCase(id: string): void {
-    this.store.dispatch(TestCaseActions.deleteTestCase({ projectId: this.projectId, id }));
+  deleteTestCase(testCase: TestCase): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titleKey: 'common.delete',
+        messageKey: 'testCase.deleteConfirm',
+        messageParams: { title: testCase.title },
+        secondaryMessageKey: 'common.irreversibleWarning',
+        danger: true,
+      } as ConfirmDialogData,
+    });
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(confirmed => {
+      if (confirmed) {
+        this.store.dispatch(TestCaseActions.deleteTestCase({ projectId: this.projectId, id: testCase.id }));
+      }
+    });
   }
 
   toggleDensity(): void {

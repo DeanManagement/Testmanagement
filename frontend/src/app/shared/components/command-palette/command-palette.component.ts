@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, ElementRef, HostListener, OnInit, ViewChild, inject } from '@angular/core';
+import { Component, DestroyRef, ElementRef, HostListener, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
@@ -73,7 +73,15 @@ export class CommandPaletteComponent implements OnInit {
   @ViewChild('searchInput') searchInput?: ElementRef<HTMLInputElement>;
 
   query = '';
-  results: CommandItem[] = [];
+  /**
+   * Signals rather than plain fields: the server fallback appends results from
+   * an async subscribe, which under zoneless change detection would otherwise
+   * never trigger a re-render (the original plain-array version silently
+   * dropped every server hit).
+   */
+  readonly results = signal<CommandItem[]>([]);
+  readonly serverPending = signal(false);
+  readonly serverError = signal(false);
   selectedIndex = 0;
 
   /**
@@ -167,38 +175,55 @@ export class CommandPaletteComponent implements OnInit {
 
   onQueryChange(): void {
     this.selectedIndex = 0;
+    this.serverError.set(false);
     this.applyQuery();
     const q = this.query.trim();
-    if (q.length >= 2 && this.results.length < CommandPaletteComponent.SERVER_FALLBACK_THRESHOLD) {
+    if (q.length >= 2 && this.results().length < CommandPaletteComponent.SERVER_FALLBACK_THRESHOLD) {
+      this.serverPending.set(true);
       this.serverQuery$.next(q);
+    } else {
+      this.serverPending.set(false);
     }
   }
 
   /** Fetch server results and append any not already shown locally. */
   private serverFallback(q: string): void {
     if (q !== this.query.trim() || q.length < 2) {
+      this.serverPending.set(false);
       return;
     }
-    this.searchApi.search(q).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((response) => {
-      // Ignore stale responses for an outdated query.
-      if (q !== this.query.trim()) {
-        return;
-      }
-      const serverItems = [
-        ...response.projects,
-        ...response.testCases,
-        ...response.testRuns,
-        ...response.bugReports,
-      ].map((hit) => this.toCommandItem(hit));
-
-      const seen = new Set(this.results.map((r) => r.link.join('/')));
-      for (const item of serverItems) {
-        const id = item.link.join('/');
-        if (!seen.has(id)) {
-          this.results.push(item);
-          seen.add(id);
+    this.searchApi.search(q).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (response) => {
+        // Ignore stale responses for an outdated query.
+        if (q !== this.query.trim()) {
+          return;
         }
-      }
+        this.serverPending.set(false);
+        const serverItems = [
+          ...response.projects,
+          ...response.testCases,
+          ...response.testRuns,
+          ...response.bugReports,
+        ].map((hit) => this.toCommandItem(hit));
+
+        const current = this.results();
+        const seen = new Set(current.map((r) => r.link.join('/')));
+        const appended = [...current];
+        for (const item of serverItems) {
+          const id = item.link.join('/');
+          if (!seen.has(id)) {
+            appended.push(item);
+            seen.add(id);
+          }
+        }
+        this.results.set(appended);
+      },
+      error: () => {
+        if (q === this.query.trim()) {
+          this.serverPending.set(false);
+          this.serverError.set(true);
+        }
+      },
     });
   }
 
@@ -223,7 +248,7 @@ export class CommandPaletteComponent implements OnInit {
   private applyQuery(): void {
     const q = this.query.trim().toLowerCase();
     if (!q) {
-      this.results = this.cachedAll.slice(0, CommandPaletteComponent.PER_TYPE_LIMIT * 4);
+      this.results.set(this.cachedAll.slice(0, CommandPaletteComponent.PER_TYPE_LIMIT * 4));
       return;
     }
     const tokens = q.split(/\s+/);
@@ -240,12 +265,12 @@ export class CommandPaletteComponent implements OnInit {
         byType[item.type].push(item);
       }
     }
-    this.results = [
+    this.results.set([
       ...byType.project.slice(0, CommandPaletteComponent.PER_TYPE_LIMIT),
       ...byType.testCase.slice(0, CommandPaletteComponent.PER_TYPE_LIMIT),
       ...byType.testRun.slice(0, CommandPaletteComponent.PER_TYPE_LIMIT),
       ...byType.bugReport.slice(0, CommandPaletteComponent.PER_TYPE_LIMIT),
-    ];
+    ]);
   }
 
   @HostListener('keydown', ['$event'])
@@ -253,14 +278,14 @@ export class CommandPaletteComponent implements OnInit {
     switch (event.key) {
       case 'ArrowDown':
         event.preventDefault();
-        if (this.results.length > 0) {
-          this.selectedIndex = (this.selectedIndex + 1) % this.results.length;
+        if (this.results().length > 0) {
+          this.selectedIndex = (this.selectedIndex + 1) % this.results().length;
         }
         break;
       case 'ArrowUp':
         event.preventDefault();
-        if (this.results.length > 0) {
-          this.selectedIndex = (this.selectedIndex - 1 + this.results.length) % this.results.length;
+        if (this.results().length > 0) {
+          this.selectedIndex = (this.selectedIndex - 1 + this.results().length) % this.results().length;
         }
         break;
       case 'Enter':
@@ -280,7 +305,7 @@ export class CommandPaletteComponent implements OnInit {
   }
 
   private selectCurrent(): void {
-    const item = this.results[this.selectedIndex];
+    const item = this.results()[this.selectedIndex];
     if (item) {
       this.router.navigate(item.link);
       this.dialogRef.close();

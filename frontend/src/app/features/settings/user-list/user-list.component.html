@@ -53,10 +53,13 @@
                   data-test-id="user-edit-btn" [attr.aria-label]="'Edit ' + user.email">
             <mat-icon>edit</mat-icon>
           </button>
-          <button mat-icon-button (click)="deleteUser(user.id)" class="action-btn action-btn--danger"
-                  data-test-id="user-delete-btn" [attr.aria-label]="'Delete ' + user.email">
-            <mat-icon>delete</mat-icon>
-          </button>
+          <span [matTooltip]="user.id === (currentUser$ | async)?.id ? ('settings.users.cannotDeleteSelf' | translate) : ''">
+            <button mat-icon-button (click)="deleteUser(user)" class="action-btn action-btn--danger"
+                    data-test-id="user-delete-btn" [attr.aria-label]="'Delete ' + user.email"
+                    [disabled]="user.id === (currentUser$ | async)?.id">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </span>
         </td>
       </ng-container>
 

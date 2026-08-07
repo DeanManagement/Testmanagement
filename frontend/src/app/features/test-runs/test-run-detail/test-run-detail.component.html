@@ -10,17 +10,17 @@
         @if (run.status === 'PLANNED') {
           <button mat-flat-button (click)="updateStatus(run, 'IN_PROGRESS')" class="start-btn" data-test-id="test-run-start-btn">
             <mat-icon>play_arrow</mat-icon>
-            Start
+            {{ 'testRun.start' | translate }}
           </button>
         }
         @if (run.status === 'IN_PROGRESS') {
           <button mat-flat-button (click)="completeRun(run)" class="complete-btn" data-test-id="test-run-complete-btn">
             <mat-icon>check</mat-icon>
-            Complete
+            {{ 'testRun.completeAction' | translate }}
           </button>
           <button mat-stroked-button (click)="updateStatus(run, 'ABORTED')" class="abort-btn" data-test-id="test-run-abort-btn">
             <mat-icon>stop</mat-icon>
-            Abort
+            {{ 'testRun.abort' | translate }}
           </button>
           <button mat-icon-button
                   (click)="openShortcutsHelp()"
@@ -45,7 +45,8 @@
             <mat-icon>open_in_new</mat-icon>
             {{ 'testRun.allureReport.view' | translate }}
           </button>
-          <button mat-icon-button (click)="deleteAllureReport()" [matTooltip]="'testRun.allureReport.delete' | translate" class="allure-delete-btn" data-test-id="test-run-allure-delete-btn">
+          <button mat-icon-button (click)="deleteAllureReport()" [matTooltip]="'testRun.allureReport.delete' | translate" class="allure-delete-btn" data-test-id="test-run-allure-delete-btn"
+                  [attr.aria-label]="'testRun.allureReport.delete' | translate">
             <mat-icon>delete_outline</mat-icon>
           </button>
         } @else {
@@ -202,7 +203,8 @@
                         @if (step.screenshotId) {
                           <div class="screenshot-preview">
                             <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" loading="lazy" />
-                            <button mat-icon-button class="screenshot-delete" (click)="deleteScreenshot(result.id, step)">
+                            <button mat-icon-button class="screenshot-delete" (click)="deleteScreenshot(result.id, step)"
+                                    [attr.aria-label]="'a11y.deleteScreenshot' | translate">
                               <mat-icon>close</mat-icon>
                             </button>
                           </div>

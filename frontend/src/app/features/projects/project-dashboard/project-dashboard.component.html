@@ -73,9 +73,13 @@
       @if (dashboard.passRateTrend.length > 0) {
         <div class="trend-card tm-card">
           <h3>{{ 'projectDashboard.passRateTrend' | translate }}</h3>
-          <div class="chart-wrapper chart-wrapper--wide">
-            <canvas #trendChart></canvas>
-          </div>
+          @if (dashboard.passRateTrend.length >= 2) {
+            <div class="chart-wrapper chart-wrapper--wide">
+              <canvas #trendChart></canvas>
+            </div>
+          } @else {
+            <p class="trend-insufficient">{{ 'projectDashboard.trendInsufficient' | translate }}</p>
+          }
         </div>
       }
 
@@ -105,9 +109,10 @@
             <ng-container matColumnDef="results">
               <th mat-header-cell *matHeaderCellDef>{{ 'stepResult.results' | translate }}</th>
               <td mat-cell *matCellDef="let run">
-                <span class="result-summary">
+                <span class="result-summary"
+                      [matTooltip]="'projectDashboard.resultsTooltip' | translate: { passed: run.passed, failed: run.failed, total: run.total }">
                   <span class="result-passed">{{ run.passed }}</span> /
-                  <span class="result-failed">{{ run.failed }}</span> /
+                  <span [class.result-failed]="run.failed > 0">{{ run.failed }}</span> /
                   {{ run.total }}
                 </span>
               </td>

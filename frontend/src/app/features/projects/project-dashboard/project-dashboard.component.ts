@@ -225,7 +225,9 @@ export class ProjectDashboardComponent implements OnInit {
     this.trendChart?.destroy();
 
     const trend = this.dashboard.passRateTrend;
-    if (trend.length === 0) return;
+    // A single completed run renders as a lone dot pinned to a corner; the
+    // template shows a hint instead until there are two points to connect.
+    if (trend.length < 2) return;
 
     this.trendChart = new Chart(this.trendChartCanvas.nativeElement, {
       type: 'line',

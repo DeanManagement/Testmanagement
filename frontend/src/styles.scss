@@ -1,3 +1,4 @@
+@use 'sass:map';
 @use '@angular/material' as mat;
 
 // Self-hosted Material Icons. Deliberately not the fonts.googleapis.com stylesheet the Angular
@@ -102,10 +103,66 @@ html, body {
 
 @include mat.core();
 
+// M3 palettes carry hue-tinted *neutral* tone maps: seeding with mat.$red-palette washed every
+// Material surface (dialogs, menus, form cards, paginators, tables) in rose (#fff8f6 and
+// friends), which clashed with the neutral --tm-surface cards and made tinted rows read as
+// state (see docs/reviews/UX_REVIEW_2026-08-07.md, M1). Replace the neutral / neutral-variant
+// maps with true greys (CIELAB L* = tone) so red stays an accent, not a surface wash.
+$_tm-grey-neutral: (
+  0: #000000,
+  4: #0e0e0e,
+  6: #131313,
+  10: #1b1b1b,
+  12: #1f1f1f,
+  17: #2a2a2a,
+  20: #303030,
+  22: #353535,
+  24: #393939,
+  25: #3b3b3b,
+  30: #474747,
+  35: #525252,
+  40: #5e5e5e,
+  50: #777777,
+  60: #919191,
+  70: #ababab,
+  80: #c6c6c6,
+  87: #dadada,
+  90: #e2e2e2,
+  92: #e8e8e8,
+  94: #eeeeee,
+  95: #f1f1f1,
+  96: #f3f3f3,
+  98: #f9f9f9,
+  99: #fcfcfc,
+  100: #ffffff,
+);
+$_tm-grey-neutral-variant: (
+  0: #000000,
+  10: #1b1b1b,
+  20: #303030,
+  25: #3b3b3b,
+  30: #474747,
+  35: #525252,
+  40: #5e5e5e,
+  50: #777777,
+  60: #919191,
+  70: #ababab,
+  80: #c6c6c6,
+  90: #e2e2e2,
+  95: #f1f1f1,
+  98: #f9f9f9,
+  99: #fcfcfc,
+  100: #ffffff,
+);
+$_tm-palette: map.merge(mat.$red-palette, (
+  neutral: $_tm-grey-neutral,
+  neutral-variant: $_tm-grey-neutral-variant,
+));
+
 $theme: mat.define-theme((
   color: (
     theme-type: light,
-    primary: mat.$red-palette,
+    primary: $_tm-palette,
     tertiary: mat.$violet-palette,
   ),
   density: (
@@ -116,7 +173,7 @@ $theme: mat.define-theme((
 $dark-theme: mat.define-theme((
   color: (
     theme-type: dark,
-    primary: mat.$red-palette,
+    primary: $_tm-palette,
     tertiary: mat.$violet-palette,
   ),
   density: (
@@ -201,6 +258,31 @@ a {
   border: 1px solid var(--tm-border);
   border-radius: var(--tm-radius);
   box-shadow: var(--tm-shadow);
+}
+
+// -- Page layout --
+// Single source of truth for routed page containers (see docs/reviews/UX_REVIEW_2026-08-07.md,
+// H3/L8): the per-component copies had drifted apart, and two pages (project dashboard,
+// activity feed) used the class without defining it, rendering full-bleed.
+.list-container {
+  padding: 32px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  &.list-container--wide {
+    max-width: 1400px;
+  }
+
+  @media (max-width: 600px) {
+    padding: 16px;
+  }
+}
+
+// Muted "← Back" link used in every page header. Global for the same reason as
+// .list-container: per-component copies drifted, and pages that forgot the rule
+// rendered the link in the accent color.
+.back-link {
+  color: var(--tm-text-secondary);
 }
 
 // -- Page header --
@@ -304,6 +386,10 @@ a {
   padding: 24px;
   max-width: 640px;
   margin: 0 auto;
+
+  &.form-container--wide {
+    max-width: 800px;
+  }
 }
 
 .full-width {

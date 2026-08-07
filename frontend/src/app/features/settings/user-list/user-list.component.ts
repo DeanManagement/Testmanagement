@@ -10,10 +10,13 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateModule } from '@ngx-translate/core';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { UserActions } from '../../../store/user/user.actions';
 import { selectAllUsers, selectUsersLoading } from '../../../store/user/user.selectors';
+import { selectAuthUser } from '../../../store/auth/auth.selectors';
 import { CreateUserDialogComponent } from '../create-user-dialog/create-user-dialog.component';
 import { EditUserDialogComponent } from '../edit-user-dialog/edit-user-dialog.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { User } from '../../../shared/models/user.model';
 import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 
@@ -28,6 +31,7 @@ import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
     MatIconModule,
     MatProgressSpinnerModule,
     MatChipsModule,
+    MatTooltipModule,
     TranslateModule,
   ],
   templateUrl: './user-list.component.html',
@@ -40,6 +44,7 @@ export class UserListComponent implements OnInit {
 
   users$ = this.store.select(selectAllUsers);
   loading$ = this.store.select(selectUsersLoading);
+  currentUser$ = this.store.select(selectAuthUser);
   displayedColumns = ['email', 'displayName', 'systemAdmin', 'createdAt', 'actions'];
 
   ngOnInit(): void {
@@ -71,7 +76,20 @@ export class UserListComponent implements OnInit {
     });
   }
 
-  deleteUser(id: string): void {
-    this.store.dispatch(UserActions.deleteUser({ id }));
+  deleteUser(user: User): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titleKey: 'common.delete',
+        messageKey: 'settings.users.deleteConfirm',
+        messageParams: { email: user.email },
+        secondaryMessageKey: 'common.irreversibleWarning',
+        danger: true,
+      } as ConfirmDialogData,
+    });
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((confirmed) => {
+      if (confirmed) {
+        this.store.dispatch(UserActions.deleteUser({ id: user.id }));
+      }
+    });
   }
 }
