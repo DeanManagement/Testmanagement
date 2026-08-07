@@ -40,7 +40,6 @@ import java.util.UUID;
 public class ProjectController {
 
     private final ProjectService projectService;
-    private final DashboardService dashboardService;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserService userService;
 
@@ -67,12 +66,6 @@ public class ProjectController {
     @RequireProjectRole(pathVariable = "id")
     public ProjectResponse findById(@PathVariable UUID id) {
         return projectService.findById(id);
-    }
-
-    @GetMapping("/{id}/dashboard")
-    @RequireProjectRole(pathVariable = "id")
-    public DashboardResponse getDashboard(@PathVariable UUID id) {
-        return dashboardService.getDashboard(id);
     }
 
     @PostMapping
