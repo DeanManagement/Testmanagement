@@ -59,50 +59,52 @@
 
       <div class="results-table tm-card">
         <h3>{{ 'report.latestResult' | translate }} ({{ report.total }})</h3>
-        <table mat-table [dataSource]="report.results" class="data-table">
-          <ng-container matColumnDef="testCase">
-            <th mat-header-cell *matHeaderCellDef>{{ 'report.testCase' | translate }}</th>
-            <td mat-cell *matCellDef="let result">
-              <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link">
-                {{ result.testCaseTitle }}
-              </a>
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.status' | translate }}</th>
-            <td mat-cell *matCellDef="let result">
-              @if (result.status) {
-                <span class="badge badge--{{ result.status | lowercase }}">{{ 'resultStatus.' + result.status | translate }}</span>
-              } @else {
-                <span class="badge badge--untested">{{ 'report.untested' | translate }}</span>
-              }
-            </td>
-          </ng-container>
-
-          <ng-container matColumnDef="fromRun">
-            <th mat-header-cell *matHeaderCellDef>{{ 'report.fromRun' | translate }}</th>
-            <td mat-cell *matCellDef="let result">
-              @if (result.testRunId) {
-                <a [routerLink]="['/projects', projectId, 'test-runs', result.testRunId]" class="item-link">
-                  {{ result.testRunName }}
+        <div class="table-scroll">
+          <table mat-table [dataSource]="report.results" class="data-table">
+            <ng-container matColumnDef="testCase">
+              <th mat-header-cell *matHeaderCellDef>{{ 'report.testCase' | translate }}</th>
+              <td mat-cell *matCellDef="let result">
+                <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link">
+                  {{ result.testCaseTitle }}
                 </a>
-              } @else {
-                -
-              }
-            </td>
-          </ng-container>
+              </td>
+            </ng-container>
 
-          <ng-container matColumnDef="date">
-            <th mat-header-cell *matHeaderCellDef>{{ 'report.resultDate' | translate }}</th>
-            <td mat-cell *matCellDef="let result">
-              {{ result.updatedAt ? (result.updatedAt | localizedDate:'medium') : '-' }}
-            </td>
-          </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.status' | translate }}</th>
+              <td mat-cell *matCellDef="let result">
+                @if (result.status) {
+                  <span class="badge badge--{{ result.status | lowercase }}">{{ 'resultStatus.' + result.status | translate }}</span>
+                } @else {
+                  <span class="badge badge--untested">{{ 'report.untested' | translate }}</span>
+                }
+              </td>
+            </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-          <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-        </table>
+            <ng-container matColumnDef="fromRun">
+              <th mat-header-cell *matHeaderCellDef>{{ 'report.fromRun' | translate }}</th>
+              <td mat-cell *matCellDef="let result">
+                @if (result.testRunId) {
+                  <a [routerLink]="['/projects', projectId, 'test-runs', result.testRunId]" class="item-link">
+                    {{ result.testRunName }}
+                  </a>
+                } @else {
+                  -
+                }
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="date">
+              <th mat-header-cell *matHeaderCellDef>{{ 'report.resultDate' | translate }}</th>
+              <td mat-cell *matCellDef="let result">
+                {{ result.updatedAt ? (result.updatedAt | localizedDate:'medium') : '-' }}
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+          </table>
+        </div>
       </div>
     </div>
   </div>

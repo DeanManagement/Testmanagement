@@ -14,6 +14,8 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatInputModule } from '@angular/material/input';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDividerModule } from '@angular/material/divider';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
@@ -65,6 +67,7 @@ import { ProjectMemberApiService } from '../../../core/services/project-member-a
     MatInputModule,
     MatProgressBarModule,
     MatMenuModule,
+    MatDividerModule,
     MatCheckboxModule,
     FormsModule,
     TranslateModule,
@@ -502,8 +505,21 @@ export class TestRunDetailComponent implements OnInit {
     });
   }
 
-  deleteTestRun(id: string): void {
-    this.store.dispatch(TestRunActions.deleteTestRun({ projectId: this.projectId, id }));
+  deleteTestRun(run: TestRun): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titleKey: 'common.delete',
+        messageKey: 'testRun.deleteConfirm',
+        messageParams: { name: run.name },
+        secondaryMessageKey: 'common.irreversibleWarning',
+        danger: true,
+      } as ConfirmDialogData,
+    });
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(confirmed => {
+      if (confirmed) {
+        this.store.dispatch(TestRunActions.deleteTestRun({ projectId: this.projectId, id: run.id }));
+      }
+    });
   }
 
   addResultComment(content: string): void {

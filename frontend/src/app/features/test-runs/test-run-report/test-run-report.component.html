@@ -75,31 +75,33 @@
 
       <div class="results-table tm-card">
         <h3>{{ 'stepResult.results' | translate }} ({{ report.total }})</h3>
-        <table mat-table [dataSource]="report.results" class="data-table">
-          <ng-container matColumnDef="testCase">
-            <th mat-header-cell *matHeaderCellDef>{{ 'report.testCase' | translate }}</th>
-            <td mat-cell *matCellDef="let result">
-              <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link">
-                {{ result.testCaseTitle }}
-              </a>
-            </td>
-          </ng-container>
+        <div class="table-scroll">
+          <table mat-table [dataSource]="report.results" class="data-table">
+            <ng-container matColumnDef="testCase">
+              <th mat-header-cell *matHeaderCellDef>{{ 'report.testCase' | translate }}</th>
+              <td mat-cell *matCellDef="let result">
+                <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link">
+                  {{ result.testCaseTitle }}
+                </a>
+              </td>
+            </ng-container>
 
-          <ng-container matColumnDef="status">
-            <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.status' | translate }}</th>
-            <td mat-cell *matCellDef="let result">
-              <span class="badge badge--{{ result.status | lowercase }}">{{ 'resultStatus.' + result.status | translate }}</span>
-            </td>
-          </ng-container>
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.status' | translate }}</th>
+              <td mat-cell *matCellDef="let result">
+                <span class="badge badge--{{ result.status | lowercase }}">{{ 'resultStatus.' + result.status | translate }}</span>
+              </td>
+            </ng-container>
 
-          <ng-container matColumnDef="comment">
-            <th mat-header-cell *matHeaderCellDef>Comment</th>
-            <td mat-cell *matCellDef="let result" class="comment-cell">{{ result.comment || '-' }}</td>
-          </ng-container>
+            <ng-container matColumnDef="comment">
+              <th mat-header-cell *matHeaderCellDef>Comment</th>
+              <td mat-cell *matCellDef="let result" class="comment-cell">{{ result.comment || '-' }}</td>
+            </ng-container>
 
-          <tr mat-header-row *matHeaderRowDef="['testCase', 'status', 'comment']"></tr>
-          <tr mat-row *matRowDef="let row; columns: ['testCase', 'status', 'comment']"></tr>
-        </table>
+            <tr mat-header-row *matHeaderRowDef="['testCase', 'status', 'comment']"></tr>
+            <tr mat-row *matRowDef="let row; columns: ['testCase', 'status', 'comment']"></tr>
+          </table>
+        </div>
       </div>
     </div>
   </div>

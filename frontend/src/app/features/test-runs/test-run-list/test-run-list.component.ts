@@ -21,6 +21,7 @@ import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { selectAllTestRuns, selectTestRunsLoading, selectTestRunsError, selectTestRunPage } from '../../../store/test-run/test-run.selectors';
 import { TestRun, TestRunQuery, TestRunStatus } from '../../../shared/models/test-run.model';
 import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-test-run-dialog/clone-test-run-dialog.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 
 @Component({
   selector: 'app-test-run-list',
@@ -147,7 +148,20 @@ export class TestRunListComponent implements OnInit {
     });
   }
 
-  deleteTestRun(id: string): void {
-    this.store.dispatch(TestRunActions.deleteTestRun({ projectId: this.projectId, id }));
+  deleteTestRun(run: TestRun): void {
+    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
+      data: {
+        titleKey: 'common.delete',
+        messageKey: 'testRun.deleteConfirm',
+        messageParams: { name: run.name },
+        secondaryMessageKey: 'common.irreversibleWarning',
+        danger: true,
+      } as ConfirmDialogData,
+    });
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(confirmed => {
+      if (confirmed) {
+        this.store.dispatch(TestRunActions.deleteTestRun({ projectId: this.projectId, id: run.id }));
+      }
+    });
   }
 }

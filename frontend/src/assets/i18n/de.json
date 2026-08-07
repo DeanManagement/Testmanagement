@@ -278,6 +278,7 @@
     "start": "Starten",
     "completeAction": "Abschließen",
     "abort": "Abbrechen",
+    "deleteConfirm": "Testlauf \"{{name}}\" löschen?",
     "list": {
       "title": "Testläufe",
       "create": "Testlauf starten",
@@ -657,7 +658,8 @@
     "retry": "Erneut versuchen",
     "ok": "OK",
     "saving": "Wird gespeichert…",
-    "irreversibleWarning": "Diese Aktion kann nicht rückgängig gemacht werden."
+    "irreversibleWarning": "Diese Aktion kann nicht rückgängig gemacht werden.",
+    "moreActions": "Weitere Aktionen"
   },
   "a11y": {
     "deselectAll": "Auswahl aufheben",

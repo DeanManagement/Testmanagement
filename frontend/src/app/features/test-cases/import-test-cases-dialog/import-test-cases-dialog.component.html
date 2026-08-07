@@ -16,18 +16,20 @@
     </div>
 
     @if (preview.errors.length > 0) {
-      <table mat-table [dataSource]="preview.errors" class="error-table">
-        <ng-container matColumnDef="row">
-          <th mat-header-cell *matHeaderCellDef>{{ 'import.row' | translate }}</th>
-          <td mat-cell *matCellDef="let e">{{ e.row }}</td>
-        </ng-container>
-        <ng-container matColumnDef="message">
-          <th mat-header-cell *matHeaderCellDef>{{ 'import.error' | translate }}</th>
-          <td mat-cell *matCellDef="let e">{{ e.message }}</td>
-        </ng-container>
-        <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>
-        <tr mat-row *matRowDef="let row; columns: errorColumns"></tr>
-      </table>
+      <div class="table-scroll">
+        <table mat-table [dataSource]="preview.errors" class="error-table">
+          <ng-container matColumnDef="row">
+            <th mat-header-cell *matHeaderCellDef>{{ 'import.row' | translate }}</th>
+            <td mat-cell *matCellDef="let e">{{ e.row }}</td>
+          </ng-container>
+          <ng-container matColumnDef="message">
+            <th mat-header-cell *matHeaderCellDef>{{ 'import.error' | translate }}</th>
+            <td mat-cell *matCellDef="let e">{{ e.message }}</td>
+          </ng-container>
+          <tr mat-header-row *matHeaderRowDef="errorColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: errorColumns"></tr>
+        </table>
+      </div>
     }
   }
 </mat-dialog-content>

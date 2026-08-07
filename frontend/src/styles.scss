@@ -290,6 +290,9 @@ a {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  // Narrow viewports: let the action cluster drop below the title instead of overlapping it.
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 24px;
 
   h1 {
@@ -297,6 +300,36 @@ a {
     font-weight: 700;
     color: var(--tm-text);
     margin: 0;
+  }
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+// Destructive entries in overflow menus. Global because mat-menu renders in the
+// CDK overlay, outside any component's style scope.
+.mat-mdc-menu-item.menu-item--danger {
+  color: var(--tm-danger);
+
+  .mat-icon {
+    color: var(--tm-danger);
+  }
+}
+
+// -- Responsive tables --
+// Data tables keep their natural column widths and scroll horizontally inside
+// this wrapper instead of dragging a page-level scrollbar (M4 in
+// docs/reviews/UX_REVIEW_2026-08-07.md).
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+
+  > .mat-mdc-table {
+    min-width: 640px;
   }
 }
 

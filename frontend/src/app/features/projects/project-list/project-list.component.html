@@ -40,42 +40,44 @@
       }
     </div>
   } @else {
-    <table mat-table [dataSource]="(filteredProjects$ | async) ?? []" class="project-table" data-test-id="project-table" aria-label="Projects">
-      <ng-container matColumnDef="key">
-        <th mat-header-cell *matHeaderCellDef>{{ 'project.form.key' | translate }}</th>
-        <td mat-cell *matCellDef="let project">
-          <span class="project-key" data-test-id="project-key">{{ project.key }}</span>
-        </td>
-      </ng-container>
+    <div class="table-scroll">
+      <table mat-table [dataSource]="(filteredProjects$ | async) ?? []" class="project-table" data-test-id="project-table" aria-label="Projects">
+        <ng-container matColumnDef="key">
+          <th mat-header-cell *matHeaderCellDef>{{ 'project.form.key' | translate }}</th>
+          <td mat-cell *matCellDef="let project">
+            <span class="project-key" data-test-id="project-key">{{ project.key }}</span>
+          </td>
+        </ng-container>
 
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>{{ 'project.form.name' | translate }}</th>
-        <td mat-cell *matCellDef="let project">
-          <a [routerLink]="['/projects', project.id]" class="project-name" data-test-id="project-link">{{ project.name }}</a>
-        </td>
-      </ng-container>
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>{{ 'project.form.name' | translate }}</th>
+          <td mat-cell *matCellDef="let project">
+            <a [routerLink]="['/projects', project.id]" class="project-name" data-test-id="project-link">{{ project.name }}</a>
+          </td>
+        </ng-container>
 
-      <ng-container matColumnDef="description">
-        <th mat-header-cell *matHeaderCellDef>{{ 'project.form.description' | translate }}</th>
-        <td mat-cell *matCellDef="let project" class="description-cell">
-          {{ project.description }}
-        </td>
-      </ng-container>
+        <ng-container matColumnDef="description">
+          <th mat-header-cell *matHeaderCellDef>{{ 'project.form.description' | translate }}</th>
+          <td mat-cell *matCellDef="let project" class="description-cell">
+            {{ project.description }}
+          </td>
+        </ng-container>
 
-      <ng-container matColumnDef="actions">
-        <th mat-header-cell *matHeaderCellDef></th>
-        <td mat-cell *matCellDef="let project" class="actions-cell">
-          <a mat-icon-button [routerLink]="['/projects', project.id, 'edit']" class="action-btn" data-test-id="project-edit-btn" [attr.aria-label]="'Edit ' + project.name">
-            <mat-icon>edit</mat-icon>
-          </a>
-          <button mat-icon-button (click)="deleteProject(project.id)" class="action-btn action-btn--danger" data-test-id="project-delete-btn" [attr.aria-label]="'Delete ' + project.name">
-            <mat-icon>delete</mat-icon>
-          </button>
-        </td>
-      </ng-container>
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let project" class="actions-cell">
+            <a mat-icon-button [routerLink]="['/projects', project.id, 'edit']" class="action-btn" data-test-id="project-edit-btn" [attr.aria-label]="'Edit ' + project.name">
+              <mat-icon>edit</mat-icon>
+            </a>
+            <button mat-icon-button (click)="deleteProject(project.id)" class="action-btn action-btn--danger" data-test-id="project-delete-btn" [attr.aria-label]="'Delete ' + project.name">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </td>
+        </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-    </table>
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
   }
 </div>

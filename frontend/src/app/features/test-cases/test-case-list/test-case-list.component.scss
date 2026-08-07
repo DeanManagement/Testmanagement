@@ -22,6 +22,18 @@
   gap: 24px;
 }
 
+// Stack the folder sidebar above the table once side-by-side stops fitting.
+@media (max-width: 900px) {
+  .content-layout {
+    flex-direction: column;
+  }
+
+  .folder-sidebar {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
 // Folder Sidebar
 .folder-sidebar {
   width: 280px;

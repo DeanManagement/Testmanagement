@@ -40,30 +40,41 @@
           <mat-icon>assessment</mat-icon>
           {{ 'report.title' | translate }}
         </a>
-        @if (run.allureReportId) {
-          <button mat-stroked-button (click)="openAllureReport(run)" class="allure-btn" [matTooltip]="'testRun.allureReport.view' | translate" data-test-id="test-run-allure-view-btn">
-            <mat-icon>open_in_new</mat-icon>
-            {{ 'testRun.allureReport.view' | translate }}
-          </button>
-          <button mat-icon-button (click)="deleteAllureReport()" [matTooltip]="'testRun.allureReport.delete' | translate" class="allure-delete-btn" data-test-id="test-run-allure-delete-btn"
-                  [attr.aria-label]="'testRun.allureReport.delete' | translate">
-            <mat-icon>delete_outline</mat-icon>
-          </button>
-        } @else {
-          <button mat-stroked-button (click)="allureFileInput.click()" class="allure-upload-btn" data-test-id="test-run-allure-upload-btn">
-            <mat-icon>upload_file</mat-icon>
-            {{ 'testRun.allureReport.upload' | translate }}
-          </button>
-          <input #allureFileInput type="file" accept=".zip" hidden (change)="onAllureReportUpload($event)" />
-        }
-        <button mat-stroked-button (click)="cloneTestRun(run)" class="clone-btn" data-test-id="test-run-clone-btn">
-          <mat-icon>content_copy</mat-icon>
-          {{ 'testRun.clone' | translate }}
+        <!-- Secondary and destructive actions live in an overflow menu so the toolbar
+             stays scannable and Delete is not a sibling of Clone (M5 in the UX review). -->
+        <button mat-icon-button [matMenuTriggerFor]="moreMenu" class="more-btn" data-test-id="test-run-more-btn"
+                [attr.aria-label]="'common.moreActions' | translate">
+          <mat-icon>more_vert</mat-icon>
         </button>
-        <button mat-stroked-button (click)="deleteTestRun(run.id)" class="delete-btn" data-test-id="test-run-detail-delete-btn">
-          <mat-icon>delete</mat-icon>
-          {{ 'common.delete' | translate }}
-        </button>
+        <mat-menu #moreMenu="matMenu">
+          @if (run.allureReportId) {
+            <button mat-menu-item (click)="openAllureReport(run)" data-test-id="test-run-allure-view-btn">
+              <mat-icon>open_in_new</mat-icon>
+              <span>{{ 'testRun.allureReport.view' | translate }}</span>
+            </button>
+            <button mat-menu-item (click)="deleteAllureReport()" data-test-id="test-run-allure-delete-btn">
+              <mat-icon>delete_outline</mat-icon>
+              <span>{{ 'testRun.allureReport.delete' | translate }}</span>
+            </button>
+          } @else {
+            <button mat-menu-item (click)="allureFileInput.click()" data-test-id="test-run-allure-upload-btn">
+              <mat-icon>upload_file</mat-icon>
+              <span>{{ 'testRun.allureReport.upload' | translate }}</span>
+            </button>
+          }
+          <button mat-menu-item (click)="cloneTestRun(run)" data-test-id="test-run-clone-btn">
+            <mat-icon>content_copy</mat-icon>
+            <span>{{ 'testRun.clone' | translate }}</span>
+          </button>
+          <mat-divider></mat-divider>
+          <button mat-menu-item (click)="deleteTestRun(run)" class="menu-item--danger" data-test-id="test-run-detail-delete-btn">
+            <mat-icon>delete</mat-icon>
+            <span>{{ 'common.delete' | translate }}</span>
+          </button>
+        </mat-menu>
+        <!-- Outside the menu: mat-menu content is destroyed on close, which would detach
+             the input mid-upload. -->
+        <input #allureFileInput type="file" accept=".zip" hidden (change)="onAllureReportUpload($event)" />
       </div>
     </div>
 

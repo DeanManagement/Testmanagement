@@ -278,6 +278,7 @@
     "start": "Start",
     "completeAction": "Complete",
     "abort": "Abort",
+    "deleteConfirm": "Delete test run \"{{name}}\"?",
     "list": {
       "title": "Test Runs",
       "create": "Start Test Run",
@@ -657,7 +658,8 @@
     "retry": "Retry",
     "ok": "OK",
     "saving": "Saving…",
-    "irreversibleWarning": "This action cannot be undone."
+    "irreversibleWarning": "This action cannot be undone.",
+    "moreActions": "More actions"
   },
   "a11y": {
     "deselectAll": "Deselect all",
