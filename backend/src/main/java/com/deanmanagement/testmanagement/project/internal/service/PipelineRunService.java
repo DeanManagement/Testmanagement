@@ -57,8 +57,10 @@ public class PipelineRunService {
 
     public PipelineRunResponse trigger(UUID projectId, UUID workflowId, TriggerPipelineRequest request) {
         // The assignment is the authorization: an unassigned workflow is not found, not forbidden.
+        // findForTrigger fetches workflow and server eagerly — this method runs outside a
+        // transaction, so a lazy proxy would have no session to initialize from.
         ProjectBuildWorkflow assignment = assignmentRepository
-                .findByProjectIdAndWorkflowId(projectId, workflowId)
+                .findForTrigger(projectId, workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException("Workflow", workflowId));
         BuildWorkflow workflow = assignment.getWorkflow();
         BuildServerConfig config = workflow.getBuildServerConfig();

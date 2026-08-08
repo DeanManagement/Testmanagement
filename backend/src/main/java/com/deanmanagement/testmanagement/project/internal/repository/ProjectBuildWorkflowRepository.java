@@ -18,6 +18,16 @@ public interface ProjectBuildWorkflowRepository extends JpaRepository<ProjectBui
 
     Optional<ProjectBuildWorkflow> findByProjectIdAndWorkflowId(UUID projectId, UUID workflowId);
 
+    /**
+     * The trigger path's lookup: workflow and server fetched along, because the trigger service
+     * deliberately runs outside a transaction (no HTTP inside a DB transaction) and a lazy proxy
+     * would fail there with no session to initialize from.
+     */
+    @Query("SELECT a FROM ProjectBuildWorkflow a JOIN FETCH a.workflow w "
+            + "JOIN FETCH w.buildServerConfig WHERE a.projectId = :projectId AND w.id = :workflowId")
+    Optional<ProjectBuildWorkflow> findForTrigger(@Param("projectId") UUID projectId,
+                                                  @Param("workflowId") UUID workflowId);
+
     List<ProjectBuildWorkflow> findByWorkflowId(UUID workflowId);
 
     void deleteByWorkflowIdAndProjectIdNotIn(UUID workflowId, List<UUID> projectIds);
