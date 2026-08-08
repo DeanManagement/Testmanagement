@@ -24,6 +24,14 @@
        data-test-id="settings-nav-sso">
       {{ 'sso.title' | translate }}
     </a>
+    <a mat-tab-link
+       routerLink="build-servers"
+       routerLinkActive
+       #buildServersActive="routerLinkActive"
+       [active]="buildServersActive.isActive"
+       data-test-id="settings-nav-build-servers">
+      {{ 'buildServers.title' | translate }}
+    </a>
   </nav>
   <mat-tab-nav-panel #tabPanel>
     <router-outlet />

@@ -23,7 +23,7 @@ Testmanagement/
 │   └── src/
 │       ├── main/java/com/deanmanagement/testmanagement/
 │       │   ├── user/         # Users, auth, API keys, SSO — package-by-feature
-│       │   ├── project/      # Projects, test cases/suites/runs/plans, webhooks, CI, issue tracker
+│       │   ├── project/      # Projects, test cases/suites/runs/plans, webhooks, CI, issue tracker, build servers
 │       │   └── shared/       # Cross-cutting: crypto, net (SSRF guards), config, exceptions
 │       └── main/resources/
 │           ├── application.yml

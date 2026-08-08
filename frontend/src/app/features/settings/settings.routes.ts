@@ -32,6 +32,13 @@ export const settingsRoutes: Routes = [
             (m) => m.SsoSettingsComponent
           ),
       },
+      {
+        path: 'build-servers',
+        loadComponent: () =>
+          import('../build-servers/build-server-settings.component').then(
+            (m) => m.BuildServerSettingsComponent
+          ),
+      },
     ],
   },
 ];

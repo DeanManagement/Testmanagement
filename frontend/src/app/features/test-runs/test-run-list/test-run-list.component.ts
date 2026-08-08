@@ -22,6 +22,7 @@ import { selectAllTestRuns, selectTestRunsLoading, selectTestRunsError, selectTe
 import { TestRun, TestRunQuery, TestRunStatus } from '../../../shared/models/test-run.model';
 import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-test-run-dialog/clone-test-run-dialog.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
+import { AutomationPanelComponent } from '../../automation/automation-panel.component';
 
 @Component({
   selector: 'app-test-run-list',
@@ -42,6 +43,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/compo
     MatPaginatorModule,
     MatSortModule,
     TranslateModule,
+    AutomationPanelComponent,
   ],
   templateUrl: './test-run-list.component.html',
   styleUrl: './test-run-list.component.scss',

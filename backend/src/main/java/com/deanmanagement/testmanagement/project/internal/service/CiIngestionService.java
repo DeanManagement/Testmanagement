@@ -47,16 +47,24 @@ public class CiIngestionService {
     private final TestPlanRepository testPlanRepository;
     private final TestRunMapper testRunMapper;
     private final ProjectSequenceService projectSequenceService;
+    private final PipelineRunLinker pipelineRunLinker;
 
-    /** @param projectRef the project key or UUID from the URL. */
+    /**
+     * @param projectRef the project key or UUID from the URL.
+     * @param pipelineRunId optional PRD-024 correlation: the {@code TM_PIPELINE_RUN_ID} a
+     *        triggered workflow passes back, linking the created run to its pipeline run.
+     */
     @Transactional
     public TestRunResponse ingest(String projectRef, String runName, String environment,
-                                  UUID testPlanId, List<CiResult> results) {
+                                  UUID testPlanId, List<CiResult> results, UUID pipelineRunId) {
         Project project = refResolver.resolveProject(projectRef);
+        var pipelineRun = pipelineRunLinker.resolve(pipelineRunId, project.getId());
 
         Instant now = Instant.now();
         TestRun run = new TestRun();
-        run.setName(runName != null && !runName.isBlank() ? runName : "CI import");
+        // An unnamed run from a triggered pipeline is named after the workflow that produced it.
+        run.setName(runName != null && !runName.isBlank() ? runName
+                : pipelineRun != null ? pipelineRun.getWorkflowName() : "CI import");
         run.setEnvironment(environment);
         run.setProject(project);
         run.setStatus(TestRunStatus.COMPLETED);
@@ -95,6 +103,7 @@ public class CiIngestionService {
         }
 
         run = testRunRepository.save(run);
+        pipelineRunLinker.attach(pipelineRun, run);
         return testRunMapper.toResponse(run);
     }
 

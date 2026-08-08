@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
@@ -32,11 +33,17 @@ public class ExternalTestRunService {
     private final TestRunMapper testRunMapper;
     private final ProjectSequenceService projectSequenceService;
     private final ExternalRefResolver refResolver;
+    private final PipelineRunLinker pipelineRunLinker;
 
-    /** @param projectRef the project key or UUID from the URL. */
+    /**
+     * @param projectRef the project key or UUID from the URL.
+     * @param pipelineRunId optional PRD-024 correlation, see {@link PipelineRunLinker}.
+     */
     @Transactional
-    public TestRunResponse createExternalRun(String projectRef, ExternalCreateTestRunRequest request) {
+    public TestRunResponse createExternalRun(String projectRef, ExternalCreateTestRunRequest request,
+                                             UUID pipelineRunId) {
         Project project = refResolver.resolveProject(projectRef);
+        var pipelineRun = pipelineRunLinker.resolve(pipelineRunId, project.getId());
 
         Instant now = Instant.now();
 
@@ -91,6 +98,7 @@ public class ExternalTestRunService {
         }
 
         run = testRunRepository.save(run);
+        pipelineRunLinker.attach(pipelineRun, run);
         return testRunMapper.toResponse(run);
     }
 }

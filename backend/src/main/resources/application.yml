@@ -86,8 +86,8 @@ app:
     from: ${MAIL_FROM:no-reply@testmanagement.local}
   security:
     # AES key (base64, 16/24/32 bytes) for secrets the app stores and later replays:
-    # issue-tracker API tokens and OIDC client secrets. Unset means those features refuse
-    # to store a secret rather than keeping it in plaintext.
+    # issue-tracker API tokens, build-server API tokens (PRD-024) and OIDC client secrets.
+    # Unset means those features refuse to store a secret rather than keeping it in plaintext.
     encryption-key: ${APP_ENCRYPTION_KEY:}
   sso:
     # Where the browser lands after an SSO login. Configuration only, never a request
@@ -116,6 +116,20 @@ app:
     poll-interval-ms: 300000
     poll-batch-size: 50
     poll-min-age-ms: 240000
+  buildserver:
+    # PRD-024: on-demand pipeline triggering. SSRF guard for admin-supplied server URLs.
+    allow-private-targets: ${BUILDSERVER_ALLOW_PRIVATE_TARGETS:false}
+    connect-timeout-ms: 5000
+    read-timeout-ms: 10000
+    # Status poll for non-terminal pipeline runs. No-ops entirely while no server is registered
+    # or no run is in flight, so the short interval costs nothing on an idle instance.
+    poll-interval-ms: 15000
+    poll-batch-size: 20
+    # A run still non-terminal after this long is marked TIMED_OUT and no longer polled.
+    run-timeout-minutes: 120
+    # Public URL of this instance, injected into triggered pipelines as TM_BASE_URL so the
+    # workflow can call the report-back API without hardcoding it. Optional.
+    public-base-url: ${PUBLIC_BASE_URL:}
   webhooks:
     # SSRF guard: only allow loopback/private targets if explicitly enabled.
     allow-private-targets: ${WEBHOOKS_ALLOW_PRIVATE_TARGETS:false}

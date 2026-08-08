@@ -156,6 +156,7 @@ Tester can, and Tester everything a Viewer can.
 | Create and edit test plans, requirements, parameter sets | | ● | ● |
 | Create and edit bug reports | | ● | ● |
 | Link, file and unlink issue-tracker issues | | ● | ● |
+| Trigger assigned build-server workflows and refresh pipeline status | | ● | ● |
 | Post comments | | ● | ● |
 | Manage project members and their roles | | | ● |
 | Configure webhooks and the issue tracker | | | ● |
@@ -172,7 +173,7 @@ A system administrator is set per user account, not per project. They:
 - see and enter **every** project without being a member
 - are treated as project Admin everywhere
 - are the **only** ones who can create a project
-- own the **Settings** area — users, API keys and SSO
+- own the **Settings** area — users, API keys, SSO and build servers
 - keep password sign-in even when it has been switched off for everyone else, so a broken
   identity provider cannot lock you out of your own installation
 
@@ -455,6 +456,23 @@ CSS, JavaScript, images and fonts served correctly.
 
 Reports can also be uploaded straight from CI — see [CI/CD integration](#15-cicd-integration).
 
+### Triggering automated suites
+
+If a system administrator has assigned build-server workflows to your project (see
+[Build servers](#build-servers)), an **Automation** panel appears at the top of the test-runs
+page. Each assigned workflow has a **Run** button; the dialog is pre-filled with the workflow's
+default branch and parameters, both editable per run. Triggering needs the Tester role.
+
+The panel below the buttons lists recent pipeline runs. While a pipeline is in flight its status
+chip updates live — Triggered → Pending → Running → Success / Failed — without reloading the
+page; a refresh button forces an immediate status check. Each row links to the pipeline on the
+build server and, once the pipeline has reported its results back, to the **test run** it created
+(including its Allure report, if the pipeline uploaded one).
+
+A pipeline that finishes green but never reports results shows a "no results received" hint —
+that means the workflow ran but is missing the report-back step described in
+[CI/CD integration](#15-cicd-integration).
+
 ---
 
 ## 11. Reports and dashboards
@@ -705,6 +723,43 @@ Once connected, a tester working through a failed result can:
 
 Disconnecting the tracker keeps issues already linked to results; they stay clickable.
 
+### Build servers
+
+**Settings → Build servers** (system administrators) registers CI servers **once, globally** —
+the credential lives in one place, and projects never see it. Supported providers: **GitLab CI**,
+**GitHub Actions**, **Forgejo/Gitea Actions**, **Woodpecker CI** and **Jenkins**.
+
+For each server provide a display name, the server URL (HTTPS; private addresses rejected by
+default — see `BUILDSERVER_ALLOW_PRIVATE_TARGETS`), and an API token. Tokens are stored encrypted
+and require `APP_ENCRYPTION_KEY`, like issue-tracker tokens. **Test connection** verifies the
+credential before you rely on it, and the last provider error is shown on the server card.
+
+Provider notes:
+
+| Provider | Server URL | Token | Repository / job reference |
+|---|---|---|---|
+| GitLab CI | Instance root, e.g. `https://gitlab.com` | Personal/project access token, `api` scope | `group/project` or numeric id |
+| GitHub Actions | API root: `https://api.github.com` (or `…/api/v3` for Enterprise Server) | Token with Actions read/write | `owner/repo` |
+| Forgejo / Gitea | Instance root, e.g. `https://codeberg.org` | Access token with repository scope | `owner/repo` |
+| Woodpecker | Instance root | Personal token from user settings | Numeric repo id (use discovery) |
+| Jenkins | Instance root | **`user:apiToken`** — both halves, colon-separated | Job path, e.g. `folder/jobname` |
+
+**Workflows.** On each server the admin defines what can be triggered: a display name testers
+will see, the repository/job reference, for GitHub/Forgejo the workflow file (e.g. `tests.yml`),
+a default branch, and default parameters (one `KEY=value` per line). The **Discover** button asks
+the server what exists — workflow files on GitHub/Forgejo, jobs on Jenkins, repositories on
+Woodpecker, branches on GitLab — so most workflows are a pick, not a form. Manual entry always
+works when discovery has nothing to offer.
+
+**Project assignment.** Each workflow has a project multi-select. Assignment is the entire
+authorization: a project's members see and trigger **only** the workflows assigned to that
+project, and the project-side API never exposes the server URL, the repository reference or any
+credential. Unassigning a workflow (or deleting a server) leaves past pipeline runs readable in
+the projects' history.
+
+For what the triggered pipeline must do to report its results back, see
+[CI/CD integration](#15-cicd-integration).
+
 ---
 
 ## 15. CI/CD integration
@@ -783,6 +838,57 @@ curl -X POST \
 
 The run must belong to the project named in the URL.
 
+### Reporting back from a triggered pipeline
+
+When a tester triggers a workflow from the Automation panel (see
+[Build servers](#build-servers)), the trigger injects three non-secret variables into the
+pipeline — as CI variables on GitLab/Woodpecker/Jenkins, as `workflow_dispatch` inputs on
+GitHub/Forgejo:
+
+| Variable | Content |
+|---|---|
+| `TM_PIPELINE_RUN_ID` | Correlation id for this specific trigger |
+| `TM_PROJECT_KEY` | The project key, e.g. `TES` |
+| `TM_BASE_URL` | This instance's public URL — only when `PUBLIC_BASE_URL` is configured |
+
+The API key is **not** sent to the build server. Configure it as a CI-side secret once (e.g.
+`TM_API_KEY`), like any other credential your pipeline uses.
+
+To report results, the workflow posts to the normal ingestion endpoints and appends
+`?pipelineRunId=$TM_PIPELINE_RUN_ID`. That links the created test run to the pipeline run in the
+Automation panel, and — when no `runName` is given — names the run after the workflow:
+
+```bash
+curl -f -X POST \
+  -H "X-API-Key: $TM_API_KEY" \
+  -H "Content-Type: application/xml" \
+  --data-binary @target/surefire-reports/report.xml \
+  "$TM_BASE_URL/api/external/projects/$TM_PROJECT_KEY/test-runs/junit?pipelineRunId=$TM_PIPELINE_RUN_ID"
+```
+
+The `pipelineRunId` parameter is accepted by all three submission endpoints (native JSON, JUnit,
+Cucumber). An Allure upload needs no extra parameter — attach it to the run key returned by the
+submission, as above. A `pipelineRunId` from another project is rejected as `404`; if the same id
+is reported twice, the first report keeps the link.
+
+**GitHub and Forgejo only:** the dispatch API returns no run id, so the poller has to find the
+run afterwards. Declare the inputs and set `run-name` to make that exact:
+
+```yaml
+run-name: TM ${{ inputs.TM_PIPELINE_RUN_ID }}
+on:
+  workflow_dispatch:
+    inputs:
+      TM_PIPELINE_RUN_ID: { required: false }
+      TM_PROJECT_KEY: { required: false }
+      TM_BASE_URL: { required: false }
+```
+
+Without this the trigger still works (a dispatch rejected for undeclared inputs is retried
+without them), but run matching falls back to timing, and the workflow has no way to read its
+`TM_PIPELINE_RUN_ID` — so results arrive unlinked. GitLab, Woodpecker and Jenkins need nothing:
+they accept arbitrary variables and expose them as environment variables.
+
 ### Status codes
 
 | Code | Meaning |
@@ -848,6 +954,8 @@ You must change it at first login.
 3. Create a project (system administrators only) and add members with roles
 4. Optional: **Settings → Single sign-on**, project **Webhooks**, project **Issue Tracker**
 5. Optional: **Settings → API Keys** for CI, scoped to the project that needs them
+6. Optional: **Settings → Build servers** — register CI servers, define workflows, assign them to
+   projects; set `PUBLIC_BASE_URL` so triggered pipelines know where to report back
 
 ### Configuration
 
@@ -862,7 +970,8 @@ Required only for certain features:
 
 | Variable | Needed for |
 |---|---|
-| `APP_ENCRYPTION_KEY` | Storing issue-tracker tokens and OIDC client secrets. Base64 AES key, `openssl rand -base64 32`. Without it those features refuse to save a secret rather than storing it in plain text. **Changing it makes stored secrets undecryptable** — you must re-enter them |
+| `APP_ENCRYPTION_KEY` | Storing issue-tracker tokens, build-server tokens and OIDC client secrets. Base64 AES key, `openssl rand -base64 32`. Without it those features refuse to save a secret rather than storing it in plain text. **Changing it makes stored secrets undecryptable** — you must re-enter them |
+| `PUBLIC_BASE_URL` | Injected into triggered pipelines as `TM_BASE_URL` so a workflow can report results back without hardcoding the address. Unset = the variable is simply omitted |
 | `MAIL_ENABLED` + `spring.mail.*` | Email notifications. Without a configured mail sender, email toggles have no effect |
 
 Optional, with defaults:
@@ -880,16 +989,20 @@ Optional, with defaults:
 | `SSO_ALLOW_PRIVATE_ISSUERS` | `false` |
 | `ISSUE_TRACKER_ALLOW_PRIVATE_TARGETS` | `false` |
 | `WEBHOOKS_ALLOW_PRIVATE_TARGETS` | `false` |
+| `BUILDSERVER_ALLOW_PRIVATE_TARGETS` | `false` |
 | `FLAKY_AUTO_LABEL` | `false` |
 | `APP_VERSION` | `dev` |
 
-The three `ALLOW_PRIVATE_*` flags are SSRF guards. They stop an administrator — or anyone who has
-compromised an admin account — pointing a webhook, tracker or OIDC issuer at something inside your
-network. Turn one on only when you genuinely need to reach an internal host.
+The four `ALLOW_PRIVATE_*` flags are SSRF guards. They stop an administrator — or anyone who has
+compromised an admin account — pointing a webhook, tracker, build server or OIDC issuer at
+something inside your network. Turn one on only when you genuinely need to reach an internal
+host. A build server on your LAN is the most common legitimate reason to enable
+`BUILDSERVER_ALLOW_PRIVATE_TARGETS`.
 
 Some tunables are YAML-only and need a rebuilt image: server port, the 10 MB upload cap, page
 sizes (50, max 200), the flaky window/threshold/minimum, issue-tracker timeouts and poll interval,
-and the webhook retry schedule.
+the build-server timeouts, poll interval (15 s) and run timeout (120 min), and the webhook retry
+schedule.
 
 ### Backups
 
@@ -963,11 +1076,26 @@ the run accept either their key or their UUID, so that is not the cause.
 **Email notifications never arrive.** Email is off unless the operator set `MAIL_ENABLED=true`
 *and* configured a mail server. The toggle in the UI does not turn on the server side.
 
-**Saving an issue-tracker token or SSO secret is refused.** `APP_ENCRYPTION_KEY` is not set on the
-backend. The application will not store those secrets in plain text.
+**Saving an issue-tracker token, build-server token or SSO secret is refused.**
+`APP_ENCRYPTION_KEY` is not set on the backend. The application will not store those secrets in
+plain text.
 
-**A webhook or SSO issuer is rejected.** Private and loopback addresses are blocked by default.
-See the `ALLOW_PRIVATE_*` variables above, and be sure you want to.
+**A webhook, build server or SSO issuer is rejected.** Private and loopback addresses are blocked
+by default. See the `ALLOW_PRIVATE_*` variables above, and be sure you want to.
+
+**A triggered pipeline finished but shows "no results received".** The workflow ran but never
+posted results back. Check that it calls the JUnit/Cucumber/JSON endpoint with its
+`TM_PIPELINE_RUN_ID` and a valid API key, and that `PUBLIC_BASE_URL` (or a hardcoded URL in the
+workflow) actually reaches this instance from the build agent.
+
+**A GitHub or Forgejo run stays "Triggered" and never picks up a run link.** The dispatch was
+accepted but the run cannot be matched. Declare the `TM_*` inputs and the `run-name` line shown
+in [CI/CD integration](#15-cicd-integration) — without declared inputs the server rejects them
+and the trigger is retried bare, which loses exact correlation.
+
+**Triggering fails immediately with a token error.** Use **Test connection** on the server in
+**Settings → Build servers**; the card also shows the last provider error. For Jenkins remember
+the credential is `user:apiToken`, both halves.
 
 ---
 
@@ -985,6 +1113,7 @@ See the `ALLOW_PRIVATE_*` variables above, and be sure you want to.
 | Priority | `LOW`, `MEDIUM`, `HIGH`, `CRITICAL` |
 | Requirement coverage | Covered, Failing, Blocked, Skipped, Untested, No tests |
 | Linked issue | Open, Closed, Unknown |
+| Pipeline run | `TRIGGERED`, `PENDING`, `RUNNING`, `SUCCESS`, `FAILED`, `CANCELLED`, `TIMED_OUT`, `ERROR` |
 
 ### Identifier formats
 

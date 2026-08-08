@@ -28,6 +28,7 @@ Fixes for the findings in [`docs/CODE_REVIEW_2026-06-09.md`](../CODE_REVIEW_2026
 | [021](PRD-021-authorization-data-safety-gaps.md) | Authorization & Data-Safety Gap Closure | P0/P1 | S | ✅ Implemented |
 | [022](PRD-022-frontend-stability-bundle.md) | Frontend Stability & Consistency Bundle | P1/P2 | M | ✅ Implemented |
 | [023](PRD-023-ci-pipeline-repo-hygiene.md) | CI Pipeline & Repository Hygiene | P1 | S-M | ✅ Implemented |
+| [024](PRD-024-build-server-integration.md) | Build Server Integration (Pipeline Triggering) | P2 | L | ✅ Implemented |
 
 **Sequencing:** 017 + 019 §4.1 + 021 §4.1/§4.3 first (one day, closes everything exploitable) → 018 → 020 → 023 (so the rest lands with CI in place) → 022 → 019 remainder + 021 §4.2.
 

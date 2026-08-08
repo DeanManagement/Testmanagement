@@ -83,7 +83,7 @@ class ExternalTestRunControllerTest {
         var request = new ExternalCreateTestRunRequest("CI Run", "staging", List.of(
                 new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
-        when(externalTestRunService.createExternalRun(eq(PROJECT_KEY), any())).thenReturn(sampleRunResponse());
+        when(externalTestRunService.createExternalRun(eq(PROJECT_KEY), any(), any())).thenReturn(sampleRunResponse());
 
         mockMvc.perform(post("/api/external/projects/{projectKey}/test-runs", PROJECT_KEY)
                         .with(csrf())
@@ -138,7 +138,7 @@ class ExternalTestRunControllerTest {
         var request = new ExternalCreateTestRunRequest("CI Run", "staging", List.of(
                 new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
-        when(externalTestRunService.createExternalRun(eq(PROJECT_KEY), any()))
+        when(externalTestRunService.createExternalRun(eq(PROJECT_KEY), any(), any()))
                 .thenThrow(new ResourceNotFoundException("Project", PROJECT_KEY));
 
         mockMvc.perform(post("/api/external/projects/{projectKey}/test-runs", PROJECT_KEY)

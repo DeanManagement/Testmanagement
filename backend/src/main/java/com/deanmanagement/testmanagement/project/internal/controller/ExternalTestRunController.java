@@ -48,8 +48,9 @@ public class ExternalTestRunController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public TestRunResponse create(@PathVariable String projectRef,
-                                  @Valid @RequestBody ExternalCreateTestRunRequest request) {
-        return externalTestRunService.createExternalRun(projectRef, request);
+                                  @Valid @RequestBody ExternalCreateTestRunRequest request,
+                                  @RequestParam(required = false) UUID pipelineRunId) {
+        return externalTestRunService.createExternalRun(projectRef, request, pipelineRunId);
     }
 
     @PostMapping(value = "/junit", consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.TEXT_XML_VALUE})
@@ -58,10 +59,13 @@ public class ExternalTestRunController {
                                        @RequestBody byte[] body,
                                        @RequestParam(required = false) String runName,
                                        @RequestParam(required = false) String environment,
-                                       @RequestParam(required = false) UUID testPlanId) {
+                                       @RequestParam(required = false) UUID testPlanId,
+                                       @RequestParam(required = false) UUID pipelineRunId) {
         checkSize(body);
-        String name = runName != null ? runName : "JUnit import";
-        return ciIngestionService.ingest(projectRef, name, environment, testPlanId, jUnitXmlParser.parse(body));
+        // With a pipelineRunId and no explicit name the run is named after its workflow (PRD-024).
+        String name = runName != null ? runName : pipelineRunId != null ? null : "JUnit import";
+        return ciIngestionService.ingest(projectRef, name, environment, testPlanId,
+                jUnitXmlParser.parse(body), pipelineRunId);
     }
 
     @PostMapping(value = "/cucumber", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -70,10 +74,12 @@ public class ExternalTestRunController {
                                           @RequestBody byte[] body,
                                           @RequestParam(required = false) String runName,
                                           @RequestParam(required = false) String environment,
-                                          @RequestParam(required = false) UUID testPlanId) {
+                                          @RequestParam(required = false) UUID testPlanId,
+                                          @RequestParam(required = false) UUID pipelineRunId) {
         checkSize(body);
-        String name = runName != null ? runName : "Cucumber import";
-        return ciIngestionService.ingest(projectRef, name, environment, testPlanId, cucumberJsonParser.parse(body));
+        String name = runName != null ? runName : pipelineRunId != null ? null : "Cucumber import";
+        return ciIngestionService.ingest(projectRef, name, environment, testPlanId,
+                cucumberJsonParser.parse(body), pipelineRunId);
     }
 
     private void checkSize(byte[] body) {

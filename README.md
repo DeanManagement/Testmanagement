@@ -20,6 +20,7 @@ A self-hosted test management tool for simple organisations. Manage test cases, 
 - **External API** — accept completed test runs from CI/CD pipelines via API key authentication (JUnit XML, Cucumber JSON, or native JSON)
 - **Webhooks** — signed outbound callbacks on run and bug events
 - **Issue Tracker** — link or file GitLab / Forgejo issues straight from a failed result
+- **Build Servers** — register GitLab CI, GitHub Actions, Forgejo/Gitea Actions, Woodpecker or Jenkins once, assign workflows to projects, and let testers trigger automated suites on demand — with live pipeline status and results reported back as linked test runs and Allure reports
 - **Notifications** — watch plans, runs and bug reports; in-app always, email optional
 - **SSO** — optional multi-provider OpenID Connect, configured at runtime in the admin UI
 - **Dark mode** — light, dark, or follow the operating system
@@ -300,6 +301,11 @@ The backend serves individual files from the stored ZIP with correct MIME types,
 | POST | `/api/external/projects/{projectRef}/test-runs/junit` | Import a JUnit XML report |
 | POST | `/api/external/projects/{projectRef}/test-runs/cucumber` | Import a Cucumber JSON report |
 | POST | `/api/external/projects/{projectRef}/test-runs/{testRunRef}/allure-report` | Upload an Allure report ZIP |
+
+All three submission endpoints accept an optional `?pipelineRunId=` parameter: pipelines
+triggered from the UI (Settings → Build servers, PRD-024) receive it as `TM_PIPELINE_RUN_ID` and
+pass it back so the created test run is linked to the pipeline run that produced it. See the
+[user manual](docs/USER_MANUAL.md#15-cicd-integration).
 
 ## Tech Stack
 

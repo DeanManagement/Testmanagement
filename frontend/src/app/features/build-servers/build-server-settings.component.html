@@ -1,0 +1,255 @@
+<div class="build-servers-container">
+  <div class="page-header">
+    <h1 data-test-id="build-servers-title">{{ 'buildServers.title' | translate }}</h1>
+    <button mat-flat-button (click)="openServerForm(null)" data-test-id="build-server-add-btn">
+      <mat-icon>add</mat-icon>
+      {{ 'buildServers.add' | translate }}
+    </button>
+  </div>
+  <p class="page-hint">{{ 'buildServers.description' | translate }}</p>
+
+  @if (loading) {
+    <div class="loading-state">
+      <mat-spinner diameter="32"></mat-spinner>
+    </div>
+  } @else {
+    @if (serverFormOpen) {
+      <div class="tm-card form-card" data-test-id="build-server-form">
+        <h2>{{ (editingServer ? 'buildServers.edit' : 'buildServers.add') | translate }}</h2>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'buildServers.name' | translate }}</mat-label>
+          <input matInput [(ngModel)]="sName" data-test-id="build-server-name-input">
+          <mat-hint>{{ 'buildServers.nameHint' | translate }}</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'buildServers.provider' | translate }}</mat-label>
+          <mat-select [(ngModel)]="sProvider" [disabled]="!!editingServer"
+                      data-test-id="build-server-provider-select">
+            @for (provider of providers; track provider) {
+              <mat-option [value]="provider">{{ 'buildServers.providers.' + provider | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'buildServers.baseUrl' | translate }}</mat-label>
+          <input matInput [(ngModel)]="sBaseUrl" placeholder="https://..."
+                 data-test-id="build-server-base-url-input">
+          <mat-hint>{{ 'buildServers.baseUrlHint.' + sProvider | translate }}</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>
+            {{ (editingServer?.tokenSet ? 'buildServers.tokenReplace' : 'buildServers.token') | translate }}
+          </mat-label>
+          <input matInput type="password" autocomplete="off" [(ngModel)]="sToken"
+                 data-test-id="build-server-token-input">
+          <mat-hint>{{ 'buildServers.tokenHint.' + sProvider | translate }}</mat-hint>
+        </mat-form-field>
+        <mat-slide-toggle [(ngModel)]="sActive" data-test-id="build-server-active-toggle">
+          {{ 'buildServers.active' | translate }}
+        </mat-slide-toggle>
+        <div class="form-actions">
+          <button mat-button (click)="closeServerForm()">{{ 'common.cancel' | translate }}</button>
+          <button mat-flat-button (click)="saveServer()" [disabled]="savingServer"
+                  data-test-id="build-server-save-btn">
+            {{ 'common.save' | translate }}
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (servers.length === 0 && !serverFormOpen) {
+      <div class="tm-card empty-state" data-test-id="build-servers-empty">
+        <mat-icon>construction</mat-icon>
+        <p>{{ 'buildServers.empty' | translate }}</p>
+      </div>
+    }
+
+    @for (server of servers; track server.id) {
+      <div class="tm-card server-card" [attr.data-test-id]="'build-server-card-' + server.id">
+        <div class="server-header" (click)="toggleExpand(server)">
+          <div class="server-meta">
+            <span class="server-name">
+              {{ server.name }}
+              @if (!server.active) {
+                <span class="inactive-badge">{{ 'buildServers.inactive' | translate }}</span>
+              }
+            </span>
+            <span class="server-detail">
+              {{ 'buildServers.providers.' + server.provider | translate }} · {{ server.baseUrl }}
+            </span>
+          </div>
+          <div class="server-actions" (click)="$event.stopPropagation()">
+            @if (testingServerId === server.id) {
+              <mat-spinner diameter="20"></mat-spinner>
+            } @else {
+              <button mat-icon-button (click)="testServer(server)"
+                      [matTooltip]="'buildServers.test' | translate"
+                      [attr.data-test-id]="'build-server-test-' + server.id">
+                <mat-icon>network_check</mat-icon>
+              </button>
+            }
+            <button mat-icon-button (click)="openServerForm(server)"
+                    [matTooltip]="'common.edit' | translate">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button (click)="deleteServer(server)"
+                    [matTooltip]="'common.delete' | translate">
+              <mat-icon>delete_outline</mat-icon>
+            </button>
+            <mat-icon class="expand-icon">
+              {{ expandedServerId === server.id ? 'expand_less' : 'expand_more' }}
+            </mat-icon>
+          </div>
+        </div>
+
+        @if (server.lastError) {
+          <div class="server-error" [attr.data-test-id]="'build-server-error-' + server.id">
+            <mat-icon>error_outline</mat-icon>
+            <div>
+              <p>{{ server.lastError }}</p>
+              @if (server.lastErrorAt) {
+                <small>{{ server.lastErrorAt | localizedDate: 'medium' }}</small>
+              }
+            </div>
+          </div>
+        }
+
+        @if (expandedServerId === server.id) {
+          <div class="workflow-section">
+            <div class="workflow-section-header">
+              <h3>{{ 'buildServers.workflows' | translate }}</h3>
+              <button mat-stroked-button (click)="openWorkflowForm(server.id, null)"
+                      [attr.data-test-id]="'workflow-add-' + server.id">
+                <mat-icon>add</mat-icon>
+                {{ 'buildServers.addWorkflow' | translate }}
+              </button>
+            </div>
+
+            @if (workflowFormServerId === server.id) {
+              <div class="workflow-form" data-test-id="workflow-form">
+                <div class="discover-row">
+                  <mat-form-field appearance="outline" class="grow">
+                    <mat-label>{{ 'buildServers.repoRef' | translate }}</mat-label>
+                    <input matInput [(ngModel)]="wRepoRef" [placeholder]="repoRefHint"
+                           data-test-id="workflow-repo-ref-input">
+                    <mat-hint>{{ repoRefHint }}</mat-hint>
+                  </mat-form-field>
+                  <button mat-stroked-button (click)="discover()" [disabled]="discovering"
+                          data-test-id="workflow-discover-btn">
+                    @if (discovering) {
+                      <mat-spinner diameter="16"></mat-spinner>
+                    } @else {
+                      <mat-icon>travel_explore</mat-icon>
+                    }
+                    {{ 'buildServers.discover' | translate }}
+                  </button>
+                </div>
+
+                @if (discoverySupported === false) {
+                  <p class="muted">{{ 'buildServers.discoveryUnsupported' | translate }}</p>
+                }
+                @if (discovered.length > 0) {
+                  <div class="discovered-list" data-test-id="workflow-discovered-list">
+                    @for (candidate of discovered; track $index) {
+                      <button mat-stroked-button class="discovered-item" (click)="pickDiscovered(candidate)">
+                        <mat-icon>account_tree</mat-icon>
+                        {{ candidate.name }}
+                        @if (candidate.workflowRef) {
+                          <span class="muted">({{ candidate.workflowRef }})</span>
+                        }
+                      </button>
+                    }
+                  </div>
+                }
+
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>{{ 'buildServers.workflowName' | translate }}</mat-label>
+                  <input matInput [(ngModel)]="wName" data-test-id="workflow-name-input">
+                  <mat-hint>{{ 'buildServers.workflowNameHint' | translate }}</mat-hint>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>{{ 'buildServers.workflowRef' | translate }}</mat-label>
+                  <input matInput [(ngModel)]="wWorkflowRef" placeholder="tests.yml"
+                         data-test-id="workflow-ref-input">
+                  <mat-hint>{{ 'buildServers.workflowRefHint' | translate }}</mat-hint>
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>{{ 'buildServers.defaultRef' | translate }}</mat-label>
+                  <input matInput [(ngModel)]="wDefaultRef" placeholder="main"
+                         data-test-id="workflow-default-ref-input">
+                </mat-form-field>
+                <mat-form-field appearance="outline" class="full-width">
+                  <mat-label>{{ 'buildServers.defaultParameters' | translate }}</mat-label>
+                  <textarea matInput rows="3" [(ngModel)]="wParamsText"
+                            placeholder="ENVIRONMENT=staging"
+                            data-test-id="workflow-parameters-input"></textarea>
+                  <mat-hint>{{ 'buildServers.defaultParametersHint' | translate }}</mat-hint>
+                </mat-form-field>
+                <mat-slide-toggle [(ngModel)]="wActive">{{ 'buildServers.active' | translate }}</mat-slide-toggle>
+                <div class="form-actions">
+                  <button mat-button (click)="closeWorkflowForm()">{{ 'common.cancel' | translate }}</button>
+                  <button mat-flat-button (click)="saveWorkflow()" [disabled]="savingWorkflow"
+                          data-test-id="workflow-save-btn">
+                    {{ 'common.save' | translate }}
+                  </button>
+                </div>
+              </div>
+            }
+
+            @for (workflow of workflowsFor(server.id); track workflow.id) {
+              <div class="workflow-item" [attr.data-test-id]="'workflow-item-' + workflow.id">
+                <div class="workflow-item-header">
+                  <div class="workflow-meta">
+                    <span class="workflow-name">
+                      {{ workflow.name }}
+                      @if (!workflow.active) {
+                        <span class="inactive-badge">{{ 'buildServers.inactive' | translate }}</span>
+                      }
+                    </span>
+                    <span class="server-detail">
+                      {{ workflow.repoRef }}
+                      @if (workflow.workflowRef) {<span> · {{ workflow.workflowRef }}</span>}
+                      @if (workflow.defaultRef) {<span> · {{ workflow.defaultRef }}</span>}
+                    </span>
+                  </div>
+                  <div>
+                    <button mat-icon-button (click)="openWorkflowForm(server.id, workflow)"
+                            [matTooltip]="'common.edit' | translate">
+                      <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button (click)="deleteWorkflow(server.id, workflow)"
+                            [matTooltip]="'common.delete' | translate">
+                      <mat-icon>delete_outline</mat-icon>
+                    </button>
+                  </div>
+                </div>
+                <div class="assignment-row">
+                  <mat-form-field appearance="outline" class="grow">
+                    <mat-label>{{ 'buildServers.assignedProjects' | translate }}</mat-label>
+                    <mat-select multiple [(ngModel)]="assignments[workflow.id]"
+                                [attr.data-test-id]="'workflow-projects-select-' + workflow.id">
+                      @for (project of projects; track project.id) {
+                        <mat-option [value]="project.id">{{ project.name }}</mat-option>
+                      }
+                    </mat-select>
+                    <mat-hint>{{ 'buildServers.assignedProjectsHint' | translate }}</mat-hint>
+                  </mat-form-field>
+                  <button mat-stroked-button
+                          (click)="saveAssignments(server.id, workflow)"
+                          [disabled]="!assignmentChanged(workflow) || savingAssignmentId === workflow.id"
+                          [attr.data-test-id]="'workflow-assign-save-' + workflow.id">
+                    {{ 'buildServers.saveAssignments' | translate }}
+                  </button>
+                </div>
+              </div>
+            } @empty {
+              @if (workflowFormServerId !== server.id) {
+                <p class="muted">{{ 'buildServers.noWorkflows' | translate }}</p>
+              }
+            }
+          </div>
+        }
+      </div>
+    }
+  }
+</div>

@@ -1,0 +1,110 @@
+@if (visible) {
+  <div class="tm-card automation-panel" data-test-id="automation-panel">
+    <div class="panel-header">
+      <h2>
+        <mat-icon>rocket_launch</mat-icon>
+        {{ 'automation.title' | translate }}
+      </h2>
+      @if (hasLiveRuns()) {
+        <span class="live-hint" data-test-id="automation-live-hint">
+          <mat-spinner diameter="14"></mat-spinner>
+          {{ 'automation.liveUpdating' | translate }}
+        </span>
+      }
+    </div>
+
+    <div class="workflow-row" data-test-id="automation-workflows">
+      @for (workflow of workflows; track workflow.id) {
+        <div class="workflow-chip">
+          <div class="workflow-meta">
+            <span class="workflow-name">{{ workflow.name }}</span>
+            <span class="workflow-server">{{ workflow.serverName }}
+              @if (workflow.defaultRef) {<span class="workflow-ref"> · {{ workflow.defaultRef }}</span>}
+            </span>
+          </div>
+          <button mat-flat-button
+                  (click)="trigger(workflow)"
+                  [disabled]="triggeringId === workflow.id"
+                  [attr.data-test-id]="'automation-run-' + workflow.id">
+            @if (triggeringId === workflow.id) {
+              <mat-spinner diameter="16"></mat-spinner>
+            } @else {
+              <mat-icon>play_arrow</mat-icon>
+            }
+            {{ 'automation.run' | translate }}
+          </button>
+        </div>
+      }
+    </div>
+
+    @if (runs.length > 0) {
+      <table class="run-table" data-test-id="automation-run-table">
+        <thead>
+          <tr>
+            <th>{{ 'automation.columns.workflow' | translate }}</th>
+            <th>{{ 'automation.columns.status' | translate }}</th>
+            <th>{{ 'automation.columns.triggered' | translate }}</th>
+            <th>{{ 'automation.columns.result' | translate }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (run of runs; track run.id) {
+            <tr [attr.data-test-id]="'automation-run-row-' + run.id">
+              <td>
+                <span class="workflow-name">{{ run.workflowName }}</span>
+                @if (run.triggeredRef) {
+                  <span class="workflow-ref">{{ run.triggeredRef }}</span>
+                }
+              </td>
+              <td>
+                <span class="status-chip" [class]="'status-' + run.status.toLowerCase()"
+                      [matTooltip]="run.errorMessage ?? ''">
+                  @if (isActive(run)) {
+                    <mat-spinner diameter="12"></mat-spinner>
+                  }
+                  {{ 'automation.status.' + run.status | translate }}
+                </span>
+                @if (run.status === 'SUCCESS' && !run.testRunKey) {
+                  <span class="no-results-hint" [matTooltip]="'automation.noResultsHint' | translate">
+                    {{ 'automation.noResults' | translate }}
+                  </span>
+                }
+              </td>
+              <td>{{ run.createdAt | localizedDate: 'short' }}</td>
+              <td>
+                @if (run.testRunId) {
+                  <a [routerLink]="['/projects', projectId, 'test-runs', run.testRunId]"
+                     class="test-run-link"
+                     [attr.data-test-id]="'automation-test-run-link-' + run.id">
+                    {{ run.testRunKey }}
+                  </a>
+                } @else {
+                  <span class="muted">—</span>
+                }
+              </td>
+              <td class="actions">
+                @if (run.externalUrl) {
+                  <a mat-icon-button [href]="run.externalUrl" target="_blank" rel="noopener noreferrer"
+                     [matTooltip]="'automation.openExternal' | translate">
+                    <mat-icon>open_in_new</mat-icon>
+                  </a>
+                }
+                @if (isActive(run)) {
+                  <button mat-icon-button (click)="refresh(run)"
+                          [disabled]="refreshingId === run.id"
+                          [matTooltip]="'automation.refresh' | translate"
+                          [attr.data-test-id]="'automation-refresh-' + run.id">
+                    <mat-icon>refresh</mat-icon>
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <p class="muted empty-hint">{{ 'automation.noRuns' | translate }}</p>
+    }
+  </div>
+}
