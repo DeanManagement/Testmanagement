@@ -22,6 +22,15 @@ app:
     read-timeout-ms: 3000
     poll-interval-ms: 3600000
     poll-min-age-ms: 0
+  buildserver:
+    # Stub build servers live on 127.0.0.1, and allow-private also skips DNS resolution so the
+    # example.com fixtures work on runners without outbound DNS. The poller is pushed far out so
+    # it never fires during a test run; strict URL rules are covered by BuildServerUrlValidatorTest.
+    allow-private-targets: true
+    require-https: false
+    connect-timeout-ms: 2000
+    read-timeout-ms: 3000
+    poll-interval-ms: 3600000
   webhooks:
     allow-private-targets: true
     require-https: false

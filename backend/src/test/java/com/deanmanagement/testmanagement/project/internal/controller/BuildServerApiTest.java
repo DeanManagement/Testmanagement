@@ -198,15 +198,9 @@ class BuildServerApiTest {
         assertThat(stored.getApiTokenEncrypted()).doesNotContain(TOKEN);
     }
 
-    @Test
-    void privateBaseUrl_isRejected() throws Exception {
-        mockMvc.perform(post("/api/build-servers")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"name\":\"Local\",\"provider\":\"GITLAB_CI\","
-                                + "\"baseUrl\":\"https://127.0.0.1\",\"apiToken\":\"t\"}")
-                        .with(user(sysAdmin).roles("ADMIN")))
-                .andExpect(status().isBadRequest());
-    }
+    // URL/SSRF rules are covered DNS-free in BuildServerUrlValidatorTest; the test profile runs
+    // with allow-private-targets so stub servers on 127.0.0.1 (and unresolvable example.com
+    // fixtures) work on CI runners without outbound DNS.
 
     @Test
     void workflowAssignments_areReplacedAsASet() throws Exception {
