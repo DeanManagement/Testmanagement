@@ -1,0 +1,349 @@
+{
+  "title": "User manual",
+  "chapters": [
+    {
+      "id": "erste-schritte",
+      "title": "Getting started",
+      "summary": "What you are looking at, and where to begin.",
+      "audiences": ["EVERYONE"],
+      "sections": [
+        {
+          "heading": "What this tool does",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "You record what should be checked (test cases), carry those checks out (test runs), and read what came of it. Everything else — folders, suites, plans, reports — exists to keep those three things manageable."
+            },
+            {
+              "type": "p",
+              "text": "Your landing page is the dashboard. It shows what is waiting on you: runs in progress, work assigned to you, and items you are watching."
+            }
+          ]
+        },
+        {
+          "heading": "Finding your way around",
+          "blocks": [
+            {
+              "type": "ul",
+              "items": [
+                "Projects — each project is a self-contained area with its own test cases, runs and members.",
+                "My test runs — the runs you are named as executor on.",
+                "My bugs — bug reports you raised.",
+                "Watched — items you are notified about when they change."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "You only see projects you are a member of. If one is missing, ask its administrator to add you."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rollen",
+      "title": "Understanding roles",
+      "summary": "Why you can see some things and not others.",
+      "audiences": ["EVERYONE"],
+      "sections": [
+        {
+          "heading": "The three project roles",
+          "blocks": [
+            {
+              "type": "ul",
+              "items": [
+                "Viewer — reads everything in the project, changes nothing.",
+                "Tester — writes and edits test cases, carries out runs, records results.",
+                "Administrator — additionally manages members and project settings."
+              ]
+            },
+            {
+              "type": "p",
+              "text": "Your role is per project. You can be a tester on one and only a viewer on another."
+            },
+            {
+              "type": "note",
+              "text": "This manual only shows chapters that match your roles. If an instruction seems to be missing, you probably lack the role for it — ask the project administrator."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "testfaelle-lesen",
+      "title": "Reading test cases and results",
+      "summary": "Understanding a test case, and reading a result correctly.",
+      "audiences": ["EVERYONE"],
+      "sections": [
+        {
+          "heading": "How a test case is built",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "A test case describes one check: a title, optional preconditions, and a sequence of steps. Each step has an action and an expected result — what should happen if all is well."
+            },
+            {
+              "type": "p",
+              "text": "The status says how much weight it carries: Draft (still being written), Active (in use), Deprecated (no longer valid, kept for history)."
+            }
+          ]
+        },
+        {
+          "heading": "Expected versus actual",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Executing a case adds an actual result to each step. Expected and actual are always kept apart and labelled separately — comparing the two is the test result."
+            },
+            {
+              "type": "ul",
+              "items": [
+                "Passed — the actual matched the expected result.",
+                "Failed — it differed. That is a finding.",
+                "Blocked — the check could not be carried out, for instance because the environment was down. Also a finding: the case proved nothing.",
+                "Skipped — deliberately not checked. Not a finding.",
+                "Pending — not executed yet."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "On a completed run the findings come first: results are ordered by urgency and failed entries are already expanded."
+            }
+          ]
+        },
+        {
+          "heading": "Reports",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Every run has a report with figures, a chart and the full result list. The PDF button produces a version you can pass on."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "testfaelle-schreiben",
+      "title": "Writing test cases",
+      "summary": "Recording, editing and versioning good test cases.",
+      "audiences": ["TESTER"],
+      "sections": [
+        {
+          "heading": "Creating a test case",
+          "blocks": [
+            {
+              "type": "steps",
+              "items": [
+                "Open the project and go to Test cases.",
+                "Choose New test case.",
+                "Give it a title — short, and phrased as a claim, e.g. \"Login with valid credentials\".",
+                "Record preconditions if the case needs a particular starting state.",
+                "Add steps: an action and an expected result for each.",
+                "Set priority and status, then save."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "Write expected results you can actually check against. \"Works\" cannot be verified; \"The confirmation page appears with the order number\" can."
+            }
+          ]
+        },
+        {
+          "heading": "Editing and versions",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Every edit saves the previous wording as a version. The history shows what changed and when — which matters when a result refers to an older version of the case."
+            },
+            {
+              "type": "note",
+              "text": "Replacing the step list discards screenshots attached to steps that no longer exist."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "organisieren",
+      "title": "Organising test cases",
+      "summary": "Folders, suites, labels and plans — and when to use which.",
+      "audiences": ["TESTER"],
+      "sections": [
+        {
+          "heading": "Which tool for what",
+          "blocks": [
+            {
+              "type": "ul",
+              "items": [
+                "Folders — a filing structure. A case sits in exactly one folder.",
+                "Suites — named groupings for a purpose, e.g. \"Regression before release\". A case may be in several suites.",
+                "Labels — free-form tags for filtering, e.g. \"negative\" or \"accessibility\".",
+                "Test plans — dated undertakings that group several runs together."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "Reuse existing labels rather than inventing new ones. Two spellings of the same topic split the results and nobody notices."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "durchfuehren",
+      "title": "Carrying out test runs",
+      "summary": "From planning to a completed run.",
+      "audiences": ["TESTER"],
+      "sections": [
+        {
+          "heading": "The sequence",
+          "blocks": [
+            {
+              "type": "steps",
+              "items": [
+                "In the project, go to Test runs and choose New test run.",
+                "Give a name and an environment — the environment is what later explains what was tested against.",
+                "Select test cases, individually or via a suite.",
+                "Start. The run moves to In progress and the execution view opens.",
+                "Set a status per step and record the actual result.",
+                "Complete it once everything is recorded."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "When something differs, record what actually happened, not just that it failed. \"Error\" helps nobody; \"500 error after submitting\" does."
+            }
+          ]
+        },
+        {
+          "heading": "Reopening",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "A completed run can be reopened with a reason. The reason is shown on the run, so it stays clear later why something was changed after the fact."
+            }
+          ]
+        },
+        {
+          "heading": "Screenshots and defects",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "A screenshot can be attached to any step. From a failed or blocked result you can raise a bug report or — if configured — create and link an issue in the tracker directly."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "benachrichtigungen",
+      "title": "Notifications",
+      "summary": "Keeping up with changes without watching everything.",
+      "audiences": ["EVERYONE"],
+      "sections": [
+        {
+          "heading": "Watching",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "The eye icon on a test run, test plan or bug report starts watching it. Changes then appear under the bell at the top right."
+            },
+            {
+              "type": "p",
+              "text": "Notification settings control what you additionally hear about by e-mail."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "projekt-verwalten",
+      "title": "Administering a project",
+      "summary": "Members, roles and project settings.",
+      "audiences": ["PROJECT_ADMIN"],
+      "sections": [
+        {
+          "heading": "Members and roles",
+          "blocks": [
+            {
+              "type": "steps",
+              "items": [
+                "Open the project and go to Members.",
+                "Add a member and choose their role.",
+                "Change the role later from the list, or remove the member."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "Grant the smallest role that does the job. A role can always be raised; one granted too widely rarely gets noticed."
+            }
+          ]
+        },
+        {
+          "heading": "Requirements and evidence",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Under Requirements you record what the product must do and link the test cases that demonstrate it. The coverage matrix then shows which requirements are actually proven."
+            },
+            {
+              "type": "note",
+              "text": "Watch for the \"untested\" status: a requirement with a linked case that has never run. Covered on paper, demonstrated by nothing."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "instanz-verwalten",
+      "title": "Administering the instance",
+      "summary": "Users, sign-in, API keys and build servers.",
+      "audiences": ["SYSTEM_ADMIN"],
+      "sections": [
+        {
+          "heading": "Users and sign-in",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Settings is where you manage user accounts and optionally set up single sign-on. Without SSO, users sign in with an e-mail address and password."
+            }
+          ]
+        },
+        {
+          "heading": "API keys",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "An API key belongs to exactly one project and holds a role there: viewer reads, tester may write. The key is shown once."
+            },
+            {
+              "type": "ul",
+              "items": [
+                "Regenerate replaces the secret. Project, role and history stay; the old key stops working immediately.",
+                "Revoke additionally removes the key's project membership.",
+                "Regenerate as soon as a key has turned up anywhere it should not have."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Automation",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "A CI pipeline reports results back through the external interface — JUnit XML, Cucumber JSON or plain JSON, authenticated with an API key."
+            },
+            {
+              "type": "code",
+              "text": "curl -X POST https://<host>/api/external/projects/<PROJECT>/test-runs/junit \\\n  -H 'X-API-Key: tm_…' \\\n  -H 'Content-Type: application/xml' \\\n  --data-binary @surefire.xml"
+            },
+            {
+              "type": "p",
+              "text": "An MCP server can also be switched on, letting an AI agent create test cases, suites and plans. It is off by default; every call is recorded and visible under MCP activity."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

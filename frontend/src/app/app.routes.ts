@@ -71,6 +71,12 @@ export const routes: Routes = [
         path: 'notification-settings',
         component: NotificationSettingsComponent,
       },
+      {
+        // Lazy: the manual and its content are only fetched by someone who opens it.
+        path: 'help',
+        loadComponent: () =>
+          import('./features/help/help.component').then((m) => m.HelpComponent),
+      },
     ],
   },
   { path: '**', redirectTo: '' },

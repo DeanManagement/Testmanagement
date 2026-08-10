@@ -92,7 +92,8 @@
     "myBugs": "Meine Fehlermeldungen",
     "myTestRuns": "Meine Testläufe",
     "myWatched": "Meine beobachteten Elemente",
-    "logout": "Abmelden"
+    "logout": "Abmelden",
+    "help": "Handbuch"
   },
   "landing": {
     "nav": {
@@ -983,5 +984,17 @@
     "deleteMessage": "{{name}} wird entfernt und in künftigen Durchläufen nicht mehr berücksichtigt.",
     "deleteKeepsResults": "Bereits erfasste Ergebnisse behalten die Werte, mit denen sie ausgeführt wurden.",
     "resultLabel": "Satz: {{name}}"
+  },
+  "help": {
+    "title": "Benutzerhandbuch",
+    "contents": "Inhalt",
+    "unavailable": "Das Handbuch konnte nicht geladen werden.",
+    "roles": {
+      "systemAdmin": "Sie sind Instanz-Administrator und sehen daher alle Kapitel.",
+      "projectAdmin": "Sie administrieren mindestens ein Projekt, daher werden die Verwaltungskapitel angezeigt.",
+      "tester": "Sie dürfen Testfälle schreiben und Läufe durchführen, daher werden die Kapitel dazu angezeigt.",
+      "viewer": "Sie haben Leserechte, daher behandelt dieses Handbuch das Lesen und Nachvollziehen von Testergebnissen.",
+      "none": "Sie sind noch in keinem Projekt Mitglied. Bitten Sie einen Administrator um Aufnahme."
+    }
   }
 }

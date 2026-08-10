@@ -1,0 +1,66 @@
+<div class="help-container">
+  <div class="page-header">
+    <h1 data-test-id="help-title">{{ manualTitle() || ('help.title' | translate) }}</h1>
+  </div>
+
+  @if (loading()) {
+    <div class="spinner-container" data-test-id="help-loading">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+  } @else if (failed()) {
+    <div class="empty-state" data-test-id="help-failed">
+      <mat-icon>menu_book</mat-icon>
+      <p>{{ 'help.unavailable' | translate }}</p>
+    </div>
+  } @else {
+    <!-- States the reader's own access, so the length of the manual is explained rather than
+         looking like something is missing. -->
+    <p class="role-summary" data-test-id="help-role-summary">
+      <mat-icon class="meta-icon">badge</mat-icon>
+      {{ roleSummaryKey() | translate }}
+    </p>
+
+    <nav class="toc tm-card" data-test-id="help-toc">
+      <h2>{{ 'help.contents' | translate }}</h2>
+      <ol>
+        @for (chapter of chapters(); track chapter.id) {
+          <li>
+            <button type="button" class="toc-link" (click)="scrollTo(chapter.id)"
+                    [attr.data-test-id]="'help-toc-' + chapter.id">
+              {{ chapter.title }}
+            </button>
+            <span class="toc-summary">{{ chapter.summary }}</span>
+          </li>
+        }
+      </ol>
+    </nav>
+
+    @for (chapter of chapters(); track chapter.id) {
+      <section class="chapter tm-card" [id]="chapter.id" [attr.data-test-id]="'help-chapter-' + chapter.id">
+        <h2>{{ chapter.title }}</h2>
+        @for (section of chapter.sections; track section.heading) {
+          <h3>{{ section.heading }}</h3>
+          @for (block of section.blocks; track $index) {
+            @switch (block.type) {
+              @case ('p') { <p>{{ block.text }}</p> }
+              @case ('ul') {
+                <ul>
+                  @for (item of block.items ?? []; track $index) { <li>{{ item }}</li> }
+                </ul>
+              }
+              @case ('steps') {
+                <ol class="steps">
+                  @for (item of block.items ?? []; track $index) { <li>{{ item }}</li> }
+                </ol>
+              }
+              @case ('note') {
+                <p class="note"><mat-icon class="meta-icon">lightbulb</mat-icon>{{ block.text }}</p>
+              }
+              @case ('code') { <pre class="code">{{ block.text }}</pre> }
+            }
+          }
+        }
+      </section>
+    }
+  }
+</div>

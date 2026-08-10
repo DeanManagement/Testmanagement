@@ -1,0 +1,349 @@
+{
+  "title": "Benutzerhandbuch",
+  "chapters": [
+    {
+      "id": "erste-schritte",
+      "title": "Erste Schritte",
+      "summary": "Was Sie hier sehen und wo Sie anfangen.",
+      "audiences": ["EVERYONE"],
+      "sections": [
+        {
+          "heading": "Was dieses Werkzeug macht",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Sie halten fest, was geprüft werden soll (Testfälle), führen diese Prüfungen durch (Testläufe) und lesen ab, was dabei herauskam. Alles andere — Ordner, Suites, Pläne, Berichte — dient nur dazu, diese drei Dinge übersichtlich zu halten."
+            },
+            {
+              "type": "p",
+              "text": "Ihre Startseite ist das Dashboard. Es zeigt, was gerade auf Sie wartet: laufende Testläufe, Ihnen zugewiesene Aufgaben und Einträge, die Sie beobachten."
+            }
+          ]
+        },
+        {
+          "heading": "Sich zurechtfinden",
+          "blocks": [
+            {
+              "type": "ul",
+              "items": [
+                "Projekte — jedes Projekt ist ein abgeschlossener Bereich mit eigenen Testfällen, Läufen und Mitgliedern.",
+                "Meine Testläufe — die Läufe, für die Sie als ausführende Person eingetragen sind.",
+                "Meine Fehler — von Ihnen gemeldete Fehlerberichte.",
+                "Beobachtet — Einträge, über deren Änderungen Sie benachrichtigt werden."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "Sie sehen ausschliesslich Projekte, in denen Sie Mitglied sind. Fehlt ein Projekt, bitten Sie dessen Administrator um Aufnahme."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "rollen",
+      "title": "Rollen verstehen",
+      "summary": "Warum Sie manches sehen und manches nicht.",
+      "audiences": ["EVERYONE"],
+      "sections": [
+        {
+          "heading": "Die drei Projektrollen",
+          "blocks": [
+            {
+              "type": "ul",
+              "items": [
+                "Betrachter — liest alles im Projekt, ändert nichts.",
+                "Tester — schreibt und ändert Testfälle, führt Testläufe durch, erfasst Ergebnisse.",
+                "Administrator — zusätzlich Mitglieder verwalten und Projekteinstellungen ändern."
+              ]
+            },
+            {
+              "type": "p",
+              "text": "Ihre Rolle gilt je Projekt. Sie können in einem Projekt Tester und in einem anderen nur Betrachter sein."
+            },
+            {
+              "type": "note",
+              "text": "Dieses Handbuch zeigt nur Kapitel, die zu Ihren Rollen passen. Wenn Sie eine Anleitung vermissen, fehlt Ihnen vermutlich die passende Rolle — fragen Sie den Projektadministrator."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "testfaelle-lesen",
+      "title": "Testfälle und Ergebnisse lesen",
+      "summary": "Einen Testfall verstehen und ein Ergebnis richtig deuten.",
+      "audiences": ["EVERYONE"],
+      "sections": [
+        {
+          "heading": "Aufbau eines Testfalls",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Ein Testfall beschreibt eine Prüfung: einen Titel, optionale Vorbedingungen und eine Folge von Schritten. Jeder Schritt hat eine Aktion und ein erwartetes Ergebnis — was passieren soll, wenn alles stimmt."
+            },
+            {
+              "type": "p",
+              "text": "Der Status sagt, wie belastbar der Fall ist: Entwurf (noch in Arbeit), Aktiv (wird verwendet), Veraltet (nicht mehr gültig, aber als Historie erhalten)."
+            }
+          ]
+        },
+        {
+          "heading": "Soll und Ist",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Beim Ausführen kommt zu jedem Schritt das tatsächliche Ergebnis hinzu. Erwartetes und tatsächliches Ergebnis stehen immer getrennt und sind getrennt beschriftet — der Vergleich der beiden ist das eigentliche Testresultat."
+            },
+            {
+              "type": "ul",
+              "items": [
+                "Bestanden — das tatsächliche entsprach dem erwarteten Ergebnis.",
+                "Fehlgeschlagen — es wich ab. Das ist ein Befund.",
+                "Blockiert — die Prüfung war nicht durchführbar, etwa weil die Umgebung nicht lief. Ebenfalls ein Befund: der Fall hat nichts bewiesen.",
+                "Übersprungen — bewusst nicht geprüft. Kein Befund.",
+                "Ausstehend — noch nicht ausgeführt."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "Bei abgeschlossenen Läufen stehen die Befunde zuoberst: Ergebnisse werden nach Dringlichkeit sortiert und fehlgeschlagene Einträge sind bereits aufgeklappt."
+            }
+          ]
+        },
+        {
+          "heading": "Berichte",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Jeder Lauf hat einen Bericht mit Kennzahlen, einem Diagramm und der vollständigen Ergebnisliste. Über die Schaltfläche PDF erzeugen Sie eine Fassung zum Weitergeben."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "testfaelle-schreiben",
+      "title": "Testfälle schreiben",
+      "summary": "Gute Testfälle erfassen, ändern und versionieren.",
+      "audiences": ["TESTER"],
+      "sections": [
+        {
+          "heading": "Einen Testfall anlegen",
+          "blocks": [
+            {
+              "type": "steps",
+              "items": [
+                "Projekt öffnen und zu Testfälle wechseln.",
+                "Neuer Testfall wählen.",
+                "Titel vergeben — kurz und als Aussage, etwa «Anmeldung mit gültigen Zugangsdaten».",
+                "Vorbedingungen erfassen, sofern der Fall einen bestimmten Ausgangszustand braucht.",
+                "Schritte hinzufügen: je Schritt eine Aktion und das erwartete Ergebnis.",
+                "Priorität und Status setzen und speichern."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "Schreiben Sie erwartete Ergebnisse überprüfbar. «Funktioniert» lässt sich nicht prüfen, «Die Bestätigungsseite erscheint mit der Bestellnummer» schon."
+            }
+          ]
+        },
+        {
+          "heading": "Ändern und Versionen",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Bei jeder Änderung wird die vorherige Fassung als Version gesichert. Über den Verlauf sehen Sie, was wann geändert wurde — wichtig, wenn ein Ergebnis auf eine ältere Fassung des Falls verweist."
+            },
+            {
+              "type": "note",
+              "text": "Ersetzen Sie die Schrittliste, gehen Screenshots verloren, die an nicht mehr vorhandenen Schritten hingen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "organisieren",
+      "title": "Testfälle organisieren",
+      "summary": "Ordner, Suites, Labels und Pläne — und wann welches.",
+      "audiences": ["TESTER"],
+      "sections": [
+        {
+          "heading": "Welches Werkzeug wofür",
+          "blocks": [
+            {
+              "type": "ul",
+              "items": [
+                "Ordner — eine Ablagestruktur. Ein Fall liegt in genau einem Ordner.",
+                "Suites — benannte Zusammenstellungen für einen Zweck, etwa «Regression vor dem Release». Ein Fall darf in mehreren Suites sein.",
+                "Labels — freie Schlagworte zum Filtern, etwa «negativ» oder «barrierefreiheit».",
+                "Testpläne — datierte Vorhaben, die mehrere Testläufe zusammenfassen."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "Verwenden Sie bestehende Labels weiter, statt neue zu erfinden. Zwei Schreibweisen desselben Themas teilen die Trefferliste und niemand merkt es."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "durchfuehren",
+      "title": "Testläufe durchführen",
+      "summary": "Von der Planung bis zum abgeschlossenen Lauf.",
+      "audiences": ["TESTER"],
+      "sections": [
+        {
+          "heading": "Ablauf",
+          "blocks": [
+            {
+              "type": "steps",
+              "items": [
+                "Im Projekt zu Testläufe wechseln und Neuer Testlauf wählen.",
+                "Namen und Umgebung angeben — die Umgebung erklärt später, wogegen geprüft wurde.",
+                "Testfälle auswählen, einzeln oder über eine Suite.",
+                "Starten. Der Lauf wechselt auf In Arbeit und die Ausführungsansicht öffnet sich.",
+                "Je Schritt Status setzen und das tatsächliche Ergebnis festhalten.",
+                "Abschliessen, wenn alles erfasst ist."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "Halten Sie bei Abweichungen fest, was tatsächlich passiert ist, nicht nur dass etwas fehlschlug. «Fehler» hilft niemandem; «Fehlermeldung 500 nach dem Absenden» schon."
+            }
+          ]
+        },
+        {
+          "heading": "Wiedereröffnen",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Ein abgeschlossener Lauf lässt sich mit Begründung wieder öffnen. Die Begründung erscheint im Lauf, damit später nachvollziehbar bleibt, warum nachträglich geändert wurde."
+            }
+          ]
+        },
+        {
+          "heading": "Screenshots und Fehler",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Zu jedem Schritt lässt sich ein Screenshot hinzufügen. Aus einem fehlgeschlagenen oder blockierten Ergebnis heraus können Sie einen Fehlerbericht erfassen oder — sofern eingerichtet — direkt ein Ticket im Issue-Tracker anlegen und verknüpfen."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "benachrichtigungen",
+      "title": "Benachrichtigungen",
+      "summary": "Mitbekommen, was sich ändert, ohne alles zu beobachten.",
+      "audiences": ["EVERYONE"],
+      "sections": [
+        {
+          "heading": "Beobachten",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Über das Augensymbol auf einem Testlauf, Testplan oder Fehlerbericht beobachten Sie den Eintrag. Änderungen erscheinen anschliessend in der Glocke oben rechts."
+            },
+            {
+              "type": "p",
+              "text": "Unter Benachrichtigungseinstellungen legen Sie fest, worüber Sie zusätzlich per E-Mail informiert werden möchten."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "projekt-verwalten",
+      "title": "Ein Projekt verwalten",
+      "summary": "Mitglieder, Rollen und Projekteinstellungen.",
+      "audiences": ["PROJECT_ADMIN"],
+      "sections": [
+        {
+          "heading": "Mitglieder und Rollen",
+          "blocks": [
+            {
+              "type": "steps",
+              "items": [
+                "Projekt öffnen und zu Mitglieder wechseln.",
+                "Mitglied hinzufügen und Rolle wählen.",
+                "Rolle später über die Liste ändern oder Mitglied entfernen."
+              ]
+            },
+            {
+              "type": "note",
+              "text": "Vergeben Sie die geringste Rolle, die für die Aufgabe reicht. Eine Rolle lässt sich jederzeit erhöhen; eine zu weit vergebene fällt selten jemandem auf."
+            }
+          ]
+        },
+        {
+          "heading": "Anforderungen und Nachweis",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Unter Anforderungen halten Sie fest, was das Produkt leisten soll, und verknüpfen die Testfälle, die es belegen. Die Abdeckungsmatrix zeigt anschliessend, welche Anforderungen tatsächlich nachgewiesen sind."
+            },
+            {
+              "type": "note",
+              "text": "Achten Sie auf den Status «ungetestet»: eine Anforderung mit verknüpftem Testfall, der nie ausgeführt wurde. Auf dem Papier abgedeckt, tatsächlich unbelegt."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "instanz-verwalten",
+      "title": "Die Instanz verwalten",
+      "summary": "Benutzer, Anmeldung, API-Schlüssel und Build-Server.",
+      "audiences": ["SYSTEM_ADMIN"],
+      "sections": [
+        {
+          "heading": "Benutzer und Anmeldung",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Unter Einstellungen verwalten Sie Benutzerkonten und richten optional Single Sign-on ein. Ohne SSO melden sich Benutzer mit E-Mail und Passwort an."
+            }
+          ]
+        },
+        {
+          "heading": "API-Schlüssel",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Ein API-Schlüssel gehört zu genau einem Projekt und trägt dort eine Rolle: Betrachter liest nur, Tester darf schreiben. Der Schlüssel wird einmalig angezeigt."
+            },
+            {
+              "type": "ul",
+              "items": [
+                "Neu generieren ersetzt das Geheimnis. Projekt, Rolle und Verlauf bleiben; der alte Schlüssel funktioniert sofort nicht mehr.",
+                "Widerrufen entzieht dem Schlüssel zusätzlich seine Projektmitgliedschaft.",
+                "Generieren Sie neu, sobald ein Schlüssel irgendwo aufgetaucht ist, wo er nicht hingehört."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Automatisierung",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Eine CI-Pipeline meldet Ergebnisse über die externe Schnittstelle zurück — JUnit-XML, Cucumber-JSON oder ein eigenes JSON, authentifiziert mit einem API-Schlüssel."
+            },
+            {
+              "type": "code",
+              "text": "curl -X POST https://<host>/api/external/projects/<PROJEKT>/test-runs/junit \\\n  -H 'X-API-Key: tm_…' \\\n  -H 'Content-Type: application/xml' \\\n  --data-binary @surefire.xml"
+            },
+            {
+              "type": "p",
+              "text": "Zusätzlich lässt sich ein MCP-Server aktivieren, über den ein KI-Agent Testfälle, Suites und Pläne anlegen kann. Er ist standardmässig ausgeschaltet; jeder Aufruf wird protokolliert und ist unter MCP-Aktivität einsehbar."
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

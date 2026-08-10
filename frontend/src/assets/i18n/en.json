@@ -92,7 +92,8 @@
     "myBugs": "My Bug Reports",
     "myTestRuns": "My Test Runs",
     "myWatched": "My Watched Items",
-    "logout": "Sign Out"
+    "logout": "Sign Out",
+    "help": "Manual"
   },
   "landing": {
     "nav": {
@@ -983,5 +984,17 @@
     "deleteMessage": "{{name}} will be removed and future runs will no longer include it.",
     "deleteKeepsResults": "Results already recorded keep the values they ran with.",
     "resultLabel": "Set: {{name}}"
+  },
+  "help": {
+    "title": "User manual",
+    "contents": "Contents",
+    "unavailable": "The manual could not be loaded.",
+    "roles": {
+      "systemAdmin": "You are an instance administrator, so you see every chapter.",
+      "projectAdmin": "You administer at least one project, so the administration chapters are shown.",
+      "tester": "You can write test cases and carry out runs, so the authoring chapters are shown.",
+      "viewer": "You have read access, so this manual covers reading and following test results.",
+      "none": "You are not a member of any project yet. Ask an administrator to add you."
+    }
   }
 }

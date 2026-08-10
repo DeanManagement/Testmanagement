@@ -13,6 +13,10 @@
         <mat-icon matListItemIcon>folder</mat-icon>
         <span matListItemTitle>{{ 'nav.projects' | translate }}</span>
       </a>
+      <a mat-list-item routerLink="/help" routerLinkActive="active-link" data-test-id="nav-help" (click)="closeMobileSidenav()">
+        <mat-icon matListItemIcon>menu_book</mat-icon>
+        <span matListItemTitle>{{ 'nav.help' | translate }}</span>
+      </a>
     </mat-nav-list>
     @if (isAdmin$ | async) {
       <mat-divider></mat-divider>
