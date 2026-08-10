@@ -41,6 +41,15 @@ public class ApiKeyController {
         return apiKeyService.create(request);
     }
 
+    /**
+     * Replaces the key's secret and returns the new one. The previous secret stops working
+     * immediately, so anything using it — a CI pipeline, an MCP client — has to be updated.
+     */
+    @PostMapping("/{id}/rotate")
+    public ApiKeyCreatedResponse rotate(@PathVariable UUID id) {
+        return apiKeyService.rotate(id);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void revoke(@PathVariable UUID id) {

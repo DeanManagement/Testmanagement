@@ -51,6 +51,20 @@ export class ApiKeyEffects {
     { dispatch: false }
   );
 
+  rotateApiKey$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(ApiKeyActions.rotateApiKey),
+      mergeMap(({ id }) =>
+        this.apiKeyApi.rotate(id).pipe(
+          map((created) => ApiKeyActions.rotateApiKeySuccess({ created })),
+          catchError((error) =>
+            of(ApiKeyActions.rotateApiKeyFailure({ error: error.message }))
+          )
+        )
+      )
+    )
+  );
+
   revokeApiKey$ = createEffect(() =>
     this.actions$.pipe(
       ofType(ApiKeyActions.revokeApiKey),

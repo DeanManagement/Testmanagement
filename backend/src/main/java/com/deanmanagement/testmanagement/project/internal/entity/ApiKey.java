@@ -40,6 +40,10 @@ public class ApiKey extends BaseEntity {
     @Column(name = "last_used_at")
     private Instant lastUsedAt;
 
+    /** When the secret was last replaced. Null means the key still carries the one it was issued with. */
+    @Column(name = "rotated_at")
+    private Instant rotatedAt;
+
     /**
      * PRD-021 §4.2: the project this key may ingest into. {@code null} = legacy/global key
      * (deprecated — accepted with a startup warning, to be rejected in a future release).

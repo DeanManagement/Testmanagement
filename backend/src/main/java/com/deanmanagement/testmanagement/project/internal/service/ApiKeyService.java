@@ -14,6 +14,8 @@ import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepo
 import com.deanmanagement.testmanagement.user.User;
 import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ApiKeyService {
+
+    private static final Logger log = LoggerFactory.getLogger(ApiKeyService.class);
 
     private static final String KEY_PREFIX = "tm_";
     private static final int KEY_HEX_LENGTH = 40;
@@ -66,15 +70,9 @@ public class ApiKeyService {
             throw new IllegalArgumentException("API keys may hold VIEWER or TESTER, not ADMIN");
         }
 
-        String randomHex = generateRandomHex(KEY_HEX_LENGTH);
-        String rawKey = KEY_PREFIX + randomHex;
-        String hash = sha256(rawKey);
-        String prefix = rawKey.substring(0, 8);
-
         ApiKey apiKey = new ApiKey();
         apiKey.setName(request.name());
-        apiKey.setKeyHash(hash);
-        apiKey.setKeyPrefix(prefix);
+        String rawKey = assignNewSecret(apiKey);
         apiKey.setRevoked(false);
         apiKey.setProject(project);
         apiKey.setRole(role);
@@ -95,6 +93,65 @@ public class ApiKeyService {
                 project.getName(),
                 apiKey.getRole()
         );
+    }
+
+    /**
+     * Replaces a key's secret, keeping everything else about it.
+     *
+     * <p>Rotation is a change of secret, not a new key: the row, the project, the role and above
+     * all the service user stay as they were. That last part is what makes the audit trail survive
+     * — {@code created_by} on every test case the key has written, and every row in its MCP
+     * activity log, points at that service user. Revoke-and-recreate would have split the history
+     * in two and attributed the first half to a key that no longer exists.
+     *
+     * <p>The old secret stops working immediately, so whatever is using it has to be updated. The
+     * last-used timestamp is cleared, which gives the admin the signal that matters afterwards:
+     * once it is populated again, the new secret has been picked up.
+     *
+     * @return the new key, shown once and never again
+     */
+    @Transactional
+    public ApiKeyCreatedResponse rotate(UUID id) {
+        ApiKey apiKey = apiKeyRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("ApiKey", id));
+        if (apiKey.isRevoked()) {
+            // Rotating would silently bring it back to life, along with a project membership that
+            // revocation deliberately removed.
+            throw new IllegalArgumentException(
+                    "This key is revoked. Create a new one rather than rotating it.");
+        }
+
+        String rawKey = assignNewSecret(apiKey);
+        apiKey.setRotatedAt(Instant.now());
+        apiKey.setLastUsedAt(null);
+        apiKey = apiKeyRepository.save(apiKey);
+
+        log.info("Rotated API key '{}' ({}) — the previous secret is no longer accepted",
+                apiKey.getName(), apiKey.getKeyPrefix());
+
+        return new ApiKeyCreatedResponse(
+                apiKey.getId(),
+                apiKey.getName(),
+                apiKey.getKeyPrefix(),
+                rawKey,
+                apiKey.getCreatedAt(),
+                apiKey.getProject() == null ? null : apiKey.getProject().getId(),
+                apiKey.getProject() == null ? null : apiKey.getProject().getName(),
+                apiKey.getRole());
+    }
+
+    /**
+     * Mints a secret and stamps its hash and prefix onto the key. Shared by create and rotate so
+     * the two cannot drift — a rotation that generated a weaker secret than a fresh key would be a
+     * quiet downgrade.
+     *
+     * @return the raw key, which exists only in this return value and is never stored
+     */
+    private String assignNewSecret(ApiKey apiKey) {
+        String rawKey = KEY_PREFIX + generateRandomHex(KEY_HEX_LENGTH);
+        apiKey.setKeyHash(sha256(rawKey));
+        apiKey.setKeyPrefix(rawKey.substring(0, 8));
+        return rawKey;
     }
 
     /**
@@ -178,6 +235,7 @@ public class ApiKeyService {
                 apiKey.isRevoked(),
                 apiKey.getLastUsedAt(),
                 apiKey.getCreatedAt(),
+                apiKey.getRotatedAt(),
                 apiKey.getProject() == null ? null : apiKey.getProject().getId(),
                 apiKey.getProject() == null ? null : apiKey.getProject().getName(),
                 apiKey.getRole()

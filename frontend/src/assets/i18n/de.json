@@ -437,7 +437,14 @@
       "roleViewer": "Betrachter (nur lesen)",
       "roleHint": "Der Schlüssel agiert als Dienstkonto mit dieser Rolle im Projekt.",
       "mcpTitle": "KI-Agent verbinden (MCP)",
-      "mcpHint": "Fügen Sie dies in die Konfiguration Ihres MCP-Clients ein. Der Endpunkt lässt sich nicht automatisch ermitteln; ein Agent benötigt die vollständige URL und den Header."
+      "mcpHint": "Fügen Sie dies in die Konfiguration Ihres MCP-Clients ein. Der Endpunkt lässt sich nicht automatisch ermitteln; ein Agent benötigt die vollständige URL und den Header.",
+      "rotate": "Schlüssel neu generieren",
+      "revokeAction": "Schlüssel widerrufen",
+      "rotateTitle": "API-Schlüssel neu generieren?",
+      "rotateMessage": "Für «{{name}}» wird ein neues Geheimnis ausgestellt.",
+      "rotateWarning": "Der bisherige Schlüssel funktioniert ab sofort nicht mehr. Jede CI-Pipeline und jeder KI-Agent, der ihn verwendet, schlägt fehl, bis Sie den neuen hinterlegt haben. Projekt, Rolle und Verlauf des Schlüssels bleiben erhalten.",
+      "rotatedAt": "Neu generiert",
+      "neverRotated": "Nie"
     },
     "users": {
       "title": "Benutzer",

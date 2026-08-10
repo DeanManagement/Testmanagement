@@ -52,6 +52,13 @@
           <td mat-cell *matCellDef="let key">{{ key.createdAt | localizedDate:'medium' }}</td>
         </ng-container>
 
+        <ng-container matColumnDef="rotatedAt">
+          <th mat-header-cell *matHeaderCellDef>{{ 'settings.apiKeys.rotatedAt' | translate }}</th>
+          <td mat-cell *matCellDef="let key">
+            {{ key.rotatedAt ? (key.rotatedAt | localizedDate:'medium') : ('settings.apiKeys.neverRotated' | translate) }}
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="lastUsedAt">
           <th mat-header-cell *matHeaderCellDef>{{ 'settings.apiKeys.lastUsed' | translate }}</th>
           <td mat-cell *matCellDef="let key">
@@ -72,7 +79,13 @@
           <th mat-header-cell *matHeaderCellDef></th>
           <td mat-cell *matCellDef="let key" class="actions-cell">
             @if (!key.revoked) {
+              <button mat-icon-button (click)="rotateKey(key)" class="action-btn"
+                      [matTooltip]="'settings.apiKeys.rotate' | translate"
+                      data-test-id="api-key-rotate-btn">
+                <mat-icon>autorenew</mat-icon>
+              </button>
               <button mat-icon-button (click)="revokeKey(key.id)" class="action-btn action-btn--danger"
+                      [matTooltip]="'settings.apiKeys.revokeAction' | translate"
                       data-test-id="api-key-revoke-btn">
                 <mat-icon>block</mat-icon>
               </button>

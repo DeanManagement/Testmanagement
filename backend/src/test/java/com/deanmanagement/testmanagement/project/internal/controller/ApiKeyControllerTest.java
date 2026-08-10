@@ -47,11 +47,28 @@ class ApiKeyControllerTest {
     private static final Instant NOW = Instant.now();
 
     private ApiKeyResponse sampleResponse() {
-        return new ApiKeyResponse(KEY_ID, "CI Pipeline", "tm_abc12", false, null, NOW, PROJECT_ID, "Demo Project", ProjectRole.TESTER);
+        return new ApiKeyResponse(KEY_ID, "CI Pipeline", "tm_abc12", false, null, NOW, null, PROJECT_ID, "Demo Project", ProjectRole.TESTER);
     }
 
     private ApiKeyCreatedResponse sampleCreatedResponse() {
         return new ApiKeyCreatedResponse(KEY_ID, "CI Pipeline", "tm_abc12", "tm_abc123456789abcdef", NOW, PROJECT_ID, "Demo Project", ProjectRole.TESTER);
+    }
+
+    @Test
+    @WithMockUser
+    void rotate_returnsTheNewSecret() throws Exception {
+        when(apiKeyService.rotate(KEY_ID)).thenReturn(sampleCreatedResponse());
+
+        mockMvc.perform(post("/api/api-keys/{id}/rotate", KEY_ID).with(csrf()))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.rawKey").value("tm_abc123456789abcdef"))
+                .andExpect(jsonPath("$.id").value(KEY_ID.toString()));
+    }
+
+    @Test
+    void rotate_requiresAuthentication() throws Exception {
+        mockMvc.perform(post("/api/api-keys/{id}/rotate", KEY_ID).with(csrf()))
+                .andExpect(status().isUnauthorized());
     }
 
     @Test

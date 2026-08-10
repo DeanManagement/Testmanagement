@@ -15,6 +15,8 @@ export interface ApiKey {
   projectId: string | null;
   projectName: string | null;
   role: ApiKeyRole;
+  /** Null while the key still carries the secret it was issued with. */
+  rotatedAt: string | null;
 }
 
 export interface ApiKeyCreated {

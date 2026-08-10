@@ -99,6 +99,24 @@ ingestion API (PRD-005), and deleting anything stays a human action in the UI.
   step's `testData` often holds a test-account password, and that does not belong in an audit table.
 - Agent-authored rows show `API key: <name>` as their author.
 
+## Rotating a key
+
+Settings → API Keys → the **regenerate** button on a key issues a new secret and shows it once,
+with the client config already filled in.
+
+The key itself is unchanged — same project, same role, same service account — so `created_by` on
+everything it has written and its entry in the MCP activity log stay attached. Only the secret
+moves.
+
+**The old secret stops working immediately.** Any CI pipeline or agent still holding it fails until
+you update it, so rotate at a moment when you can. The list shows when each key was last
+regenerated, and clears its last-used timestamp — once that reappears, the new secret has been
+picked up.
+
+Rotate when a key has leaked (a chat transcript, a commit, a screen share), when someone with
+access leaves, or on whatever schedule your policy sets. A revoked key cannot be rotated: create a
+new one instead.
+
 ## Revoking
 
 Revoking a key in the UI drops its project membership as well, so a request already in flight is

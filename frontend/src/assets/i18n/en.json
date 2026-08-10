@@ -437,7 +437,14 @@
       "roleViewer": "Viewer (read only)",
       "roleHint": "The key acts as a service account with this role on the project.",
       "mcpTitle": "Connect an AI agent (MCP)",
-      "mcpHint": "Paste this into your MCP client's configuration. The endpoint cannot be discovered automatically, so an agent needs the full URL and header."
+      "mcpHint": "Paste this into your MCP client's configuration. The endpoint cannot be discovered automatically, so an agent needs the full URL and header.",
+      "rotate": "Regenerate key",
+      "revokeAction": "Revoke key",
+      "rotateTitle": "Regenerate API key?",
+      "rotateMessage": "A new secret will be issued for \"{{name}}\".",
+      "rotateWarning": "The current key stops working immediately. Any CI pipeline or AI agent using it will fail until you update it with the new one. The key keeps its project, role and history.",
+      "rotatedAt": "Regenerated",
+      "neverRotated": "Never"
     },
     "users": {
       "title": "Users",

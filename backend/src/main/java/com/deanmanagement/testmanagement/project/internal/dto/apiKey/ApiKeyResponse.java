@@ -12,6 +12,8 @@ public record ApiKeyResponse(
         boolean revoked,
         Instant lastUsedAt,
         Instant createdAt,
+        // PRD: null means the key still carries the secret it was issued with.
+        Instant rotatedAt,
         // PRD-021 §4.2: null for legacy/global keys.
         UUID projectId,
         String projectName,

@@ -33,12 +33,34 @@ export const apiKeyReducer = createReducer(
         projectId: created.projectId,
         projectName: created.projectName,
         role: created.role,
+        rotatedAt: null,
       },
       state
     )
   ),
 
   on(ApiKeyActions.createApiKeyFailure, (state, { error }) => ({
+    ...state,
+    error,
+  })),
+
+  // Mirrors what the server did: new prefix, last-used cleared so its reappearance means the new
+  // secret has been picked up.
+  on(ApiKeyActions.rotateApiKeySuccess, (state, { created }) =>
+    apiKeyAdapter.updateOne(
+      {
+        id: created.id,
+        changes: {
+          keyPrefix: created.keyPrefix,
+          lastUsedAt: null,
+          rotatedAt: new Date().toISOString(),
+        },
+      },
+      state
+    )
+  ),
+
+  on(ApiKeyActions.rotateApiKeyFailure, (state, { error }) => ({
     ...state,
     error,
   })),

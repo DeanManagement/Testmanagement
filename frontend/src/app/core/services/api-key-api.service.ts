@@ -17,6 +17,11 @@ export class ApiKeyApiService {
     return this.http.post<ApiKeyCreated>(this.baseUrl, request);
   }
 
+  /** Replaces the secret; the previous one stops working at once. */
+  rotate(id: string): Observable<ApiKeyCreated> {
+    return this.http.post<ApiKeyCreated>(`${this.baseUrl}/${id}/rotate`, {});
+  }
+
   revoke(id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
