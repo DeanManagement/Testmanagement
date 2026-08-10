@@ -138,6 +138,80 @@ class McpEndpointApiTest {
                 .containsExactlyInAnyOrder("title", "priority");
     }
 
+    /**
+     * Every tool must declare what it returns.
+     *
+     * <p>Without an {@code outputSchema} a model has the argument shape but has to <em>guess</em>
+     * the response — whether a list call returns an array or a page object, whether the field is
+     * {@code testCases} or {@code results}, whether an id is nested. Capable models usually guess
+     * right; smaller ones guess wrong and then reason confidently from the wrong shape, which is
+     * far harder to debug than a refusal. The schema is derived from the return type, so it cannot
+     * drift from the code the way prose in a description can.
+     */
+    @Test
+    void everyToolDeclaresWhatItReturns() throws Exception {
+        JsonNode tools = MAPPER.readTree(post(TOOLS_LIST, "X-API-Key", rawKey).body())
+                .path("result").path("tools");
+
+        List<String> missing = new ArrayList<>();
+        for (JsonNode tool : tools) {
+            if (tool.path("outputSchema").isMissingNode() || tool.path("outputSchema").isNull()) {
+                missing.add(tool.path("name").asText());
+            }
+        }
+        assertThat(missing)
+                .as("a new tool without generateOutputSchema = true leaves callers guessing")
+                .isEmpty();
+    }
+
+    @Test
+    void theOutputSchemaDescribesTheActualShape() throws Exception {
+        JsonNode tools = MAPPER.readTree(post(TOOLS_LIST, "X-API-Key", rawKey).body())
+                .path("result").path("tools");
+
+        // A page, not a bare array — the distinction a caller most often gets wrong.
+        JsonNode search = toolNamed(tools, "search_test_cases").path("outputSchema");
+        assertThat(fieldsOf(search.path("properties")))
+                .contains("testCases", "totalElements", "hasMore");
+
+        // And the nested element shape, so an agent knows a case carries a key and a status.
+        JsonNode caseItem = search.path("properties").path("testCases").path("items");
+        assertThat(fieldsOf(caseItem.path("properties")))
+                .contains("id", "key", "title", "status", "priority");
+    }
+
+    /**
+     * Declaring an output schema is a promise: the spec expects the result to carry
+     * {@code structuredContent} matching it, and a strict client will reject a call that only
+     * returns text. This asserts the promise is kept, so turning the schemas on cannot have quietly
+     * broken calling the tools.
+     */
+    @Test
+    void aToolCallReturnsStructuredContentMatchingItsSchema() throws Exception {
+        String call = """
+                {"jsonrpc":"2.0","id":3,"method":"tools/call",
+                 "params":{"name":"get_project","arguments":{}}}
+                """;
+
+        JsonNode result = MAPPER.readTree(post(call, "X-API-Key", rawKey).body()).path("result");
+
+        assertThat(result.path("isError").asBoolean()).isFalse();
+        JsonNode structured = result.path("structuredContent");
+        assertThat(structured.isMissingNode())
+                .as("a schema was advertised, so the structured payload has to be there")
+                .isFalse();
+        assertThat(fieldsOf(structured)).contains("key", "name", "yourRole");
+        assertThat(structured.path("key").asText()).isEqualTo("MCPE");
+        // The text block stays too, for clients that only read that.
+        assertThat(result.path("content").path(0).path("text").asText()).contains("MCPE");
+    }
+
+    private static List<String> fieldsOf(JsonNode object) {
+        List<String> names = new ArrayList<>();
+        object.propertyNames().forEach(names::add);
+        return names;
+    }
+
     private static JsonNode toolNamed(JsonNode tools, String name) {
         for (JsonNode tool : tools) {
             if (name.equals(tool.path("name").asText())) {

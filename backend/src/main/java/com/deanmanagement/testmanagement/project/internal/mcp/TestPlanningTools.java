@@ -44,6 +44,7 @@ public class TestPlanningTools {
                     The project's test suites — named groupings of test cases. Paged; check
                     totalElements and hasMore before concluding a suite does not exist.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
     public McpDtos.SuitePage listTestSuites(
@@ -66,6 +67,7 @@ public class TestPlanningTools {
     @McpTool(
             name = "get_test_suite",
             description = "One test suite with the test cases it contains.",
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
     public McpDtos.SuiteDetail getTestSuite(
@@ -86,6 +88,7 @@ public class TestPlanningTools {
                     Every id must name a case in this project — if any does not, nothing is created
                     and you get an error naming it, rather than a quietly incomplete suite.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
     @Transactional
     public McpDtos.CreatedSuite createTestSuite(
@@ -113,6 +116,7 @@ public class TestPlanningTools {
                     The project's test plans. status: OPEN | IN_PROGRESS | COMPLETED | CANCELLED;
                     omit it to get them all. Not paged — projects hold few plans.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
     public List<McpDtos.PlanSummary> listTestPlans(
@@ -131,6 +135,7 @@ public class TestPlanningTools {
                     One test plan with its execution summary: how many runs it holds, how many are
                     finished, and the pass/fail breakdown across them.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
     public McpDtos.PlanDetail getTestPlan(
@@ -149,6 +154,7 @@ public class TestPlanningTools {
                     purpose: assigning work to a named person is a human's decision, so a human
                     picks the assignee in the UI afterwards.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
     @Transactional
     public McpDtos.CreatedPlan createTestPlan(

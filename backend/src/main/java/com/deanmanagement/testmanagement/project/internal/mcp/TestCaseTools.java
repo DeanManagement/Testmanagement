@@ -61,6 +61,7 @@ public class TestCaseTools {
                     Results are paged; check totalElements and hasMore before concluding something
                     does not exist.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
     public McpDtos.TestCasePage searchTestCases(
@@ -101,6 +102,7 @@ public class TestCaseTools {
                     One test case in full, including its ordered steps. Accepts either the case key
                     (for example PROJ-12, which is what humans quote) or its UUID.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
     public McpDtos.TestCaseDetail getTestCase(
@@ -130,6 +132,7 @@ public class TestCaseTools {
                     steps: ordered; each has an action, an optional expectedResult and optional
                     testData. Order comes from the array, not from any index you supply.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
     @Transactional
     public McpDtos.CreatedTestCase createTestCase(
@@ -164,6 +167,7 @@ public class TestCaseTools {
                     Pass steps only if you mean to replace the whole ordered list — doing so
                     discards any screenshots a human attached to steps that no longer exist.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
     @Transactional
     public McpDtos.CreatedTestCase updateTestCase(
@@ -213,6 +217,7 @@ public class TestCaseTools {
                     duplicate title, or ERROR) rather than assuming all-or-nothing. Use dryRun to
                     see what would happen without writing anything.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
     // Deliberately NOT @Transactional: each item commits on its own via McpTestCaseWriter. A
     // shared transaction here would mark itself rollback-only on the first failure and take every

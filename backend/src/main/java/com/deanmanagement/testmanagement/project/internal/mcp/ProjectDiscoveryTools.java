@@ -42,6 +42,7 @@ public class ProjectDiscoveryTools {
                     suites and plans, and the role your key holds (VIEWER can only read; TESTER can
                     also create and update). Call this first to confirm which project you are in.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     public McpDtos.ProjectInfo getProject() {
         var caller = callerContext.require();
@@ -65,6 +66,7 @@ public class ProjectDiscoveryTools {
                     cases without one land at the root, which is usually not where a human expects
                     them. Returns nested folders with their test-case counts.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     public List<McpDtos.Folder> listTestCaseFolders() {
         var caller = callerContext.require();
@@ -81,6 +83,7 @@ public class ProjectDiscoveryTools {
                     list_test_case_folders first: folder names are not unique, so creating one that
                     already exists just produces two folders with the same name.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
     @Transactional
     public McpDtos.Folder createTestCaseFolder(
@@ -106,6 +109,7 @@ public class ProjectDiscoveryTools {
                     omit it to move them back to the project root. Every id must name a test case in
                     this project; if one does not, nothing is moved.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
     @Transactional
     public McpDtos.MoveResult moveTestCasesToFolder(

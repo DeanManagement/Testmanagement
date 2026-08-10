@@ -47,6 +47,7 @@ public class RequirementTools {
                     second requirement with an id that already exists is the usual way this gets
                     messy.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
     public McpDtos.RequirementPage listRequirements(
@@ -72,6 +73,7 @@ public class RequirementTools {
                     tool — a Jira key, a spec section number, a clause reference — and must be
                     unique in the project.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
     @Transactional
     public McpDtos.Requirement createRequirement(
@@ -97,6 +99,7 @@ public class RequirementTools {
                     in this project. Linking the same case twice is harmless — the link simply
                     already exists.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
     @Transactional
     public McpDtos.Requirement linkTestCasesToRequirement(
@@ -137,6 +140,7 @@ public class RequirementTools {
                     the one worth acting on — the requirement looks covered on paper and nothing has
                     demonstrated it.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
     public McpDtos.TraceabilityMatrix getTraceabilityMatrix() {

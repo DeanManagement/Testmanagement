@@ -83,7 +83,37 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`.
 
 **Write** (Tester only) — `create_test_case`, `update_test_case`, `create_test_cases_bulk`,
-`create_test_suite`, `create_test_plan`.
+`create_test_suite`, `create_test_plan`, `create_test_case_folder`,
+`move_test_cases_to_folder`, `create_requirement`, `link_test_cases_to_requirement`.
+
+### What the tools return
+
+**Do not guess the response shape — it is published.** Every tool carries an `outputSchema` in
+`tools/list`, and every call returns `structuredContent` matching it alongside the text block. A
+client that reads the schema never has to infer whether a list came back as an array or a page.
+
+Two conventions worth knowing, because they are what callers most often get wrong:
+
+- **List tools return a page object, not an array.** `search_test_cases` returns
+  `{testCases: [...], page, size, totalElements, hasMore}` — the items are under a *named* field
+  (`testCases`, `testSuites`, `testRuns`, `requirements`), never at the top level. Check
+  `hasMore` before concluding something does not exist. The exceptions are
+  `list_test_case_folders` and `list_test_plans`, which return plain arrays because neither is
+  paged.
+- **Empty fields are omitted, never null.** A project with no description has no `description`
+  key at all. So `folderId` absent means the case is at the project root, and `targetDate` absent
+  means the plan has no date.
+
+To see any shape exactly, ask the server rather than guessing:
+
+```bash
+curl -s -X POST https://your-instance/api/mcp \
+  -H 'Authorization: Bearer tm_your_key_here' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}' \
+  | jq '.result.tools[] | select(.name=="search_test_cases") | .outputSchema'
+```
 
 There are no delete tools and no test-run or result tools. Recording results stays with the CI
 ingestion API (PRD-005), and deleting anything stays a human action in the UI.

@@ -46,6 +46,7 @@ public class TestRunReadTools {
                     how the project is doing before deciding what to write or fix.
                     status: PLANNED | IN_PROGRESS | COMPLETED | ABORTED.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     public McpDtos.TestRunPage listTestRuns(
             @McpToolParam(description = "Free-text query over the run name", required = false) String query,
@@ -81,6 +82,7 @@ public class TestRunReadTools {
                     example FAILED to get just the failures of a large run.
                     Result status: PENDING | PASSED | FAILED | BLOCKED | SKIPPED.
                     """,
+            generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     public McpDtos.TestRunDetail getTestRun(
             @McpToolParam(description = "Test run UUID") UUID id,
