@@ -4,6 +4,7 @@ import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -42,6 +43,10 @@ public class ApiKeySecurityConfig {
                 .addFilterBefore(new ApiKeyAuthenticationFilter(apiKeyService, allowLegacyGlobalKeys),
                         UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
+                        // The discovery descriptor, for a client that has not been configured yet
+                        // and therefore cannot authenticate. GET is not part of the stateless
+                        // streamable-HTTP transport, so this takes nothing away from it.
+                        .requestMatchers(HttpMethod.GET, "/api/mcp").permitAll()
                         .anyRequest().hasRole("API_KEY"));
         return http.build();
     }

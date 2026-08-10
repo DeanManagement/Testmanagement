@@ -62,6 +62,11 @@ public class UserSecurityConfig {
                                 request -> !isApiRequest(request),
                                 new XFrameOptionsHeaderWriter(XFrameOptionsMode.DENY))))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // A caller who presents an API key here has come to the wrong chain. Spring's
+                // default answer is a bare 403, which reads as "your credential is invalid" rather
+                // than "your credential belongs somewhere else" — see ApiKeySignpostEntryPoint.
+                .exceptionHandling(exceptions ->
+                        exceptions.authenticationEntryPoint(new ApiKeySignpostEntryPoint()))
                 .addFilterBefore(new JwtAuthenticationFilter(jwtDecoder, userRepository),
                         UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
@@ -83,6 +88,11 @@ public class UserSecurityConfig {
                         .requestMatchers(HttpMethod.GET,
                                 "/api/projects/*/test-runs/*/allure-report/view/**").permitAll()
                         .requestMatchers("/api/external/**").hasRole("API_KEY")
+                        // PRD-025: the MCP discovery descriptor. When MCP is on, the @Order(1)
+                        // chain has already claimed this. When it is off, nothing handles it and
+                        // this lets it reach the dispatcher and answer 404 — a switched-off feature
+                        // should be absent, not merely unauthorized.
+                        .requestMatchers(HttpMethod.GET, "/api/mcp").permitAll()
                         .requestMatchers("/api/**").authenticated()
                         // Everything above is the API. What is left is the Angular app the jar now
                         // serves: the shell, its hashed assets, and every client-side route, all of

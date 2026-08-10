@@ -435,7 +435,9 @@
       "role": "Role",
       "roleTester": "Tester (can create and edit)",
       "roleViewer": "Viewer (read only)",
-      "roleHint": "The key acts as a service account with this role on the project."
+      "roleHint": "The key acts as a service account with this role on the project.",
+      "mcpTitle": "Connect an AI agent (MCP)",
+      "mcpHint": "Paste this into your MCP client's configuration. The endpoint cannot be discovered automatically, so an agent needs the full URL and header."
     },
     "users": {
       "title": "Users",

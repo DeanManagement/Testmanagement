@@ -47,6 +47,11 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String uri = request.getRequestURI();
+        // GET /api/mcp is the unauthenticated discovery descriptor — the one thing here a caller
+        // without a working key is meant to be able to read.
+        if ("GET".equals(request.getMethod()) && MCP_PATH_PREFIX.equals(uri)) {
+            return true;
+        }
         return !uri.startsWith(EXTERNAL_PATH_PREFIX) && !isMcpPath(uri);
     }
 

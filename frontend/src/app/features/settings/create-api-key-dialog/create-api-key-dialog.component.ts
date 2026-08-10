@@ -71,6 +71,17 @@ import { ProjectApiService } from '../../../core/services/project-api.service';
             <mat-icon>{{ copied ? 'check' : 'content_copy' }}</mat-icon>
           </button>
         </div>
+
+        <!-- Without this an agent is told only "there is an MCP server at <host>", which is not
+             enough to connect: the endpoint path and auth header cannot be discovered by probing. -->
+        <h3 class="section-heading">{{ 'settings.apiKeys.mcpTitle' | translate }}</h3>
+        <p class="section-hint">{{ 'settings.apiKeys.mcpHint' | translate }}</p>
+        <div class="key-display">
+          <pre data-test-id="api-key-mcp-config">{{ mcpConfig }}</pre>
+          <button mat-icon-button (click)="copyMcpConfig()" data-test-id="api-key-mcp-copy-btn">
+            <mat-icon>{{ configCopied ? 'check' : 'content_copy' }}</mat-icon>
+          </button>
+        </div>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
         <button mat-flat-button color="primary" (click)="onClose()" data-test-id="api-key-done-btn">
@@ -91,12 +102,16 @@ import { ProjectApiService } from '../../../core/services/project-api.service';
       border-radius: 4px;
       padding: 8px 12px;
     }
-    .key-display code {
+    .key-display code, .key-display pre {
       flex: 1;
       word-break: break-all;
+      white-space: pre-wrap;
+      margin: 0;
       font-family: 'JetBrains Mono', 'Fira Code', monospace;
       font-size: 13px;
     }
+    .section-heading { margin: 20px 0 4px; font-size: 15px; }
+    .section-hint { margin: 0 0 8px; font-size: 13px; opacity: 0.75; }
   `],
 })
 export class CreateApiKeyDialogComponent implements OnInit {
@@ -111,6 +126,7 @@ export class CreateApiKeyDialogComponent implements OnInit {
   projects: Project[] = [];
   createdKey: ApiKeyCreated | null = null;
   copied = false;
+  configCopied = false;
 
   ngOnInit(): void {
     this.projectApi.getAll().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((projects) => (this.projects = projects));
@@ -134,6 +150,29 @@ export class CreateApiKeyDialogComponent implements OnInit {
       this.copied = true;
       setTimeout(() => (this.copied = false), 2000);
     }
+  }
+
+  /** Ready to paste into an MCP client, with this instance's own origin already filled in. */
+  get mcpConfig(): string {
+    return JSON.stringify(
+      {
+        mcpServers: {
+          testmanagement: {
+            type: 'http',
+            url: `${window.location.origin}/api/mcp`,
+            headers: { Authorization: `Bearer ${this.createdKey?.rawKey ?? ''}` },
+          },
+        },
+      },
+      null,
+      2
+    );
+  }
+
+  copyMcpConfig(): void {
+    this.clipboard.copy(this.mcpConfig);
+    this.configCopied = true;
+    setTimeout(() => (this.configCopied = false), 2000);
   }
 
   onClose(): void {

@@ -34,6 +34,10 @@ another one: no tool takes a project id.
 
 ## 3. Point a client at it
 
+The key dialog shows this block with your host and key already filled in — copy it from there.
+Note that **an agent cannot find the endpoint on its own**: MCP has no discovery protocol, so
+telling it only the hostname is not enough. It needs the full URL and the header.
+
 ```json
 {
   "mcpServers": {
@@ -47,6 +51,10 @@ another one: no tool takes a project id.
 ```
 
 `X-API-Key: tm_…` works too, for clients that prefer it.
+
+If you are unsure a client is reaching the right place, `GET https://your-instance/api/mcp` in a
+browser returns a small descriptor naming the endpoint, transport and accepted headers. And an API
+key used on any other `/api/` path answers with a hint pointing back here, rather than a bare 403.
 
 ## 4. Tools
 

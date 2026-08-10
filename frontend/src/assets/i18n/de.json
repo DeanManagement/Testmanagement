@@ -435,7 +435,9 @@
       "role": "Rolle",
       "roleTester": "Tester (kann erstellen und bearbeiten)",
       "roleViewer": "Betrachter (nur lesen)",
-      "roleHint": "Der Schlüssel agiert als Dienstkonto mit dieser Rolle im Projekt."
+      "roleHint": "Der Schlüssel agiert als Dienstkonto mit dieser Rolle im Projekt.",
+      "mcpTitle": "KI-Agent verbinden (MCP)",
+      "mcpHint": "Fügen Sie dies in die Konfiguration Ihres MCP-Clients ein. Der Endpunkt lässt sich nicht automatisch ermitteln; ein Agent benötigt die vollständige URL und den Header."
     },
     "users": {
       "title": "Benutzer",

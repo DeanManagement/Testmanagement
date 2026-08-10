@@ -40,7 +40,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 // PRD-025: API-key territory. Redundant — the @Order(1) chain claims these first —
                 // but it mirrors the /api/external/ entry and costs nothing. Note the trailing
                 // slash: /api/mcp-activity is an admin endpoint and must keep its JWT.
-                || path.equals("/api/mcp") || path.startsWith("/api/mcp/");
+                || path.equals("/api/mcp") || path.startsWith("/api/mcp/")
+                // An API key presented as a bearer token is not a JWT and must not be decoded as
+                // one: this filter would answer with its own "Invalid or expired token" 401, which
+                // is exactly the dead end ApiKeySignpostEntryPoint exists to replace.
+                || carriesApiKeyBearer(request);
+    }
+
+    /** {@code tm_} is the API-key prefix; nothing else uses it, so this cannot swallow a JWT. */
+    private static boolean carriesApiKeyBearer(HttpServletRequest request) {
+        String authorization = request.getHeader("Authorization");
+        return authorization != null && authorization.startsWith("Bearer tm_");
     }
 
     @Override

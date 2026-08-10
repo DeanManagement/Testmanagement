@@ -33,7 +33,11 @@ public class SpaResourceConfig implements WebMvcConfigurer {
      * fails deep inside ngx-translate and surfaces as untranslated keys with no error at all.
      */
     private static final List<String> RESERVED = List.of(
-            "api/", "actuator/", "error", "v3/api-docs", "swagger-ui", "assets/");
+            "api/", "actuator/", "error", "v3/api-docs", "swagger-ui", "assets/",
+            // Discovery documents. Anything probing .well-known/ is a machine looking for a
+            // specific JSON contract; answering with the HTML shell and a 200 tells it the
+            // document exists, which is worse than admitting it does not.
+            ".well-known/");
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
