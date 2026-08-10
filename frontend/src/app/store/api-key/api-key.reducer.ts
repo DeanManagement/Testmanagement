@@ -32,6 +32,7 @@ export const apiKeyReducer = createReducer(
         createdAt: created.createdAt,
         projectId: created.projectId,
         projectName: created.projectName,
+        role: created.role,
       },
       state
     )

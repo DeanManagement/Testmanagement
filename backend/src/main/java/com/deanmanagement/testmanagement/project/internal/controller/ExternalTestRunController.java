@@ -1,11 +1,13 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
+import com.deanmanagement.testmanagement.project.internal.access.ProjectAccessService;
 import com.deanmanagement.testmanagement.project.internal.ci.CucumberJsonParser;
 import com.deanmanagement.testmanagement.project.internal.ci.JUnitXmlParser;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.ExternalCreateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.AllureReport;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.service.AllureReportService;
 import com.deanmanagement.testmanagement.project.internal.service.CiIngestionService;
@@ -39,6 +41,7 @@ public class ExternalTestRunController {
     private final ExternalTestRunService externalTestRunService;
     private final AllureReportService allureReportService;
     private final ExternalRefResolver refResolver;
+    private final ProjectAccessService projectAccessService;
     private final CiIngestionService ciIngestionService;
     private final JUnitXmlParser jUnitXmlParser;
     private final CucumberJsonParser cucumberJsonParser;
@@ -50,6 +53,7 @@ public class ExternalTestRunController {
     public TestRunResponse create(@PathVariable String projectRef,
                                   @Valid @RequestBody ExternalCreateTestRunRequest request,
                                   @RequestParam(required = false) UUID pipelineRunId) {
+        requireTester(projectRef);
         return externalTestRunService.createExternalRun(projectRef, request, pipelineRunId);
     }
 
@@ -61,6 +65,7 @@ public class ExternalTestRunController {
                                        @RequestParam(required = false) String environment,
                                        @RequestParam(required = false) UUID testPlanId,
                                        @RequestParam(required = false) UUID pipelineRunId) {
+        requireTester(projectRef);
         checkSize(body);
         // With a pipelineRunId and no explicit name the run is named after its workflow (PRD-024).
         String name = runName != null ? runName : pipelineRunId != null ? null : "JUnit import";
@@ -76,10 +81,24 @@ public class ExternalTestRunController {
                                           @RequestParam(required = false) String environment,
                                           @RequestParam(required = false) UUID testPlanId,
                                           @RequestParam(required = false) UUID pipelineRunId) {
+        requireTester(projectRef);
         checkSize(body);
         String name = runName != null ? runName : pipelineRunId != null ? null : "Cucumber import";
         return ciIngestionService.ingest(projectRef, name, environment, testPlanId,
                 cucumberJsonParser.parse(body), pipelineRunId);
+    }
+
+    /**
+     * PRD-025 §3.2: every endpoint here writes, so the calling key must hold TESTER on the project.
+     *
+     * <p>{@code @RequireProjectRole} cannot be used: its aspect resolves the project id by calling
+     * {@code UUID.fromString} on the path variable, and {@code projectRef} may be a project key.
+     * Resolving here costs one extra lookup and keeps the check visible at the endpoint, which is
+     * the point of PRD-001's discipline.
+     */
+    private void requireTester(String projectRef) {
+        Project project = refResolver.resolveProject(projectRef);
+        projectAccessService.requireRoleForCurrentUser(project.getId(), ProjectRole.TESTER);
     }
 
     private void checkSize(byte[] body) {
@@ -96,6 +115,7 @@ public class ExternalTestRunController {
     public Map<String, UUID> uploadAllureReport(@PathVariable String projectRef,
                                                 @PathVariable String testRunRef,
                                                 @RequestParam MultipartFile file) throws IOException {
+        requireTester(projectRef);
         Project project = refResolver.resolveProject(projectRef);
         TestRun testRun = refResolver.resolveTestRun(testRunRef);
         // The API-key filter only checks the project segment of the URL, so without this a key

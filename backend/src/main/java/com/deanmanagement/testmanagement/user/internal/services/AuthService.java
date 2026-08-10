@@ -67,6 +67,14 @@ public class AuthService {
             throw new BadCredentialsException("Invalid email or password");
         }
 
+        // PRD-025 §3.2: service accounts back API keys and must never hold a session. Their null
+        // password hash already makes `matches` false, so this is belt and braces — but it is the
+        // check that documents the intent, and it is asserted by test.
+        if (user.isServiceAccount()) {
+            loginThrottle.recordFailure(request.email(), remoteIp);
+            throw new BadCredentialsException("Invalid email or password");
+        }
+
         // Break-glass (PRD-012 §4.2): when local login is switched off, system admins may still
         // use a password. The check happens after credential verification so it cannot be used to
         // discover which accounts are admins.

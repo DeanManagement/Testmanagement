@@ -33,6 +33,13 @@
           </td>
         </ng-container>
 
+        <ng-container matColumnDef="role">
+          <th mat-header-cell *matHeaderCellDef>{{ 'settings.apiKeys.role' | translate }}</th>
+          <td mat-cell *matCellDef="let key">
+            {{ (key.role === 'VIEWER' ? 'settings.apiKeys.roleViewer' : 'settings.apiKeys.roleTester') | translate }}
+          </td>
+        </ng-container>
+
         <ng-container matColumnDef="keyPrefix">
           <th mat-header-cell *matHeaderCellDef>{{ 'settings.apiKeys.key' | translate }}</th>
           <td mat-cell *matCellDef="let key">

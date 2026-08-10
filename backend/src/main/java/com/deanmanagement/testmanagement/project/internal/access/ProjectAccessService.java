@@ -7,6 +7,7 @@ import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
 import com.deanmanagement.testmanagement.user.User;
 import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -64,11 +65,39 @@ public class ProjectAccessService {
      * call outside a request), the check is skipped.
      */
     public void requireRoleForCurrentUser(UUID projectId, ProjectRole minRole) {
-        UUID userId = currentUserId();
+        UUID userId = resolvedCallerOrNull();
         if (userId == null) {
             return;
         }
         requireRole(userId, projectId, minRole);
+    }
+
+    /**
+     * The caller for authorization purposes.
+     *
+     * <p>Returns {@code null} only when the request carries no principal at all — an anonymous or
+     * permit-all context, where the filter chain is the thing responsible for authentication and
+     * skipping the role check preserves dev/test parity.
+     *
+     * <p>When there <em>is</em> an authenticated principal but it does not resolve to a user id,
+     * this throws. That case used to fall into the same "skip the check" branch, which is how
+     * API-key callers — whose principal was the string {@code "api-key:<name>"} — bypassed project
+     * role enforcement entirely (PRD-025 §3.2). Every principal that reaches here now either names
+     * a user or is refused.
+     *
+     * @throws ForbiddenException if an authenticated principal cannot be resolved to a user
+     */
+    public UUID resolvedCallerOrNull() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated() || auth.getName() == null
+                || auth instanceof AnonymousAuthenticationToken) {
+            return null;
+        }
+        try {
+            return UUID.fromString(auth.getName());
+        } catch (IllegalArgumentException e) {
+            throw new ForbiddenException("Authenticated principal does not resolve to a user");
+        }
     }
 
     public boolean isSystemAdmin(UUID userId) {
@@ -80,18 +109,4 @@ public class ProjectAccessService {
                 .orElse(false);
     }
 
-    /**
-     * @return the authenticated user's id, or {@code null} if there is no usable principal.
-     */
-    public UUID currentUserId() {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated() || auth.getName() == null) {
-            return null;
-        }
-        try {
-            return UUID.fromString(auth.getName());
-        } catch (IllegalArgumentException e) {
-            return null;
-        }
-    }
 }

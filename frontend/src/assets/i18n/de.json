@@ -431,7 +431,11 @@
       "never": "Nie",
       "empty": "Noch keine API-Schlüssel. Erstellen Sie einen, um externen Tools das Übermitteln von Testergebnissen zu ermöglichen.",
       "project": "Projekt",
-      "globalKey": "Alle Projekte (Altbestand)"
+      "globalKey": "Alle Projekte (Altbestand)",
+      "role": "Rolle",
+      "roleTester": "Tester (kann erstellen und bearbeiten)",
+      "roleViewer": "Betrachter (nur lesen)",
+      "roleHint": "Der Schlüssel agiert als Dienstkonto mit dieser Rolle im Projekt."
     },
     "users": {
       "title": "Benutzer",

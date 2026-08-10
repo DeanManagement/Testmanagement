@@ -72,6 +72,7 @@ public class SsoLoginService {
         if (existing.isPresent()) {
             User user = userRepository.findById(existing.get().getUserId())
                     .orElseThrow(() -> new SsoLoginException("The linked account no longer exists"));
+            refuseServiceAccount(user);
             refreshProfile(user, email, displayName, provider, shouldBeAdmin);
             touch(existing.get());
             return user;
@@ -91,8 +92,23 @@ public class SsoLoginService {
         return provision(provider, subject, email, displayName, shouldBeAdmin);
     }
 
+    /**
+     * PRD-025 §3.2: service accounts back API keys and must never hold a session. This path is the
+     * one that matters — SSO links by email and never consults {@code password_hash}, so the null
+     * hash that incidentally blocks password login would not block SSO. Their addresses are on the
+     * reserved {@code .invalid} TLD (RFC 2606) so no real provider can assert one, but an operator
+     * could still create an identity link by hand.
+     */
+    private void refuseServiceAccount(User user) {
+        if (user.isServiceAccount()) {
+            log.warn("Refused SSO login for service account {}", user.getId());
+            throw new SsoLoginException("This account cannot be used to sign in.");
+        }
+    }
+
     private User adoptExistingAccount(SsoProvider provider, User user, String subject,
                                       Map<String, Object> claims, String displayName, boolean shouldBeAdmin) {
+        refuseServiceAccount(user);
         if (!provider.isTrustEmailForLinking()) {
             log.warn("Refused SSO login for subject {} on provider {}: email matches an existing "
                     + "account but the provider is not trusted for email linking", subject, provider.getSlug());

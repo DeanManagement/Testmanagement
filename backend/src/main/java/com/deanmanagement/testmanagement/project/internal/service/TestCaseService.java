@@ -97,9 +97,20 @@ public class TestCaseService {
         // results stamped N actually executed (PRD-011).
         versionService.snapshotBeforeEdit(tc);
 
-        tc.setTitle(request.title());
-        tc.setDescription(request.description());
-        tc.setPreconditions(request.preconditions());
+        // Null-guarded like every other field: absent means "leave alone", and a caller clearing a
+        // text field sends "". Previously these three were assigned unconditionally, which made
+        // partial updates impossible — a caller had to read the case and send its current values
+        // back, and any concurrent human edit in between was silently reverted (PRD-025 §3.4).
+        if (request.title() != null) {
+            if (request.title().isBlank()) {
+                // @NotBlank moved off the DTO so that null could mean "unchanged"; a title that is
+                // present but empty is still not a title.
+                throw new IllegalArgumentException("title must not be blank");
+            }
+            tc.setTitle(request.title());
+        }
+        if (request.description() != null) tc.setDescription(request.description());
+        if (request.preconditions() != null) tc.setPreconditions(request.preconditions());
         if (request.priority() != null) tc.setPriority(request.priority());
         if (request.status() != null) tc.setStatus(request.status());
         if (request.labels() != null) tc.setLabels(request.labels());

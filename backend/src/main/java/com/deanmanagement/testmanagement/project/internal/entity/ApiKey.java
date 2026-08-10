@@ -2,8 +2,12 @@ package com.deanmanagement.testmanagement.project.internal.entity;
 
 import com.deanmanagement.testmanagement.shared.BaseEntity;
 
+import com.deanmanagement.testmanagement.user.User;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
@@ -43,4 +47,20 @@ public class ApiKey extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id")
     private Project project;
+
+    /**
+     * PRD-025 §3.2: the role this key holds on its project. {@code VIEWER} or {@code TESTER} only —
+     * {@code ADMIN} is not offered, so a key can never manage members or delete a project.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ProjectRole role = ProjectRole.TESTER;
+
+    /**
+     * The service user this key authenticates as. {@code null} only for legacy project-less keys,
+     * which have no project to hold a membership on.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "service_user_id")
+    private User serviceUser;
 }

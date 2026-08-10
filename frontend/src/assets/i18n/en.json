@@ -431,7 +431,11 @@
       "never": "Never",
       "empty": "No API keys yet. Create one to allow external tools to submit test results.",
       "project": "Project",
-      "globalKey": "All projects (legacy)"
+      "globalKey": "All projects (legacy)",
+      "role": "Role",
+      "roleTester": "Tester (can create and edit)",
+      "roleViewer": "Viewer (read only)",
+      "roleHint": "The key acts as a service account with this role on the project."
     },
     "users": {
       "title": "Users",

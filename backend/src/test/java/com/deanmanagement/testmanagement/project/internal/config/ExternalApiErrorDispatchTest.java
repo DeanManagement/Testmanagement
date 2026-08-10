@@ -41,6 +41,8 @@ class ExternalApiErrorDispatchTest {
     private ProjectRepository projectRepository;
     @Autowired
     private ApiKeyRepository apiKeyRepository;
+    @Autowired
+    private com.deanmanagement.testmanagement.project.internal.service.ApiKeyService apiKeyService;
 
     private static final String RAW_KEY = "tm_error_dispatch_probe";
 
@@ -60,7 +62,10 @@ class ExternalApiErrorDispatchTest {
             key.setKeyHash(hash);
             key.setKeyPrefix(RAW_KEY.substring(0, 8));
             key.setProject(project);
-            apiKeyRepository.save(key);
+            key = apiKeyRepository.save(key);
+            // PRD-025 §3.2: a project-scoped key without a service user is rejected outright, so a
+            // hand-seeded key has to be completed the same way the startup backfill would.
+            apiKeyService.ensureServiceUser(key.getId());
         }
     }
 

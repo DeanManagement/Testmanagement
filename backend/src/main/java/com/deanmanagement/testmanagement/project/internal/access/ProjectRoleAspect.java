@@ -27,10 +27,11 @@ public class ProjectRoleAspect {
 
     @Before("@annotation(requireProjectRole)")
     public void enforce(RequireProjectRole requireProjectRole) {
-        UUID userId = access.currentUserId();
+        // Null means "no principal at all" (permit-all dev context) — the filter chain owns
+        // authentication there. A principal that exists but does not resolve to a user throws
+        // rather than falling through; see ProjectAccessService#resolvedCallerOrNull.
+        UUID userId = access.resolvedCallerOrNull();
         if (userId == null) {
-            // No authenticated principal (e.g. permit-all dev context); the security filter chain
-            // is responsible for authentication. Fail open here to preserve dev/test parity.
             return;
         }
         UUID projectId = resolveProjectId(requireProjectRole.pathVariable());

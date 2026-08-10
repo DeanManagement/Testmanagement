@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.ApiKeyCreatedResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.ApiKeyResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
 import tools.jackson.databind.ObjectMapper;
@@ -46,11 +47,11 @@ class ApiKeyControllerTest {
     private static final Instant NOW = Instant.now();
 
     private ApiKeyResponse sampleResponse() {
-        return new ApiKeyResponse(KEY_ID, "CI Pipeline", "tm_abc12", false, null, NOW, PROJECT_ID, "Demo Project");
+        return new ApiKeyResponse(KEY_ID, "CI Pipeline", "tm_abc12", false, null, NOW, PROJECT_ID, "Demo Project", ProjectRole.TESTER);
     }
 
     private ApiKeyCreatedResponse sampleCreatedResponse() {
-        return new ApiKeyCreatedResponse(KEY_ID, "CI Pipeline", "tm_abc12", "tm_abc123456789abcdef", NOW, PROJECT_ID, "Demo Project");
+        return new ApiKeyCreatedResponse(KEY_ID, "CI Pipeline", "tm_abc12", "tm_abc123456789abcdef", NOW, PROJECT_ID, "Demo Project", ProjectRole.TESTER);
     }
 
     @Test
@@ -79,7 +80,7 @@ class ApiKeyControllerTest {
     @Test
     @WithMockUser
     void create_returnsCreatedWithRawKey() throws Exception {
-        var request = new CreateApiKeyRequest("CI Pipeline", PROJECT_ID);
+        var request = new CreateApiKeyRequest("CI Pipeline", PROJECT_ID, ProjectRole.TESTER);
         when(apiKeyService.create(any())).thenReturn(sampleCreatedResponse());
 
         mockMvc.perform(post("/api/api-keys")
@@ -95,7 +96,7 @@ class ApiKeyControllerTest {
     @Test
     @WithMockUser
     void create_blankName_returns400() throws Exception {
-        var request = new CreateApiKeyRequest("", PROJECT_ID);
+        var request = new CreateApiKeyRequest("", PROJECT_ID, ProjectRole.TESTER);
 
         mockMvc.perform(post("/api/api-keys")
                         .with(csrf())

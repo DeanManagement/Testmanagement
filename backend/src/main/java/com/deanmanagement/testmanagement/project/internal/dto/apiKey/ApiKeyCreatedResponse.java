@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.dto.apiKey;
 
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
+
 import java.time.Instant;
 import java.util.UUID;
 
@@ -10,6 +12,7 @@ public record ApiKeyCreatedResponse(
         String rawKey,
         Instant createdAt,
         UUID projectId,
-        String projectName
+        String projectName,
+        ProjectRole role
 ) {
 }

@@ -12,6 +12,7 @@ import com.deanmanagement.testmanagement.project.internal.service.AllureReportSe
 import com.deanmanagement.testmanagement.project.internal.service.ExternalRefResolver;
 import com.deanmanagement.testmanagement.project.internal.service.ExternalTestRunService;
 import tools.jackson.databind.ObjectMapper;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
@@ -27,6 +28,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
@@ -53,6 +55,11 @@ class ExternalTestRunControllerTest {
     @MockitoBean
     private ExternalRefResolver refResolver;
 
+    // PRD-025 §3.2: the controller now checks the calling key's project role. Mocked here so the
+    // slice stays a controller test; enforcement itself is covered by ApiKeyServiceUserApiTest.
+    @MockitoBean
+    private com.deanmanagement.testmanagement.project.internal.access.ProjectAccessService projectAccessService;
+
     @MockitoBean
     private com.deanmanagement.testmanagement.project.internal.service.CiIngestionService ciIngestionService;
 
@@ -65,6 +72,17 @@ class ExternalTestRunControllerTest {
     private static final String PROJECT_KEY = "TEST";
     private static final String TEST_CASE_KEY = "TEST-1";
     private static final Instant NOW = Instant.now();
+
+    /**
+     * PRD-025 §3.2: every write endpoint resolves the project up front to check the calling key's
+     * role, so the resolver has to answer for the happy paths.
+     */
+    @BeforeEach
+    void stubProjectResolution() {
+        Project project = new Project();
+        project.setId(UUID.randomUUID());
+        lenient().when(refResolver.resolveProject(PROJECT_KEY)).thenReturn(project);
+    }
 
     private TestRunResponse sampleRunResponse() {
         return new TestRunResponse(
@@ -138,7 +156,9 @@ class ExternalTestRunControllerTest {
         var request = new ExternalCreateTestRunRequest("CI Run", "staging", List.of(
                 new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
-        when(externalTestRunService.createExternalRun(eq(PROJECT_KEY), any(), any()))
+        // Since PRD-025 §3.2 the 404 comes from the role check's project lookup, which now runs
+        // first — one hop earlier than before, same status to the caller.
+        when(refResolver.resolveProject(PROJECT_KEY))
                 .thenThrow(new ResourceNotFoundException("Project", PROJECT_KEY));
 
         mockMvc.perform(post("/api/external/projects/{projectKey}/test-runs", PROJECT_KEY)

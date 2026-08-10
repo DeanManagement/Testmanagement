@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.user;
 
 import com.deanmanagement.testmanagement.shared.exception.DuplicateKeyException;
+import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.user.internal.requests.UserResponse;
 import com.deanmanagement.testmanagement.user.internal.requests.CreateUserRequest;
@@ -26,14 +27,16 @@ public class UserService {
     private final UserRepository userRepository;
     private final BCryptPasswordEncoder passwordEncoder;
 
+    /** Human accounts only — service accounts (PRD-025 §3.2) are managed via API keys, not here. */
     public List<UserResponse> findAll() {
-        return userRepository.findAll().stream()
+        return userRepository.findByServiceAccountFalse().stream()
                 .map(this::toResponse)
                 .toList();
     }
 
     public UserResponse findById(UUID id) {
         User user = userRepository.findById(id)
+                .filter(candidate -> !candidate.isServiceAccount())
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
         return toResponse(user);
     }
@@ -74,6 +77,14 @@ public class UserService {
     public UserResponse update(UUID id, UpdateUserRequest request) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        if (user.isServiceAccount()) {
+            // Otherwise an admin holding a service account's id — which is now readable from
+            // created_by on every row its key wrote — could set systemAdmin, and
+            // ProjectAccessService short-circuits on that. The key would become an unrestricted
+            // global admin while staying invisible in the user list, defeating the VIEWER/TESTER
+            // ceiling that ApiKeyService.create enforces.
+            throw new ForbiddenException("Service accounts are managed through their API key");
+        }
 
         user.setDisplayName(request.displayName());
         if (request.systemAdmin() != null) {
@@ -88,11 +99,34 @@ public class UserService {
 
     @Transactional
     public void delete(UUID id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("User", id);
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("User", id));
+        if (user.isServiceAccount()) {
+            // Deleting it here would orphan the API key that authenticates as it.
+            throw new ForbiddenException("Service accounts are removed by revoking their API key");
         }
-        userRepository.deleteById(id);
+        userRepository.delete(user);
     }
+
+    /**
+     * PRD-025 §3.2: creates the non-human account an API key authenticates as. Exposed on the
+     * module's public surface because {@code ApiKeyService} lives in the {@code project} module and
+     * must not reach into {@code user.internal}.
+     *
+     * <p>No password hash is set, and {@code serviceAccount} is checked explicitly on both sign-in
+     * paths — a null hash alone would not block SSO, which links by email.
+     */
+    @Transactional
+    public User createServiceAccount(String email, String displayName) {
+        User user = new User();
+        user.setEmail(email.toLowerCase());
+        user.setDisplayName(displayName);
+        user.setPasswordHash(null);
+        user.setSystemAdmin(false);
+        user.setServiceAccount(true);
+        return userRepository.save(user);
+    }
+
 
     private UserResponse toResponse(User user) {
         return new UserResponse(

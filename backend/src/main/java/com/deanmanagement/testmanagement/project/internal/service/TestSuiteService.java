@@ -65,7 +65,7 @@ public class TestSuiteService {
 
         TestSuite suite = testSuiteMapper.toEntity(request);
         suite.setProject(project);
-        suite.setTestCases(resolveTestCases(request.testCaseIds()));
+        suite.setTestCases(resolveTestCases(projectId, request.testCaseIds()));
 
         suite = testSuiteRepository.save(suite);
         auditService.log(projectId, userId, AuditAction.CREATED,
@@ -82,7 +82,7 @@ public class TestSuiteService {
         suite.setName(request.name());
         suite.setDescription(request.description());
         if (request.testCaseIds() != null) {
-            suite.setTestCases(resolveTestCases(request.testCaseIds()));
+            suite.setTestCases(resolveTestCases(projectId, request.testCaseIds()));
         }
 
         suite = testSuiteRepository.save(suite);
@@ -158,7 +158,7 @@ public class TestSuiteService {
                 .filter(s -> s.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestSuite", suiteId));
 
-        Set<TestCase> toAdd = resolveTestCases(testCaseIds);
+        Set<TestCase> toAdd = resolveTestCases(projectId, testCaseIds);
         suite.getTestCases().addAll(toAdd);
         testSuiteRepository.save(suite);
 
@@ -181,10 +181,28 @@ public class TestSuiteService {
                 "Removed " + testCaseIds.size() + " test cases");
     }
 
-    private Set<TestCase> resolveTestCases(Set<UUID> testCaseIds) {
+    /**
+     * Resolves the supplied ids <em>within the suite's project</em>, and refuses the whole call if
+     * any of them is unknown there.
+     *
+     * <p>Both halves matter. Without the project filter, a caller could attach another project's
+     * test cases to its own suite and then read their titles back through the suite — a
+     * cross-project write and an information leak in one move, which is reachable from both the
+     * REST API and the MCP {@code create_test_suite} tool. And silently dropping ids that do not
+     * resolve turns a typo into a quietly half-empty suite; a caller that names a case it cannot
+     * see should be told, in the same not-found terms used everywhere else so that existence in
+     * another project is not disclosed (PRD-021 discipline).
+     */
+    private Set<TestCase> resolveTestCases(UUID projectId, Set<UUID> testCaseIds) {
         if (testCaseIds == null || testCaseIds.isEmpty()) {
             return new HashSet<>();
         }
-        return new HashSet<>(testCaseRepository.findAllById(testCaseIds));
+        List<TestCase> found = testCaseRepository.findByIdInAndProjectId(testCaseIds, projectId);
+        if (found.size() != testCaseIds.size()) {
+            Set<UUID> missing = new HashSet<>(testCaseIds);
+            found.forEach(testCase -> missing.remove(testCase.getId()));
+            throw new ResourceNotFoundException("TestCase", missing.iterator().next());
+        }
+        return new HashSet<>(found);
     }
 }

@@ -10,7 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 import { Clipboard } from '@angular/cdk/clipboard';
-import { ApiKeyCreated } from '../../../shared/models/api-key.model';
+import { ApiKeyCreated, ApiKeyRole } from '../../../shared/models/api-key.model';
 import { Project } from '../../../shared/models/project.model';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 
@@ -43,6 +43,15 @@ import { ProjectApiService } from '../../../core/services/project-api.service';
               <mat-option [value]="project.id">{{ project.name }} ({{ project.key }})</mat-option>
             }
           </mat-select>
+        </mat-form-field>
+        <!-- PRD-025: the key acts as a service account holding this role on the project -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'settings.apiKeys.role' | translate }}</mat-label>
+          <mat-select [(ngModel)]="role" required data-test-id="api-key-role-select">
+            <mat-option value="TESTER">{{ 'settings.apiKeys.roleTester' | translate }}</mat-option>
+            <mat-option value="VIEWER">{{ 'settings.apiKeys.roleViewer' | translate }}</mat-option>
+          </mat-select>
+          <mat-hint>{{ 'settings.apiKeys.roleHint' | translate }}</mat-hint>
         </mat-form-field>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
@@ -98,6 +107,7 @@ export class CreateApiKeyDialogComponent implements OnInit {
 
   name = '';
   projectId: string | null = null;
+  role: ApiKeyRole = 'TESTER';
   projects: Project[] = [];
   createdKey: ApiKeyCreated | null = null;
   copied = false;
@@ -111,7 +121,7 @@ export class CreateApiKeyDialogComponent implements OnInit {
   }
 
   onCreate(): void {
-    this.dialogRef.close({ action: 'create', name: this.name.trim(), projectId: this.projectId });
+    this.dialogRef.close({ action: 'create', name: this.name.trim(), projectId: this.projectId, role: this.role });
   }
 
   setCreatedKey(key: ApiKeyCreated): void {

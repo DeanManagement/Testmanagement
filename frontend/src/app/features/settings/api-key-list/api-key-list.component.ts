@@ -38,7 +38,7 @@ export class ApiKeyListComponent implements OnInit {
 
   apiKeys$ = this.store.select(selectAllApiKeys);
   loading$ = this.store.select(selectApiKeysLoading);
-  displayedColumns = ['name', 'project', 'keyPrefix', 'createdAt', 'lastUsedAt', 'status', 'actions'];
+  displayedColumns = ['name', 'project', 'role', 'keyPrefix', 'createdAt', 'lastUsedAt', 'status', 'actions'];
 
   ngOnInit(): void {
     this.store.dispatch(ApiKeyActions.loadApiKeys());
@@ -51,7 +51,9 @@ export class ApiKeyListComponent implements OnInit {
 
     dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result?.action === 'create') {
-        this.store.dispatch(ApiKeyActions.createApiKey({ request: { name: result.name, projectId: result.projectId } }));
+        this.store.dispatch(ApiKeyActions.createApiKey({
+          request: { name: result.name, projectId: result.projectId, role: result.role },
+        }));
 
         this.actions$.pipe(
           ofType(ApiKeyActions.createApiKeySuccess),

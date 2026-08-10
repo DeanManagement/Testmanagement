@@ -286,7 +286,7 @@ class BuildServerApiTest {
         BuildWorkflow workflow = saveWorkflow(config, "Nightly regression");
         assign(project, workflow);
         PipelineRun pipelineRun = savePipelineRun(project, workflow);
-        String apiKey = apiKeyService.create(new CreateApiKeyRequest("ci", project.getId())).rawKey();
+        String apiKey = apiKeyService.create(new CreateApiKeyRequest("ci", project.getId(), null)).rawKey();
 
         mockMvc.perform(post("/api/external/projects/AUT/test-runs/junit")
                         .header("X-API-Key", apiKey)
@@ -307,7 +307,7 @@ class BuildServerApiTest {
         BuildWorkflow workflow = saveWorkflow(config, "Nightly");
         assign(otherProject, workflow);
         PipelineRun foreignRun = savePipelineRun(otherProject, workflow);
-        String apiKey = apiKeyService.create(new CreateApiKeyRequest("ci", project.getId())).rawKey();
+        String apiKey = apiKeyService.create(new CreateApiKeyRequest("ci", project.getId(), null)).rawKey();
 
         // The key is scoped to AUT; the pipeline run belongs to OTB. Existence is not disclosed.
         mockMvc.perform(post("/api/external/projects/AUT/test-runs/junit")

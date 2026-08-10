@@ -21,6 +21,11 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
 
     boolean existsByUserIdAndProjectId(UUID userId, UUID projectId);
 
-    @Query("SELECT pm.user.id FROM ProjectMember pm WHERE pm.project.id = :projectId AND pm.user.id IN :userIds")
+    /**
+     * Used to filter notification recipients. Service accounts (PRD-025 §3.2) are excluded — they
+     * hold real memberships but have no inbox and no one reads their notification bell.
+     */
+    @Query("SELECT pm.user.id FROM ProjectMember pm WHERE pm.project.id = :projectId "
+            + "AND pm.user.id IN :userIds AND pm.user.serviceAccount = false")
     Set<UUID> findMemberUserIds(@Param("projectId") UUID projectId, @Param("userIds") Collection<UUID> userIds);
 }

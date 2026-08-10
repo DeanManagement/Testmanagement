@@ -106,7 +106,7 @@ class CiIngestionApiTest {
         project.setKey(KEY);
         projectId = projectRepository.save(project).getId();
 
-        apiKey = apiKeyService.create(new CreateApiKeyRequest("ci-test-key", projectId)).rawKey();
+        apiKey = apiKeyService.create(new CreateApiKeyRequest("ci-test-key", projectId, null)).rawKey();
     }
 
     @Test

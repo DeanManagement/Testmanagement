@@ -27,8 +27,15 @@ public class ProjectMemberService {
     private final ProjectRepository projectRepository;
     private final UserService userService;
 
+    /**
+     * Human members only. The service accounts behind API keys (PRD-025 §3.2) hold real memberships
+     * so authorization works, but they are managed from the API-key settings page — surfacing them
+     * here would put them in assignee pickers and let an admin edit a key's role in a place that
+     * does not know it is editing a key.
+     */
     public List<ProjectMemberResponse> findByProject(UUID projectId) {
         return projectMemberRepository.findByProjectId(projectId).stream()
+                .filter(member -> !member.getUser().isServiceAccount())
                 .map(this::toResponse)
                 .toList();
     }
@@ -39,6 +46,7 @@ public class ProjectMemberService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
         User user = userService.findEntityById(request.userId())
+                .filter(candidate -> !candidate.isServiceAccount())
                 .orElseThrow(() -> new ResourceNotFoundException("User", request.userId()));
 
         if (projectMemberRepository.existsByUserIdAndProjectId(request.userId(), projectId)) {
@@ -56,6 +64,7 @@ public class ProjectMemberService {
     @Transactional
     public ProjectMemberResponse updateRole(UUID projectId, UUID memberId, UpdateProjectMemberRequest request) {
         ProjectMember member = projectMemberRepository.findById(memberId)
+                .filter(candidate -> !candidate.getUser().isServiceAccount())
                 .orElseThrow(() -> new ResourceNotFoundException("ProjectMember", memberId));
 
         member.setRole(request.role());
@@ -65,10 +74,10 @@ public class ProjectMemberService {
 
     @Transactional
     public void removeMember(UUID projectId, UUID memberId) {
-        if (!projectMemberRepository.existsById(memberId)) {
-            throw new ResourceNotFoundException("ProjectMember", memberId);
-        }
-        projectMemberRepository.deleteById(memberId);
+        ProjectMember member = projectMemberRepository.findById(memberId)
+                .filter(candidate -> !candidate.getUser().isServiceAccount())
+                .orElseThrow(() -> new ResourceNotFoundException("ProjectMember", memberId));
+        projectMemberRepository.delete(member);
     }
 
     private ProjectMemberResponse toResponse(ProjectMember member) {

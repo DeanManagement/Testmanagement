@@ -36,7 +36,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected boolean shouldNotFilter(HttpServletRequest request) {
         String path = request.getRequestURI();
         return path.equals("/api/auth/login")
-                || path.startsWith("/api/external/");
+                || path.startsWith("/api/external/")
+                // PRD-025: API-key territory. Redundant — the @Order(1) chain claims these first —
+                // but it mirrors the /api/external/ entry and costs nothing. Note the trailing
+                // slash: /api/mcp-activity is an admin endpoint and must keep its JWT.
+                || path.equals("/api/mcp") || path.startsWith("/api/mcp/");
     }
 
     @Override

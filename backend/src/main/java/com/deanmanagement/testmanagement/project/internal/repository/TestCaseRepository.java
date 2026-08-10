@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -19,9 +20,22 @@ public interface TestCaseRepository extends JpaRepository<TestCase, UUID>, JpaSp
 
     Optional<TestCase> findFirstByProjectIdAndTitle(UUID projectId, String title);
 
+    /**
+     * Project-scoped batch lookup. Callers that resolve caller-supplied ids must use this rather
+     * than {@code findAllById}, which would happily return another project's cases.
+     */
+    List<TestCase> findByIdInAndProjectId(Collection<UUID> ids, UUID projectId);
+
     List<TestCase> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
 
     long countByProjectId(UUID projectId);
+
+    /**
+     * Id/key/title only, for the MCP duplicate guard (PRD-025 §3.5). Loading whole entities to
+     * compare titles would pull every step of every case with them.
+     */
+    @Query("SELECT tc.id, tc.key, tc.title FROM TestCase tc WHERE tc.project.id = :projectId")
+    List<Object[]> findTitlesByProjectId(@Param("projectId") UUID projectId);
 
     @Query("SELECT CAST(tc.status AS string), COUNT(tc) FROM TestCase tc WHERE tc.project.id = :projectId GROUP BY tc.status")
     List<Object[]> countByProjectIdGroupByStatus(@Param("projectId") UUID projectId);
