@@ -350,6 +350,11 @@
       "allStepsPassed": "Mark every step Passed (and the result)",
       "focusComment": "Focus the comment field",
       "showHelp": "Show this help"
+    },
+    "failures": {
+      "title": "{{count}} failed",
+      "outOf": "of {{total}} test cases",
+      "defect": "Open defect"
     }
   },
   "testPlan": {

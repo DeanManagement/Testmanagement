@@ -350,6 +350,11 @@
       "allStepsPassed": "Alle Schritte als Bestanden markieren (auch das Ergebnis)",
       "focusComment": "Kommentarfeld fokussieren",
       "showHelp": "Diese Hilfe anzeigen"
+    },
+    "failures": {
+      "title": "{{count}} fehlgeschlagen",
+      "outOf": "von {{total}} Testfällen",
+      "defect": "Fehler öffnen"
     }
   },
   "testPlan": {

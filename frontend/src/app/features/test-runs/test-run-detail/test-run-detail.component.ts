@@ -453,6 +453,39 @@ export class TestRunDetailComponent implements OnInit {
     return [...result.stepResults].sort((a, b) => a.orderIndex - b.orderIndex);
   }
 
+  /**
+   * FAILED and BLOCKED both mean the case did not demonstrate what it was written to demonstrate,
+   * and both need someone to look. SKIPPED does not — it is a deliberate omission, not a finding.
+   */
+  isFailure(result: TestResult): boolean {
+    return result.status === 'FAILED' || result.status === 'BLOCKED';
+  }
+
+  failures(run: TestRun): TestResult[] {
+    return (run.results ?? []).filter(result => this.isFailure(result));
+  }
+
+  /**
+   * Worst first. A finished run is opened to find out what broke, so the order that matters is by
+   * how much attention a result needs, not the order the cases happened to be executed in.
+   */
+  resultsWorstFirst(run: TestRun): TestResult[] {
+    const rank: Record<string, number> = { FAILED: 0, BLOCKED: 1, PENDING: 2, SKIPPED: 3, PASSED: 4 };
+    return [...(run.results ?? [])].sort(
+      (a, b) => (rank[a.status] ?? 9) - (rank[b.status] ?? 9)
+    );
+  }
+
+  /**
+   * The first step that failed, which is usually where the story starts — a later step failing is
+   * often just fallout from this one.
+   */
+  firstFailedStep(result: TestResult): StepResult | undefined {
+    return this.sortedSteps(result).find(
+      step => step.status === 'FAILED' || step.status === 'BLOCKED'
+    );
+  }
+
   completeRun(run: TestRun): void {
     this.testRunApi.getCompletionInfo(this.projectId, run.id)
       .pipe(take(1), takeUntilDestroyed(this.destroyRef))

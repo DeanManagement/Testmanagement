@@ -51,6 +51,18 @@ services:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       # SSRF guard for admin-registered build servers; enable only for a CI server on your LAN.
       BUILDSERVER_ALLOW_PRIVATE_TARGETS: ${BUILDSERVER_ALLOW_PRIVATE_TARGETS:-false}
+      # PRD-025: the MCP server for AI agents. Off by default — it is a write surface for
+      # non-human callers, so switching it on should be deliberate.
+      MCP_ENABLED: ${MCP_ENABLED:-false}
+      # Guardrails against an agent looping, not a security boundary — that is the key's project
+      # role. Raise the write budget for a bulk import, lower it if an agent is left unattended.
+      MCP_MAX_WRITES_PER_MINUTE: ${MCP_MAX_WRITES_PER_MINUTE:-60}
+      MCP_MAX_BULK_SIZE: ${MCP_MAX_BULK_SIZE:-50}
+      MCP_MAX_STEPS_PER_CASE: ${MCP_MAX_STEPS_PER_CASE:-100}
+      MCP_AUDIT_RETENTION_DAYS: ${MCP_AUDIT_RETENTION_DAYS:-90}
+      # PRD-025 §3.2: API keys without a project scope hold no role and are rejected. Enable only
+      # while re-creating pre-existing keys scoped to a project.
+      API_KEYS_ALLOW_LEGACY_GLOBAL: ${API_KEYS_ALLOW_LEGACY_GLOBAL:-false}
     # 8012 kept as the published port so existing bookmarks and reverse-proxy rules still work;
     # in-container everything is Spring on 8089.
     ports:

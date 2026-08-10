@@ -22,6 +22,10 @@ Optional limits, with their defaults:
 | `MCP_MAX_STEPS_PER_CASE` | 100 | Steps in one test case |
 | `MCP_AUDIT_RETENTION_DAYS` | 90 | How long tool-call records are kept |
 
+All of these are plumbed through `docker-compose.yml`, so setting them in your `.env` is enough.
+Raise `MCP_MAX_WRITES_PER_MINUTE` before a bulk import — 60 is deliberately low enough that an
+agent stuck in a loop is stopped within a minute.
+
 ## 2. Create a key
 
 Settings → API Keys → Create. Pick the project and a role:
