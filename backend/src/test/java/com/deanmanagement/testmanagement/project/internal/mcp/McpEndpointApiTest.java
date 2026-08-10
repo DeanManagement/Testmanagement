@@ -96,7 +96,13 @@ class McpEndpointApiTest {
                 .contains("create_test_suite")
                 .contains("create_test_plan")
                 .contains("create_test_case_folder")
-                .contains("move_test_cases_to_folder");
+                .contains("move_test_cases_to_folder")
+                .contains("list_test_runs")
+                .contains("get_test_run")
+                .contains("list_requirements")
+                .contains("create_requirement")
+                .contains("link_test_cases_to_requirement")
+                .contains("get_traceability_matrix");
         // Schemas are derived from the method signatures, so an enum an agent must get right
         // should appear in them rather than only in prose.
         assertThat(tools.body()).contains("CRITICAL").contains("DEPRECATED");
@@ -153,10 +159,14 @@ class McpEndpointApiTest {
         // deletes anything.
         HttpResponse<String> tools = post(TOOLS_LIST, "X-API-Key", rawKey);
 
+        // Reading runs is fine and was added deliberately; *writing* results is not — that stays
+        // with PRD-005's ingestion endpoints, and nothing here deletes.
         assertThat(tools.body())
                 .doesNotContain("create_test_run")
                 .doesNotContain("record_result")
-                .doesNotContain("delete_test_case");
+                .doesNotContain("update_test_result")
+                .doesNotContain("delete_test_case")
+                .doesNotContain("delete_requirement");
     }
 
     @Test

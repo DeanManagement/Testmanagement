@@ -9,7 +9,12 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.ApiKeyRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
+import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestResultRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestRunRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseFolderService;
+import com.deanmanagement.testmanagement.project.internal.service.ProjectService;
+import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -66,6 +71,14 @@ class McpToolSurfaceApiTest {
     private McpWriteThrottle writeThrottle;
     @Autowired
     private TestCaseFolderService folderService;
+    @Autowired
+    private RequirementTools requirementTools;
+    @Autowired
+    private TestRunReadTools testRunReadTools;
+    @Autowired
+    private TestRunService testRunService;
+    @Autowired
+    private ProjectService projectService;
 
     private Project project;
     private Project otherProject;
@@ -83,9 +96,10 @@ class McpToolSurfaceApiTest {
     @AfterEach
     void tearDown() {
         SecurityContextHolder.clearContext();
-        // Cascades to the projects' test cases, suites, plans and API keys.
-        projectRepository.deleteById(project.getId());
-        projectRepository.deleteById(otherProject.getId());
+        // Through the service rather than the repository: it removes the project's executions
+        // first, which a plain cascade cannot do (see ProjectDeletionWithResultsTest).
+        projectService.delete(project.getId(), null);
+        projectService.delete(otherProject.getId(), null);
     }
 
     private Project newProject(String name, String key) {
@@ -461,6 +475,142 @@ class McpToolSurfaceApiTest {
         assertThatThrownBy(() -> discoveryTools.createTestCaseFolder("  ", null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("name");
+    }
+
+    // --- reading executions ----------------------------------------------------------------
+
+    /**
+     * The loop these tools exist to close: after results arrive — from CI, or from a human running
+     * the suite — an agent must be able to ask what failed, so it can act on it.
+     */
+    @Test
+    void runsAndTheirResultsCanBeReadBack() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase passing = createCase("Geht durch");
+        McpDtos.CreatedTestCase failing = createCase("Fällt durch");
+        UUID runId = testRunService.create(project.getId(),
+                new CreateTestRunRequest("Regression", "Produktion",
+                        Set.of(passing.id(), failing.id()), null, null), null).id();
+        markResult(runId, failing.id(), TestResultStatus.FAILED, "Schaltfläche reagiert nicht");
+        markResult(runId, passing.id(), TestResultStatus.PASSED, null);
+
+        McpDtos.TestRunPage runs = testRunReadTools.listTestRuns(null, null, null, null);
+        assertThat(runs.testRuns()).singleElement().satisfies(run -> {
+            assertThat(run.name()).isEqualTo("Regression");
+            assertThat(run.total()).isEqualTo(2);
+            assertThat(run.failed()).isEqualTo(1);
+        });
+
+        McpDtos.TestRunDetail onlyFailures =
+                testRunReadTools.getTestRun(runId, List.of(TestResultStatus.FAILED));
+        assertThat(onlyFailures.results()).singleElement().satisfies(result -> {
+            assertThat(result.testCaseId()).isEqualTo(failing.id());
+            assertThat(result.comment()).isEqualTo("Schaltfläche reagiert nicht");
+        });
+        assertThat(testRunReadTools.getTestRun(runId, null).results()).hasSize(2);
+    }
+
+    @Test
+    void aRunFromAnotherProjectIsNotFound() {
+        authenticateAs(otherProject, ProjectRole.TESTER, "other-agent");
+        UUID foreignRun = testRunService.create(otherProject.getId(),
+                new CreateTestRunRequest("Fremder Lauf", null, Set.of(), null, null), null).id();
+        SecurityContextHolder.clearContext();
+
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+
+        assertThatThrownBy(() -> testRunReadTools.getTestRun(foreignRun, null))
+                .isInstanceOf(ResourceNotFoundException.class);
+        assertThat(testRunReadTools.listTestRuns(null, null, null, null).testRuns()).isEmpty();
+    }
+
+    private void markResult(UUID runId, UUID testCaseId, TestResultStatus status, String comment) {
+        UUID resultId = testRunService.findById(project.getId(), runId).results().stream()
+                .filter(r -> r.testCaseId().equals(testCaseId))
+                .findFirst().orElseThrow().id();
+        testRunService.updateResult(project.getId(), runId, resultId,
+                new UpdateTestResultRequest(status, comment, null));
+    }
+
+    // --- requirements and traceability -----------------------------------------------------
+
+    /**
+     * The workflow the requirement tools exist for: record what the spec asks, link the cases that
+     * cover it, then find out what nothing actually proves. UNTESTED is the interesting verdict —
+     * a case is linked, so it looks covered, but it has never run.
+     */
+    @Test
+    void requirementsCanBeRecordedLinkedAndTraced() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase covering = createCase("Prüft die Anmeldung");
+
+        McpDtos.Requirement covered = requirementTools.createRequirement(
+                "REQ-1", "Benutzer können sich anmelden", "Aus dem Pflichtenheft, Abschnitt 3.1");
+        requirementTools.createRequirement("REQ-2", "Benutzer können ihr Passwort zurücksetzen", null);
+
+        requirementTools.linkTestCasesToRequirement(covered.id(), List.of(covering.id()));
+
+        McpDtos.TraceabilityMatrix matrix = requirementTools.getTraceabilityMatrix();
+
+        assertThat(matrix.summary().totalRequirements()).isEqualTo(2);
+        assertThat(matrix.summary().uncovered())
+                .as("REQ-2 has no linked case at all")
+                .isEqualTo(1);
+        assertThat(matrix.summary().untested())
+                .as("REQ-1 is linked to a case that has never been executed")
+                .isEqualTo(1);
+        assertThat(matrix.requirements())
+                .filteredOn(r -> r.externalId().equals("REQ-1"))
+                .singleElement()
+                .satisfies(row -> {
+                    assertThat(row.coverage()).isEqualTo("UNTESTED");
+                    assertThat(row.cells()).singleElement()
+                            .satisfies(cell -> assertThat(cell.testCaseKey()).isEqualTo(covering.key()));
+                });
+        assertThat(matrix.requirements())
+                .filteredOn(r -> r.externalId().equals("REQ-2"))
+                .singleElement()
+                .satisfies(row -> assertThat(row.coverage()).isEqualTo("UNCOVERED"));
+    }
+
+    @Test
+    void requirementsListShowsTheirLinkedCases() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase testCase = createCase("Ein abdeckender Fall");
+        McpDtos.Requirement requirement = requirementTools.createRequirement("REQ-9", "Etwas", null);
+        requirementTools.linkTestCasesToRequirement(requirement.id(), List.of(testCase.id()));
+
+        assertThat(requirementTools.listRequirements(null, null).requirements())
+                .singleElement()
+                .satisfies(r -> assertThat(r.testCases()).extracting(McpDtos.TestCaseRef::id)
+                        .containsExactly(testCase.id()));
+    }
+
+    @Test
+    void aTestCaseFromAnotherProjectCannotBeLinked() {
+        authenticateAs(otherProject, ProjectRole.TESTER, "other-agent");
+        McpDtos.CreatedTestCase foreign = createCase("Fremder Fall");
+        SecurityContextHolder.clearContext();
+
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.Requirement requirement = requirementTools.createRequirement("REQ-3", "Etwas", null);
+
+        assertThatThrownBy(() ->
+                requirementTools.linkTestCasesToRequirement(requirement.id(), List.of(foreign.id())))
+                .isInstanceOf(ResourceNotFoundException.class);
+        assertThat(requirementTools.listRequirements(null, null).requirements())
+                .singleElement()
+                .satisfies(r -> assertThat(r.testCases()).isEmpty());
+    }
+
+    @Test
+    void aViewerKeyCanReadTheMatrixButNotWriteRequirements() {
+        authenticateAs(project, ProjectRole.VIEWER, "read-only-agent");
+
+        assertThatCode(() -> requirementTools.getTraceabilityMatrix()).doesNotThrowAnyException();
+        assertThatThrownBy(() -> requirementTools.createRequirement("REQ-4", "Nicht erlaubt", null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("TESTER");
     }
 
     // --- guardrails and audit --------------------------------------------------------------

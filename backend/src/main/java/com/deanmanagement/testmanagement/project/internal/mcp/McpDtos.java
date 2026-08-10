@@ -3,8 +3,11 @@ package com.deanmanagement.testmanagement.project.internal.mcp;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import org.jspecify.annotations.Nullable;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
@@ -93,4 +96,38 @@ final class McpDtos {
 
     /** A near-match that blocked a create, so the agent can update it instead. */
     record DuplicateCandidate(UUID id, String key, String title) {}
+
+    // --- executions (read-only) --------------------------------------------------------------
+
+    record TestRunSummary(UUID id, String key, String name, @Nullable String environment,
+                          TestRunStatus status, int total, int passed, int failed, int blocked,
+                          int skipped, int pending, @Nullable Instant endTime) {}
+
+    record TestRunPage(List<TestRunSummary> testRuns, int page, int size, long totalElements,
+                       boolean hasMore) {}
+
+    record TestResult(UUID testCaseId, String testCaseTitle, TestResultStatus status,
+                      @Nullable String comment, @Nullable String defectLink) {}
+
+    record TestRunDetail(UUID id, String key, String name, @Nullable String environment,
+                         TestRunStatus status, @Nullable Instant startTime, @Nullable Instant endTime,
+                         List<TestResult> results) {}
+
+    // --- requirements and traceability -------------------------------------------------------
+
+    record Requirement(UUID id, String externalId, String title, @Nullable String description,
+                       List<TestCaseRef> testCases) {}
+
+    record RequirementPage(List<Requirement> requirements, int page, int size, long totalElements,
+                           boolean hasMore) {}
+
+    record TraceabilityCell(UUID testCaseId, String testCaseKey, String testCaseTitle, String status) {}
+
+    record TraceabilityRow(UUID requirementId, String externalId, String title, String coverage,
+                           List<TraceabilityCell> cells) {}
+
+    record CoverageSummary(long totalRequirements, long uncovered, long untested, long failing,
+                           long passing, double coveragePercent) {}
+
+    record TraceabilityMatrix(List<TraceabilityRow> requirements, CoverageSummary summary) {}
 }
