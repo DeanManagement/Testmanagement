@@ -15,6 +15,7 @@ import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundExcept
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.ai.mcp.annotation.McpToolParam;
+import org.jspecify.annotations.Nullable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -276,10 +277,21 @@ public class TestCaseTools {
         return new McpDtos.BulkResult(dry, created, skipped, failed, results);
     }
 
-    /** One item of {@code create_test_cases_bulk}; mirrors {@code create_test_case}'s arguments. */
-    public record BulkCase(String title, Priority priority, String description, String preconditions,
-                           TestCaseStatus status, Set<String> labels, List<McpDtos.Step> steps,
-                           UUID folderId) {}
+    /**
+     * One item of {@code create_test_cases_bulk}; mirrors {@code create_test_case}'s arguments.
+     *
+     * <p>Everything but title and priority is {@code @Nullable} so the generated schema marks it
+     * optional — see {@link McpDtos.Step} for why that annotation is required rather than cosmetic.
+     * Without it an agent has to send all eight fields on every one of fifty items.
+     */
+    public record BulkCase(String title,
+                           Priority priority,
+                           @Nullable String description,
+                           @Nullable String preconditions,
+                           @Nullable TestCaseStatus status,
+                           @Nullable Set<String> labels,
+                           @Nullable List<McpDtos.Step> steps,
+                           @Nullable UUID folderId) {}
 
     // --- internals -------------------------------------------------------------------------
 

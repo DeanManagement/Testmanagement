@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.mcp;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
+import org.jspecify.annotations.Nullable;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -33,7 +34,19 @@ final class McpDtos {
     record TestCasePage(List<TestCaseSummary> testCases, int page, int size, long totalElements,
                         boolean hasMore) {}
 
-    record Step(String action, String expectedResult, String testData) {}
+    /**
+     * A test step as an agent supplies it.
+     *
+     * <p>The {@code @Nullable}s are load-bearing, not documentation. Spring AI generates the tool's
+     * JSON schema with victools, which marks every property of a nested type <em>required</em>
+     * unless it is annotated nullable — {@code @McpToolParam(required = false)} only applies to
+     * top-level method parameters. Without these, a client is rejected at schema validation, before
+     * any of this code runs, for omitting {@code testData} on a step that has none. Most steps have
+     * none.
+     */
+    record Step(String action,
+                @Nullable String expectedResult,
+                @Nullable String testData) {}
 
     record TestCaseDetail(UUID id, String key, String title, String description,
                           String preconditions, TestCaseStatus status, Priority priority,

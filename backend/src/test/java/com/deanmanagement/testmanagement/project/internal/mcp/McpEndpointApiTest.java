@@ -13,12 +13,17 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.TestPropertySource;
 
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -39,6 +44,8 @@ class McpEndpointApiTest {
     private ApiKeyService apiKeyService;
 
     private String rawKey;
+
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     private static final String INITIALIZE = """
             {"jsonrpc":"2.0","id":1,"method":"initialize","params":{
@@ -91,6 +98,51 @@ class McpEndpointApiTest {
         // Schemas are derived from the method signatures, so an enum an agent must get right
         // should appear in them rather than only in prose.
         assertThat(tools.body()).contains("CRITICAL").contains("DEPRECATED");
+    }
+
+    /**
+     * Optional arguments must be optional in the generated schema, including inside nested types.
+     *
+     * <p>Schema validation happens in the MCP layer, before any of our code runs, so a wrongly
+     * required field is invisible to every test that calls the tools in Java — which is how a live
+     * client hit it first. victools marks every property of a nested record required unless it is
+     * annotated {@code @Nullable}; {@code @McpToolParam(required = false)} only reaches top-level
+     * method parameters. Most steps have no testData, so getting this wrong made steps unusable.
+     */
+    @Test
+    void optionalArgumentsAreOptionalInTheSchema() throws Exception {
+        JsonNode tools = MAPPER.readTree(post(TOOLS_LIST, "X-API-Key", rawKey).body())
+                .path("result").path("tools");
+
+        JsonNode createCase = toolNamed(tools, "create_test_case");
+        assertThat(required(createCase.path("inputSchema")))
+                .containsExactlyInAnyOrder("title", "priority");
+
+        JsonNode step = createCase.path("inputSchema").path("properties").path("steps").path("items");
+        assertThat(required(step))
+                .as("a step needs an action; expectedResult and testData are usually absent")
+                .containsExactly("action");
+
+        JsonNode bulkItem = toolNamed(tools, "create_test_cases_bulk")
+                .path("inputSchema").path("properties").path("cases").path("items");
+        assertThat(required(bulkItem))
+                .as("50 items × 8 mandatory fields is not a usable bulk API")
+                .containsExactlyInAnyOrder("title", "priority");
+    }
+
+    private static JsonNode toolNamed(JsonNode tools, String name) {
+        for (JsonNode tool : tools) {
+            if (name.equals(tool.path("name").asText())) {
+                return tool;
+            }
+        }
+        throw new AssertionError("tool not advertised: " + name);
+    }
+
+    private static List<String> required(JsonNode schema) {
+        List<String> names = new ArrayList<>();
+        schema.path("required").forEach(node -> names.add(node.asText()));
+        return names;
     }
 
     @Test
