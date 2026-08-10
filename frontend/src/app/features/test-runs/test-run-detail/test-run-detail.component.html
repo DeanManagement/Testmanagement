@@ -341,28 +341,28 @@
         @if (failures(run).length) {
           <div class="failure-summary" data-test-id="test-run-failure-summary">
             <div class="failure-summary-header">
-              <mat-icon class="failure-summary-icon">error</mat-icon>
+              <mat-icon>error</mat-icon>
               <h3>{{ 'testRun.failures.title' | translate: { count: failures(run).length } }}</h3>
-              <span class="failure-summary-of">{{ 'testRun.failures.outOf' | translate: { total: run.results?.length ?? 0 } }}</span>
+              <span>{{ 'testRun.failures.outOf' | translate: { total: run.results?.length ?? 0 } }}</span>
             </div>
             <ul class="failure-list">
               @for (result of failures(run); track result.id) {
                 <li class="failure-item" [attr.data-test-id]="'failure-item-' + result.id">
                   <span class="badge badge--{{ result.status | lowercase }} badge--small">{{ 'resultStatus.' + result.status | translate }}</span>
-                  <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link failure-item-title">
+                  <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link">
                     {{ result.testCaseTitle }}
                   </a>
                   @if (result.comment) {
-                    <p class="failure-item-comment" [attr.data-test-id]="'failure-comment-' + result.id">{{ result.comment }}</p>
+                    <p  [attr.data-test-id]="'failure-comment-' + result.id">{{ result.comment }}</p>
                   }
                   @if (firstFailedStep(result); as step) {
-                    <p class="failure-item-step">
+                    <p >
                       <strong>{{ 'stepResult.step' | translate }} {{ step.orderIndex + 1 }}:</strong>
                       {{ step.actualResult || step.action }}
                     </p>
                   }
                   @if (result.defectLink) {
-                    <a [href]="result.defectLink" target="_blank" rel="noopener noreferrer" class="failure-item-defect"
+                    <a [href]="result.defectLink" target="_blank" rel="noopener noreferrer" class="defect-link"
                        [attr.data-test-id]="'failure-defect-' + result.id">
                       <mat-icon class="meta-icon">bug_report</mat-icon>
                       {{ 'testRun.failures.defect' | translate }}
@@ -396,13 +396,13 @@
                 <!-- The executor's note and any linked defect. Populated by CI ingestion and by a
                      tester completing a run, and previously rendered nowhere on a finished run. -->
                 @if (result.comment) {
-                  <div class="result-comment-readonly" [attr.data-test-id]="'test-result-comment-' + result.id">
+                  <div class="step-actual-readonly" [attr.data-test-id]="'test-result-comment-' + result.id">
                     <span class="spec-label">{{ 'testRun.execution.comment' | translate }}</span>
                     <span class="spec-text">{{ result.comment }}</span>
                   </div>
                 }
                 @if (result.defectLink) {
-                  <a [href]="result.defectLink" target="_blank" rel="noopener noreferrer" class="result-defect-link"
+                  <a [href]="result.defectLink" target="_blank" rel="noopener noreferrer" class="defect-link"
                      [attr.data-test-id]="'test-result-defect-' + result.id">
                     <mat-icon class="meta-icon">bug_report</mat-icon>
                     {{ result.defectLink }}

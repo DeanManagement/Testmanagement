@@ -548,9 +548,9 @@ app-step-spec-card {
   }
 }
 
-/* Failures first, and loud. A finished run is read to find out what broke, so the findings sit
-   above the full result list rather than collapsed inside it. Uses the shared --tm-* tokens so it
-   follows the dark theme (PRD-013). */
+/* Failures first, and loud: a finished run is read to find out what broke, so the findings sit
+   above the full list rather than collapsed inside it. Reuses .step-actual-readonly, .spec-text
+   and .meta-icon from above rather than restating them. */
 .failure-summary {
   border: 1px solid var(--tm-danger);
   border-left-width: 4px;
@@ -558,6 +558,9 @@ app-step-spec-card {
   padding: 16px 20px;
   margin-bottom: 24px;
   background: color-mix(in srgb, var(--tm-danger) 6%, transparent);
+
+  h3 { margin: 0; font-size: 16px; color: var(--tm-danger); }
+  .mat-icon { color: var(--tm-danger); }
 }
 
 .failure-summary-header {
@@ -566,20 +569,7 @@ app-step-spec-card {
   gap: 8px;
   margin-bottom: 12px;
 
-  h3 {
-    margin: 0;
-    font-size: 16px;
-    color: var(--tm-danger);
-  }
-}
-
-.failure-summary-icon {
-  color: var(--tm-danger);
-}
-
-.failure-summary-of {
-  font-size: 13px;
-  opacity: 0.75;
+  span { font-size: 13px; opacity: 0.75; }
 }
 
 .failure-list {
@@ -596,48 +586,16 @@ app-step-spec-card {
   flex-wrap: wrap;
   align-items: baseline;
   gap: 8px;
+
+  /* The executor's note is the actual finding: full width, never truncated. */
+  p { flex-basis: 100%; margin: 0; font-size: 14px; white-space: pre-wrap; }
+  .item-link { font-weight: 600; }
 }
 
-.failure-item-title {
-  font-weight: 600;
-}
-
-/* The executor's note is the actual finding — full width, and never truncated. */
-.failure-item-comment,
-.failure-item-step {
-  flex-basis: 100%;
-  margin: 0;
-  font-size: 14px;
-  white-space: pre-wrap;
-}
-
-.failure-item-step {
-  opacity: 0.85;
-}
-
-.failure-item-defect {
+.defect-link {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-size: 13px;
-}
-
-.result-comment-readonly {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 12px;
-
-  .spec-text {
-    white-space: pre-wrap;
-  }
-}
-
-.result-defect-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-bottom: 12px;
   font-size: 13px;
   word-break: break-all;
 }
