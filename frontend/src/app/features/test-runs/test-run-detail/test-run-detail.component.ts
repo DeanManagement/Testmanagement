@@ -42,6 +42,7 @@ import { CommentFormComponent } from '../../../shared/components/comment-form/co
 import { KeyboardShortcutsDialogComponent } from '../keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.component';
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
 import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
+import { RunFailureSummaryComponent } from '../run-failure-summary/run-failure-summary.component';
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
 import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
@@ -76,6 +77,7 @@ import { ProjectMemberApiService } from '../../../core/services/project-member-a
     CommentFormComponent,
     AuthImagePipe,
     StepSpecCardComponent,
+    RunFailureSummaryComponent,
     EntityHistoryComponent,
     WatchToggleComponent,
     IssueLinksComponent,
@@ -476,15 +478,6 @@ export class TestRunDetailComponent implements OnInit {
     );
   }
 
-  /**
-   * The first step that failed, which is usually where the story starts — a later step failing is
-   * often just fallout from this one.
-   */
-  firstFailedStep(result: TestResult): StepResult | undefined {
-    return this.sortedSteps(result).find(
-      step => step.status === 'FAILED' || step.status === 'BLOCKED'
-    );
-  }
 
   completeRun(run: TestRun): void {
     this.testRunApi.getCompletionInfo(this.projectId, run.id)

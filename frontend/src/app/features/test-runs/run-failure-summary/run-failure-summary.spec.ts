@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { TestRun, TestResult } from '../../../shared/models/test-run.model';
-import { TestRunDetailComponent } from './test-run-detail.component';
+import { TestRunDetailComponent } from '../test-run-detail/test-run-detail.component';
+import { RunFailureSummaryComponent } from './run-failure-summary.component';
 
 /**
  * How a finished run orders and surfaces its results.
@@ -14,7 +15,10 @@ import { TestRunDetailComponent } from './test-run-detail.component';
  * actual error, and is what CI ingestion populates — was not rendered on a finished run at all.
  */
 describe('completed test run — surfacing failures', () => {
+  // Selection and ordering stay with the run detail, which owns the run; rendering a finding
+  // moved to the summary component along with the step it highlights.
   const proto = TestRunDetailComponent.prototype;
+  const summary = RunFailureSummaryComponent.prototype;
 
   const result = (over: Partial<TestResult>): TestResult => ({
     id: over.id ?? crypto.randomUUID(),
@@ -71,7 +75,7 @@ describe('completed test run — surfacing failures', () => {
     const step = (orderIndex: number, status: string, actualResult = '') =>
       ({ id: `s${orderIndex}`, orderIndex, status, actualResult, action: `step ${orderIndex}` }) as never;
 
-    const found = proto.firstFailedStep(
+    const found = summary.firstFailedStep(
       result({
         status: 'FAILED',
         // Deliberately out of order — the component sorts before searching.

@@ -334,45 +334,13 @@
           </div>
         </div>
       } @else {
-        <!-- What went wrong, before anything else. A finished run is read to find out what broke;
-             everything that passed is background. Without this the failures sat collapsed in the
-             accordion below and their comments — which carry the actual error — were not rendered
-             at all. -->
-        @if (failures(run).length) {
-          <div class="failure-summary" data-test-id="test-run-failure-summary">
-            <div class="failure-summary-header">
-              <mat-icon>error</mat-icon>
-              <h3>{{ 'testRun.failures.title' | translate: { count: failures(run).length } }}</h3>
-              <span>{{ 'testRun.failures.outOf' | translate: { total: run.results?.length ?? 0 } }}</span>
-            </div>
-            <ul class="failure-list">
-              @for (result of failures(run); track result.id) {
-                <li class="failure-item" [attr.data-test-id]="'failure-item-' + result.id">
-                  <span class="badge badge--{{ result.status | lowercase }} badge--small">{{ 'resultStatus.' + result.status | translate }}</span>
-                  <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link">
-                    {{ result.testCaseTitle }}
-                  </a>
-                  @if (result.comment) {
-                    <p  [attr.data-test-id]="'failure-comment-' + result.id">{{ result.comment }}</p>
-                  }
-                  @if (firstFailedStep(result); as step) {
-                    <p >
-                      <strong>{{ 'stepResult.step' | translate }} {{ step.orderIndex + 1 }}:</strong>
-                      {{ step.actualResult || step.action }}
-                    </p>
-                  }
-                  @if (result.defectLink) {
-                    <a [href]="result.defectLink" target="_blank" rel="noopener noreferrer" class="defect-link"
-                       [attr.data-test-id]="'failure-defect-' + result.id">
-                      <mat-icon class="meta-icon">bug_report</mat-icon>
-                      {{ 'testRun.failures.defect' | translate }}
-                    </a>
-                  }
-                </li>
-              }
-            </ul>
-          </div>
-        }
+        <!-- What went wrong, before anything else. Its own component: this template is already
+             the largest in the app, and the block belongs on the run report too. -->
+        <app-run-failure-summary
+          [failures]="failures(run)"
+          [totalResults]="run.results?.length ?? 0"
+          [projectId]="projectId">
+        </app-run-failure-summary>
 
         <div class="results-section" data-test-id="test-run-results-section">
           <h3 class="results-title">{{ 'stepResult.results' | translate }} ({{ run.results?.length ?? 0 }})</h3>
