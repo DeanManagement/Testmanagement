@@ -468,10 +468,24 @@ Deviations and things worth knowing:
   security chain's `securityMatcher` widening is conditional on the same flag. Disabled means 404,
   asserted by `McpDisabledApiTest`.
 
-**Still to do:** no real MCP client has been pointed at this yet — the protocol is exercised by
-`McpEndpointApiTest` over real HTTP (initialize → tools/list, both header forms), but a live
-Claude Desktop / Claude Code session against a running instance is the obvious next check. The
-frontend has no MCP activity table yet either; the data and the admin endpoint
+### Verified live (2026-08-09)
+
+Exercised against a deployed instance with a project-scoped TESTER key: handshake, `tools/list`
+(all 13), `get_project`, `search_test_cases`, `list_test_case_folders`, `create_test_case` with
+steps into a folder, `update_test_case`, `create_test_cases_bulk` (dry run then real, with a
+duplicate correctly skipped against an existing case), `create_test_suite`, `create_test_plan`.
+Auth boundaries confirmed on the deployment: no key → 401 with a `WWW-Authenticate` challenge, a
+JWT-shaped bearer → 401, an unknown key → 401, and an API key against `/api/mcp-activity` → 403.
+
+**One bug only a live client could find.** Spring AI generates schemas with victools, which marks
+every property of a *nested* type required unless annotated `@Nullable` —
+`@McpToolParam(required = false)` only reaches top-level method parameters. So `Step.expectedResult`
+and `Step.testData` were mandatory, and every one of `BulkCase`'s eight fields was too. The client
+was rejected at schema validation, above the Java methods the tool tests call, so nothing in the
+suite could see it. Fixed, and `McpEndpointApiTest` now asserts the generated `required` arrays
+directly.
+
+**Still to do:** the frontend has no MCP activity table; the data and the admin endpoint
 (`GET /api/mcp-activity`) exist, so it is a UI-only piece of work.
 
 ## 9. Future Work
