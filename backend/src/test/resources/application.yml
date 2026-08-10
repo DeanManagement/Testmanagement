@@ -4,9 +4,25 @@ spring:
       pageable:
         default-page-size: 50
         max-page-size: 200
+  ai:
+    mcp:
+      server:
+        # This file SHADOWS src/main/resources/application.yml on the test classpath rather than
+        # merging with it, so the MCP transport settings have to be repeated here — without them a
+        # test that sets app.mcp.enabled=true gets the guardrails but no endpoint, and every
+        # protocol assertion fails with a puzzling 404.
+        enabled: ${app.mcp.enabled:false}
+        protocol: STATELESS
+        name: testmanagement
+        version: 1.0.0
+        streamable-http:
+          mcp-endpoint: /api/mcp
 app:
   search:
     full-text: false
+  mcp:
+    # Off unless a test turns it on, matching the production default.
+    enabled: false
   security:
     encryption-key: dGVzdC1zaGFyZWQtc2VjcmV0LWtleS0zMi1ieXRlcyE=
   sso:

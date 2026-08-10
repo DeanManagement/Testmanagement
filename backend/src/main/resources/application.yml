@@ -1,6 +1,26 @@
 spring:
   application:
     name: testmanagement
+  ai:
+    mcp:
+      server:
+        # PRD-025 §3.1. STATELESS streamable-HTTP: the API key is presented on every request, so
+        # there is no session state worth keeping and no affinity needed if this ever runs with
+        # more than one replica. SSE is deprecated in Spring AI 2.0 and is not offered.
+        #
+        # Chained off app.mcp.enabled rather than reading MCP_ENABLED again, so there is exactly
+        # one switch. Setting only one of the two would leave the transport and the guardrails
+        # disagreeing about whether the feature exists.
+        enabled: ${app.mcp.enabled:false}
+        protocol: STATELESS
+        name: testmanagement
+        version: 1.0.0
+        instructions: >-
+          Test management for a self-hosted instance. Every tool operates inside the single project
+          your API key is scoped to; no tool takes a project id. Search before creating: duplicate
+          test cases are the most common failure mode.
+        streamable-http:
+          mcp-endpoint: /api/mcp
   servlet:
     multipart:
       max-file-size: 10MB
@@ -80,6 +100,18 @@ app:
   search:
     # Postgres full-text (tsvector) search. Disable for non-Postgres deployments to use LIKE.
     full-text: ${SEARCH_FULL_TEXT:true}
+  api-keys:
+    # PRD-025 §3.2: keys without a project scope hold no role, so nothing can authorize them.
+    # Enable only while re-creating them scoped.
+    allow-legacy-global: ${API_KEYS_ALLOW_LEGACY_GLOBAL:false}
+  mcp:
+    # PRD-025: MCP server letting agents author test cases, suites and plans. Off by default —
+    # it is a write surface for non-human callers, so it should be a deliberate decision.
+    enabled: ${MCP_ENABLED:false}
+    max-writes-per-minute: ${MCP_MAX_WRITES_PER_MINUTE:60}
+    max-bulk-size: ${MCP_MAX_BULK_SIZE:50}
+    max-steps-per-case: ${MCP_MAX_STEPS_PER_CASE:100}
+    audit-retention-days: ${MCP_AUDIT_RETENTION_DAYS:90}
   mail:
     # Optional watcher email notifications. Off by default (air-gap safe).
     enabled: ${MAIL_ENABLED:false}

@@ -61,5 +61,24 @@ Note that 011, 014 and 015 were originally gated on a driver appearing — compl
 two, real demand for the third — and were built on request rather than because that driver arrived.
 Worth revisiting if any of them turns out to be carried complexity rather than used capability.
 
+## v2.2 — proposed
+
+| PRD | Title | Priority | Size | Status |
+|---|---|---|---|---|
+| [025](PRD-025-mcp-server.md) | MCP Server (agent-authored test cases & plans) | P2 | M | ✅ Implemented |
+
+**PRD-025 shipped on 2026-08-09**, in two commits. First the API-key → service-user authorization
+rework (§3.2), which closes a fail-open gap in `ProjectRoleAspect` — API-key callers bypassed
+project role checks entirely — and is worth having on its own. Then the 13-tool authoring surface at
+`/api/mcp` (Spring AI 2.0, stateless streamable-HTTP), off by default behind `app.mcp.enabled`.
+
+Two cross-project holes were found by review during this work and are fixed: API keys failing open
+past `@RequireProjectRole`, and `create_test_suite` (plus the equivalent REST endpoint) accepting
+test case ids from any project.
+
+**Breaking change in §3.2:** API keys without a project scope are now rejected. Set
+`app.api-keys.allow-legacy-global=true` to keep them working while re-creating them scoped.
+
 ## Status legend
-Every PRD in this directory is **Implemented**. New work should get a new PRD rather than extending a shipped one.
+Every PRD in this directory is **Implemented**. New work should get a new PRD rather than extending
+a shipped one.
