@@ -372,6 +372,97 @@ class McpToolSurfaceApiTest {
                 .isEqualTo(LocalDate.of(2026, 9, 1));
     }
 
+    // --- folders ---------------------------------------------------------------------------
+
+    @Test
+    void createFolderAndFileCasesIntoIt() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase one = createCase("Erster Fall");
+        McpDtos.CreatedTestCase two = createCase("Zweiter Fall");
+
+        McpDtos.Folder parent = discoveryTools.createTestCaseFolder("Navigation", null);
+        McpDtos.Folder child = discoveryTools.createTestCaseFolder("Hauptmenü", parent.id());
+
+        McpDtos.MoveResult moved = discoveryTools.moveTestCasesToFolder(
+                List.of(one.id(), two.id()), child.id());
+
+        assertThat(moved.moved()).isEqualTo(2);
+        assertThat(child.parentId()).isEqualTo(parent.id());
+        assertThat(testCaseTools.getTestCase(one.key()).folderId()).isEqualTo(child.id());
+        assertThat(discoveryTools.listTestCaseFolders())
+                .singleElement()
+                .satisfies(root -> {
+                    assertThat(root.name()).isEqualTo("Navigation");
+                    assertThat(root.children()).extracting(McpDtos.Folder::name)
+                            .containsExactly("Hauptmenü");
+                });
+    }
+
+    @Test
+    void movingCasesWithNoFolderReturnsThemToTheRoot() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase testCase = createCase("Wandert zurück");
+        McpDtos.Folder folder = discoveryTools.createTestCaseFolder("Zwischenablage", null);
+        discoveryTools.moveTestCasesToFolder(List.of(testCase.id()), folder.id());
+
+        discoveryTools.moveTestCasesToFolder(List.of(testCase.id()), null);
+
+        assertThat(testCaseTools.getTestCase(testCase.key()).folderId()).isNull();
+    }
+
+    /** Same scoping rule as everywhere else: a foreign id is not-found, and nothing moves. */
+    @Test
+    void casesFromAnotherProjectCannotBeFiled() {
+        authenticateAs(otherProject, ProjectRole.TESTER, "other-agent");
+        McpDtos.CreatedTestCase foreign = createCase("Gehört dem anderen Projekt");
+        SecurityContextHolder.clearContext();
+
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase own = createCase("Eigener Fall");
+        McpDtos.Folder folder = discoveryTools.createTestCaseFolder("Ziel", null);
+
+        assertThatThrownBy(() -> discoveryTools.moveTestCasesToFolder(
+                List.of(own.id(), foreign.id()), folder.id()))
+                .isInstanceOf(ResourceNotFoundException.class);
+        assertThat(testCaseTools.getTestCase(own.key()).folderId())
+                .as("the whole move is refused, so the caller's own case stays put")
+                .isNull();
+    }
+
+    @Test
+    void aFolderFromAnotherProjectCannotBeUsedAsParent() {
+        authenticateAs(otherProject, ProjectRole.TESTER, "other-agent");
+        McpDtos.Folder foreign = discoveryTools.createTestCaseFolder("Fremder Ordner", null);
+        SecurityContextHolder.clearContext();
+
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+
+        assertThatThrownBy(() -> discoveryTools.createTestCaseFolder("Untergeordnet", foreign.id()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void aViewerKeyCannotCreateOrMoveFolders() {
+        authenticateAs(project, ProjectRole.VIEWER, "read-only-agent");
+
+        assertThatThrownBy(() -> discoveryTools.createTestCaseFolder("Nicht erlaubt", null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("TESTER");
+        assertThatThrownBy(() ->
+                discoveryTools.moveTestCasesToFolder(List.of(UUID.randomUUID()), null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("TESTER");
+    }
+
+    @Test
+    void aFolderNeedsAName() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+
+        assertThatThrownBy(() -> discoveryTools.createTestCaseFolder("  ", null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("name");
+    }
+
     // --- guardrails and audit --------------------------------------------------------------
 
     @Test

@@ -94,7 +94,9 @@ class McpEndpointApiTest {
                 .contains("update_test_case")
                 .contains("create_test_cases_bulk")
                 .contains("create_test_suite")
-                .contains("create_test_plan");
+                .contains("create_test_plan")
+                .contains("create_test_case_folder")
+                .contains("move_test_cases_to_folder");
         // Schemas are derived from the method signatures, so an enum an agent must get right
         // should appear in them rather than only in prose.
         assertThat(tools.body()).contains("CRITICAL").contains("DEPRECATED");

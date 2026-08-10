@@ -162,20 +162,23 @@ public class TestCaseFolderService {
 
     @Transactional
     public void moveTestCases(UUID projectId, MoveTestCasesRequest request, UUID userId) {
-        TestCaseFolder targetFolder = null;
-        if (request.targetFolderId() != null) {
-            targetFolder = folderRepository.findById(request.targetFolderId())
-                    .filter(f -> f.getProject().getId().equals(projectId))
-                    .orElseThrow(() -> new ResourceNotFoundException("TestCaseFolder", request.targetFolderId()));
-        }
+        final TestCaseFolder targetFolder = request.targetFolderId() == null ? null
+                : folderRepository.findById(request.targetFolderId())
+                        .filter(f -> f.getProject().getId().equals(projectId))
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException("TestCaseFolder", request.targetFolderId()));
 
-        List<TestCase> testCases = testCaseRepository.findAllById(request.testCaseIds());
-        for (TestCase tc : testCases) {
-            if (!tc.getProject().getId().equals(projectId)) {
-                throw new IllegalArgumentException("Test case " + tc.getId() + " does not belong to this project");
-            }
-            tc.setFolder(targetFolder);
+        // Scoped lookup, and every requested id must resolve. Previously this loaded by id alone
+        // and then rejected a foreign case by message, which both leaked that the id exists and
+        // silently ignored ids that do not — so a typo moved fewer cases than asked, quietly.
+        List<TestCase> testCases =
+                testCaseRepository.findByIdInAndProjectId(request.testCaseIds(), projectId);
+        if (testCases.size() != new HashSet<>(request.testCaseIds()).size()) {
+            Set<UUID> missing = new HashSet<>(request.testCaseIds());
+            testCases.forEach(tc -> missing.remove(tc.getId()));
+            throw new ResourceNotFoundException("TestCase", missing.iterator().next());
         }
+        testCases.forEach(tc -> tc.setFolder(targetFolder));
         testCaseRepository.saveAll(testCases);
 
         String folderName = targetFolder != null ? targetFolder.getName() : "root";

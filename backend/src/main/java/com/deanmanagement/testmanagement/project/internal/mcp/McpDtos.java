@@ -52,7 +52,11 @@ final class McpDtos {
                           String preconditions, TestCaseStatus status, Priority priority,
                           Set<String> labels, UUID folderId, List<Step> steps) {}
 
-    record Folder(UUID id, String name, UUID parentId, long testCaseCount, List<Folder> children) {}
+    record Folder(UUID id, String name, @Nullable UUID parentId, long testCaseCount,
+                  List<Folder> children) {}
+
+    /** @param folderId null when the cases were moved back to the project root */
+    record MoveResult(int moved, @Nullable UUID folderId) {}
 
     record SuiteSummary(UUID id, String name, String description, int testCaseCount) {}
 

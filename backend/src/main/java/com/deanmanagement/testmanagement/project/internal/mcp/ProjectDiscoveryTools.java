@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.CreateTestCaseFolderRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.MoveTestCasesRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.TestCaseFolderResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
@@ -9,10 +11,12 @@ import com.deanmanagement.testmanagement.project.internal.repository.TestSuiteRe
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseFolderService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.mcp.annotation.McpTool;
+import org.springframework.ai.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Orientation tools (PRD-025 §3.4). An agent calls these first to learn what it is working in.
@@ -28,6 +32,8 @@ public class ProjectDiscoveryTools {
     private final TestSuiteRepository testSuiteRepository;
     private final TestPlanRepository testPlanRepository;
     private final TestCaseFolderService folderService;
+    private final McpWriteThrottle writeThrottle;
+    private final McpValidator validator;
 
     @McpTool(
             name = "get_project",
@@ -65,6 +71,57 @@ public class ProjectDiscoveryTools {
         return folderService.getTree(caller.projectId()).stream()
                 .map(ProjectDiscoveryTools::toFolder)
                 .toList();
+    }
+
+    @McpTool(
+            name = "create_test_case_folder",
+            description = """
+                    Create a folder to organise test cases. Pass parentId to nest it under an
+                    existing folder, or omit it for a top-level folder. Call
+                    list_test_case_folders first: folder names are not unique, so creating one that
+                    already exists just produces two folders with the same name.
+                    """,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
+    @Transactional
+    public McpDtos.Folder createTestCaseFolder(
+            @McpToolParam(description = "Folder name, max 255 characters") String name,
+            @McpToolParam(description = "Parent folder id; omit for a top-level folder", required = false)
+            UUID parentId) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        var request = new CreateTestCaseFolderRequest(name, parentId);
+        validator.validate(request);
+
+        TestCaseFolderResponse created =
+                folderService.create(caller.projectId(), request, caller.userId());
+        return new McpDtos.Folder(created.id(), created.name(), created.parentId(),
+                created.testCaseCount(), List.of());
+    }
+
+    @McpTool(
+            name = "move_test_cases_to_folder",
+            description = """
+                    File existing test cases into a folder. Pass folderId to move them there, or
+                    omit it to move them back to the project root. Every id must name a test case in
+                    this project; if one does not, nothing is moved.
+                    """,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.MoveResult moveTestCasesToFolder(
+            @McpToolParam(description = "UUIDs of the test cases to move") List<UUID> testCaseIds,
+            @McpToolParam(description = "Target folder id; omit to move to the project root", required = false)
+            UUID folderId) {
+
+        var caller = callerContext.requireWriter();
+        if (testCaseIds == null || testCaseIds.isEmpty()) {
+            throw new McpToolException("testCaseIds is required.");
+        }
+        writeThrottle.recordWrite(caller.apiKeyId());
+
+        folderService.moveTestCases(caller.projectId(),
+                new MoveTestCasesRequest(testCaseIds, folderId), caller.userId());
+        return new McpDtos.MoveResult(testCaseIds.size(), folderId);
     }
 
     private static McpDtos.Folder toFolder(TestCaseFolderResponse folder) {
