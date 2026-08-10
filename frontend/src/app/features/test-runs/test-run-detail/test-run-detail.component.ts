@@ -43,6 +43,7 @@ import { KeyboardShortcutsDialogComponent } from '../keyboard-shortcuts-dialog/k
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
 import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 import { RunFailureSummaryComponent } from '../run-failure-summary/run-failure-summary.component';
+import { failuresOf, isFailure, worstFirst } from '../../../shared/utils/test-result-triage';
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
 import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
@@ -455,27 +456,15 @@ export class TestRunDetailComponent implements OnInit {
     return [...result.stepResults].sort((a, b) => a.orderIndex - b.orderIndex);
   }
 
-  /**
-   * FAILED and BLOCKED both mean the case did not demonstrate what it was written to demonstrate,
-   * and both need someone to look. SKIPPED does not — it is a deliberate omission, not a finding.
-   */
-  isFailure(result: TestResult): boolean {
-    return result.status === 'FAILED' || result.status === 'BLOCKED';
-  }
+  /** Triage lives in one place so the detail and the report cannot disagree about a count. */
+  isFailure = isFailure;
 
   failures(run: TestRun): TestResult[] {
-    return (run.results ?? []).filter(result => this.isFailure(result));
+    return failuresOf(run.results);
   }
 
-  /**
-   * Worst first. A finished run is opened to find out what broke, so the order that matters is by
-   * how much attention a result needs, not the order the cases happened to be executed in.
-   */
   resultsWorstFirst(run: TestRun): TestResult[] {
-    const rank: Record<string, number> = { FAILED: 0, BLOCKED: 1, PENDING: 2, SKIPPED: 3, PASSED: 4 };
-    return [...(run.results ?? [])].sort(
-      (a, b) => (rank[a.status] ?? 9) - (rank[b.status] ?? 9)
-    );
+    return worstFirst(run.results);
   }
 
 

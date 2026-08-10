@@ -553,7 +553,8 @@
     "fromRun": "Aus Testlauf",
     "resultDate": "Datum",
     "chart": "Statusverteilung",
-    "downloadPdf": "PDF herunterladen"
+    "downloadPdf": "PDF herunterladen",
+    "comment": "Kommentar"
   },
   "comment": {
     "title": "Kommentare",

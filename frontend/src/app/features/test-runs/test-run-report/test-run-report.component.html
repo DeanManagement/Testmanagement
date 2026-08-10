@@ -32,6 +32,13 @@
       </div>
     </div>
 
+    <!-- Above the statistics on purpose: the pass rate is context, the failures are the finding. -->
+    <app-run-failure-summary
+      [failures]="failures"
+      [totalResults]="report.total"
+      [projectId]="projectId">
+    </app-run-failure-summary>
+
     <div class="report-body">
       <div class="stats-and-chart">
         <div class="stat-cards">
@@ -76,7 +83,7 @@
       <div class="results-table tm-card">
         <h3>{{ 'stepResult.results' | translate }} ({{ report.total }})</h3>
         <div class="table-scroll">
-          <table mat-table [dataSource]="report.results" class="data-table">
+          <table mat-table [dataSource]="resultsWorstFirst" class="data-table">
             <ng-container matColumnDef="testCase">
               <th mat-header-cell *matHeaderCellDef>{{ 'report.testCase' | translate }}</th>
               <td mat-cell *matCellDef="let result">
@@ -94,7 +101,7 @@
             </ng-container>
 
             <ng-container matColumnDef="comment">
-              <th mat-header-cell *matHeaderCellDef>Comment</th>
+              <th mat-header-cell *matHeaderCellDef>{{ 'report.comment' | translate }}</th>
               <td mat-cell *matCellDef="let result" class="comment-cell">{{ result.comment || '-' }}</td>
             </ng-container>
 

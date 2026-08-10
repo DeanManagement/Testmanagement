@@ -553,7 +553,8 @@
     "fromRun": "From Run",
     "resultDate": "Date",
     "chart": "Status Distribution",
-    "downloadPdf": "Download PDF"
+    "downloadPdf": "Download PDF",
+    "comment": "Comment"
   },
   "comment": {
     "title": "Comments",
