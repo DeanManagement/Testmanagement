@@ -7,11 +7,13 @@ import com.deanmanagement.testmanagement.project.internal.dto.project.UpdateProj
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ import java.util.UUID;
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
+    private final TestRunRepository testRunRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectMapper projectMapper;
     private final AuditService auditService;
@@ -76,6 +79,17 @@ public class ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project", id));
         auditService.log(project.getId(), userId, AuditAction.DELETED,
                 AuditEntityType.PROJECT, project.getId(), project.getName(), null);
+
+        // Executions first, explicitly. Project cascades to both testCases and testRuns, but
+        // test_results carries a NOT NULL foreign key to test_cases that no entity maps, so
+        // Hibernate cannot know the results have to go before the cases they reference — it tries
+        // to null the column instead and the delete fails. The symptom was that any project which
+        // had ever been executed could not be deleted, which is every project in real use.
+        List<TestRun> runs = testRunRepository.findByProjectIdOrderByCreatedAtDesc(project.getId());
+        if (!runs.isEmpty()) {
+            testRunRepository.deleteAll(runs);
+            testRunRepository.flush();
+        }
         projectRepository.delete(project);
     }
 

@@ -44,6 +44,10 @@ class ProjectServiceTest {
     @Mock
     private ProjectMemberRepository projectMemberRepository;
 
+    /** Deleting a project now clears its executions first — see ProjectDeletionWithResultsTest. */
+    @Mock
+    private com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository testRunRepository;
+
     @Mock
     private UserService userService;
 
@@ -186,6 +190,8 @@ class ProjectServiceTest {
     void delete_removesProject() {
         Project project = sampleProject();
         when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(project));
+        when(testRunRepository.findByProjectIdOrderByCreatedAtDesc(PROJECT_ID))
+                .thenReturn(java.util.List.of());
 
         projectService.delete(PROJECT_ID, null);
 
