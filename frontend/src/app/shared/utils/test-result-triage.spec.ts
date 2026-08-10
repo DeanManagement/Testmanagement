@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { TestResult } from '../models/test-run.model';
-import { RunFailureSummaryComponent } from '../../features/test-runs/run-failure-summary/run-failure-summary.component';
 import { failuresOf, isFailure, worstFirst } from './test-result-triage';
 
 /**
@@ -16,8 +15,6 @@ import { failuresOf, isFailure, worstFirst } from './test-result-triage';
  * actual error, and is what CI ingestion populates — was not rendered on a finished run at all.
  */
 describe('completed test run — surfacing failures', () => {
-  const summary = RunFailureSummaryComponent.prototype;
-
   const result = (over: Partial<TestResult>): TestResult => ({
     id: over.id ?? crypto.randomUUID(),
     testCaseId: 'tc-1',
@@ -61,26 +58,6 @@ describe('completed test run — surfacing failures', () => {
     ]);
 
     expect(ordered.map((r) => r.testCaseTitle)).toEqual(['f', 'b', 'n', 's', 'p']);
-  });
-
-  it('picks the first failing step, since a later one is usually just fallout', () => {
-    const step = (orderIndex: number, status: string, actualResult = '') =>
-      ({ id: `s${orderIndex}`, orderIndex, status, actualResult, action: `step ${orderIndex}` }) as never;
-
-    const found = summary.firstFailedStep(
-      result({
-        status: 'FAILED',
-        // Deliberately out of order — the component sorts before searching.
-        stepResults: [
-          step(2, 'FAILED', 'second failure, a consequence'),
-          step(0, 'PASSED'),
-          step(1, 'FAILED', 'the one that actually broke'),
-        ],
-      })
-    );
-
-    expect(found?.orderIndex).toBe(1);
-    expect(found?.actualResult).toBe('the one that actually broke');
   });
 
   it('has no findings for a wholly passing run, so the summary stays hidden', () => {

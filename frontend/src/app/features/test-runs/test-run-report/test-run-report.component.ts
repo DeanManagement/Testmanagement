@@ -11,8 +11,7 @@ import { MatTableModule } from '@angular/material/table';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Chart, DoughnutController, ArcElement, Tooltip, Legend } from 'chart.js';
 import { TestResult, TestRunReport } from '../../../shared/models/test-run.model';
-import { RunFailureSummaryComponent } from '../run-failure-summary/run-failure-summary.component';
-import { failuresOf, worstFirst } from '../../../shared/utils/test-result-triage';
+import { worstFirst } from '../../../shared/utils/test-result-triage';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { applyChartDefaults } from '../../../core/utils/chart-theme';
@@ -32,7 +31,6 @@ Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
     MatIconModule,
     MatTableModule,
     TranslateModule,
-    RunFailureSummaryComponent,
   ],
   templateUrl: './test-run-report.component.html',
   styleUrl: './test-run-report.component.scss',
@@ -51,11 +49,6 @@ export class TestRunReportComponent implements OnInit {
   runId = '';
   report: TestRunReport | null = null;
   downloading = false;
-
-  /** Shared with the run detail so the two screens cannot disagree about what counts as a failure. */
-  get failures(): TestResult[] {
-    return failuresOf(this.report?.results);
-  }
 
   get resultsWorstFirst(): TestResult[] {
     return worstFirst(this.report?.results);

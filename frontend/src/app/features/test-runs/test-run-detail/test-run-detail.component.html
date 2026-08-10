@@ -334,14 +334,6 @@
           </div>
         </div>
       } @else {
-        <!-- What went wrong, before anything else. Its own component: this template is already
-             the largest in the app, and the block belongs on the run report too. -->
-        <app-run-failure-summary
-          [failures]="failures(run)"
-          [totalResults]="run.results?.length ?? 0"
-          [projectId]="projectId">
-        </app-run-failure-summary>
-
         <div class="results-section" data-test-id="test-run-results-section">
           <h3 class="results-title">{{ 'stepResult.results' | translate }} ({{ run.results?.length ?? 0 }})</h3>
           <mat-accordion multi data-test-id="test-run-results-accordion">
