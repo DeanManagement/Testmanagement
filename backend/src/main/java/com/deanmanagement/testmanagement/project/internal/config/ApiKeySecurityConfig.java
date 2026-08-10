@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.config;
 
+import com.deanmanagement.testmanagement.project.internal.mcp.McpFilters;
 import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -42,6 +43,9 @@ public class ApiKeySecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(new ApiKeyAuthenticationFilter(apiKeyService, allowLegacyGlobalKeys),
                         UsernamePasswordAuthenticationFilter.class)
+                // After authentication, so an anonymous prober still just gets 401 — and before
+                // the transport, whose own answer to a bad Accept header is an empty 400.
+                .addFilterAfter(McpFilters.acceptHeader(), ApiKeyAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         // The discovery descriptor, for a client that has not been configured yet
                         // and therefore cannot authenticate. GET is not part of the stateless

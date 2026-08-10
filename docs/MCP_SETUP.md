@@ -50,7 +50,24 @@ telling it only the hostname is not enough. It needs the full URL and the header
 }
 ```
 
-`X-API-Key: tm_…` works too, for clients that prefer it.
+`X-API-Key: tm_…` works too, for clients that prefer it. **Include the scheme** — a bare
+`your-instance/api/mcp` without `https://` is not a URL most clients can use.
+
+### Calling it without an MCP client
+
+If you are driving it by hand, the transport requires **both** Accept types. This is the single
+most common way to get stuck: sending only `application/json`, or leaving a client's default
+`*/*`, is rejected.
+
+```bash
+curl -X POST https://your-instance/api/mcp \
+  -H 'Authorization: Bearer tm_your_key_here' \
+  -H 'Content-Type: application/json' \
+  -H 'Accept: application/json, text/event-stream' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+```
+
+Get it wrong and the response says so, naming the header and what it needs to contain.
 
 If you are unsure a client is reaching the right place, `GET https://your-instance/api/mcp` in a
 browser returns a small descriptor naming the endpoint, transport and accepted headers. And an API

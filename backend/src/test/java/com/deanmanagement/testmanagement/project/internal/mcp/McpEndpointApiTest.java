@@ -153,6 +153,54 @@ class McpEndpointApiTest {
         return names;
     }
 
+    /**
+     * The rejection that costs hand-written clients the most time.
+     *
+     * <p>Streamable-HTTP requires the caller to accept both {@code application/json} and
+     * {@code text/event-stream}. The transport enforces that with an empty 400 — no message, no
+     * header name. An agent sent {@code Accept: application/json}, which is the obvious guess for
+     * JSON-RPC, got nothing back it could act on, and spent an afternoon deciding the transport was
+     * mismatched. Each variant below is one it actually tried.
+     */
+    @Test
+    void aWrongAcceptHeaderSaysWhatIsWrong() throws Exception {
+        for (String accept : new String[] {"application/json", "*/*", "text/event-stream", null}) {
+            HttpResponse<String> response = postWithAccept(accept);
+
+            assertThat(response.statusCode())
+                    .as("Accept: %s", accept)
+                    .isEqualTo(400);
+            assertThat(response.body())
+                    .as("Accept: %s — an empty body is what made this so expensive", accept)
+                    .isNotEmpty()
+                    .contains("application/json, text/event-stream")
+                    .contains("Accept");
+        }
+    }
+
+    @Test
+    void bothAcceptTypesAreLetThrough() throws Exception {
+        assertThat(postWithAccept("application/json, text/event-stream").statusCode()).isEqualTo(200);
+        // Order and spacing are the client's business, not ours.
+        assertThat(postWithAccept("text/event-stream,application/json").statusCode()).isEqualTo(200);
+    }
+
+    @Test
+    void theDescriptorStatesTheHeadersAClientMustSend() throws Exception {
+        // The descriptor is where someone speaking HTTP but not MCP looks first, so the
+        // requirement has to be stated there rather than only in the docs.
+        String body = post(null, null, null, "GET").body();
+
+        assertThat(body)
+                .contains("application/json, text/event-stream")
+                .contains("\"method\":\"POST\"")
+                .contains("curl");
+    }
+
+    private HttpResponse<String> postWithAccept(String accept) throws Exception {
+        return post(INITIALIZE, "X-API-Key", rawKey, "POST", accept);
+    }
+
     @Test
     void execution_toolsAreNotExposed() throws Exception {
         // v1 is authoring only (§2 non-goals). Recording results stays PRD-005's job, and no tool
@@ -204,12 +252,30 @@ class McpEndpointApiTest {
 
     private HttpResponse<String> post(String body, String headerName, String headerValue)
             throws IOException, InterruptedException {
+        return post(body, headerName, headerValue, "POST", "application/json, text/event-stream");
+    }
+
+    private HttpResponse<String> post(String body, String headerName, String headerValue,
+                                      String method) throws IOException, InterruptedException {
+        return post(body, headerName, headerValue, method, "application/json, text/event-stream");
+    }
+
+    /** @param accept null to send no Accept header at all, which is one of the failing cases */
+    private HttpResponse<String> post(String body, String headerName, String headerValue,
+                                      String method, String accept)
+            throws IOException, InterruptedException {
         HttpRequest.Builder request = HttpRequest.newBuilder()
                 .uri(URI.create("http://localhost:" + port + "/api/mcp"))
-                .timeout(Duration.ofSeconds(10))
-                .header("Content-Type", "application/json")
-                .header("Accept", "application/json, text/event-stream")
-                .POST(HttpRequest.BodyPublishers.ofString(body));
+                .timeout(Duration.ofSeconds(10));
+        if ("GET".equals(method)) {
+            request.GET();
+        } else {
+            request.header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body));
+        }
+        if (accept != null) {
+            request.header("Accept", accept);
+        }
         if (headerName != null) {
             request.header(headerName, headerValue);
         }
