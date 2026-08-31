@@ -26,6 +26,9 @@ public interface TestCaseRepository extends JpaRepository<TestCase, UUID>, JpaSp
      */
     List<TestCase> findByIdInAndProjectId(Collection<UUID> ids, UUID projectId);
 
+    /** Single-id counterpart of the above, for the same reason (PRD-027 §3.5). */
+    Optional<TestCase> findByIdAndProjectId(UUID id, UUID projectId);
+
     List<TestCase> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
 
     long countByProjectId(UUID projectId);

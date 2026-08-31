@@ -10,11 +10,21 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDate;
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface TestPlanRepository extends JpaRepository<TestPlan, UUID> {
 
     List<TestPlan> findByProjectIdOrderByCreatedAtDesc(UUID projectId);
+
+    /**
+     * Project-scoped lookup for a caller-supplied plan id (PRD-027 §3.5).
+     *
+     * <p>Callers that already know the project must not reach a plan through a bare
+     * {@code findById}: attaching a run to another project's plan makes that run count toward the
+     * other plan's pass rate, which is a cross-project write, not just a leak.
+     */
+    Optional<TestPlan> findByIdAndProjectId(UUID id, UUID projectId);
 
     List<TestPlan> findByAssigneeIdOrderByCreatedAtDesc(UUID assigneeId);
 

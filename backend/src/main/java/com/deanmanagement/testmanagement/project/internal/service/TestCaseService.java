@@ -154,10 +154,12 @@ public class TestCaseService {
 
     @Transactional
     public BulkOperationResponse bulkUpdateStatus(UUID projectId, BulkStatusRequest request, UUID userId) {
-        List<TestCase> testCases = testCaseRepository.findAllById(request.testCaseIds());
-        List<TestCase> projectTestCases = testCases.stream()
-                .filter(tc -> tc.getProject().getId().equals(projectId))
-                .toList();
+        // Scoped in the query rather than loaded across every project and filtered afterwards.
+        // The old form was safe — the size check below rejected foreign ids before anything was
+        // read off them — but it made the guard a property of this method rather than of the
+        // lookup, which is how the same shape became a real hole three times (PRD-027 §3.5).
+        List<TestCase> projectTestCases =
+                testCaseRepository.findByIdInAndProjectId(request.testCaseIds(), projectId);
 
         if (projectTestCases.size() != request.testCaseIds().size()) {
             throw new IllegalArgumentException("Some test case IDs do not belong to this project");
@@ -178,10 +180,9 @@ public class TestCaseService {
 
     @Transactional
     public BulkOperationResponse bulkDelete(UUID projectId, BulkDeleteRequest request, UUID userId) {
-        List<TestCase> testCases = testCaseRepository.findAllById(request.testCaseIds());
-        List<TestCase> projectTestCases = testCases.stream()
-                .filter(tc -> tc.getProject().getId().equals(projectId))
-                .toList();
+        // Scoped in the query — see bulkUpdateStatus.
+        List<TestCase> projectTestCases =
+                testCaseRepository.findByIdInAndProjectId(request.testCaseIds(), projectId);
 
         if (projectTestCases.size() != request.testCaseIds().size()) {
             throw new IllegalArgumentException("Some test case IDs do not belong to this project");

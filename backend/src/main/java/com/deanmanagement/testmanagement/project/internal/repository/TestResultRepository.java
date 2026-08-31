@@ -9,6 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -26,6 +27,17 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
 
     @Query("SELECT r FROM TestResult r LEFT JOIN FETCH r.stepResults WHERE r.id IN :ids AND r.testRun.id = :runId")
     List<TestResult> findByIdInAndTestRunId(@Param("ids") Set<UUID> ids, @Param("runId") UUID runId);
+
+    /**
+     * Project-scoped lookup for a caller-supplied result id (PRD-027 §3.5).
+     *
+     * <p>A test result carries no project of its own — it reaches one only through its run, which
+     * is why a bare {@code findById} looked harmless here and was not. A bug report linked to
+     * another project's result echoes that result's test case title straight back to the caller.
+     */
+    @Query("SELECT r FROM TestResult r JOIN r.testRun run "
+           + "WHERE r.id = :id AND run.project.id = :projectId")
+    Optional<TestResult> findByIdAndProjectId(@Param("id") UUID id, @Param("projectId") UUID projectId);
 
     /**
      * Terminal results across a project, newest first, for flakiness scoring (PRD-016).

@@ -71,7 +71,11 @@ public class CiIngestionService {
         run.setStartTime(now);
         run.setEndTime(now);
         if (testPlanId != null) {
-            TestPlan plan = testPlanRepository.findById(testPlanId)
+            // Scoped like the pipelineRunId on the line above, which always was (PRD-027 §3.5).
+            // testPlanId arrives as a free @RequestParam and requireTester() only authorizes the
+            // project in the path, so an unscoped lookup let a CI key file its run against another
+            // project's plan — where the results then count toward that plan's pass rate.
+            TestPlan plan = testPlanRepository.findByIdAndProjectId(testPlanId, project.getId())
                     .orElseThrow(() -> new ResourceNotFoundException("TestPlan", testPlanId));
             run.setTestPlan(plan);
         }

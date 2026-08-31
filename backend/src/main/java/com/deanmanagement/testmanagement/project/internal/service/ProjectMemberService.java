@@ -63,10 +63,7 @@ public class ProjectMemberService {
 
     @Transactional
     public ProjectMemberResponse updateRole(UUID projectId, UUID memberId, UpdateProjectMemberRequest request) {
-        ProjectMember member = projectMemberRepository.findById(memberId)
-                .filter(candidate -> !candidate.getUser().isServiceAccount())
-                .orElseThrow(() -> new ResourceNotFoundException("ProjectMember", memberId));
-
+        ProjectMember member = requireMemberOfProject(projectId, memberId);
         member.setRole(request.role());
         member = projectMemberRepository.save(member);
         return toResponse(member);
@@ -74,10 +71,29 @@ public class ProjectMemberService {
 
     @Transactional
     public void removeMember(UUID projectId, UUID memberId) {
-        ProjectMember member = projectMemberRepository.findById(memberId)
+        projectMemberRepository.delete(requireMemberOfProject(projectId, memberId));
+    }
+
+    /**
+     * The membership row named by {@code memberId}, <em>provided it belongs to this project</em>
+     * (PRD-027 §3.5).
+     *
+     * <p>Both callers previously resolved {@code memberId} through a bare {@code findById} and
+     * never looked at {@code projectId} at all — the parameter was accepted and dropped. The
+     * controller authorizes with {@code requireProjectAdmin(projectId)}, so being an admin of
+     * <em>any</em> project was enough to pass the gate and then act on a membership row belonging
+     * to a different one.
+     *
+     * <p>That made this the most serious of the set. The others leak a title or a name; this one
+     * let an admin of project A promote an account to ADMIN on project B, or delete a member's
+     * access to B outright, and {@code updateRole}'s response handed back that user's email
+     * address and display name — a membership-id enumeration oracle on the way past.
+     */
+    private ProjectMember requireMemberOfProject(UUID projectId, UUID memberId) {
+        return projectMemberRepository.findById(memberId)
+                .filter(candidate -> candidate.getProject().getId().equals(projectId))
                 .filter(candidate -> !candidate.getUser().isServiceAccount())
                 .orElseThrow(() -> new ResourceNotFoundException("ProjectMember", memberId));
-        projectMemberRepository.delete(member);
     }
 
     private ProjectMemberResponse toResponse(ProjectMember member) {

@@ -33,6 +33,15 @@ public interface TestRunRepository extends JpaRepository<TestRun, UUID>, JpaSpec
 
     long countByProjectIdAndStatus(UUID projectId, TestRunStatus status);
 
+    /**
+     * Project-scoped lookup for a caller-supplied run id (PRD-027 §3.5).
+     *
+     * <p>The {@code findById(..).filter(r -> r.getProject()...)} idiom this service uses elsewhere
+     * is equivalent; this exists for the callers that only hold an id from a request body, where
+     * the filter is easy to forget.
+     */
+    Optional<TestRun> findByIdAndProjectId(UUID id, UUID projectId);
+
     @Query("SELECT DISTINCT r FROM TestRun r " +
             "LEFT JOIN FETCH r.executor " +
             "LEFT JOIN FETCH r.completedBy " +

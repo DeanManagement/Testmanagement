@@ -2,8 +2,11 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.TestPlan;
+import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,8 +43,12 @@ class CiIngestionApiTest {
     @Autowired
     private ApiKeyService apiKeyService;
 
+    @Autowired
+    private TestPlanRepository testPlanRepository;
+
     private UUID projectId;
     private String apiKey;
+    private UUID foreignPlanId;
     private static final String KEY = "CI";
 
     private static final String SUREFIRE_XML = """
@@ -107,6 +114,38 @@ class CiIngestionApiTest {
         projectId = projectRepository.save(project).getId();
 
         apiKey = apiKeyService.create(new CreateApiKeyRequest("ci-test-key", projectId, null)).rawKey();
+
+        Project other = new Project();
+        other.setName("Other Project");
+        other.setKey("OTHER");
+        other = projectRepository.save(other);
+
+        TestPlan foreignPlan = new TestPlan();
+        foreignPlan.setProject(other);
+        foreignPlan.setName("Their plan");
+        foreignPlan.setStatus(TestPlanStatus.OPEN);
+        foreignPlanId = testPlanRepository.save(foreignPlan).getId();
+    }
+
+    /**
+     * PRD-027 §3.5. {@code testPlanId} is a free query parameter here and {@code requireTester}
+     * only authorizes the project in the path, so an unscoped lookup let a CI key scoped to one
+     * project file its run against another project's plan — where the results then counted toward
+     * that plan's pass rate, and the response echoed the plan's name back.
+     *
+     * <p>The neighbouring {@code pipelineRunId} was scoped from the start, which is what makes this
+     * an oversight rather than a design choice.
+     */
+    @Test
+    void junit_againstAnotherProjectsTestPlan_isNotFound() throws Exception {
+        mockMvc.perform(post("/api/external/projects/{k}/test-runs/junit", KEY)
+                        .header("X-API-Key", apiKey)
+                        .param("testPlanId", foreignPlanId.toString())
+                        .contentType(MediaType.APPLICATION_XML).content(SUREFIRE_XML))
+                .andExpect(status().isNotFound());
+
+        assertThat(testCaseRepository.countByProjectId(projectId))
+                .as("a refused import must not auto-create its test cases").isZero();
     }
 
     @Test

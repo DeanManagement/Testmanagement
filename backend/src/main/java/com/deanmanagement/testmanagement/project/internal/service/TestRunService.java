@@ -30,6 +30,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.AllureReportRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.StepResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
@@ -70,6 +71,7 @@ public class TestRunService {
     private final AllureReportRepository allureReportRepository;
     private final TestCaseRepository testCaseRepository;
     private final TestPlanRepository testPlanRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final TestRunMapper testRunMapper;
     private final UserService userService;
     private final AuditService auditService;
@@ -210,20 +212,18 @@ public class TestRunService {
         run.setKey(project.getKey() + "-Run-" + runNumber);
 
         if (request.testPlanId() != null) {
-            TestPlan testPlan = testPlanRepository.findById(request.testPlanId())
+            TestPlan testPlan = testPlanRepository.findByIdAndProjectId(request.testPlanId(), projectId)
                     .orElseThrow(() -> new ResourceNotFoundException("TestPlan", request.testPlanId()));
             run.setTestPlan(testPlan);
         }
 
         if (request.executorId() != null) {
-            User executor = userService.findEntityById(request.executorId())
-                    .orElseThrow(() -> new ResourceNotFoundException("User", request.executorId()));
-            run.setExecutor(executor);
+            run.setExecutor(requireProjectMember(projectId, request.executorId()));
         }
 
         // If test case IDs provided, create pending results for each
         if (request.testCaseIds() != null && !request.testCaseIds().isEmpty()) {
-            List<TestCase> testCases = testCaseRepository.findAllById(request.testCaseIds());
+            List<TestCase> testCases = resolveTestCases(projectId, request.testCaseIds());
             for (TestCase tc : testCases) {
                 // A parameterized case expands into one result per set (PRD-015); a case with no
                 // sets yields exactly one result, byte-for-byte as before this feature existed.
@@ -306,7 +306,9 @@ public class TestRunService {
         run.setEnvironment(request.environment());
 
         if (request.testPlanId() != null) {
-            TestPlan testPlan = testPlanRepository.findById(request.testPlanId())
+            // Scoped for the same reason as create(): moving an existing run into another
+            // project's plan is the same cross-project write, just through PUT (PRD-027 §3.5).
+            TestPlan testPlan = testPlanRepository.findByIdAndProjectId(request.testPlanId(), projectId)
                     .orElseThrow(() -> new ResourceNotFoundException("TestPlan", request.testPlanId()));
             run.setTestPlan(testPlan);
         }
@@ -416,7 +418,9 @@ public class TestRunService {
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", runId));
 
-        TestCase testCase = testCaseRepository.findById(request.testCaseId())
+        // Scoped: an ad-hoc result naming another project's case would put that case's title into
+        // this run's report, readable by anyone who can see the run (PRD-027 §3.5).
+        TestCase testCase = testCaseRepository.findByIdAndProjectId(request.testCaseId(), projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("TestCase", request.testCaseId()));
 
         TestResult result = new TestResult();
@@ -526,12 +530,60 @@ public class TestRunService {
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", id));
 
-        User executor = userService.findEntityById(executorId)
-                .orElseThrow(() -> new ResourceNotFoundException("User", executorId));
-        run.setExecutor(executor);
+        run.setExecutor(requireProjectMember(projectId, executorId));
 
         run = testRunRepository.save(run);
         return testRunMapper.toResponse(run);
+    }
+
+    /**
+     * Resolves caller-supplied test case ids <em>within this project</em>, refusing the whole call
+     * if any id is unknown (PRD-027 §3.5).
+     *
+     * <p>This used to be {@code testCaseRepository.findAllById(ids)}, which is the third appearance
+     * of the bug PRD-025 §8 fixed in {@code TestSuiteService.resolveTestCases}. Two things were
+     * wrong with it. A run could be seeded with another project's cases, and {@code get_test_run}
+     * (and the REST equivalent) then read their titles back to a caller with no access to them.
+     * And {@code findAllById} <em>silently drops</em> ids it cannot find, so a run seeded with ten
+     * ids of which three were typos was created with seven results and reported success — the
+     * caller had no way to tell the difference between "these seven passed" and "the suite passed".
+     *
+     * <p>Failing the whole call rather than dropping the strays is the same choice
+     * {@code resolveTestCases} makes, and for the same reason: a partial run that looks complete is
+     * worse than no run.
+     */
+    private List<TestCase> resolveTestCases(UUID projectId, Set<UUID> testCaseIds) {
+        List<TestCase> found = testCaseRepository.findByIdInAndProjectId(testCaseIds, projectId);
+        if (found.size() != testCaseIds.size()) {
+            Set<UUID> foundIds = found.stream().map(TestCase::getId).collect(Collectors.toSet());
+            String missing = testCaseIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .map(UUID::toString)
+                    .sorted()
+                    .collect(Collectors.joining(", "));
+            throw new ResourceNotFoundException(
+                    "TestCase(s) not found in this project: " + missing);
+        }
+        return found;
+    }
+
+    /**
+     * Resolves a user who must already be a member of this project (PRD-027 §3.5).
+     *
+     * <p>{@code userService.findEntityById} resolves <em>any</em> user in the instance, so an
+     * executor could be set to someone with no access to the project — who then sees the run in
+     * their "My queue" widget, which reads by executor id and not by membership.
+     *
+     * <p>A non-member is reported as a missing user rather than a forbidden one: whether a given
+     * UUID names a real account elsewhere in the instance is not this project's to disclose
+     * (PRD-021).
+     */
+    private User requireProjectMember(UUID projectId, UUID userId) {
+        if (!projectMemberRepository.existsByUserIdAndProjectId(userId, projectId)) {
+            throw new ResourceNotFoundException("User", userId);
+        }
+        return userService.findEntityById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
 
     private TestResultStatus computeWorstStepStatus(List<StepResult> stepResults) {

@@ -15,6 +15,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
@@ -36,6 +37,24 @@ public class TestPlanService {
     private final TestPlanMapper testPlanMapper;
     private final AuditService auditService;
     private final UserService userService;
+    private final ProjectMemberRepository projectMemberRepository;
+
+    /**
+     * Resolves an assignee who must already be a member of this project (PRD-027 §3.5).
+     *
+     * <p>Was {@code userService.findEntityById(..).orElse(null)}: any user in the instance could be
+     * made assignee of any plan, and a mistyped id quietly produced an unassigned plan. Assigned
+     * plans surface in the assignee's "My queue" widget, which reads by assignee id and never
+     * checks membership — so this also stopped a plan from appearing in the queue of someone with
+     * no access to it.
+     */
+    private com.deanmanagement.testmanagement.user.User requireProjectMember(UUID projectId, UUID userId) {
+        if (!projectMemberRepository.existsByUserIdAndProjectId(userId, projectId)) {
+            throw new ResourceNotFoundException("User", userId);
+        }
+        return userService.findEntityById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
+    }
 
     public List<TestPlanResponse> findByProject(UUID projectId) {
         return testPlanRepository.findByProjectIdOrderByCreatedAtDesc(projectId).stream()
@@ -112,7 +131,7 @@ public class TestPlanService {
         plan.setStatus(TestPlanStatus.OPEN);
 
         if (request.assigneeId() != null) {
-            plan.setAssignee(userService.findEntityById(request.assigneeId()).orElse(null));
+            plan.setAssignee(requireProjectMember(projectId, request.assigneeId()));
         }
 
         plan = testPlanRepository.save(plan);
@@ -133,11 +152,10 @@ public class TestPlanService {
         if (request.status() != null) {
             plan.setStatus(request.status());
         }
-        if (request.assigneeId() != null) {
-            plan.setAssignee(userService.findEntityById(request.assigneeId()).orElse(null));
-        } else {
-            plan.setAssignee(null);
-        }
+        // Null clears the assignee (the SPA sends the whole object); a supplied id that does not
+        // name a member of this project now fails rather than silently clearing (PRD-027 §3.5).
+        plan.setAssignee(request.assigneeId() == null
+                ? null : requireProjectMember(projectId, request.assigneeId()));
 
         plan = testPlanRepository.save(plan);
         auditService.log(projectId, userId, AuditAction.UPDATED,

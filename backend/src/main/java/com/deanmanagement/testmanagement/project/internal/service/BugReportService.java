@@ -10,14 +10,18 @@ import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType
 import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
+import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.WebhookEventType;
 import com.deanmanagement.testmanagement.project.internal.webhook.WebhookEvent;
 import com.deanmanagement.testmanagement.project.internal.repository.BugReportRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.user.User;
 import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -41,6 +45,7 @@ public class BugReportService {
     private final ProjectRepository projectRepository;
     private final TestResultRepository testResultRepository;
     private final TestRunRepository testRunRepository;
+    private final ProjectMemberRepository projectMemberRepository;
     private final UserService userService;
     private final BugReportMapper bugReportMapper;
     private final AuditService auditService;
@@ -81,13 +86,13 @@ public class BugReportService {
         bugReport.setProject(project);
 
         if (request.testResultId() != null) {
-            bugReport.setTestResult(testResultRepository.findById(request.testResultId()).orElse(null));
+            bugReport.setTestResult(requireTestResult(projectId, request.testResultId()));
         }
         if (request.testRunId() != null) {
-            bugReport.setTestRun(testRunRepository.findById(request.testRunId()).orElse(null));
+            bugReport.setTestRun(requireTestRun(projectId, request.testRunId()));
         }
         if (request.assigneeId() != null) {
-            bugReport.setAssignee(userService.findEntityById(request.assigneeId()).orElse(null));
+            bugReport.setAssignee(requireProjectMember(projectId, request.assigneeId()));
         }
 
         bugReport = bugReportRepository.save(bugReport);
@@ -119,21 +124,15 @@ public class BugReportService {
         bugReport.setStatus(request.status());
         bugReport.setEnvironment(request.environment());
 
-        if (request.testResultId() != null) {
-            bugReport.setTestResult(testResultRepository.findById(request.testResultId()).orElse(null));
-        } else {
-            bugReport.setTestResult(null);
-        }
-        if (request.testRunId() != null) {
-            bugReport.setTestRun(testRunRepository.findById(request.testRunId()).orElse(null));
-        } else {
-            bugReport.setTestRun(null);
-        }
-        if (request.assigneeId() != null) {
-            bugReport.setAssignee(userService.findEntityById(request.assigneeId()).orElse(null));
-        } else {
-            bugReport.setAssignee(null);
-        }
+        // Null means "clear the link" here, deliberately — the SPA sends the whole object, so an
+        // absent assignee is how a human unassigns. A supplied id that does not resolve is a
+        // different thing entirely and now fails instead of silently clearing (PRD-027 §3.5).
+        bugReport.setTestResult(request.testResultId() == null
+                ? null : requireTestResult(projectId, request.testResultId()));
+        bugReport.setTestRun(request.testRunId() == null
+                ? null : requireTestRun(projectId, request.testRunId()));
+        bugReport.setAssignee(request.assigneeId() == null
+                ? null : requireProjectMember(projectId, request.assigneeId()));
 
         bugReport = bugReportRepository.save(bugReport);
         auditService.log(projectId, userId, AuditAction.UPDATED,
@@ -169,6 +168,39 @@ public class BugReportService {
         auditService.log(projectId, userId, AuditAction.DELETED,
                 AuditEntityType.BUG_REPORT, bugReport.getId(), bugReport.getTitle(), null);
         bugReportRepository.delete(bugReport);
+    }
+
+    /*
+     * PRD-027 §3.5. These three resolved through bare findById/.orElse(null), which was two bugs at
+     * once.
+     *
+     * A bug report in project A could be linked to project B's test result and run, and
+     * BugReportResponse carries testCaseTitle and testRunName — so a caller with access to A alone
+     * read the names of B's cases and runs back out of its own bug list. That is the same shape as
+     * the findAllById hole PRD-025 §8 fixed in TestSuiteService, and it was reachable through the
+     * REST API, not just the MCP tools that prompted the audit.
+     *
+     * And .orElse(null) meant a mistyped id produced a bug report with no link and a 200. The
+     * caller asked for a link to a specific failure and got a detached report, silently.
+     */
+
+    private TestResult requireTestResult(UUID projectId, UUID testResultId) {
+        return testResultRepository.findByIdAndProjectId(testResultId, projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("TestResult", testResultId));
+    }
+
+    private TestRun requireTestRun(UUID projectId, UUID testRunId) {
+        return testRunRepository.findByIdAndProjectId(testRunId, projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("TestRun", testRunId));
+    }
+
+    /** A non-member is reported missing rather than forbidden — see {@code TestRunService}. */
+    private User requireProjectMember(UUID projectId, UUID userId) {
+        if (!projectMemberRepository.existsByUserIdAndProjectId(userId, projectId)) {
+            throw new ResourceNotFoundException("User", userId);
+        }
+        return userService.findEntityById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
 
     private void requireBugReportsEnabled(UUID projectId) {
