@@ -85,6 +85,7 @@ test case ids from any project.
 |---|---|---|---|---|
 | [026](PRD-026-azure-devops-integration.md) | Azure DevOps Integration (Pipelines, Work Items, results, Entra ID) | P2 | L | 📝 Draft |
 | [027](PRD-027-mcp-execution-tools.md) | MCP Execution & Defect Tools (agent-run test execution) | P2 | M | ✅ Implemented |
+| [028](PRD-028-mcp-stdio-bridge.md) | MCP stdio Bridge (clients without HTTP transport) | P3 | S | 📝 Draft — blocked |
 
 Four surfaces on three seams that already exist, phased so each ships alone: Entra ID SSO is
 documentation only (the generic OIDC provider already handles it), Pipelines fills the
@@ -108,6 +109,12 @@ regression tests demonstrated red against the unfixed code first.
 nulled, and `UpdateTestRunRequest.name` treats null as "unchanged" (as `UpdateTestCaseRequest`
 already did since PRD-025). `MCP_MAX_WRITES_PER_MINUTE` defaults to 120, up from 60.
 
+PRD-028 tests the clause PRD-025 §9 left open — "a stdio wrapper if clients without HTTP transport
+turn out to matter in practice". It is **deliberately blocked on confirming that premise**: the
+evidence is one local model that shells out to `curl`, and the diagnosis that its client is
+stdio-only is a hypothesis, not a finding. §2.1 is a five-minute check that either justifies the
+work or closes the PRD unbuilt. The scope is written up first so that decision is an informed one.
+
 ## Status legend
-Every PRD in this directory except 026 is **Implemented**. New work should get a new PRD rather than
-extending a shipped one.
+Every PRD in this directory except 026 and 028 is **Implemented**. New work should get a new PRD
+rather than extending a shipped one.
