@@ -27,9 +27,12 @@ import java.util.UUID;
  * makes the obvious follow-up workflow — "look at the last run and write cases for what broke" —
  * impossible, and it is the loop that makes the rest of the surface worth having.
  *
- * <p>Deliberately read-only. Recording results stays with PRD-005's ingestion endpoints: that path
- * already exists, already authenticates with the same key, and is the one CI uses. A second way to
- * write results would be a worse version of it.
+ * <p>Was read-only until PRD-027. The original note said recording results belonged to PRD-005's
+ * ingestion endpoints, since that path exists, authenticates with the same key, and is what CI
+ * uses. That still holds for the case it described — an agent that already has every result should
+ * post the lot in one request — and {@code TestRunWriteTools} does not duplicate it. What it adds
+ * is the case the note did not cover: an agent executing tests one at a time, which has a single
+ * result and no idea how many more there will be, and so cannot use a batch endpoint at all.
  */
 @Service
 @RequiredArgsConstructor
@@ -81,6 +84,9 @@ public class TestRunReadTools {
                     failed and what the executor recorded. Pass onlyStatus to narrow it — for
                     example FAILED to get just the failures of a large run.
                     Result status: PENDING | PASSED | FAILED | BLOCKED | SKIPPED.
+                    Each result carries its own id; pass that to record_test_result when a test
+                    case appears more than once in the run, which happens when the case is
+                    parameterized (those results also carry parameterSetName).
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
@@ -96,8 +102,8 @@ public class TestRunReadTools {
                 com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse>of()
                 : run.results()).stream()
                 .filter(r -> onlyStatus == null || onlyStatus.isEmpty() || onlyStatus.contains(r.status()))
-                .map(r -> new McpDtos.TestResult(r.testCaseId(), r.testCaseTitle(), r.status(),
-                        r.comment(), r.defectLink()))
+                .map(r -> new McpDtos.TestResult(r.id(), r.testCaseId(), r.testCaseTitle(),
+                        r.status(), r.comment(), r.defectLink(), r.parameterSetName()))
                 .toList();
 
         return new McpDtos.TestRunDetail(run.id(), run.key(), run.name(), run.environment(),

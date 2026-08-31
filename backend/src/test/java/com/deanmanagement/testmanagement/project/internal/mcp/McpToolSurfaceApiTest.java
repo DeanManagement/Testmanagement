@@ -2,7 +2,10 @@ package com.deanmanagement.testmanagement.project.internal.mcp;
 
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.ApiKeyCreatedResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.parameter.SaveParameterSetRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
+import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
@@ -10,6 +13,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.ApiKeyRepos
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestResultRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseFolderService;
@@ -29,6 +33,7 @@ import org.springframework.test.context.TestPropertySource;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -69,6 +74,19 @@ class McpToolSurfaceApiTest {
     private McpToolInvocationRepository invocationRepository;
     @Autowired
     private McpWriteThrottle writeThrottle;
+
+    @Autowired
+    private McpProperties mcpProperties;
+
+    @Autowired
+    private com.deanmanagement.testmanagement.project.internal.service.ParameterSetService
+            parameterSetService;
+
+    @Autowired
+    private TestRunWriteTools testRunWriteTools;
+
+    @Autowired
+    private BugReportTools bugReportTools;
     @Autowired
     private TestCaseFolderService folderService;
     @Autowired
@@ -618,9 +636,11 @@ class McpToolSurfaceApiTest {
     @Test
     void writeBudgetIsEnforcedPerKey() {
         authenticateAs(project, ProjectRole.TESTER, "agent");
-        // The dev/test default is 60 writes a minute; spend them, then check the next one is
-        // refused with something an agent can act on.
-        for (int i = 0; i < 60; i++) {
+        // Read from the configured limit rather than hard-coded: this test asserted 60 until
+        // PRD-027 §3.6 raised the default to 120, and the value is not the point — that the budget
+        // binds, and refuses in terms an agent can act on, is.
+        int limit = mcpProperties.getMaxWritesPerMinute();
+        for (int i = 0; i < limit; i++) {
             createCase("Budgeted case " + i);
         }
 
@@ -652,5 +672,465 @@ class McpToolSurfaceApiTest {
                     assertThat(r.getCreatedEntityType()).isEqualTo("TEST_CASE");
                     assertThat(r.getCreatedEntityId()).isEqualTo(created.id());
                 });
+    }
+
+    /**
+     * The audit row has to say <em>what</em> was created, not just that something was. The aspect
+     * picks up new tools automatically but its result-to-entity mapping does not: runs and bug
+     * reports were landing with a null entity type until it was extended, which is precisely the
+     * kind of gap that survives because the row itself looks fine.
+     */
+    @Test
+    void auditRowsLinkTheRunAndBugTheyCreated() {
+        enableBugReports(project);
+        ApiKeyCreatedResponse key = authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestRun run =
+                testRunWriteTools.createTestRun("Geprüfter Lauf", null, null, null, null);
+        McpDtos.BugDetail bug = bugReportTools.createBugReport("Geprüfter Fehler", Priority.LOW,
+                null, null, null, null, null, null, null, null);
+
+        List<McpToolInvocation> records = invocationRepository.findAll().stream()
+                .filter(r -> key.id().equals(r.getApiKeyId()))
+                .toList();
+
+        assertThat(records)
+                .filteredOn(r -> "create_test_run".equals(r.getToolName()))
+                .singleElement()
+                .satisfies(r -> {
+                    assertThat(r.getCreatedEntityType()).isEqualTo("TEST_RUN");
+                    assertThat(r.getCreatedEntityId()).isEqualTo(run.id());
+                });
+        assertThat(records)
+                .filteredOn(r -> "create_bug_report".equals(r.getToolName()))
+                .singleElement()
+                .satisfies(r -> {
+                    assertThat(r.getCreatedEntityType()).isEqualTo("BUG_REPORT");
+                    assertThat(r.getCreatedEntityId()).isEqualTo(bug.id());
+                });
+    }
+
+    // --- executing runs (PRD-027) ----------------------------------------------------------
+
+    /**
+     * The loop PRD-027 exists to close, end to end: open a run, work through it, close it. Before
+     * these tools an agent could read the run and do nothing else.
+     */
+    @Test
+    void anAgentCanExecuteARunFromStartToFinish() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase first = createCase("Anmeldung funktioniert");
+        McpDtos.CreatedTestCase second = createCase("Abmeldung funktioniert");
+
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Rauchtest", "staging",
+                Set.of(first.id(), second.id()), null, null);
+        assertThat(run.status()).isEqualTo(TestRunStatus.PLANNED);
+        assertThat(run.totalResults()).isEqualTo(2);
+
+        // Recording the first result starts the run — no separate start tool to forget.
+        McpDtos.RecordedResult recorded = testRunWriteTools.recordTestResult(run.id(),
+                TestResultStatus.PASSED, first.id(), null, "sauber durchgelaufen", null);
+        assertThat(recorded.runStatus()).isEqualTo(TestRunStatus.IN_PROGRESS);
+        assertThat(recorded.added()).isFalse();
+
+        testRunWriteTools.recordTestResult(run.id(), TestResultStatus.FAILED, second.id(), null,
+                "Schaltfläche reagiert nicht", null);
+
+        McpDtos.CompletedTestRun done = testRunWriteTools.completeTestRun(run.id(), null);
+        assertThat(done.status()).isEqualTo(TestRunStatus.COMPLETED);
+        assertThat(done.total()).isEqualTo(2);
+        assertThat(done.passed()).isEqualTo(1);
+        assertThat(done.failed()).isEqualTo(1);
+        assertThat(done.pending()).isZero();
+    }
+
+    /**
+     * The assertion that matters most in this file. {@code TestRunService.addResult} appends a new
+     * row without checking whether the case already has one, so recording through it would leave
+     * the seeded PENDING result in place beside the new one — a run reporting three results for
+     * two cases, one permanently pending, and every pass rate downstream wrong.
+     *
+     * <p>Counted rather than inspected on purpose: a status assertion passes just as happily
+     * against the broken version, because the appended row does have the right status. Only the
+     * count catches it.
+     */
+    @Test
+    void recordingFillsInTheSeededResultRatherThanAppendingASecond() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase testCase = createCase("Nur ein Ergebnis");
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Lauf", null,
+                Set.of(testCase.id()), null, null);
+
+        testRunWriteTools.recordTestResult(run.id(), TestResultStatus.FAILED, testCase.id(), null,
+                "erster Versuch", null);
+        // Re-recording is how an agent corrects itself; it must still not add a row.
+        testRunWriteTools.recordTestResult(run.id(), TestResultStatus.PASSED, testCase.id(), null,
+                "nach dem Fix", null);
+
+        McpDtos.TestRunDetail detail = testRunReadTools.getTestRun(run.id(), null);
+        assertThat(detail.results()).hasSize(1);
+        assertThat(detail.results().getFirst().status()).isEqualTo(TestResultStatus.PASSED);
+        assertThat(detail.results().getFirst().comment()).isEqualTo("nach dem Fix");
+    }
+
+    /**
+     * Re-recording must not erase the evidence. {@code UpdateTestResultRequest} has no
+     * absent-versus-null distinction and {@code updateResult} assigns all three fields, so passing
+     * the arguments straight through would clear the comment on any call that omits it — and the
+     * tool advertises {@code idempotentHint} and tells agents to retry, which is exactly that call.
+     */
+    @Test
+    void reRecordingWithoutACommentKeepsTheOneAlreadyThere() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase testCase = createCase("Beweis behalten");
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Lauf", null,
+                Set.of(testCase.id()), null, null);
+
+        testRunWriteTools.recordTestResult(run.id(), TestResultStatus.FAILED, testCase.id(), null,
+                "Stacktrace: NullPointerException in PaymentService", "https://tracker/1");
+        // The retry an agent makes after a dropped response: status only, no comment.
+        testRunWriteTools.recordTestResult(run.id(), TestResultStatus.FAILED, testCase.id(), null,
+                null, null);
+
+        McpDtos.TestResult result =
+                testRunReadTools.getTestRun(run.id(), null).results().getFirst();
+        assertThat(result.comment()).isEqualTo("Stacktrace: NullPointerException in PaymentService");
+        assertThat(result.defectLink()).isEqualTo("https://tracker/1");
+    }
+
+    @Test
+    void aResultIdThatContradictsTheTestCaseIdIsRefused() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase a = createCase("Fall A");
+        McpDtos.CreatedTestCase b = createCase("Fall B");
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Lauf", null,
+                Set.of(a.id(), b.id()), null, null);
+        UUID resultForA = testRunReadTools.getTestRun(run.id(), null).results().stream()
+                .filter(r -> r.testCaseId().equals(a.id()))
+                .findFirst().orElseThrow().id();
+
+        assertThatThrownBy(() -> testRunWriteTools.recordTestResult(run.id(),
+                TestResultStatus.PASSED, b.id(), resultForA, null, null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("belongs to test case");
+    }
+
+    /**
+     * Idempotency must not extend to the opposite terminal state: answering "abort this" with a
+     * cheerful COMPLETED leaves the agent to notice by diffing a field against its own request.
+     */
+    @Test
+    void abortingAnAlreadyCompletedRunIsRefusedRatherThanSilentlyIgnored() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestRun run =
+                testRunWriteTools.createTestRun("Lauf", null, null, null, null);
+        testRunWriteTools.completeTestRun(run.id(), null);
+
+        assertThatThrownBy(() ->
+                testRunWriteTools.completeTestRun(run.id(), TestRunStatus.ABORTED))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("already COMPLETED");
+    }
+
+    /**
+     * Closing a run must not revert a rename made while the agent was executing. The tools send a
+     * status-only update; {@code TestRunService.update} treats null name/environment as unchanged.
+     */
+    @Test
+    void completingARunDoesNotRevertAConcurrentRename() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Ursprünglicher Name",
+                "staging", null, null, null);
+
+        // A human renames it in the UI while the agent is mid-run.
+        testRunService.update(project.getId(), run.id(),
+                new UpdateTestRunRequest("Vom Menschen umbenannt", "produktion", null, null, null),
+                null);
+
+        testRunWriteTools.completeTestRun(run.id(), null);
+
+        McpDtos.TestRunDetail after = testRunReadTools.getTestRun(run.id(), null);
+        assertThat(after.name()).isEqualTo("Vom Menschen umbenannt");
+        assertThat(after.environment()).isEqualTo("produktion");
+    }
+
+    /** A run completed straight from PLANNED would otherwise have an endTime and no startTime. */
+    @Test
+    void completingAPlannedRunStillStampsAStartTime() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestRun run =
+                testRunWriteTools.createTestRun("Nie begonnen", null, null, null, null);
+
+        testRunWriteTools.completeTestRun(run.id(), null);
+
+        McpDtos.TestRunDetail after = testRunReadTools.getTestRun(run.id(), null);
+        assertThat(after.startTime()).isNotNull();
+        assertThat(after.endTime()).isNotNull();
+    }
+
+    @Test
+    void aRunCanBeSeededFromASuite() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase a = createCase("Fall A");
+        McpDtos.CreatedTestCase b = createCase("Fall B");
+        McpDtos.CreatedSuite suite =
+                planningTools.createTestSuite("Rauchtests", null, Set.of(a.id(), b.id()));
+
+        McpDtos.CreatedTestRun run =
+                testRunWriteTools.createTestRun("Aus Suite", null, null, suite.id(), null);
+
+        assertThat(run.totalResults()).isEqualTo(2);
+    }
+
+    @Test
+    void recordingForACaseNotInTheRunAppendsAndSaysSo() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase seeded = createCase("Im Lauf");
+        McpDtos.CreatedTestCase adHoc = createCase("Nicht im Lauf");
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Lauf", null,
+                Set.of(seeded.id()), null, null);
+
+        McpDtos.RecordedResult recorded = testRunWriteTools.recordTestResult(run.id(),
+                TestResultStatus.BLOCKED, adHoc.id(), null, "unterwegs entdeckt", null);
+
+        // Flagged because this is also what a mistyped id looks like.
+        assertThat(recorded.added()).isTrue();
+        assertThat(testRunReadTools.getTestRun(run.id(), null).results()).hasSize(2);
+    }
+
+    @Test
+    void resultsOfACompletedRunAreFinal() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase testCase = createCase("Abgeschlossen");
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Lauf", null,
+                Set.of(testCase.id()), null, null);
+        testRunWriteTools.recordTestResult(run.id(), TestResultStatus.PASSED, testCase.id(), null,
+                null, null);
+        testRunWriteTools.completeTestRun(run.id(), null);
+
+        assertThatThrownBy(() -> testRunWriteTools.recordTestResult(run.id(),
+                TestResultStatus.FAILED, testCase.id(), null, "zu spät", null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("new run");
+    }
+
+    /** An agent retrying after a dropped response should get the counts, not an error. */
+    @Test
+    void completingATwiceCompletedRunIsANoOp() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestRun run =
+                testRunWriteTools.createTestRun("Leerlauf", null, null, null, null);
+
+        testRunWriteTools.completeTestRun(run.id(), null);
+        McpDtos.CompletedTestRun again = testRunWriteTools.completeTestRun(run.id(), null);
+
+        assertThat(again.status()).isEqualTo(TestRunStatus.COMPLETED);
+    }
+
+    @Test
+    void pendingResultsDoNotBlockCompletionButAreReported() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase done = createCase("Erledigt");
+        McpDtos.CreatedTestCase notDone = createCase("Nicht erledigt");
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Abgebrochen", null,
+                Set.of(done.id(), notDone.id()), null, null);
+        testRunWriteTools.recordTestResult(run.id(), TestResultStatus.PASSED, done.id(), null,
+                null, null);
+
+        McpDtos.CompletedTestRun aborted =
+                testRunWriteTools.completeTestRun(run.id(), TestRunStatus.ABORTED);
+
+        assertThat(aborted.status()).isEqualTo(TestRunStatus.ABORTED);
+        assertThat(aborted.pending()).isEqualTo(1);
+    }
+
+    /**
+     * The reason {@code get_test_run} publishes result ids at all.
+     *
+     * <p>A parameterized case (PRD-015) expands into one result per parameter set, so a test case
+     * id names three rows and there is no correct one to pick. Guessing would record an outcome
+     * against the wrong data set and look like it worked. The refusal names the candidates, and
+     * the second half of this test proves the escape it offers actually works — a refusal pointing
+     * at an unusable alternative is just a dead end.
+     */
+    @Test
+    void aParameterizedCaseIsAmbiguousByTestCaseIdAndAddressableByResultId() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase testCase = createCase("Anmeldung je Rolle");
+        addParameterSet(testCase.id(), "Admin", Map.of("rolle", "admin"));
+        addParameterSet(testCase.id(), "Gast", Map.of("rolle", "gast"));
+
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Rollenlauf", null,
+                Set.of(testCase.id()), null, null);
+        assertThat(run.totalResults()).as("one result per parameter set").isEqualTo(2);
+
+        assertThatThrownBy(() -> testRunWriteTools.recordTestResult(run.id(),
+                TestResultStatus.PASSED, testCase.id(), null, null, null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("parameterized")
+                .hasMessageContaining("resultId");
+
+        McpDtos.TestRunDetail detail = testRunReadTools.getTestRun(run.id(), null);
+        assertThat(detail.results()).allSatisfy(r -> assertThat(r.parameterSetName()).isNotNull());
+        UUID guestResultId = detail.results().stream()
+                .filter(r -> "Gast".equals(r.parameterSetName()))
+                .findFirst().orElseThrow().id();
+
+        McpDtos.RecordedResult recorded = testRunWriteTools.recordTestResult(run.id(),
+                TestResultStatus.FAILED, null, guestResultId, "Gast kommt nicht rein", null);
+
+        assertThat(recorded.added()).isFalse();
+        assertThat(testRunReadTools.getTestRun(run.id(), null).results())
+                .filteredOn(r -> r.status() == TestResultStatus.FAILED)
+                .singleElement()
+                .satisfies(r -> assertThat(r.parameterSetName()).isEqualTo("Gast"));
+    }
+
+    @Test
+    void aViewerKeyCannotExecute() {
+        authenticateAs(project, ProjectRole.VIEWER, "read-only-agent");
+
+        assertThatThrownBy(() ->
+                testRunWriteTools.createTestRun("Nicht erlaubt", null, null, null, null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("TESTER");
+    }
+
+    @Test
+    void aSuiteFromAnotherProjectCannotSeedARun() {
+        authenticateAs(otherProject, ProjectRole.TESTER, "other-agent");
+        McpDtos.CreatedSuite foreign = planningTools.createTestSuite("Fremde Suite", null, null);
+        SecurityContextHolder.clearContext();
+
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        assertThatThrownBy(() ->
+                testRunWriteTools.createTestRun("Lauf", null, null, foreign.id(), null))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    // --- bug reports (PRD-027) -------------------------------------------------------------
+
+    /**
+     * {@code bugReportsEnabled} defaults to false, so without translation the agent gets a bare
+     * ForbiddenException — which it will read as a transient error and retry forever. The refusal
+     * has to say what the fix is and that the agent cannot apply it.
+     */
+    @Test
+    void filingOnAProjectWithBugReportsOffExplainsHowToTurnThemOn() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+
+        assertThatThrownBy(() -> bugReportTools.createBugReport("Kaputt", Priority.HIGH, null,
+                null, null, null, null, null, null, null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("not enabled")
+                .hasMessageContaining("ADMIN");
+    }
+
+    @Test
+    void aBugCanBeFiledAgainstTheResultThatProducedIt() {
+        enableBugReports(project);
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase testCase = createCase("Zahlung schlägt fehl");
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Lauf", "staging",
+                Set.of(testCase.id()), null, null);
+        McpDtos.RecordedResult failure = testRunWriteTools.recordTestResult(run.id(),
+                TestResultStatus.FAILED, testCase.id(), null, "500 vom Zahlungsdienst", null);
+
+        McpDtos.BugDetail bug = bugReportTools.createBugReport("Zahlung wirft 500",
+                Priority.CRITICAL, "Beim Bezahlen", "1. Warenkorb 2. Bezahlen", "Bestätigung",
+                "HTTP 500", "staging", failure.resultId(), run.id(), null);
+
+        assertThat(bug.status()).isEqualTo(BugReportStatus.OPEN);
+        assertThat(bug.testResultId()).isEqualTo(failure.resultId());
+        assertThat(bug.testCaseTitle()).isEqualTo("Zahlung schlägt fehl");
+        assertThat(bug.stepsToReproduce()).isEqualTo("1. Warenkorb 2. Bezahlen");
+    }
+
+    /**
+     * An agent running the same suite nightly will otherwise file the same bug every night.
+     * Matching is on the normalised title, so punctuation and case do not defeat it.
+     */
+    @Test
+    void filingABugThatDuplicatesAnOpenOneIsRefused() {
+        enableBugReports(project);
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.BugDetail first = bugReportTools.createBugReport("Zahlung wirft 500",
+                Priority.HIGH, null, null, null, null, null, null, null, null);
+
+        assertThatThrownBy(() -> bugReportTools.createBugReport("zahlung wirft 500!",
+                Priority.HIGH, null, null, null, null, null, null, null, null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining(first.id().toString())
+                .hasMessageContaining("allowDuplicateTitle");
+    }
+
+    /**
+     * A regression of something closed last month is a new report, not a duplicate — refusing it
+     * would suppress the most interesting thing a nightly run can tell you.
+     */
+    @Test
+    void theSameTitleIsAllowedOnceTheEarlierBugIsClosed() {
+        enableBugReports(project);
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.BugDetail first = bugReportTools.createBugReport("Zahlung wirft 500",
+                Priority.HIGH, null, null, null, null, null, null, null, null);
+        bugReportTools.changeBugReportStatus(first.id(), BugReportStatus.CLOSED,
+                "In 2.3 behoben und nachgeprüft");
+
+        McpDtos.BugDetail regression = bugReportTools.createBugReport("Zahlung wirft 500",
+                Priority.HIGH, null, null, null, null, null, null, null, null);
+
+        assertThat(regression.id()).isNotEqualTo(first.id());
+        assertThat(regression.status()).isEqualTo(BugReportStatus.OPEN);
+    }
+
+    @Test
+    void bugsCanBeListedAndFilteredBeforeFilingANewOne() {
+        enableBugReports(project);
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        bugReportTools.createBugReport("Offener Fehler", Priority.HIGH, null, null, null, null,
+                null, null, null, null);
+        McpDtos.BugDetail closed = bugReportTools.createBugReport("Behobener Fehler", Priority.LOW,
+                null, null, null, null, null, null, null, null);
+        bugReportTools.changeBugReportStatus(closed.id(), BugReportStatus.CLOSED, "nachgeprüft");
+
+        McpDtos.BugPage open = bugReportTools.listBugReports(List.of(BugReportStatus.OPEN), null,
+                null, null);
+
+        assertThat(open.totalElements()).isEqualTo(1);
+        assertThat(open.bugReports()).singleElement()
+                .satisfies(b -> assertThat(b.title()).isEqualTo("Offener Fehler"));
+    }
+
+    @Test
+    void aStatusChangeNeedsAReason() {
+        enableBugReports(project);
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.BugDetail bug = bugReportTools.createBugReport("Irgendwas", Priority.LOW, null,
+                null, null, null, null, null, null, null);
+
+        assertThatThrownBy(() ->
+                bugReportTools.changeBugReportStatus(bug.id(), BugReportStatus.RESOLVED, "  "))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("reason");
+    }
+
+    @Test
+    void aViewerKeyCannotFileBugs() {
+        enableBugReports(project);
+        authenticateAs(project, ProjectRole.VIEWER, "read-only-agent");
+
+        assertThatThrownBy(() -> bugReportTools.createBugReport("Nicht erlaubt", Priority.LOW,
+                null, null, null, null, null, null, null, null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("TESTER");
+    }
+
+    private void enableBugReports(Project target) {
+        projectService.toggleBugReports(target.getId(), true, null);
+    }
+
+    private void addParameterSet(UUID testCaseId, String name, Map<String, String> values) {
+        parameterSetService.create(project.getId(), testCaseId,
+                new SaveParameterSetRequest(name, values, null));
     }
 }

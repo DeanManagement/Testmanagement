@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
@@ -146,14 +147,68 @@ final class McpDtos {
     record TestRunPage(List<TestRunSummary> testRuns, int page, int size, long totalElements,
                        boolean hasMore) {}
 
+    /**
+     * @param id              the result's own id, which {@code record_test_result} needs whenever
+     *                        {@code testCaseId} is ambiguous — see {@code parameterSetName}
+     * @param parameterSetName present only for a parameterized case (PRD-015), which expands into
+     *                        one result per set. That is exactly when one test case id maps to
+     *                        several results and the agent has to address one by {@code id}
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record TestResult(UUID testCaseId, String testCaseTitle, TestResultStatus status,
-                      @Nullable String comment, @Nullable String defectLink) {}
+    record TestResult(UUID id, UUID testCaseId, String testCaseTitle, TestResultStatus status,
+                      @Nullable String comment, @Nullable String defectLink,
+                      @Nullable String parameterSetName) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record TestRunDetail(UUID id, String key, String name, @Nullable String environment,
                          TestRunStatus status, @Nullable Instant startTime, @Nullable Instant endTime,
                          List<TestResult> results) {}
+
+    // --- execution (write, PRD-027) ----------------------------------------------------------
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record CreatedTestRun(UUID id, String key, String name, TestRunStatus status,
+                          int totalResults) {}
+
+    /**
+     * @param added true when no result for this test case existed in the run, so one was appended
+     *              rather than an existing pending one filled in. Surfaced because it usually means
+     *              the agent passed an id that is not in the run — worth it noticing
+     * @param runStatus the run's status <em>after</em> the call: recording into a PLANNED run
+     *                  starts it, so this is how the agent learns that happened
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record RecordedResult(UUID resultId, UUID testCaseId, String testCaseTitle,
+                          TestResultStatus status, boolean added, TestRunStatus runStatus) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record CompletedTestRun(UUID id, String key, TestRunStatus status, int total, int passed,
+                            int failed, int blocked, int skipped, int pending) {}
+
+    // --- bug reports (PRD-027) ---------------------------------------------------------------
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record BugSummary(UUID id, String title, BugReportStatus status, Priority priority,
+                      @Nullable String environment, @Nullable UUID testResultId,
+                      @Nullable String testCaseTitle, @Nullable UUID testRunId,
+                      @Nullable String testRunName, @Nullable String assigneeName) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record BugPage(List<BugSummary> bugReports, int page, int size, long totalElements,
+                   boolean hasMore) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record BugDetail(UUID id, String title, @Nullable String description,
+                     @Nullable String stepsToReproduce, @Nullable String expectedBehavior,
+                     @Nullable String actualBehavior, BugReportStatus status, Priority priority,
+                     @Nullable String environment, @Nullable UUID testResultId,
+                     @Nullable String testCaseTitle, @Nullable UUID testRunId,
+                     @Nullable String testRunName, @Nullable String assigneeName,
+                     @Nullable String reporterName) {}
+
+    /** A near-match that blocked a bug create, so the agent can update it instead of re-filing. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record DuplicateBug(UUID id, String title, BugReportStatus status) {}
 
     // --- requirements and traceability -------------------------------------------------------
 

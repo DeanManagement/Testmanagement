@@ -20,7 +20,13 @@ public class McpProperties {
     /** Master switch. Off means the endpoint does not exist at all — 404, not 401. */
     private boolean enabled = false;
 
-    private int maxWritesPerMinute = 60;
+    /**
+     * Raised from 60 for PRD-027's execution tools. Authoring is human-paced; executing a run is
+     * one write per test case, so a 50-case run is 52 writes and the old default was tripped
+     * mid-run — leaving a half-recorded run, which is worse than a refusal. 120 still bounds an
+     * overnight accident to something a human notices.
+     */
+    private int maxWritesPerMinute = 120;
 
     /** Cap on {@code create_test_cases_bulk}; also the cap on a single agent turn's blast radius. */
     private int maxBulkSize = 50;

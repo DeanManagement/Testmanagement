@@ -302,8 +302,19 @@ public class TestRunService {
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", id));
 
-        run.setName(request.name());
-        run.setEnvironment(request.environment());
+        // Null-guarded so a caller that only means to change the status does not write back the
+        // name and environment it read a moment earlier, silently reverting a human's concurrent
+        // edit. Same fix, and the same reason, as PRD-025 §8 applied to TestCaseService.update:
+        // null now means "unchanged", and blank is refused rather than stored (PRD-027 §3.2).
+        if (request.name() != null) {
+            if (request.name().isBlank()) {
+                throw new IllegalArgumentException("Test run name must not be blank");
+            }
+            run.setName(request.name());
+        }
+        if (request.environment() != null) {
+            run.setEnvironment(request.environment());
+        }
 
         if (request.testPlanId() != null) {
             // Scoped for the same reason as create(): moving an existing run into another

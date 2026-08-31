@@ -17,7 +17,7 @@ Optional limits, with their defaults:
 
 | Variable | Default | What it bounds |
 |---|---|---|
-| `MCP_MAX_WRITES_PER_MINUTE` | 60 | Writes per API key per minute |
+| `MCP_MAX_WRITES_PER_MINUTE` | 120 | Writes per API key per minute |
 | `MCP_MAX_BULK_SIZE` | 50 | Items in one `create_test_cases_bulk` call |
 | `MCP_MAX_STEPS_PER_CASE` | 100 | Steps in one test case |
 | `MCP_AUDIT_RETENTION_DAYS` | 90 | How long tool-call records are kept |
@@ -80,11 +80,38 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 ## 4. Tools
 
 **Read** — `get_project`, `search_test_cases`, `get_test_case`, `list_test_case_folders`,
-`list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`.
+`list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`, `list_test_runs`,
+`get_test_run`, `list_requirements`, `get_traceability_matrix`, `list_bug_reports`,
+`get_bug_report`.
 
 **Write** (Tester only) — `create_test_case`, `update_test_case`, `create_test_cases_bulk`,
 `create_test_suite`, `create_test_plan`, `create_test_case_folder`,
-`move_test_cases_to_folder`, `create_requirement`, `link_test_cases_to_requirement`.
+`move_test_cases_to_folder`, `create_requirement`, `link_test_cases_to_requirement`,
+`create_test_run`, `record_test_result`, `complete_test_run`, `create_bug_report`,
+`change_bug_report_status`.
+
+### Executing a run
+
+The one sequence you cannot infer from the tool list. An agent that runs tests itself does:
+
+1. **`create_test_run`** — seed it with `testCaseIds`, or with `testSuiteId` to take a whole suite.
+   Each seeded case gets a `PENDING` result. The run is created `PLANNED`.
+2. **`record_test_result`** once per case, as each finishes. This *fills in* the pending result
+   rather than adding another, and the first one moves the run to `IN_PROGRESS` — there is no
+   separate start call. Identify the case with `testCaseId`; for a parameterized case, which has one
+   result per parameter set, use the `resultId` from `get_test_run` instead.
+3. **`complete_test_run`** — `COMPLETED`, or `ABORTED` if something blocked you part-way. Results
+   still pending are reported back, not refused.
+4. **`create_bug_report`** for a real defect, passing the `resultId` from step 2 as `testResultId`
+   so the bug is reachable from the failure that produced it.
+
+**If you already have every result** — a CI job, a test framework's output — do not use these tools.
+`POST /api/external/projects/{key}/test-runs` takes a whole run in one request with the same API
+key, and `…/junit` and `…/cucumber` take report files directly. The MCP tools are for the case where
+results arrive one at a time.
+
+**Bug reports are off by default.** `create_bug_report` refuses until a project administrator
+enables them in the project's settings; an API key cannot, since that needs the `ADMIN` role.
 
 ### What the tools return
 
@@ -115,8 +142,8 @@ curl -s -X POST https://your-instance/api/mcp \
   | jq '.result.tools[] | select(.name=="search_test_cases") | .outputSchema'
 ```
 
-There are no delete tools and no test-run or result tools. Recording results stays with the CI
-ingestion API (PRD-005), and deleting anything stays a human action in the UI.
+There are no delete tools, and no tool reopens a completed run. Deleting anything stays a human
+action in the UI, and re-testing means a new run rather than editing a signed-off one.
 
 ## Things worth knowing before you let an agent loose
 
@@ -128,6 +155,13 @@ ingestion API (PRD-005), and deleting anything stays a human action in the UI.
   partial result is normal, not a failure. `dryRun: true` shows what would happen.
 - **Replacing a case's steps discards screenshots** attached to steps that no longer exist. Omit
   `steps` unless you mean to rewrite them.
+- **Executing a run costs one write per test case.** A 50-case run is 52 writes against a budget of
+  120 a minute. If you run larger suites through an agent, raise `MCP_MAX_WRITES_PER_MINUTE` — a run
+  refused half-way leaves a half-recorded run.
+- **A bug title matching an already-open bug is refused**, with that bug's id, so a nightly agent
+  does not file the same defect every night. The same title is allowed again once the earlier bug is
+  closed, because that is a regression and worth knowing about. `allowDuplicateTitle: true`
+  overrides.
 - **Everything is logged.** `GET /api/mcp-activity` (instance admin) shows every call: which key,
   which tool, the outcome, and what it created. Argument *shapes* are recorded, not values — a
   step's `testData` often holds a test-account password, and that does not belong in an audit table.

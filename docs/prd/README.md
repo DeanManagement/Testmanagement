@@ -79,6 +79,35 @@ test case ids from any project.
 **Breaking change in §3.2:** API keys without a project scope are now rejected. Set
 `app.api-keys.allow-legacy-global=true` to keep them working while re-creating them scoped.
 
+## v2.3 — proposed
+
+| PRD | Title | Priority | Size | Status |
+|---|---|---|---|---|
+| [026](PRD-026-azure-devops-integration.md) | Azure DevOps Integration (Pipelines, Work Items, results, Entra ID) | P2 | L | 📝 Draft |
+| [027](PRD-027-mcp-execution-tools.md) | MCP Execution & Defect Tools (agent-run test execution) | P2 | M | ✅ Implemented |
+
+Four surfaces on three seams that already exist, phased so each ships alone: Entra ID SSO is
+documentation only (the generic OIDC provider already handles it), Pipelines fills the
+`AZURE_DEVOPS` slot PRD-024 reserved, Work Items is a PRD-010 adapter, and test-result pull builds
+on the Pipelines adapter. Cloud and on-premises Azure DevOps Server both in scope.
+
+**PRD-027 shipped on 2026-08-31**, in two commits. It closes the loop PRD-025 opened: an agent could
+author tests and read results but not run them, so it adds three test-run tools and four native
+bug-report tools (21 → 28).
+
+The first commit is §3.5 and is worth having on its own. The `findAllById` sweep PRD-025 §8 asked
+for was never run; doing it found **nine unscoped child-id lookups across five services**, all live
+through the REST API. Eight are cross-project leaks or writes — a run seeded from another project's
+cases, a run counting toward another project's plan pass rate, a bug linked to another project's
+result. The ninth is worse and unrelated to MCP: `ProjectMemberService.updateRole` and
+`removeMember` accepted a `projectId` and never read it, so an admin of **any** project could change
+roles or remove members in **any other** — cross-tenant privilege escalation. All fixed, with the
+regression tests demonstrated red against the unfixed code first.
+
+**Behaviour change:** unknown or foreign child ids now 404 instead of being silently dropped or
+nulled, and `UpdateTestRunRequest.name` treats null as "unchanged" (as `UpdateTestCaseRequest`
+already did since PRD-025). `MCP_MAX_WRITES_PER_MINUTE` defaults to 120, up from 60.
+
 ## Status legend
-Every PRD in this directory is **Implemented**. New work should get a new PRD rather than extending
-a shipped one.
+Every PRD in this directory except 026 is **Implemented**. New work should get a new PRD rather than
+extending a shipped one.

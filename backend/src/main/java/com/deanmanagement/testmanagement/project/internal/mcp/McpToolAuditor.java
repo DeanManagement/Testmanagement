@@ -82,6 +82,10 @@ public class McpToolAuditor {
             case McpDtos.CreatedSuite suite -> new Created("TEST_SUITE", suite.id());
             case McpDtos.CreatedPlan plan -> new Created("TEST_PLAN", plan.id());
             case McpDtos.BulkResult bulk -> new Created("TEST_CASE_BULK(" + bulk.created() + ")", null);
+            case McpDtos.CreatedTestRun run -> new Created("TEST_RUN", run.id());
+            // Every bug tool returns BugDetail, including the two read tools — but the aspect only
+            // reaches this for a SUCCESS, and linking a read to what it read is harmless and true.
+            case McpDtos.BugDetail bug -> new Created("BUG_REPORT", bug.id());
             case null, default -> Created.NONE;
         };
     }

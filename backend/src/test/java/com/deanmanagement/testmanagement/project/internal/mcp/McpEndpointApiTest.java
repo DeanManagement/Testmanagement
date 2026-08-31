@@ -275,20 +275,38 @@ class McpEndpointApiTest {
         return post(INITIALIZE, "X-API-Key", rawKey, "POST", accept);
     }
 
+    /**
+     * Was {@code execution_toolsAreNotExposed}, asserting PRD-025 §2's authoring-only scope.
+     * PRD-027 reverses that half deliberately — an agent that can see failures and not run tests
+     * cannot close the loop — so the execution tools are now asserted *present*.
+     *
+     * <p>The other half of the original assertion still stands and is what this test is now for:
+     * no tool deletes anything. Deletion stays a human action in the UI (PRD-025 §2, unchanged by
+     * PRD-027 §2).
+     */
     @Test
-    void execution_toolsAreNotExposed() throws Exception {
-        // v1 is authoring only (§2 non-goals). Recording results stays PRD-005's job, and no tool
-        // deletes anything.
+    void destructive_toolsAreNotExposed() throws Exception {
         HttpResponse<String> tools = post(TOOLS_LIST, "X-API-Key", rawKey);
 
-        // Reading runs is fine and was added deliberately; *writing* results is not — that stays
-        // with PRD-005's ingestion endpoints, and nothing here deletes.
         assertThat(tools.body())
-                .doesNotContain("create_test_run")
-                .doesNotContain("record_result")
-                .doesNotContain("update_test_result")
                 .doesNotContain("delete_test_case")
-                .doesNotContain("delete_requirement");
+                .doesNotContain("delete_requirement")
+                .doesNotContain("delete_test_run")
+                .doesNotContain("delete_bug_report")
+                // Reopening a signed-off run is a human judgment call, not an agent's (PRD-027 §2).
+                .doesNotContain("reopen_test_run");
+    }
+
+    @Test
+    void execution_toolsAreExposed() throws Exception {
+        HttpResponse<String> tools = post(TOOLS_LIST, "X-API-Key", rawKey);
+
+        assertThat(tools.body())
+                .contains("create_test_run")
+                .contains("record_test_result")
+                .contains("complete_test_run")
+                .contains("create_bug_report")
+                .contains("change_bug_report_status");
     }
 
     @Test

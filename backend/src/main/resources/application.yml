@@ -108,7 +108,8 @@ app:
     # PRD-025: MCP server letting agents author test cases, suites and plans. Off by default —
     # it is a write surface for non-human callers, so it should be a deliberate decision.
     enabled: ${MCP_ENABLED:false}
-    max-writes-per-minute: ${MCP_MAX_WRITES_PER_MINUTE:60}
+    # 120, not 60: executing a run costs one write per test case (PRD-027 §3.6).
+    max-writes-per-minute: ${MCP_MAX_WRITES_PER_MINUTE:120}
     max-bulk-size: ${MCP_MAX_BULK_SIZE:50}
     max-steps-per-case: ${MCP_MAX_STEPS_PER_CASE:100}
     audit-retention-days: ${MCP_AUDIT_RETENTION_DAYS:90}
