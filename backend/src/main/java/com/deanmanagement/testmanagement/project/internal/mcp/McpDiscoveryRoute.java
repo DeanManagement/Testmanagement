@@ -12,6 +12,7 @@ import org.springframework.web.servlet.function.RouterFunctions;
 import org.springframework.web.servlet.function.ServerResponse;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * Answers a plain {@code GET /api/mcp} with what a client needs in order to connect (PRD-025).
@@ -38,10 +39,30 @@ public class McpDiscoveryRoute {
     static final String DOCUMENTATION_URL =
             "https://github.com/DeanManagement/Testmanagement/blob/main/docs/MCP_SETUP.md";
 
+    /**
+     * Field order is the reading order, and it is load-bearing.
+     *
+     * <p>This descriptor has two audiences and was written for only one of them. A human who cannot
+     * connect needs the transport and headers. An <em>agent</em> that fetches this URL to orient
+     * itself needs to be told the opposite of what it finds useful: that it should not be driving
+     * this endpoint by hand at all. The first draft led with a ready-to-paste curl command, which
+     * is a working recipe for the worst way to use the server — so a model that read it copied it,
+     * and lost the tool schemas, the argument validation and its client's tool permissions in the
+     * process.
+     *
+     * <p>{@code howToUse} and {@code clientConfiguration} therefore come before
+     * {@code manualExample}, and the curl is labelled as the debugging aid it is.
+     */
     public record McpDescriptor(String server, String version, String protocol, String transport,
                                 String endpoint, List<String> authentication,
-                                RequestRequirements requestRequirements, String example,
+                                String howToUse, ClientConfiguration clientConfiguration,
+                                RequestRequirements requestRequirements, String manualExample,
                                 String documentation, String note) {}
+
+    /** The shape a client's config file wants, so it can be copied rather than reconstructed. */
+    public record ClientConfiguration(Map<String, ServerEntry> mcpServers) {}
+
+    public record ServerEntry(String type, String url, Map<String, String> headers) {}
 
     /**
      * Stated explicitly because this is where a client that speaks HTTP but not MCP will look, and
@@ -63,11 +84,23 @@ public class McpDiscoveryRoute {
                 "streamable-http (stateless)",
                 "/api/mcp",
                 List.of("Authorization: Bearer tm_…", "X-API-Key: tm_…"),
+                "Register this endpoint in your MCP client using clientConfiguration below. Its "
+                        + "tools then appear in your tool list and you call them directly, by name. "
+                        + "If you are an agent and the tools are not in your list, the server is "
+                        + "not registered with your client — that is a configuration problem to "
+                        + "report, not something to work around by sending JSON-RPC by hand. "
+                        + "Driving this endpoint manually works but costs you the tool schemas, "
+                        + "argument validation and your client's tool permissions.",
+                new ClientConfiguration(Map.of("testmanagement", new ServerEntry(
+                        "http", "https://<host>/api/mcp",
+                        Map.of("Authorization", "Bearer tm_…")))),
                 new RequestRequirements("POST", "application/json",
                         "application/json, text/event-stream",
                         "Both Accept types are required. Sending only application/json, or leaving "
                                 + "a client's default */*, is rejected by the transport."),
                 """
+                For a human debugging a connection, or a CI smoke test — not the way an agent \
+                should call these tools:
                 curl -X POST https://<host>/api/mcp \\
                   -H 'Authorization: Bearer tm_…' \\
                   -H 'Content-Type: application/json' \\

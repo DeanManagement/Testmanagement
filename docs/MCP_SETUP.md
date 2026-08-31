@@ -23,8 +23,8 @@ Optional limits, with their defaults:
 | `MCP_AUDIT_RETENTION_DAYS` | 90 | How long tool-call records are kept |
 
 All of these are plumbed through `docker-compose.yml`, so setting them in your `.env` is enough.
-Raise `MCP_MAX_WRITES_PER_MINUTE` before a bulk import — 60 is deliberately low enough that an
-agent stuck in a loop is stopped within a minute.
+Raise `MCP_MAX_WRITES_PER_MINUTE` before a bulk import — 120 is deliberately low enough that an
+agent stuck in a loop is stopped within a minute, and executing a run costs one write per test case.
 
 ## 2. Create a key
 
@@ -57,11 +57,16 @@ telling it only the hostname is not enough. It needs the full URL and the header
 `X-API-Key: tm_…` works too, for clients that prefer it. **Include the scheme** — a bare
 `your-instance/api/mcp` without `https://` is not a URL most clients can use.
 
-### Calling it without an MCP client
+### Driving it by hand (humans and CI only)
 
-If you are driving it by hand, the transport requires **both** Accept types. This is the single
-most common way to get stuck: sending only `application/json`, or leaving a client's default
-`*/*`, is rejected.
+**This is not how an agent should call the tools.** If the server is registered with your client,
+its tools are in the model's tool list and it calls them by name — sending JSON-RPC by hand throws
+away the tool schemas, the argument validation and whatever tool permissions the client enforces.
+See the troubleshooting entry below if a model is reaching for `curl` instead.
+
+For a human checking a connection, or a CI smoke test, the transport requires **both** Accept types.
+This is the single most common way to get stuck: sending only `application/json`, or leaving a
+client's default `*/*`, is rejected.
 
 ```bash
 curl -X POST https://your-instance/api/mcp \
@@ -166,6 +171,52 @@ action in the UI, and re-testing means a new run rather than editing a signed-of
   which tool, the outcome, and what it created. Argument *shapes* are recorded, not values — a
   step's `testData` often holds a test-account password, and that does not belong in an audit table.
 - Agent-authored rows show `API key: <name>` as their author.
+
+## Troubleshooting
+
+### The model shells out to `curl` instead of calling the tools
+
+Almost always this means **the tools are not in its tool list**, so `curl` is the only route it has
+and it is behaving correctly. Check, in this order:
+
+1. **Is the server switched on?** `MCP_ENABLED=true`. It is off by default, and with it off
+   `/api/mcp` returns 404 — so the model gets nothing from the client *and* nothing from a manual
+   call. `GET /api/mcp` in a browser returning a JSON descriptor is the quickest confirmation it is
+   running.
+2. **Does the client speak streamable-HTTP MCP?** This server is HTTP-only. A lot of local-model
+   tooling supports **stdio servers only**, and pointing a stdio-only client at an HTTP URL
+   registers nothing — no error, just no tools. Front it with `mcp-remote` or an equivalent bridge:
+
+   ```json
+   {
+     "mcpServers": {
+       "testmanagement": {
+         "command": "npx",
+         "args": ["-y", "mcp-remote", "https://your-instance/api/mcp",
+                  "--header", "Authorization: Bearer tm_your_key_here"]
+       }
+     }
+   }
+   ```
+3. **Ask the model to list its tools.** If `get_project` and `search_test_cases` are not there, it
+   is a wiring problem, not a prompting one — no amount of instruction will fix it.
+4. **Only if the tools *are* listed** is this a model-behaviour problem. Smaller local models have a
+   much stronger prior for JSON-RPC-over-`curl` than for MCP tool calls, and will imitate any curl
+   example in their context — including the ones in this file. Telling them plainly, in the system
+   prompt, that the Testmanagement tools are available directly and must not be called over HTTP is
+   usually enough.
+
+The endpoint cannot tell the two apart, and deliberately does not try: a hand-driven call is
+indistinguishable from CI, which is a supported caller.
+
+### Everything returns 401
+
+The key is wrong, revoked, or missing its `tm_` prefix. An API key used on any other `/api/` path
+answers with a hint pointing back here rather than a bare 403.
+
+### Every call fails with an empty 400
+
+The `Accept` header. It must contain both `application/json` and `text/event-stream`.
 
 ## Rotating a key
 

@@ -80,6 +80,31 @@ class McpDiscoverabilityApiTest {
                 .andExpect(jsonPath("$.documentation").value(org.hamcrest.Matchers.containsString("MCP_SETUP")));
     }
 
+    /**
+     * The descriptor's other reader is an agent orienting itself, and it used to lead with a
+     * ready-to-paste curl command — a working recipe for the worst way to use the server. A model
+     * that fetched this URL copied it, and then drove JSON-RPC by hand for the rest of the session
+     * without the tool schemas or its client's tool permissions.
+     *
+     * <p>So: the client configuration a caller should actually use has to be present and machine-
+     * readable, and the manual path has to be labelled as the debugging aid it is.
+     */
+    @Test
+    void theDescriptorTellsAnAgentToRegisterTheServerRatherThanDriveItByHand() throws Exception {
+        mockMvc.perform(get("/api/mcp"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.howToUse").value(org.hamcrest.Matchers.containsString("tool list")))
+                .andExpect(jsonPath("$.clientConfiguration.mcpServers.testmanagement.url")
+                        .value(org.hamcrest.Matchers.containsString("/api/mcp")))
+                .andExpect(jsonPath("$.clientConfiguration.mcpServers.testmanagement.headers.Authorization")
+                        .value(org.hamcrest.Matchers.containsString("Bearer")))
+                // The curl survives — humans and CI need it — but under a name that says who it is
+                // for, and after the thing an agent should read first.
+                .andExpect(jsonPath("$.manualExample").value(org.hamcrest.Matchers.containsString("curl")))
+                .andExpect(jsonPath("$.manualExample").value(org.hamcrest.Matchers.containsString("debugging")))
+                .andExpect(jsonPath("$.example").doesNotExist());
+    }
+
     @Test
     void wellKnownDoesNotAnswerWithTheAppShell() throws Exception {
         // A 200 of HTML tells a machine the discovery document exists. A 404 is the truth.
