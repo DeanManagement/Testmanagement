@@ -57,6 +57,56 @@ telling it only the hostname is not enough. It needs the full URL and the header
 `X-API-Key: tm_…` works too, for clients that prefer it. **Include the scheme** — a bare
 `your-instance/api/mcp` without `https://` is not a URL most clients can use.
 
+### If your client only speaks stdio
+
+A good deal of local-model tooling registers **stdio** servers only: you give it a command to spawn
+and it talks JSON-RPC over that process's stdin and stdout. Point such a client at an HTTPS URL and
+it registers nothing — no error, no tools, silently — and the model, seeing a URL and no tools, will
+usually start shelling out to `curl`. Either bridge below fixes it.
+
+**Option 1 — the bundled bridge** (`tools/testmanagement-mcp-stdio.py`). One file, Python 3.9+,
+standard library only. Nothing to install, so it works on an air-gapped machine with no npm and no
+route out except to the instance:
+
+```json
+{
+  "mcpServers": {
+    "testmanagement": {
+      "command": "python3",
+      "args": ["/path/to/testmanagement-mcp-stdio.py"],
+      "env": {
+        "TESTMANAGEMENT_URL": "https://your-instance.example.com/api/mcp",
+        "TESTMANAGEMENT_API_KEY": "tm_your_key_here"
+      }
+    }
+  }
+}
+```
+
+The key goes in `env`, not `args` — arguments are visible in `ps` to every user on the machine, and
+the bridge refuses to take a key from the command line. Optional: `TESTMANAGEMENT_TIMEOUT_SECONDS`
+(default 120) and `TESTMANAGEMENT_USER_AGENT` (see the Cloudflare note in troubleshooting).
+
+**Option 2 — `mcp-remote`**, if you already have Node and would rather not manage a file:
+
+```json
+{
+  "mcpServers": {
+    "testmanagement": {
+      "command": "npx",
+      "args": ["-y", "mcp-remote", "https://your-instance.example.com/api/mcp",
+               "--header", "Authorization: Bearer tm_your_key_here"]
+    }
+  }
+}
+```
+
+Note what `npx -y` does: it fetches and runs the latest third-party package from npm on every
+launch, and hands that process your API key. That is fine on a workstation with internet access and
+wrong for an air-gapped or locked-down install, which is why the bundled bridge exists.
+
+Neither adds behaviour. Both are pipes — every tool, schema and error you see is the server's.
+
 ### Driving it by hand (humans and CI only)
 
 **This is not how an agent should call the tools.** If the server is registered with your client,
@@ -183,21 +233,10 @@ and it is behaving correctly. Check, in this order:
    `/api/mcp` returns 404 — so the model gets nothing from the client *and* nothing from a manual
    call. `GET /api/mcp` in a browser returning a JSON descriptor is the quickest confirmation it is
    running.
-2. **Does the client speak streamable-HTTP MCP?** This server is HTTP-only. A lot of local-model
-   tooling supports **stdio servers only**, and pointing a stdio-only client at an HTTP URL
-   registers nothing — no error, just no tools. Front it with `mcp-remote` or an equivalent bridge:
-
-   ```json
-   {
-     "mcpServers": {
-       "testmanagement": {
-         "command": "npx",
-         "args": ["-y", "mcp-remote", "https://your-instance/api/mcp",
-                  "--header", "Authorization: Bearer tm_your_key_here"]
-       }
-     }
-   }
-   ```
+2. **Does the client speak streamable-HTTP MCP?** This server is HTTP-only, and a lot of local-model
+   tooling supports **stdio servers only** — pointing such a client at an HTTP URL registers
+   nothing, with no error. See [If your client only speaks stdio](#if-your-client-only-speaks-stdio)
+   above for the two bridges.
 3. **Ask the model to list its tools.** If `get_project` and `search_test_cases` are not there, it
    is a wiring problem, not a prompting one — no amount of instruction will fix it.
 4. **Only if the tools *are* listed** is this a model-behaviour problem. Smaller local models have a
@@ -208,6 +247,23 @@ and it is behaving correctly. Check, in this order:
 
 The endpoint cannot tell the two apart, and deliberately does not try: a hand-driven call is
 indistinguishable from CI, which is a supported caller.
+
+### The bridge gets 403, but `curl` with the same key works
+
+Something in front of the instance is blocking the client signature, not rejecting the key — the
+application answers **401** for a bad key, so a 403 points at a CDN or WAF. Cloudflare's managed
+rules block `Python-urllib/3.x` outright and answer with error 1010, "banned based on your browser's
+signature".
+
+The bundled bridge already sends `testmanagement-mcp-stdio/1.0` for exactly this reason. If your
+proxy is stricter still, override it:
+
+```json
+"env": { "TESTMANAGEMENT_USER_AGENT": "curl/8.5.0" }
+```
+
+The bridge's own 403 message quotes the upstream response body, which is usually where the real
+cause is named.
 
 ### Everything returns 401
 

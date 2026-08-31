@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft — **blocked on confirming the trigger, §2.1** |
+| **Status** | ✅ Implemented (2026-08-31) — built on request; §2.1 remains unanswered |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-08-31 |
 | **Priority** | P3 — a connectivity gap, not a capability one |
@@ -241,20 +241,60 @@ The bridge is a separate artifact from the Maven build, so it needs its own smal
 - [ ] **§2.1 answered first:** the client's tool list has been checked, and if the tools are absent,
       the client has been confirmed to lack HTTP transport support. If they are present, this PRD is
       closed unbuilt.
-- [ ] A stdio-only MCP client configured with the bridge lists all 28 tools and completes a
+- [x] A stdio-only MCP client configured with the bridge lists all 28 tools and completes a
       round trip, with no Node toolchain installed.
-- [ ] The bridge runs on a machine with no npm access and no internet route except to the instance.
-- [ ] Notifications produce no stdout output; stdout parses as JSON for every line of a session that
+- [x] The bridge runs on a machine with no npm access and no internet route except to the instance.
+- [x] Notifications produce no stdout output; stdout parses as JSON for every line of a session that
       also wrote diagnostics.
-- [ ] A revoked key produces a JSON-RPC error naming the credential, not a hang.
-- [ ] The instance unreachable mid-session produces an error response per pending request, not a
+- [x] A revoked key produces a JSON-RPC error naming the credential, not a hang.
+- [x] The instance unreachable mid-session produces an error response per pending request, not a
       hang.
-- [ ] The API key is read from the environment; passing it as an argument is refused.
-- [ ] `mcp-remote` remains documented as the zero-install alternative.
+- [x] The API key is read from the environment; passing it as an argument is refused.
+- [x] `mcp-remote` remains documented as the zero-install alternative.
 - [ ] *(Separable)* `GET /api/mcp/bridge` serves the same file the repo contains, and the discovery
       descriptor advertises a stdio client configuration.
 
-## 8. Future Work
+## 8. As Built (2026-08-31)
+
+Built on request, **with §2.1 still unanswered** — that is a deliberate decision, not an oversight.
+The bridge stands on its own for the air-gap case regardless of whether it turns out to be the cause
+of the symptom that prompted it, but nobody has yet confirmed that the local model's client lacks
+HTTP transport. If its tools list turns out to be populated, this file is still useful and the
+original problem is still unsolved. §2.1 is five minutes and worth doing.
+
+`tools/testmanagement-mcp-stdio.py`, ~210 lines with comments, stdlib only.
+`tools/test_mcp_stdio_bridge.py`, 22 tests, `unittest` and a `http.server` stub so the suite needs
+no more installed than the bridge does. Verified live end to end against a real instance: handshake,
+`tools/list` returning 28, two tool calls, notification correctly producing no output, stderr
+carrying only the banner.
+
+**The live run found a bug that no unit test would have.** urllib's default `User-Agent` is
+`Python-urllib/3.x`, which Cloudflare's managed rules block outright — the instance answered **403
+with error 1010**, "banned based on your browser's signature", before the request ever reached the
+application. Against a stub server everything passed; against anything behind a CDN the bridge was
+simply broken. Two fixes:
+
+- It now sends `testmanagement-mcp-stdio/1.0`, overridable via `TESTMANAGEMENT_USER_AGENT` for a
+  stricter proxy. Identifying honestly is better for the instance's access log too.
+- **The 403 message was wrong**, and wrongly confident. It said the API key had been rejected, which
+  would have sent someone to inspect the one thing that was fine. The application answers 401 for a
+  bad key, so a 403 on this path points at a proxy; the message now says so and quotes the upstream
+  body, which is where "Cloudflare" and "1010" actually appear.
+
+That is the argument for §5's manual integration step in one paragraph: the failure was in a header
+the bridge never set, visible only to a real network path.
+
+Two deviations from the design, both narrowing:
+
+- **The instance does not serve the bridge** (§3.4). It was flagged as a separable decision about
+  whether the server should distribute executable code, and it is Dean's to make, not mine. The file
+  is in the repo; `GET /api/mcp/bridge` and the descriptor's `stdioClientConfiguration` remain
+  unbuilt.
+- **Response flattening is a fast path.** The response is forwarded byte-for-byte unless it actually
+  contains a newline, rather than being parsed and re-serialised every time — re-serialising a
+  payload we are only supposed to be carrying risks altering number formatting in it.
+
+## 9. Future Work
 
 - **Retire it** if the local-model ecosystem converges on HTTP transport, which it is drifting
   toward. This is an adapter for a transitional gap and should be allowed to die.
