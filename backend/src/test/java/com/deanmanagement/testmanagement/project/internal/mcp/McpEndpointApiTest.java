@@ -206,6 +206,37 @@ class McpEndpointApiTest {
         assertThat(result.path("content").path(0).path("text").asText()).contains("MCPE");
     }
 
+    /**
+     * A refusal must read as an instruction, not as a broken tool.
+     *
+     * <p>Spring AI prefixes every failed invocation with "Error invoking method: &lt;tool&gt;",
+     * which reads as "this tool is broken" — the one conclusion an agent should not draw from a
+     * deliberate, actionable refusal. {@code McpRefusalMessageCleaner} strips it.
+     *
+     * <p>Asserted over the real protocol rather than on the cleaner's own unit tests, because the
+     * failure mode being guarded against is the wiring silently not applying: a unit test of the
+     * trimming passes just as happily when the {@code BeanPostProcessor} never runs.
+     */
+    @Test
+    void aRefusalReachesTheClientWithoutSpringAisFraming() throws Exception {
+        // Missing both title and priority: refused by the tool, not by schema validation.
+        String call = """
+                {"jsonrpc":"2.0","id":9,"method":"tools/call",
+                 "params":{"name":"create_test_case","arguments":{"title":"   ",
+                           "priority":"MEDIUM"}}}
+                """;
+
+        JsonNode result = MAPPER.readTree(post(call, "X-API-Key", rawKey).body()).path("result");
+        String text = result.path("content").path(0).path("text").asText();
+
+        assertThat(result.path("isError").asBoolean())
+                .as("still flagged as an error — only the wording changes").isTrue();
+        assertThat(text)
+                .doesNotContain("Error invoking method")
+                .doesNotContain("createTestCase");
+        assertThat(text).isNotBlank();
+    }
+
     private static List<String> fieldsOf(JsonNode object) {
         List<String> names = new ArrayList<>();
         object.propertyNames().forEach(names::add);

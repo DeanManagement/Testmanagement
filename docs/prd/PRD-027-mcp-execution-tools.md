@@ -590,6 +590,52 @@ onto an async pool, so starting the run before recording orders the *publishing*
 The transaction reasoning behind that ordering does hold, and the `@Transactional` annotations are
 load-bearing because of it.
 
+## 8.2 As Built — refusal wording (2026-09-01)
+
+Found by test-driving the tools against a live instance rather than by any test. Every refusal
+reached the client as:
+
+```
+Error invoking method: recordTestResult
+Pass either testCaseId or resultId.
+```
+
+The second line is ours and the `isError` flag was correct, so §3.6's contract held on paper. The
+first line is Spring AI's and it undoes the intent: "Error invoking method" reads as *this tool is
+broken*, which is the one conclusion an agent must not draw from a deliberate refusal that is
+telling it exactly what to do instead. A capable model looks past it; a smaller local model — the
+kind already inclined to work around a tool rather than fix its own call — may reasonably stop using
+it. The line carries no information either, since the agent knows what it called.
+
+`AbstractSyncMcpToolMethodCallback.createSyncErrorResult` builds the text as
+`e.getMessage() + lineSeparator() + cause.getMessage()`, and `createErrorMessage` is `protected` —
+so overriding it looks like the answer, until you find `SyncMcpToolMethodCallback` is `final`.
+
+What is reachable is the specification. The stateless server takes its tools as
+`List<SyncToolSpecification>` **beans**, and a specification is a record of a tool and a call
+handler, so `McpRefusalMessageCleaner` wraps the handler in a `BeanPostProcessor` and trims the
+framing off failed results. The annotation-driven schema generation PRD-025 §3.1 valued is
+untouched.
+
+Two things worth carrying forward:
+
+- **The framing names the Java method (`createTestCase`), not the MCP tool (`create_test_case`).**
+  The first version checked the text against the tool name from the specification — a
+  guard against stripping something unrelated — and therefore matched *nothing*. Every unit test
+  passed, because they were written with the same wrong assumption as the code: they supplied a name
+  that agreed with itself. Only the end-to-end assertion over a real `tools/call` caught it, which
+  is why that test exists and why its javadoc says so. The guard is now that the framing must name a
+  bare identifier, which does not depend on knowing which name it is.
+- **A `@Bean` method sharing its `@Configuration` class's name** collides with the component-scanned
+  definition and the context refuses to start. Also caught end-to-end, immediately.
+
+Trimming does not try to tell a refusal from a genuine fault: by the time the result exists the
+exception is gone. Trimming is right either way — for a refusal it leaves the instruction, for a
+fault it leaves the underlying message, which beats the name of a method the caller already knows.
+`isError` still says it failed and `mcp_tool_invocations` still records REFUSED against ERROR.
+
+**637 backend tests green.**
+
 ## 9. Future Work
 
 - **`record_test_results_bulk`**, if the singular tool turns out to be the bottleneck rather than
