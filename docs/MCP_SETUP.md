@@ -18,7 +18,7 @@ Optional limits, with their defaults:
 | Variable | Default | What it bounds |
 |---|---|---|
 | `MCP_MAX_WRITES_PER_MINUTE` | 120 | Writes per API key per minute |
-| `MCP_MAX_BULK_SIZE` | 50 | Items in one `create_test_cases_bulk` call |
+| `MCP_MAX_BULK_SIZE` | 50 | Items in one `create_test_cases_bulk` or `record_test_results` call |
 | `MCP_MAX_STEPS_PER_CASE` | 100 | Steps in one test case |
 | `MCP_AUDIT_RETENTION_DAYS` | 90 | How long tool-call records are kept |
 
@@ -142,8 +142,8 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 **Write** (Tester only) — `create_test_case`, `update_test_case`, `create_test_cases_bulk`,
 `create_test_suite`, `create_test_plan`, `create_test_case_folder`,
 `move_test_cases_to_folder`, `create_requirement`, `link_test_cases_to_requirement`,
-`create_test_run`, `record_test_result`, `complete_test_run`, `create_bug_report`,
-`change_bug_report_status`.
+`create_test_run`, `record_test_result`, `record_test_results`, `complete_test_run`,
+`create_bug_report`, `change_bug_report_status`.
 
 ### Executing a run
 
@@ -155,10 +155,19 @@ The one sequence you cannot infer from the tool list. An agent that runs tests i
    rather than adding another, and the first one moves the run to `IN_PROGRESS` — there is no
    separate start call. Identify the case with `testCaseId`; for a parameterized case, which has one
    result per parameter set, use the `resultId` from `get_test_run` instead.
+
+   **If you already have several outcomes, use `record_test_results` instead** — one call, a list of
+   entries, capped at `MCP_MAX_BULK_SIZE`. Every entry is validated before anything is written, so a
+   bad id fails the whole call naming its position and leaves the run untouched; fix that entry and
+   resend. Recording is idempotent, so resending is safe.
 3. **`complete_test_run`** — `COMPLETED`, or `ABORTED` if something blocked you part-way. Results
    still pending are reported back, not refused.
 4. **`create_bug_report`** for a real defect, passing the `resultId` from step 2 as `testResultId`
    so the bug is reachable from the failure that produced it.
+
+Anywhere a run is named — `get_test_run`, `record_test_result`, `record_test_results`,
+`complete_test_run` — **either the UUID or the key (`PROJ-Run-7`) works**, so you can pass whichever
+the previous call handed you rather than making a round trip to translate one into the other.
 
 **If you already have every result** — a CI job, a test framework's output — do not use these tools.
 `POST /api/external/projects/{key}/test-runs` takes a whole run in one request with the same API

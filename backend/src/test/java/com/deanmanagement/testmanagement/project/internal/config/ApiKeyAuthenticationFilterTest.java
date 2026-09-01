@@ -189,18 +189,45 @@ class ApiKeyAuthenticationFilterTest {
         verify(filterChain, never()).doFilter(request, response);
     }
 
+    /**
+     * The message used to be "Invalid or revoked API key", which covered both cases and helped with
+     * neither: the reader's next move is "check the copy you are holding" for one and "ask an
+     * administrator" for the other (PRD-027 §8.3).
+     */
     @Test
-    void invalidKey_returns401() throws ServletException, IOException {
+    void unknownKey_returns401_tellingTheCallerTheKeyMatchesNothing()
+            throws ServletException, IOException {
         MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/external/projects/123/test-runs");
         request.addHeader("X-API-Key", "tm_invalidkey");
         MockHttpServletResponse response = new MockHttpServletResponse();
 
         when(apiKeyService.validateKey("tm_invalidkey")).thenReturn(Optional.empty());
+        when(apiKeyService.isRevokedKey("tm_invalidkey")).thenReturn(false);
 
         filter.doFilterInternal(request, response, filterChain);
 
         assertThat(response.getStatus()).isEqualTo(401);
-        assertThat(response.getContentAsString()).contains("Invalid or revoked API key");
+        assertThat(response.getContentAsString())
+                .contains("No API key matches")
+                .doesNotContain("revoked");
+        verify(filterChain, never()).doFilter(request, response);
+    }
+
+    @Test
+    void revokedKey_returns401_sayingSoAndWhatToDo() throws ServletException, IOException {
+        MockHttpServletRequest request = new MockHttpServletRequest("POST", "/api/external/projects/123/test-runs");
+        request.addHeader("X-API-Key", "tm_revokedkey");
+        MockHttpServletResponse response = new MockHttpServletResponse();
+
+        when(apiKeyService.validateKey("tm_revokedkey")).thenReturn(Optional.empty());
+        when(apiKeyService.isRevokedKey("tm_revokedkey")).thenReturn(true);
+
+        filter.doFilterInternal(request, response, filterChain);
+
+        assertThat(response.getStatus()).isEqualTo(401);
+        assertThat(response.getContentAsString())
+                .contains("revoked")
+                .contains("API Keys");
         verify(filterChain, never()).doFilter(request, response);
     }
 

@@ -41,6 +41,8 @@ public class TestRunReadTools {
 
     private final McpCallerContext callerContext;
     private final TestRunService testRunService;
+    private final com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository
+            testRunRepository;
 
     @McpTool(
             name = "list_test_runs",
@@ -84,6 +86,7 @@ public class TestRunReadTools {
                     failed and what the executor recorded. Pass onlyStatus to narrow it — for
                     example FAILED to get just the failures of a large run.
                     Result status: PENDING | PASSED | FAILED | BLOCKED | SKIPPED.
+                    Takes the run's UUID or its key (PROJ-Run-7) — whichever you have.
                     Each result carries its own id; pass that to record_test_result when a test
                     case appears more than once in the run, which happens when the case is
                     parameterized (those results also carry parameterSetName).
@@ -91,12 +94,13 @@ public class TestRunReadTools {
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     public McpDtos.TestRunDetail getTestRun(
-            @McpToolParam(description = "Test run UUID") UUID id,
+            @McpToolParam(description = "Test run UUID or key, e.g. PROJ-Run-7") String idOrKey,
             @McpToolParam(description = "Only results in these statuses", required = false)
             List<TestResultStatus> onlyStatus) {
 
         var caller = callerContext.require();
-        TestRunResponse run = testRunService.findById(caller.projectId(), id);
+        TestRunResponse run = testRunService.findById(caller.projectId(),
+                McpRunReferences.resolve(testRunRepository, caller.projectId(), idOrKey));
 
         List<McpDtos.TestResult> results = (run.results() == null ? List.<
                 com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse>of()

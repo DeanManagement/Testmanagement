@@ -1,6 +1,14 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
+import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.UUID;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -9,6 +17,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -31,7 +40,26 @@ class McpDiscoverabilityApiTest {
     @Autowired
     private MockMvc mockMvc;
 
+    @Autowired
+    private ApiKeyService apiKeyService;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
     private static final String KEY = "tm_somethingthatlookslikeakey";
+
+    private static final String TOOLS_LIST =
+            "{\"jsonrpc\":\"2.0\",\"id\":1,\"method\":\"tools/list\",\"params\":{}}";
+
+    private UUID revocableProjectId;
+
+    @BeforeEach
+    void createProjectForKeys() {
+        Project project = new Project();
+        project.setName("Discoverability");
+        project.setKey("DISC" + Integer.toHexString(new java.util.Random().nextInt(0xFFFF)));
+        revocableProjectId = projectRepository.save(project).getId();
+    }
 
     @Test
     void anApiKeyOnTheWrongPathIsToldWhereItWorks() throws Exception {
@@ -103,6 +131,40 @@ class McpDiscoverabilityApiTest {
                 .andExpect(jsonPath("$.manualExample").value(org.hamcrest.Matchers.containsString("curl")))
                 .andExpect(jsonPath("$.manualExample").value(org.hamcrest.Matchers.containsString("debugging")))
                 .andExpect(jsonPath("$.example").doesNotExist());
+    }
+
+    /**
+     * "Invalid or revoked API key" covered both cases and helped with neither. The next move is
+     * different for each — ask for a new key, versus check the copy you are holding — and a session
+     * reported spending several round trips re-probing the auth header off the back of it, when the
+     * header was never the problem (PRD-027 §8.3).
+     */
+    @Test
+    void anUnknownKeyAndARevokedKeyAreDistinguished() throws Exception {
+        // Against /api/mcp, where the key filter actually runs — /api/projects is answered by the
+        // signpost entry point instead, which is a different message for a different problem.
+        mockMvc.perform(post("/api/mcp").header("X-API-Key", KEY)
+                        .contentType("application/json")
+                        .accept("application/json", "text/event-stream")
+                        .content(TOOLS_LIST))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error")
+                        .value(org.hamcrest.Matchers.containsString("No API key matches")));
+
+        String live = apiKeyService.create(
+                new CreateApiKeyRequest("to-be-revoked", revocableProjectId, ProjectRole.TESTER))
+                .rawKey();
+        apiKeyService.revoke(apiKeyService.findAll().stream()
+                .filter(k -> "to-be-revoked".equals(k.name()))
+                .findFirst().orElseThrow().id());
+
+        mockMvc.perform(post("/api/mcp").header("X-API-Key", live)
+                        .contentType("application/json")
+                        .accept("application/json", "text/event-stream")
+                        .content(TOOLS_LIST))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.error")
+                        .value(org.hamcrest.Matchers.containsString("revoked")));
     }
 
     @Test

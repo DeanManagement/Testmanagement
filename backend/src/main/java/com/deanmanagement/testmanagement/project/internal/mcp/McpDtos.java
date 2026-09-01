@@ -185,6 +185,26 @@ final class McpDtos {
     record CompletedTestRun(UUID id, String key, TestRunStatus status, int total, int passed,
                             int failed, int blocked, int skipped, int pending) {}
 
+    /**
+     * One outcome in a {@code record_test_results} call.
+     *
+     * <p>The {@code @Nullable}s are load-bearing exactly as they are on {@link Step}: victools
+     * marks every property of a nested type required unless annotated, and
+     * {@code @McpToolParam(required = false)} only reaches top-level parameters. Without them a
+     * client is rejected at schema validation for omitting a comment — which most results have not
+     * got — before any of this code runs. PRD-025 §8 found that the hard way.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record ResultEntry(TestResultStatus status,
+                       @Nullable UUID testCaseId,
+                       @Nullable UUID resultId,
+                       @Nullable String comment,
+                       @Nullable String defectLink) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record RecordedResults(int recorded, TestRunStatus runStatus, int total, int passed, int failed,
+                           int blocked, int skipped, int pending) {}
+
     // --- bug reports (PRD-027) ---------------------------------------------------------------
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

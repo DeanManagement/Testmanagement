@@ -636,6 +636,58 @@ fault it leaves the underlying message, which beats the name of a method the cal
 
 **637 backend tests green.**
 
+## 8.3 As Built — friction found by a real agent (2026-09-01)
+
+A local model working a project through the tools filed a report. Four items, triaged rather than
+taken at face value — two of the diagnoses did not survive checking.
+
+**Accepted and fixed.**
+
+- **`get_test_run` demanded a UUID while every run response leads with `key`.** The agent had the
+  key, was told by `create_test_run`'s own description to quote it, and then paid a translation
+  round trip. `get_test_case` has taken `idOrKey` since PRD-025, so this was an inconsistency as
+  well as a friction. `get_test_run`, `record_test_result`, `record_test_results` and
+  `complete_test_run` now take either. The key lookup is project-scoped, because run keys are
+  unique instance-wide and an unscoped one resolves a stranger's run — the §3.5 shape again, in a
+  lookup added after §3.5 was written.
+- **The 29-call fan-out.** §2 declined a bulk record tool on the grounds that PRD-005's ingestion
+  endpoint covers batches. That reasoning does not survive the case reported: re-recording 29
+  results *inside an ongoing MCP session* would mean leaving MCP, translating ids to case keys, and
+  posting to a different API. §8 named "if the singular tool turns out to be a bottleneck" as the
+  trigger; 29 calls, and 29 writes against a 120/minute budget, is it. `record_test_results` takes a
+  list, validates every entry before writing any, and charges the budget per result so a batch is
+  not a way around it. It is **one transaction, not per-item** — the opposite of
+  `create_test_cases_bulk`, and for a reason: recording is idempotent, so resending a corrected
+  batch is safe, which makes "nothing happened, entry 12 is wrong" better than a half-recorded run
+  to reconcile.
+- **"Invalid or revoked API key"** covered both cases and helped with neither. The reader's next
+  move differs — ask an administrator, versus check the copy you are holding — and the report shows
+  several round trips spent re-probing the auth header on the strength of it, when the header was
+  never the problem. Now distinguished. While there: the rejection body was concatenated into JSON
+  with no charset and no escaping, so a message with a non-ASCII character was mangled and one with
+  a quote would have produced an unparseable body.
+
+**Not accepted.**
+
+- **"Transient 401, likely a key-store cache lagging the redeploy."** There is no cache:
+  `validateKey` hashes and hits the database on every request. A 401 there means the hash matched
+  nothing, which is a wrong or stale key. The improved message above is the useful response to this;
+  a cache that does not exist cannot be the cause.
+- **`Unknown tool: invalid_tool_name`** is a Spring AI defect — `message` carries a literal
+  placeholder while the real name sits in `data`. Left alone deliberately: nothing is lost, only
+  mislabelled, and intercepting it means rewriting JSON-RPC errors in a servlet filter, outside the
+  tool-specification seam everything else here uses. Documented, and worth reporting upstream.
+- **Calling a tool that does not exist** was the agent working from memory instead of `tools/list`.
+  Not a server problem.
+- **Both `Accept` types being mandatory** only bites a caller hand-driving the transport, which is
+  the behaviour §8.2 and the descriptor rework exist to discourage. A registered client handles it.
+
+**The offer of a skill encoding these as gotchas was declined.** Three of the four were defects to
+remove rather than lore to memorise, and a skill would have made the workarounds permanent and rotted
+the moment they were fixed.
+
+**645 backend tests green.**
+
 ## 9. Future Work
 
 - **`record_test_results_bulk`**, if the singular tool turns out to be the bottleneck rather than

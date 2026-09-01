@@ -29,6 +29,21 @@ public interface TestRunRepository extends JpaRepository<TestRun, UUID>, JpaSpec
             "WHERE r.key = :key")
     Optional<TestRun> findByKey(@Param("key") String key);
 
+    /**
+     * Project-scoped key lookup, for callers that accept a run key from outside.
+     *
+     * <p>Deliberately separate from {@link #findByKey}, which is global: run keys are unique across
+     * the instance, so an unscoped lookup would resolve another project's run and report its name
+     * back (PRD-027 §3.5).
+     */
+    @Query("SELECT r FROM TestRun r "
+            + "LEFT JOIN FETCH r.executor "
+            + "LEFT JOIN FETCH r.completedBy "
+            + "LEFT JOIN FETCH r.testPlan "
+            + "WHERE r.key = :key AND r.project.id = :projectId")
+    Optional<TestRun> findByKeyAndProjectId(@Param("key") String key,
+                                            @Param("projectId") UUID projectId);
+
     long countByProjectId(UUID projectId);
 
     long countByProjectIdAndStatus(UUID projectId, TestRunStatus status);

@@ -81,7 +81,16 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         Optional<ValidatedKey> apiKey = apiKeyService.validateKey(presentedKey);
 
         if (apiKey.isEmpty()) {
-            reject(response, HttpServletResponse.SC_UNAUTHORIZED, "Invalid or revoked API key");
+            // "Invalid or revoked" covered both and helped with neither: the next move is "ask an
+            // administrator for a new key" in one case and "the copy you are holding is wrong" in
+            // the other (PRD-027 §8.3).
+            reject(response, HttpServletResponse.SC_UNAUTHORIZED,
+                    apiKeyService.isRevokedKey(presentedKey)
+                            ? "This API key has been revoked. Ask an administrator to issue a new "
+                                    + "one under Settings → API Keys."
+                            : "No API key matches the one presented. Check for a stale or "
+                                    + "truncated copy — a key is tm_ followed by 40 hex "
+                                    + "characters, and is shown only once when created.");
             return;
         }
 
@@ -193,9 +202,18 @@ public class ApiKeyAuthenticationFilter extends OncePerRequestFilter {
         return key.isEmpty() ? null : key;
     }
 
+    /**
+     * The body is assembled by hand rather than serialised, so the charset has to be stated —
+     * without it a message carrying anything outside ASCII is mangled on the way out, and these
+     * messages name UI paths. Quotes and backslashes are escaped for the same reason: this is
+     * string concatenation into JSON, and one unescaped quote would make the response unparseable
+     * to the client that most needs to read it.
+     */
     private void reject(HttpServletResponse response, int status, String message) throws IOException {
         response.setStatus(status);
         response.setContentType("application/json");
-        response.getWriter().write("{\"error\":\"" + message + "\"}");
+        response.setCharacterEncoding("UTF-8");
+        String escaped = message.replace("\\", "\\\\").replace("\"", "\\\"");
+        response.getWriter().write("{\"error\":\"" + escaped + "\"}");
     }
 }

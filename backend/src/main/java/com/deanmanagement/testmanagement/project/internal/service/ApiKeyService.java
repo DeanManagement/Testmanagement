@@ -199,6 +199,24 @@ public class ApiKeyService {
         }
     }
 
+    /**
+     * Whether a presented key that did not authenticate was revoked, or simply matches nothing.
+     *
+     * <p>Both end in a 401, and the caller's next move is different in each case: a revoked key
+     * means ask an administrator for a new one, an unknown key means the copy you are holding is
+     * wrong or truncated. Reported from a session that spent several round trips re-probing the
+     * auth header on the strength of one message that could not tell the two apart (PRD-027 §8.3).
+     *
+     * <p>Only consulted after {@link #validateKey} has already failed, and it discloses nothing a
+     * holder of the key does not have: it answers about the exact key presented, so it cannot be
+     * used to enumerate anything.
+     */
+    public boolean isRevokedKey(String rawKey) {
+        return apiKeyRepository.findByKeyHash(sha256(rawKey))
+                .map(ApiKey::isRevoked)
+                .orElse(false);
+    }
+
     public Optional<ValidatedKey> validateKey(String rawKey) {
         String hash = sha256(rawKey);
         return apiKeyRepository.findByKeyHash(hash)

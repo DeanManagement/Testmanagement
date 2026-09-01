@@ -44,6 +44,9 @@ public class TestRunWriteTools {
     private final TestSuiteService testSuiteService;
     private final McpWriteThrottle writeThrottle;
     private final McpValidator validator;
+    private final com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository
+            testRunRepository;
+    private final McpProperties properties;
 
     @McpTool(
             name = "create_test_run",
@@ -101,6 +104,7 @@ public class TestRunWriteTools {
             description = """
                     Record the outcome of one test case in a run, as you finish executing it.
                     status: PASSED | FAILED | BLOCKED | SKIPPED.
+                    The run is named by its UUID or its key (PROJ-Run-7).
                     Identify the result either by testCaseId or, when the same case appears more
                     than once in the run because it is parameterized, by the resultId that
                     get_test_run returns for it.
@@ -113,7 +117,7 @@ public class TestRunWriteTools {
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
     @Transactional
     public McpDtos.RecordedResult recordTestResult(
-            @McpToolParam(description = "Test run UUID") UUID runId,
+            @McpToolParam(description = "Test run UUID or key, e.g. PROJ-Run-7") String runIdOrKey,
             @McpToolParam(description = "Outcome: PASSED | FAILED | BLOCKED | SKIPPED")
             TestResultStatus status,
             @McpToolParam(description = "Test case UUID; omit if you pass resultId", required = false)
@@ -137,6 +141,7 @@ public class TestRunWriteTools {
             throw new McpToolException("Pass either testCaseId or resultId.");
         }
 
+        UUID runId = McpRunReferences.resolve(testRunRepository, caller.projectId(), runIdOrKey);
         TestRunResponse run = testRunService.findById(caller.projectId(), runId);
         if (run.status() == TestRunStatus.COMPLETED || run.status() == TestRunStatus.ABORTED) {
             throw new McpToolException("Run " + run.key() + " is " + run.status()
@@ -183,6 +188,113 @@ public class TestRunWriteTools {
     }
 
     @McpTool(
+            name = "record_test_results",
+            description = """
+                    Record many outcomes in one call — use this whenever you have more than a
+                    couple, rather than calling record_test_result in a loop.
+                    Each entry needs a status (PASSED | FAILED | BLOCKED | SKIPPED) and either a
+                    testCaseId or a resultId, plus an optional comment and defectLink.
+                    Every entry is checked before anything is written, so a bad id fails the whole
+                    call naming the offending position and leaves the run untouched — you fix that
+                    entry and send the batch again. Re-recording is safe: an entry that already has
+                    the status you are sending is simply set again, and omitting a comment keeps
+                    the one already there.
+                    Like the single-result tool, the first entry starts a PLANNED run.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.RecordedResults recordTestResults(
+            @McpToolParam(description = "Test run UUID or key, e.g. PROJ-Run-7") String runIdOrKey,
+            @McpToolParam(description = "The outcomes to record") List<McpDtos.ResultEntry> results) {
+
+        var caller = callerContext.requireWriter();
+        if (results == null || results.isEmpty()) {
+            throw new McpToolException("results is required and must hold at least one entry.");
+        }
+        int max = properties.getMaxBulkSize();
+        if (results.size() > max) {
+            throw new McpToolException("Too many results in one call: " + results.size()
+                    + ", the limit is " + max + ". Send them in batches of that size.");
+        }
+        // One write per result, charged up front — the budget exists to bound a runaway agent, and
+        // a batch that slipped through as a single write would be the way around it.
+        writeThrottle.recordWrites(caller.apiKeyId(), results.size());
+
+        UUID runId = McpRunReferences.resolve(testRunRepository, caller.projectId(), runIdOrKey);
+        TestRunResponse run = testRunService.findById(caller.projectId(), runId);
+        if (run.status() == TestRunStatus.COMPLETED || run.status() == TestRunStatus.ABORTED) {
+            throw new McpToolException("Run " + run.key() + " is " + run.status()
+                    + ", so its results are final. Create a new run to re-test.");
+        }
+
+        /*
+         * Resolved and validated in full before a single write, which is why this is one
+         * transaction rather than the per-item REQUIRES_NEW that create_test_cases_bulk needs.
+         *
+         * That tool commits per item because a failed retry would duplicate the cases that already
+         * landed. Recording is idempotent — the upsert fills the same row again and an omitted
+         * comment is preserved — so resending a corrected batch is safe and cheap, and the agent
+         * is better served by "nothing happened, entry 12 names a case that is not in this run"
+         * than by a half-recorded run it now has to reconcile.
+         */
+        List<TestResultResponse> targets = new java.util.ArrayList<>(results.size());
+        for (int index = 0; index < results.size(); index++) {
+            McpDtos.ResultEntry entry = results.get(index);
+            try {
+                targets.add(validateEntry(run, entry));
+            } catch (McpToolException problem) {
+                throw new McpToolException("results[" + index + "]: " + problem.getMessage()
+                        + " Nothing was recorded.");
+            }
+        }
+
+        TestRunStatus runStatus = startIfPlanned(caller, run);
+        for (int index = 0; index < results.size(); index++) {
+            McpDtos.ResultEntry entry = results.get(index);
+            TestResultResponse target = targets.get(index);
+            var update = new UpdateTestResultRequest(entry.status(),
+                    entry.comment() == null ? target.comment() : entry.comment(),
+                    entry.defectLink() == null ? target.defectLink() : entry.defectLink());
+            validator.validate(update);
+            testRunService.updateResult(caller.projectId(), runId, target.id(), update);
+        }
+
+        McpDtos.CompletedTestRun counts =
+                counts(testRunService.findById(caller.projectId(), runId));
+        return new McpDtos.RecordedResults(results.size(), runStatus, counts.total(),
+                counts.passed(), counts.failed(), counts.blocked(), counts.skipped(),
+                counts.pending());
+    }
+
+    /**
+     * Checks one entry and returns the result it names.
+     *
+     * <p>Only seeded results can be filled in by the bulk tool: appending an ad-hoc result, which
+     * {@code record_test_result} allows, is refused here. A batch is where a stale or mistyped id
+     * is least likely to be noticed, and quietly growing the run by an entry the agent did not mean
+     * to add is the wrong way to fail.
+     */
+    private TestResultResponse validateEntry(TestRunResponse run, McpDtos.ResultEntry entry) {
+        if (entry == null || entry.status() == null) {
+            throw new McpToolException("status is required: PASSED, FAILED, BLOCKED or SKIPPED.");
+        }
+        if (entry.status() == TestResultStatus.PENDING) {
+            throw new McpToolException("PENDING is the starting state, not an outcome.");
+        }
+        if (entry.testCaseId() == null && entry.resultId() == null) {
+            throw new McpToolException("pass either testCaseId or resultId.");
+        }
+        TestResultResponse target = resolve(run, entry.resultId(), entry.testCaseId());
+        if (target == null) {
+            throw new McpToolException("test case " + entry.testCaseId() + " has no result in run "
+                    + run.key() + "; record_test_results only fills in results the run already "
+                    + "holds.");
+        }
+        return target;
+    }
+
+    @McpTool(
             name = "complete_test_run",
             description = """
                     Close a test run and return its final counts.
@@ -196,7 +308,7 @@ public class TestRunWriteTools {
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
     @Transactional
     public McpDtos.CompletedTestRun completeTestRun(
-            @McpToolParam(description = "Test run UUID") UUID runId,
+            @McpToolParam(description = "Test run UUID or key, e.g. PROJ-Run-7") String runIdOrKey,
             @McpToolParam(description = "COMPLETED (default) or ABORTED", required = false)
             TestRunStatus status) {
 
@@ -209,6 +321,7 @@ public class TestRunWriteTools {
                     + "record a result on it.");
         }
 
+        UUID runId = McpRunReferences.resolve(testRunRepository, caller.projectId(), runIdOrKey);
         TestRunResponse run = testRunService.findById(caller.projectId(), runId);
 
         // Already where the agent asked for: idempotent, because a retry after a dropped response
