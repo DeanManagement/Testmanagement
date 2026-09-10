@@ -637,7 +637,8 @@
     "deleteConfirm": "Ordner \"{{name}}\" löschen? Unterordner werden nach oben verschoben und Testfälle in die Wurzelebene.",
     "nameLabel": "Ordnername",
     "createTitle": "Ordner erstellen",
-    "renameTitle": "Ordner umbenennen"
+    "renameTitle": "Ordner umbenennen",
+    "includeSubfolders": "Unterordner einbeziehen"
   },
   "filter": {
     "search": "Suchen",

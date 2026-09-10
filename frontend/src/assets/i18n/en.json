@@ -637,7 +637,8 @@
     "deleteConfirm": "Delete folder \"{{name}}\"? Subfolders will be moved up and test cases will be moved to root.",
     "nameLabel": "Folder Name",
     "createTitle": "Create Folder",
-    "renameTitle": "Rename Folder"
+    "renameTitle": "Rename Folder",
+    "includeSubfolders": "Include subfolders"
   },
   "filter": {
     "search": "Search",

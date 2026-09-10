@@ -77,6 +77,8 @@ export interface TestCaseQuery {
   priority?: Priority[];
   label?: string[];
   folderId?: string | null;
+  /** With folderId: also list cases in its subfolders. */
+  includeSubfolders?: boolean;
   rootOnly?: boolean;
   updatedAfter?: string;
   page?: number;

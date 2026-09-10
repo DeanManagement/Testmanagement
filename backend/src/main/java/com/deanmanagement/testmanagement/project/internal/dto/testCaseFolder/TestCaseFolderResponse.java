@@ -10,6 +10,7 @@ public record TestCaseFolderResponse(
         UUID parentId,
         int sortOrder,
         long testCaseCount,
+        long totalTestCaseCount,
         List<TestCaseFolderResponse> children,
         Instant createdAt,
         Instant updatedAt

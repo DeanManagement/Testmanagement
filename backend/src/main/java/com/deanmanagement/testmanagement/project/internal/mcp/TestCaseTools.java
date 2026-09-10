@@ -75,6 +75,9 @@ public class TestCaseTools {
             List<String> labels,
             @McpToolParam(description = "Only cases in this folder (see list_test_case_folders)", required = false)
             UUID folderId,
+            @McpToolParam(description = "With folderId: also include cases in its subfolders, default false",
+                    required = false)
+            Boolean includeSubfolders,
             @McpToolParam(description = "Zero-based page number, default 0", required = false)
             Integer page,
             @McpToolParam(description = "Page size, default 50, max 200", required = false)
@@ -83,7 +86,7 @@ public class TestCaseTools {
         var caller = callerContext.require();
         Pageable pageable = pageable(page, size);
         var filter = new TestCaseListFilter(blankToNull(query), status, priority, labels, folderId,
-                false, null);
+                Boolean.TRUE.equals(includeSubfolders), false, null);
 
         Page<TestCaseResponse> result =
                 testCaseService.findByProject(caller.projectId(), filter, pageable);

@@ -53,12 +53,14 @@ public class TestCaseController {
                                           @RequestParam(required = false) List<Priority> priority,
                                           @RequestParam(required = false) List<String> label,
                                           @RequestParam(required = false) UUID folderId,
+                                          @RequestParam(required = false, defaultValue = "false") boolean includeSubfolders,
                                           @RequestParam(required = false, defaultValue = "false") boolean rootOnly,
                                           @RequestParam(required = false)
                                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant updatedAfter,
                                           @PageableDefault(size = PageableUtils.DEFAULT_SIZE) Pageable pageable) {
         TestCaseListFilter filter =
-                new TestCaseListFilter(q, status, priority, label, folderId, rootOnly, updatedAfter);
+                new TestCaseListFilter(q, status, priority, label, folderId, includeSubfolders, rootOnly,
+                        updatedAfter);
         return testCaseService.findByProject(projectId, filter, PageableUtils.normalize(pageable));
     }
 

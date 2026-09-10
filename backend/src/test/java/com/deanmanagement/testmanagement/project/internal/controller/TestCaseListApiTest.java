@@ -3,11 +3,14 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCaseFolder;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestCaseFolderRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.user.User;
 import com.deanmanagement.testmanagement.user.internal.repository.UserRepository;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +47,10 @@ class TestCaseListApiTest {
     private ProjectRepository projectRepository;
     @Autowired
     private TestCaseRepository testCaseRepository;
+    @Autowired
+    private TestCaseFolderRepository folderRepository;
+    @Autowired
+    private EntityManager entityManager;
 
     private UUID projectId;
     private String admin;
@@ -74,6 +81,100 @@ class TestCaseListApiTest {
         tc.setPriority(priority);
         tc.setLabels(new java.util.HashSet<>(Set.of(labels)));
         return testCaseRepository.save(tc);
+    }
+
+    private TestCaseFolder folder(String name, TestCaseFolder parent) {
+        TestCaseFolder f = new TestCaseFolder();
+        f.setProject(projectRepository.findById(projectId).orElseThrow());
+        f.setName(name);
+        f.setParent(parent);
+        return folderRepository.save(f);
+    }
+
+    private TestCase seedIn(String title, TestCaseFolder folder) {
+        TestCase tc = seed(title, TestCaseStatus.ACTIVE, Priority.LOW);
+        tc.setFolder(folder);
+        return testCaseRepository.save(tc);
+    }
+
+    /** parent > child > grandchild, one case each, plus a sibling folder and a root case. */
+    private TestCaseFolder seedFolderTree() {
+        TestCaseFolder parent = folder("parent", null);
+        TestCaseFolder child = folder("child", parent);
+        TestCaseFolder grandchild = folder("grandchild", child);
+        TestCaseFolder sibling = folder("sibling", null);
+        seedIn("in parent", parent);
+        seedIn("in child", child);
+        seedIn("in grandchild", grandchild);
+        seedIn("in sibling", sibling);
+        seed("at root", TestCaseStatus.ACTIVE, Priority.LOW);
+        // Drop the first-level cache so the folders' inverse-side testCases collections are
+        // loaded fresh by the request, as they would be in production.
+        entityManager.flush();
+        entityManager.clear();
+        return parent;
+    }
+
+    @Test
+    void folderId_alone_isDirectContentsOnly() throws Exception {
+        TestCaseFolder parent = seedFolderTree();
+
+        mockMvc.perform(get("/api/projects/{p}/test-cases", projectId)
+                        .param("folderId", parent.getId().toString()).with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("in parent"));
+    }
+
+    @Test
+    void includeSubfolders_returnsWholeSubtree() throws Exception {
+        TestCaseFolder parent = seedFolderTree();
+
+        mockMvc.perform(get("/api/projects/{p}/test-cases", projectId)
+                        .param("folderId", parent.getId().toString())
+                        .param("includeSubfolders", "true")
+                        .param("sort", "title,asc").with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page.totalElements").value(3))
+                .andExpect(jsonPath("$.content[0].title").value("in child"))
+                .andExpect(jsonPath("$.content[1].title").value("in grandchild"))
+                .andExpect(jsonPath("$.content[2].title").value("in parent"));
+    }
+
+    @Test
+    void includeSubfolders_stillHonoursOtherFilters() throws Exception {
+        TestCaseFolder parent = seedFolderTree();
+
+        mockMvc.perform(get("/api/projects/{p}/test-cases", projectId)
+                        .param("folderId", parent.getId().toString())
+                        .param("includeSubfolders", "true")
+                        .param("q", "grand").with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("in grandchild"));
+    }
+
+    @Test
+    void includeSubfolders_withoutFolderId_isIgnored() throws Exception {
+        seedFolderTree();
+
+        mockMvc.perform(get("/api/projects/{p}/test-cases", projectId)
+                        .param("includeSubfolders", "true").with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page.totalElements").value(5));
+    }
+
+    @Test
+    void folderTree_reportsDirectAndRecursiveCounts() throws Exception {
+        seedFolderTree();
+
+        mockMvc.perform(get("/api/projects/{p}/test-case-folders", projectId).with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.name=='parent')].testCaseCount").value(1))
+                .andExpect(jsonPath("$[?(@.name=='parent')].totalTestCaseCount").value(3))
+                .andExpect(jsonPath("$[?(@.name=='parent')].children[0].testCaseCount").value(1))
+                .andExpect(jsonPath("$[?(@.name=='parent')].children[0].totalTestCaseCount").value(2))
+                .andExpect(jsonPath("$[?(@.name=='sibling')].totalTestCaseCount").value(1));
     }
 
     @Test

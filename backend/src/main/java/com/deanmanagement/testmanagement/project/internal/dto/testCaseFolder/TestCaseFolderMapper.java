@@ -9,6 +9,7 @@ public abstract class TestCaseFolderMapper {
 
     @Mapping(target = "parentId", expression = "java(folder.getParent() != null ? folder.getParent().getId() : null)")
     @Mapping(target = "testCaseCount", expression = "java(folder.getTestCases() != null ? folder.getTestCases().size() : 0)")
+    @Mapping(target = "totalTestCaseCount", expression = "java(folder.getTestCases() != null ? folder.getTestCases().size() : 0)")
     @Mapping(target = "children", ignore = true)
     public abstract TestCaseFolderResponse toResponse(TestCaseFolder folder);
 

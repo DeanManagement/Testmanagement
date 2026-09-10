@@ -173,7 +173,7 @@ class McpToolSurfaceApiTest {
 
         assertThatThrownBy(() -> testCaseTools.getTestCase(foreign.id().toString()))
                 .isInstanceOf(ResourceNotFoundException.class);
-        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null)
+        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null)
                 .testCases())
                 .noneMatch(tc -> tc.id().equals(foreign.id()));
     }
@@ -366,7 +366,7 @@ class McpToolSurfaceApiTest {
 
         assertThat(result.dryRun()).isTrue();
         assertThat(result.created()).isEqualTo(1);
-        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null)
+        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null)
                 .totalElements()).isZero();
     }
 

@@ -193,6 +193,8 @@ public class TestCaseFolderService {
         List<TestCaseFolderResponse> childResponses = children.stream()
                 .map(child -> buildTreeNode(child, childrenMap))
                 .toList();
+        long total = response.testCaseCount()
+                + childResponses.stream().mapToLong(TestCaseFolderResponse::totalTestCaseCount).sum();
 
         return new TestCaseFolderResponse(
                 response.id(),
@@ -200,6 +202,7 @@ public class TestCaseFolderService {
                 response.parentId(),
                 response.sortOrder(),
                 response.testCaseCount(),
+                total,
                 childResponses,
                 response.createdAt(),
                 response.updatedAt()

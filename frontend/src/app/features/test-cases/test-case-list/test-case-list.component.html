@@ -64,6 +64,12 @@
           <mat-icon>create_new_folder</mat-icon>
         </button>
       </div>
+      <div class="sidebar-options">
+        <mat-slide-toggle [checked]="includeSubfolders" (change)="setIncludeSubfolders($event.checked)"
+                          data-test-id="folder-include-subfolders">
+          {{ 'folder.includeSubfolders' | translate }}
+        </mat-slide-toggle>
+      </div>
 
       <div class="folder-tree-content">
         <!-- All Test Cases item -->
@@ -91,8 +97,8 @@
               <span class="toggle-btn toggle-btn--spacer" aria-hidden="true"></span>
               <mat-icon class="folder-icon">folder</mat-icon>
               <span class="folder-name">{{ node.name }}</span>
-              @if (node.testCaseCount > 0) {
-                <span class="folder-count">{{ node.testCaseCount }}</span>
+              @if (folderBadge(node) > 0) {
+                <span class="folder-count">{{ folderBadge(node) }}</span>
               }
               <button mat-icon-button [matMenuTriggerFor]="folderMenu" class="folder-menu-btn" (click)="$event.stopPropagation()" data-test-id="folder-menu-btn"
                       [attr.aria-label]="('a11y.folderActions' | translate) + ' ' + node.name">
@@ -130,8 +136,8 @@
               </button>
               <mat-icon class="folder-icon">{{ treeControl.isExpanded(node) ? 'folder_open' : 'folder' }}</mat-icon>
               <span class="folder-name">{{ node.name }}</span>
-              @if (node.testCaseCount > 0) {
-                <span class="folder-count">{{ node.testCaseCount }}</span>
+              @if (folderBadge(node) > 0) {
+                <span class="folder-count">{{ folderBadge(node) }}</span>
               }
               <button mat-icon-button [matMenuTriggerFor]="folderMenu" class="folder-menu-btn" (click)="$event.stopPropagation()" data-test-id="folder-menu-btn"
                       [attr.aria-label]="('a11y.folderActions' | translate) + ' ' + node.name">

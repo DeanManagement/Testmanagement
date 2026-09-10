@@ -9,7 +9,8 @@ import java.util.UUID;
 
 /**
  * Filter criteria for the test-case list endpoint. All fields are optional; a {@code null} or empty
- * value means "no constraint".
+ * value means "no constraint". {@code includeSubfolders} widens {@code folderId} to the folder's
+ * whole subtree.
  */
 public record TestCaseListFilter(
         String q,
@@ -17,6 +18,7 @@ public record TestCaseListFilter(
         List<Priority> priority,
         List<String> label,
         UUID folderId,
+        boolean includeSubfolders,
         boolean rootOnly,
         Instant updatedAfter
 ) {

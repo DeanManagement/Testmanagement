@@ -9,25 +9,30 @@ import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
 /**
  * Builds a {@link Specification} for the test-case list query from a {@link TestCaseListFilter}.
  * Predicates use {@code LOWER(col) LIKE LOWER(...)} for Postgres/H2 portability.
+ * <p>
+ * {@code folderIds} is the folder constraint already resolved by the caller: {@code null} for no
+ * folder constraint, otherwise the ids to match (one id, or a whole subtree).
  */
 public final class TestCaseSpecifications {
 
     private TestCaseSpecifications() {
     }
 
-    public static Specification<TestCase> build(UUID projectId, TestCaseListFilter filter) {
+    public static Specification<TestCase> build(UUID projectId, TestCaseListFilter filter,
+                                                Collection<UUID> folderIds) {
         return (root, query, cb) -> {
             List<Predicate> predicates = new ArrayList<>();
             predicates.add(cb.equal(root.get("project").get("id"), projectId));
 
-            if (filter.folderId() != null) {
-                predicates.add(cb.equal(root.get("folder").get("id"), filter.folderId()));
+            if (folderIds != null) {
+                predicates.add(root.get("folder").get("id").in(folderIds));
             } else if (filter.rootOnly()) {
                 predicates.add(cb.isNull(root.get("folder")));
             }

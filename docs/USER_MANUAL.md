@@ -253,6 +253,10 @@ Notes:
 nest as deep as you like. Deleting a folder does not delete its contents: subfolders move up a
 level and test cases move to the root.
 
+Selecting a folder lists everything in its subtree, and the count beside each folder is the
+subtree total. Switch off **Include subfolders** above the tree to see only a folder's direct
+contents (and direct counts); the choice is kept in the URL, so a bookmarked list keeps it.
+
 Folders are a filing system, not a permission boundary.
 
 **Labels** are free-text tags on a case (`smoke`, `regression`, `flaky`). Use them to filter, and

@@ -19,8 +19,12 @@ export class TestCaseApiService {
     (query.status ?? []).forEach((s) => (params = params.append('status', s)));
     (query.priority ?? []).forEach((p) => (params = params.append('priority', p)));
     (query.label ?? []).forEach((l) => (params = params.append('label', l)));
-    if (query.folderId) params = params.set('folderId', query.folderId);
-    else if (query.rootOnly) params = params.set('rootOnly', 'true');
+    if (query.folderId) {
+      params = params.set('folderId', query.folderId);
+      if (query.includeSubfolders) params = params.set('includeSubfolders', 'true');
+    } else if (query.rootOnly) {
+      params = params.set('rootOnly', 'true');
+    }
     if (query.updatedAfter) params = params.set('updatedAfter', query.updatedAfter);
     if (query.page != null) params = params.set('page', String(query.page));
     if (query.size != null) params = params.set('size', String(query.size));

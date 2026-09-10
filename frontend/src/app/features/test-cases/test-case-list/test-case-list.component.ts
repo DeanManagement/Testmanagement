@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { MatTreeModule, MatTreeFlatDataSource, MatTreeFlattener } from '@angular/material/tree';
 import { FlatTreeControl } from '@angular/cdk/tree';
@@ -45,6 +46,7 @@ interface FlatFolderNode {
   level: number;
   expandable: boolean;
   testCaseCount: number;
+  totalTestCaseCount: number;
   parentId: string | null;
 }
 
@@ -62,6 +64,7 @@ interface FlatFolderNode {
     MatProgressSpinnerModule,
     MatChipsModule,
     MatCheckboxModule,
+    MatSlideToggleModule,
     MatTreeModule,
     MatMenuModule,
     MatBadgeModule,
@@ -100,6 +103,8 @@ export class TestCaseListComponent implements OnInit {
   displayedColumns = ['select', 'key', 'title', 'priority', 'status', 'labels', 'actions'];
 
   selectedFolderId: string | null = null;
+  /** Show a folder's whole subtree, not just its direct contents. On unless the URL says `subfolders=0`. */
+  includeSubfolders = true;
   /** Table row density; persisted across sessions (PRD-008 §2.3). */
   density: 'comfortable' | 'compact' =
     (localStorage.getItem('tc-density') as 'comfortable' | 'compact') ?? 'comfortable';
@@ -119,6 +124,7 @@ export class TestCaseListComponent implements OnInit {
     level,
     expandable: node.children.length > 0,
     testCaseCount: node.testCaseCount,
+    totalTestCaseCount: node.totalTestCaseCount,
     parentId: node.parentId,
   });
 
@@ -155,6 +161,7 @@ export class TestCaseListComponent implements OnInit {
       this.statusFilter = (params.get('status') as TestCaseStatus) ?? '';
       this.priorityFilter = (params.get('priority') as Priority) ?? '';
       this.selectedFolderId = params.get('folderId');
+      this.includeSubfolders = params.get('subfolders') !== '0';
       this.sortActive = params.get('sort')?.split(',')[0] ?? 'updatedAt';
       this.sortDirection = (params.get('sort')?.split(',')[1] as 'asc' | 'desc') ?? 'desc';
 
@@ -163,6 +170,7 @@ export class TestCaseListComponent implements OnInit {
         status: this.statusFilter ? [this.statusFilter] : undefined,
         priority: this.priorityFilter ? [this.priorityFilter] : undefined,
         folderId: this.selectedFolderId,
+        includeSubfolders: this.includeSubfolders,
         page: params.get('page') ? Number(params.get('page')) : 0,
         size: params.get('size') ? Number(params.get('size')) : 50,
         sort: params.get('sort') ?? 'updatedAt,desc',
@@ -221,6 +229,20 @@ export class TestCaseListComponent implements OnInit {
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
+  }
+
+  setIncludeSubfolders(include: boolean): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { subfolders: include ? null : '0', page: null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  /** The badge beside a folder: its subtree when subfolders are included, else just its own cases. */
+  folderBadge(node: FlatFolderNode): number {
+    return this.includeSubfolders ? node.totalTestCaseCount : node.testCaseCount;
   }
 
   createFolder(parentId?: string | null): void {

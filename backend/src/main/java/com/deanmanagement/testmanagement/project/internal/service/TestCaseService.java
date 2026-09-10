@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -50,7 +51,13 @@ public class TestCaseService {
     private final ProjectSequenceService projectSequenceService;
 
     public Page<TestCaseResponse> findByProject(UUID projectId, TestCaseListFilter filter, Pageable pageable) {
-        return testCaseRepository.findAll(TestCaseSpecifications.build(projectId, filter), pageable)
+        Set<UUID> folderIds = null;
+        if (filter.folderId() != null) {
+            folderIds = filter.includeSubfolders()
+                    ? folderRepository.findSubtreeIds(projectId, filter.folderId())
+                    : Set.of(filter.folderId());
+        }
+        return testCaseRepository.findAll(TestCaseSpecifications.build(projectId, filter, folderIds), pageable)
                 .map(testCaseMapper::toResponse);
     }
 
