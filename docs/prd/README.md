@@ -123,6 +123,36 @@ Worth reading §8 for one thing: the live run found a bug no unit test could. ur
 failed against any instance behind a CDN — and its own error message blamed the API key, which was
 the one thing that was fine.
 
+## v2.4 — proposed (feature research, 2026-09-17)
+
+Gaps against comparable test-management tools, each grounded in the current code. All drafts.
+
+| PRD | Title | Priority | Size | Status |
+|---|---|---|---|---|
+| [029](PRD-029-jira-github-issue-trackers.md) | Jira & GitHub Issues as Issue Trackers | P1 | M | 📝 Draft |
+| [030](PRD-030-shared-steps.md) | Shared / Reusable Steps | P2 | M-L | 📝 Draft |
+| [031](PRD-031-chat-notification-presets.md) | Chat Notification Presets (Slack / Teams / Mattermost) | P2 | S-M | 📝 Draft |
+| [032](PRD-032-environments-configurations.md) | Project Environments | P2 | M | 📝 Draft |
+| [033](PRD-033-test-case-review-status.md) | Test Case Review / Approval Status | P3 | S-M | 📝 Draft |
+| [034](PRD-034-exploratory-sessions.md) | Exploratory Testing Sessions | P3 | M | 📝 Draft |
+| [035](PRD-035-custom-fields.md) | Custom Fields | P3 | M-L | 📝 Draft |
+| [036](PRD-036-time-estimates-tracking.md) | Time Estimates & Tracking | P3 | M | 📝 Draft |
+| [037](PRD-037-release-readiness-quality-gate.md) | Release Readiness / Quality Gate | P2 | S-M | 📝 Draft |
+| [038](PRD-038-run-comparison.md) | Run Comparison | P2 | S-M | 📝 Draft |
+| [039](PRD-039-backup-restore.md) | Backup / Restore | P2 (A) · P3 (B) | S (A) · L (B) | 📝 Draft |
+| [040](PRD-040-bdd-gherkin.md) | BDD / Gherkin Authoring | P3 | M | 📝 Draft |
+| [041](PRD-041-totp-two-factor.md) | TOTP Two-Factor Authentication | P3 | M | 📝 Draft |
+| [042](PRD-042-ai-case-generation.md) | AI-Assisted Case Generation | P3 | S (A) | 📝 Draft |
+| [043](PRD-043-scheduled-reports.md) | Scheduled Report Emails | P3 | M | 📝 Draft |
+| [044](PRD-044-test-case-attachments.md) | Test Case Attachments | P2 | M | 📝 Draft |
+
+**Suggested order:** 029 → 031 → 039 Phase A → 038 → 037 → 044 → 030 → 032. Everything P3 waits for
+its driver. 042 Option A is cheap enough to slot in anywhere.
+
+**Found while writing these (existing bugs, not new features):** CI-ingested runs fire no run webhook
+events (031); `PLAN_COMPLETED` is declared but never published (031); `forcePasswordChange` is
+enforced only in the frontend (041); comments on a deleted test case are never cleaned up (035).
+
 ## Status legend
-Every PRD in this directory except 026 is **Implemented**. New work should get a new PRD rather than
+Every PRD up to 028 except 026 is **Implemented**; 029–044 are drafts. New work should get a new PRD rather than
 extending a shipped one.
