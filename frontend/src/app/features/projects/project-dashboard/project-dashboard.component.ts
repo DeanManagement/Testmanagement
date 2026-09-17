@@ -22,7 +22,7 @@ import {
   CategoryScale,
   LinearScale,
   Tooltip,
-  Legend,
+  Legend, Filler
 } from 'chart.js';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -32,7 +32,10 @@ import { FlakyTest, ProjectDashboard } from '../../../shared/models/dashboard.mo
 Chart.register(
   DoughnutController, BarController, LineController,
   ArcElement, BarElement, LineElement, PointElement,
-  CategoryScale, LinearScale, Tooltip, Legend
+  CategoryScale, LinearScale, Tooltip, Legend,
+  // The pass-rate trend sets `fill: true`. Without Filler registered Chart.js skips the area and
+  // logs "Tried to use the 'fill' option without the 'Filler' plugin enabled" on every load.
+  Filler
 );
 
 @Component({
