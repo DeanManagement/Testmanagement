@@ -13,10 +13,11 @@ import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { AuthService } from '../../services/auth.service';
 import { ThemePreference, ThemeService } from '../../services/theme.service';
+import { Language, LanguageService } from '../../services/language.service';
 import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
 import { CommandPaletteComponent } from '../../../shared/components/command-palette/command-palette.component';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
@@ -51,7 +52,7 @@ export class ShellComponent {
   /** Single source of truth is package.json — the footer badge follows releases automatically. */
   readonly appVersion = packageInfo.version;
 
-  private readonly translate = inject(TranslateService);
+  private readonly languageService = inject(LanguageService);
   private readonly router = inject(Router);
   private readonly store = inject(Store);
   private readonly authService = inject(AuthService);
@@ -72,13 +73,13 @@ export class ShellComponent {
   themePreference = this.themeService.preference;
   resolvedTheme = this.themeService.resolved;
 
-  switchLanguage(lang: string): void {
-    this.translate.use(lang);
+  switchLanguage(language: Language): void {
+    this.languageService.use(language);
   }
 
   /** Active language for the checkmark in the language menu (mirrors the theme menu). */
-  get currentLanguage(): string {
-    return this.translate.currentLang || this.translate.defaultLang || 'en';
+  get currentLanguage(): Language {
+    return this.languageService.current();
   }
 
   setTheme(preference: ThemePreference): void {
