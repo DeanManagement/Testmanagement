@@ -11,6 +11,7 @@
     <mat-form-field appearance="outline" class="full-width">
       <mat-label>{{ 'bugReport.form.title' | translate }}</mat-label>
       <input matInput formControlName="title" data-test-id="bug-report-form-title" />
+      <mat-error><app-field-error [control]="form.controls.title" /></mat-error>
     </mat-form-field>
 
     <mat-form-field appearance="outline" class="full-width">

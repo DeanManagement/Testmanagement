@@ -1,4 +1,8 @@
 {
+  "validation": {
+    "required": "Dieses Feld ist erforderlich",
+    "maxLength": "Höchstens {{max}} Zeichen"
+  },
   "app": {
     "title": "Testmanagement"
   },
@@ -97,7 +101,8 @@
   },
   "landing": {
     "nav": {
-      "login": "Anmelden"
+      "login": "Anmelden",
+      "dashboard": "Zum Dashboard"
     },
     "hero": {
       "title": "Testmanagement leicht gemacht",
