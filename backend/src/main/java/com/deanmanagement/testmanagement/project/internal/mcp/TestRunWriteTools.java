@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.StepResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
@@ -38,6 +39,7 @@ import java.util.stream.Collectors;
  * everywhere else in this package.
  */
 @Service
+@InToolGroup(McpToolGroup.EXECUTION)
 @RequiredArgsConstructor
 public class TestRunWriteTools {
 

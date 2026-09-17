@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.version.TestCaseVersionResponse;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseVersionService;
@@ -18,6 +19,7 @@ import java.util.UUID;
  * state it replaces and there is nothing for a caller to write.
  */
 @Service
+@InToolGroup(McpToolGroup.AUTHORING)
 @RequiredArgsConstructor
 public class TestCaseHistoryTools {
 

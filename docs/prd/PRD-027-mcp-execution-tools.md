@@ -701,7 +701,15 @@ the moment they were fixed.
   why it is not in v1.
 - **Result-level project audit rows** in `AuditService` — currently only `mcp_tool_invocations`
   records who set a result. A change to the human path as much as the agent one.
-- **Per-key tool allow-list** (PRD-025 §9) — promoted from nice-to-have to scheduled. The surface is
+- ~~**Per-key tool allow-list**~~ Shipped 2026-09-17 as **tool groups** (`api_keys.mcp_tool_groups`,
+  V53): `AUTHORING`, `EXECUTION`, `REPORTING`, `PIPELINES`, `ISSUE_TRACKER`, plus an always-granted
+  `CORE` holding `get_project`. Groups rather than tool names, so a tool added later is not invisible
+  to every restricted key until each is re-issued. Enforced twice: `McpToolAuditor` refuses a call
+  outside the key's groups (the boundary), and `McpToolListFilter` trims `tools/list` (the context
+  saving). The list is trimmed at the HTTP layer because the SDK's `tools/list` handler is private
+  and `WebMvcStatelessServerTransport` is final. This reverses PRD-025's "every key sees every
+  tool": that objected to a list varying call to call, and this one varies only key to key.
+  Original note: (PRD-025 §9) — promoted from nice-to-have to scheduled. The surface is
   now 59 tools (28 when this was written, §3.1), several times PRD-025's stated ceiling, and every description rides along on
   every agent turn. An authoring-only key should not pay for execution tools it will never call.
 - ~~**Step-level results from an agent.**~~ Shipped 2026-09-17 as `record_step_result`, together

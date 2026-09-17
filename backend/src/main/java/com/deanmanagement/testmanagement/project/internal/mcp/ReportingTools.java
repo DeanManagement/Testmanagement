@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.dashboard.DashboardResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuiteReportResponse;
 import com.deanmanagement.testmanagement.project.internal.service.DashboardService;
@@ -21,6 +22,7 @@ import java.util.UUID;
  * and {@code list_test_runs} the counts, so it would only restate them.
  */
 @Service
+@InToolGroup(McpToolGroup.REPORTING)
 @RequiredArgsConstructor
 public class ReportingTools {
 

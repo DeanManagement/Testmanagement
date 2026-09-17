@@ -195,6 +195,26 @@ the previous call handed you rather than making a round trip to translate one in
 key, and `…/junit` and `…/cucumber` take report files directly. The MCP tools are for the case where
 results arrive one at a time.
 
+### Restricting a key to some tools
+
+An agent carries the description of every tool it is shown on every turn, so a key meant for one
+kind of work should only see that kind. When creating a key, **MCP tools** selects the groups it may
+use; leaving it empty allows everything, which is also what every key issued before this existed
+holds.
+
+| Group | Tools |
+|---|---|
+| Authoring | test cases, folders, suites, plans, requirements, parameter sets, version history |
+| Execution | test runs, results, step results, comments, native bug reports |
+| Reporting | dashboard, flaky tests, suite report |
+| Pipelines | build-server workflows and pipeline runs |
+| Issue tracker | linking and filing issues in the external tracker |
+
+`get_project` is always available. A restricted key does not see the other groups' tools in
+`tools/list`, and calling one anyway is refused with a message naming the group it would need — the
+refusal appears in the MCP activity log like any other. Groups are fixed when the key is created,
+like its role; issue a new key to change them.
+
 ### Tools that reach outside Testmanagement
 
 Three tools act on other systems, and are marked `openWorldHint` so a client can ask before calling

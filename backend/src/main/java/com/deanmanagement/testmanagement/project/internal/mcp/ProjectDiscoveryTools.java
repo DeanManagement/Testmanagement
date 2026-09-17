@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.CreateTestCaseFolderRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.UpdateTestCaseFolderRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.MoveTestCasesRequest;
@@ -26,6 +27,7 @@ import java.util.UUID;
  * Orientation tools (PRD-025 §3.4). An agent calls these first to learn what it is working in.
  */
 @Service
+@InToolGroup(McpToolGroup.AUTHORING)
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class ProjectDiscoveryTools {
@@ -39,6 +41,9 @@ public class ProjectDiscoveryTools {
     private final McpWriteThrottle writeThrottle;
     private final McpValidator validator;
 
+    // Identity, not authoring: a key restricted to running tests still has to be able to ask
+    // which project it is scoped to and what role it holds.
+    @InToolGroup(McpToolGroup.CORE)
     @McpTool(
             name = "get_project",
             description = """

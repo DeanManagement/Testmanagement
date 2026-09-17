@@ -1,6 +1,8 @@
 package com.deanmanagement.testmanagement.project.internal.config;
 
+import com.deanmanagement.testmanagement.project.internal.mcp.McpCallerContext;
 import com.deanmanagement.testmanagement.project.internal.mcp.McpFilters;
+import com.deanmanagement.testmanagement.project.internal.mcp.McpToolGroups;
 import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,12 +23,18 @@ public class ApiKeySecurityConfig {
     private final ApiKeyService apiKeyService;
     private final boolean allowLegacyGlobalKeys;
     private final boolean mcpEnabled;
+    private final McpCallerContext mcpCallerContext;
+    private final McpToolGroups mcpToolGroups;
 
     public ApiKeySecurityConfig(
             ApiKeyService apiKeyService,
+            McpCallerContext mcpCallerContext,
+            McpToolGroups mcpToolGroups,
             @Value("${app.api-keys.allow-legacy-global:false}") boolean allowLegacyGlobalKeys,
             @Value("${app.mcp.enabled:false}") boolean mcpEnabled) {
         this.apiKeyService = apiKeyService;
+        this.mcpCallerContext = mcpCallerContext;
+        this.mcpToolGroups = mcpToolGroups;
         this.allowLegacyGlobalKeys = allowLegacyGlobalKeys;
         this.mcpEnabled = mcpEnabled;
     }
@@ -46,6 +54,10 @@ public class ApiKeySecurityConfig {
                 // After authentication, so an anonymous prober still just gets 401 — and before
                 // the transport, whose own answer to a bad Accept header is an empty 400.
                 .addFilterAfter(McpFilters.acceptHeader(), ApiKeyAuthenticationFilter.class)
+                // PRD-027 §9: trims tools/list to the key's tool groups. After authentication because
+                // it needs to know the key; it ignores everything that is not a tools/list reply.
+                .addFilterAfter(McpFilters.toolList(mcpCallerContext, mcpToolGroups),
+                        ApiKeyAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         // The discovery descriptor, for a client that has not been configured yet
                         // and therefore cannot authenticate. GET is not part of the stateless

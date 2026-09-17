@@ -10,7 +10,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 import { Clipboard } from '@angular/cdk/clipboard';
-import { ApiKeyCreated, ApiKeyRole } from '../../../shared/models/api-key.model';
+import { ApiKeyCreated, ApiKeyRole, MCP_TOOL_GROUPS, McpToolGroup } from '../../../shared/models/api-key.model';
 import { Project } from '../../../shared/models/project.model';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 
@@ -52,6 +52,19 @@ import { ProjectApiService } from '../../../core/services/project-api.service';
             <mat-option value="VIEWER">{{ 'settings.apiKeys.roleViewer' | translate }}</mat-option>
           </mat-select>
           <mat-hint>{{ 'settings.apiKeys.roleHint' | translate }}</mat-hint>
+        </mat-form-field>
+        <!-- PRD-027 §9: an agent pays for every tool description on every turn, so a key for one
+             kind of work should only carry that kind of tool. Empty means unrestricted. -->
+        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+          <mat-label>{{ 'settings.apiKeys.toolGroups' | translate }}</mat-label>
+          <mat-select [(ngModel)]="mcpToolGroups" multiple
+                      [placeholder]="'settings.apiKeys.toolGroupsAll' | translate"
+                      data-test-id="api-key-tool-groups-select">
+            @for (group of toolGroupOptions; track group) {
+              <mat-option [value]="group">{{ 'settings.apiKeys.toolGroup.' + group | translate }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>{{ 'settings.apiKeys.toolGroupsHint' | translate }}</mat-hint>
         </mat-form-field>
       </mat-dialog-content>
       <mat-dialog-actions align="end">
@@ -123,6 +136,8 @@ export class CreateApiKeyDialogComponent implements OnInit {
   name = '';
   projectId: string | null = null;
   role: ApiKeyRole = 'TESTER';
+  mcpToolGroups: McpToolGroup[] = [];
+  readonly toolGroupOptions = MCP_TOOL_GROUPS;
   projects: Project[] = [];
   createdKey: ApiKeyCreated | null = null;
   copied = false;
@@ -137,7 +152,13 @@ export class CreateApiKeyDialogComponent implements OnInit {
   }
 
   onCreate(): void {
-    this.dialogRef.close({ action: 'create', name: this.name.trim(), projectId: this.projectId, role: this.role });
+    this.dialogRef.close({
+      action: 'create',
+      name: this.name.trim(),
+      projectId: this.projectId,
+      role: this.role,
+      mcpToolGroups: this.mcpToolGroups,
+    });
   }
 
   setCreatedKey(key: ApiKeyCreated): void {

@@ -437,6 +437,24 @@
       "roleTester": "Tester (kann erstellen und bearbeiten)",
       "roleViewer": "Betrachter (nur lesen)",
       "roleHint": "Der Schlüssel agiert als Dienstkonto mit dieser Rolle im Projekt.",
+      "toolGroups": "MCP-Tools",
+      "toolGroupsAll": "Alle Tools",
+      "toolGroupsHint": "Leer lassen, um alle Tools zu erlauben. Ein Agent führt die Beschreibung jedes sichtbaren Tools bei jedem Schritt mit – ein Schlüssel für eine Art von Arbeit ist günstiger und sicherer, wenn er nur diese Art sieht.",
+      "toolGroupsOnly": "MCP-Tools:",
+      "toolGroup": {
+        "AUTHORING": "Erstellung – Testfälle, Ordner, Suiten, Pläne, Anforderungen",
+        "EXECUTION": "Ausführung – Testläufe, Ergebnisse, Kommentare, Fehlerberichte",
+        "REPORTING": "Berichte – Dashboard, instabile Tests, Suitenbericht",
+        "PIPELINES": "Pipelines – Build-Server-Workflows auslösen und verfolgen",
+        "ISSUE_TRACKER": "Issue-Tracker – externe Issues verknüpfen und anlegen"
+      },
+      "toolGroupShort": {
+        "AUTHORING": "Erstellung",
+        "EXECUTION": "Ausführung",
+        "REPORTING": "Berichte",
+        "PIPELINES": "Pipelines",
+        "ISSUE_TRACKER": "Issue-Tracker"
+      },
       "mcpTitle": "KI-Agent verbinden (MCP)",
       "mcpHint": "Fügen Sie dies in die Konfiguration Ihres MCP-Clients ein. Der Endpunkt lässt sich nicht automatisch ermitteln; ein Agent benötigt die vollständige URL und den Header.",
       "rotate": "Schlüssel neu generieren",

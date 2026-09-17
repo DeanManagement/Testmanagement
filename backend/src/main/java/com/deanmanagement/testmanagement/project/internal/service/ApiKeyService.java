@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKe
 import com.deanmanagement.testmanagement.project.internal.entity.ApiKey;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ApiKeyRepository;
@@ -24,9 +25,11 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Instant;
+import java.util.EnumSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -76,6 +79,7 @@ public class ApiKeyService {
         apiKey.setRevoked(false);
         apiKey.setProject(project);
         apiKey.setRole(role);
+        apiKey.setMcpToolGroups(restrictedToolGroups(request.mcpToolGroups()));
         apiKey = apiKeyRepository.save(apiKey);
 
         // PRD-025 §3.2: the key authenticates as this user, which holds a real membership. Created
@@ -91,8 +95,25 @@ public class ApiKeyService {
                 apiKey.getCreatedAt(),
                 project.getId(),
                 project.getName(),
-                apiKey.getRole()
+                apiKey.getRole(),
+                apiKey.getMcpToolGroups()
         );
+    }
+
+    /**
+     * @return the groups to store, or null for an unrestricted key. Naming every selectable group
+     *         is normalised to null too: it means the same today, and unlike the explicit list it
+     *         keeps meaning "everything" when a group is added later
+     */
+    private static Set<McpToolGroup> restrictedToolGroups(Set<McpToolGroup> requested) {
+        if (requested == null || requested.isEmpty()) {
+            return null;
+        }
+        if (requested.contains(McpToolGroup.CORE)) {
+            throw new IllegalArgumentException("CORE is always granted and cannot be selected");
+        }
+        Set<McpToolGroup> selectable = EnumSet.complementOf(EnumSet.of(McpToolGroup.CORE));
+        return requested.containsAll(selectable) ? null : EnumSet.copyOf(requested);
     }
 
     /**
@@ -137,7 +158,8 @@ public class ApiKeyService {
                 apiKey.getCreatedAt(),
                 apiKey.getProject() == null ? null : apiKey.getProject().getId(),
                 apiKey.getProject() == null ? null : apiKey.getProject().getName(),
-                apiKey.getRole());
+                apiKey.getRole(),
+                apiKey.getMcpToolGroups());
     }
 
     /**
@@ -256,7 +278,8 @@ public class ApiKeyService {
                 apiKey.getRotatedAt(),
                 apiKey.getProject() == null ? null : apiKey.getProject().getId(),
                 apiKey.getProject() == null ? null : apiKey.getProject().getName(),
-                apiKey.getRole()
+                apiKey.getRole(),
+                apiKey.getMcpToolGroups()
         );
     }
 

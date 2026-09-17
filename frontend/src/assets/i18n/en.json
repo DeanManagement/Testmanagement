@@ -437,6 +437,24 @@
       "roleTester": "Tester (can create and edit)",
       "roleViewer": "Viewer (read only)",
       "roleHint": "The key acts as a service account with this role on the project.",
+      "toolGroups": "MCP tools",
+      "toolGroupsAll": "All tools",
+      "toolGroupsHint": "Leave empty to allow every tool. An agent carries the description of every tool it is shown on every turn, so a key for one kind of work is cheaper and safer if it only sees that kind.",
+      "toolGroupsOnly": "MCP tools:",
+      "toolGroup": {
+        "AUTHORING": "Authoring — test cases, folders, suites, plans, requirements",
+        "EXECUTION": "Execution — test runs, results, comments, bug reports",
+        "REPORTING": "Reporting — dashboard, flaky tests, suite report",
+        "PIPELINES": "Pipelines — trigger and follow build-server workflows",
+        "ISSUE_TRACKER": "Issue tracker — link and file external issues"
+      },
+      "toolGroupShort": {
+        "AUTHORING": "Authoring",
+        "EXECUTION": "Execution",
+        "REPORTING": "Reporting",
+        "PIPELINES": "Pipelines",
+        "ISSUE_TRACKER": "Issue tracker"
+      },
       "mcpTitle": "Connect an AI agent (MCP)",
       "mcpHint": "Paste this into your MCP client's configuration. The endpoint cannot be discovered automatically, so an agent needs the full URL and header.",
       "rotate": "Regenerate key",

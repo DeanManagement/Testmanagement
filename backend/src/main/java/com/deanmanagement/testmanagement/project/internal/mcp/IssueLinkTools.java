@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.CreateIssueLinkRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueLinkResponse;
 import com.deanmanagement.testmanagement.project.internal.service.IssueLinkService;
@@ -25,6 +26,7 @@ import java.util.UUID;
  * <p>Not {@code @Transactional} here: the service calls the tracker over the network.
  */
 @Service
+@InToolGroup(McpToolGroup.ISSUE_TRACKER)
 @RequiredArgsConstructor
 public class IssueLinkTools {
 

@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CloneTestRunRequest;
@@ -21,6 +22,7 @@ import java.util.UUID;
  * human decision (PRD-027 §2).
  */
 @Service
+@InToolGroup(McpToolGroup.EXECUTION)
 @RequiredArgsConstructor
 public class TestRunMaintenanceTools {
 

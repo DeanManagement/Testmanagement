@@ -8,9 +8,16 @@ import jakarta.servlet.Filter;
  */
 public final class McpFilters {
 
+    private static final String MCP_ENDPOINT = "/api/mcp";
+
     /** @see McpAcceptHeaderFilter */
     public static Filter acceptHeader() {
-        return new McpAcceptHeaderFilter("/api/mcp");
+        return new McpAcceptHeaderFilter(MCP_ENDPOINT);
+    }
+
+    /** @see McpToolListFilter */
+    public static Filter toolList(McpCallerContext callerContext, McpToolGroups toolGroups) {
+        return new McpToolListFilter(MCP_ENDPOINT, callerContext, toolGroups);
     }
 
     private McpFilters() {

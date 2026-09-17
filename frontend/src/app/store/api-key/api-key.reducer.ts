@@ -34,6 +34,7 @@ export const apiKeyReducer = createReducer(
         projectName: created.projectName,
         role: created.role,
         rotatedAt: null,
+        mcpToolGroups: created.mcpToolGroups,
       },
       state
     )

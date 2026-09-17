@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.comment.CommentResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.comment.CreateCommentRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.CommentEntityType;
@@ -22,6 +23,7 @@ import java.util.UUID;
  * conversation with humans. No edit or delete tool, per PRD-025's no-deletion rule.
  */
 @Service
+@InToolGroup(McpToolGroup.EXECUTION)
 @RequiredArgsConstructor
 public class CommentTools {
 

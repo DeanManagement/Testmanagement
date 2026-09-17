@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.CoverageSummaryResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.RequirementResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.SaveRequirementRequest;
@@ -30,6 +31,7 @@ import java.util.UUID;
  * audit asks about.
  */
 @Service
+@InToolGroup(McpToolGroup.AUTHORING)
 @RequiredArgsConstructor
 public class RequirementTools {
 

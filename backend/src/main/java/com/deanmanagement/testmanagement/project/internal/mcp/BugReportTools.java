@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.ChangeBugStatusRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.CreateBugReportRequest;
@@ -36,6 +37,7 @@ import java.util.stream.Collectors;
  * removed from {@code update_test_case} — making the agent the author of fields it never touched.
  */
 @Service
+@InToolGroup(McpToolGroup.EXECUTION)
 @RequiredArgsConstructor
 public class BugReportTools {
 

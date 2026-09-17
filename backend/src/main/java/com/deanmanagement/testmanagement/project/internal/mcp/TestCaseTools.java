@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestCaseListFilter;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkStatusRequest;
@@ -36,6 +37,7 @@ import java.util.UUID;
  * error.
  */
 @Service
+@InToolGroup(McpToolGroup.AUTHORING)
 @RequiredArgsConstructor
 public class TestCaseTools {
 

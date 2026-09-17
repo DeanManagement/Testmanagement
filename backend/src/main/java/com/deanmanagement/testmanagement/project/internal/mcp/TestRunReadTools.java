@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunSummaryResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestRunListFilter;
@@ -35,6 +36,7 @@ import java.util.UUID;
  * result and no idea how many more there will be, and so cannot use a batch endpoint at all.
  */
 @Service
+@InToolGroup(McpToolGroup.EXECUTION)
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class TestRunReadTools {

@@ -5,6 +5,7 @@ import com.deanmanagement.testmanagement.shared.BaseEntity;
 import com.deanmanagement.testmanagement.user.User;
 
 import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -17,6 +18,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.Instant;
+import java.util.Set;
 
 @Entity
 @Table(name = "api_keys")
@@ -67,4 +69,12 @@ public class ApiKey extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "service_user_id")
     private User serviceUser;
+
+    /**
+     * PRD-027 §9: the MCP tool groups this key may use. {@code null} means all of them, which is
+     * what every key issued before the column existed holds. Never contains {@code CORE}.
+     */
+    @Convert(converter = McpToolGroupSetConverter.class)
+    @Column(name = "mcp_tool_groups")
+    private Set<McpToolGroup> mcpToolGroups;
 }

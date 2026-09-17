@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.PipelineRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.TriggerPipelineRequest;
 import com.deanmanagement.testmanagement.project.internal.service.BuildWorkflowService;
@@ -28,6 +29,7 @@ import java.util.UUID;
  * hold a database connection for its duration.
  */
 @Service
+@InToolGroup(McpToolGroup.PIPELINES)
 @RequiredArgsConstructor
 public class PipelineTools {
 

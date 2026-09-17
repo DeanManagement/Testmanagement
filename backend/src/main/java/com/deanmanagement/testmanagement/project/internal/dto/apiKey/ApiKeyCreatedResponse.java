@@ -1,8 +1,10 @@
 package com.deanmanagement.testmanagement.project.internal.dto.apiKey;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 
 import java.time.Instant;
+import java.util.Set;
 import java.util.UUID;
 
 public record ApiKeyCreatedResponse(
@@ -13,6 +15,8 @@ public record ApiKeyCreatedResponse(
         Instant createdAt,
         UUID projectId,
         String projectName,
-        ProjectRole role
+        ProjectRole role,
+        // PRD-027 §9: null means the key may use every MCP tool group.
+        Set<McpToolGroup> mcpToolGroups
 ) {
 }

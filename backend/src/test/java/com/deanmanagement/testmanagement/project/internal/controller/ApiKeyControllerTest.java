@@ -47,11 +47,11 @@ class ApiKeyControllerTest {
     private static final Instant NOW = Instant.now();
 
     private ApiKeyResponse sampleResponse() {
-        return new ApiKeyResponse(KEY_ID, "CI Pipeline", "tm_abc12", false, null, NOW, null, PROJECT_ID, "Demo Project", ProjectRole.TESTER);
+        return new ApiKeyResponse(KEY_ID, "CI Pipeline", "tm_abc12", false, null, NOW, null, PROJECT_ID, "Demo Project", ProjectRole.TESTER, null);
     }
 
     private ApiKeyCreatedResponse sampleCreatedResponse() {
-        return new ApiKeyCreatedResponse(KEY_ID, "CI Pipeline", "tm_abc12", "tm_abc123456789abcdef", NOW, PROJECT_ID, "Demo Project", ProjectRole.TESTER);
+        return new ApiKeyCreatedResponse(KEY_ID, "CI Pipeline", "tm_abc12", "tm_abc123456789abcdef", NOW, PROJECT_ID, "Demo Project", ProjectRole.TESTER, null);
     }
 
     @Test

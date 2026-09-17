@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.parameter.ParameterSetResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.parameter.SaveParameterSetRequest;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
@@ -21,6 +22,7 @@ import java.util.UUID;
  * these an agent could execute such a case but never author one.
  */
 @Service
+@InToolGroup(McpToolGroup.AUTHORING)
 @RequiredArgsConstructor
 public class ParameterSetTools {
 

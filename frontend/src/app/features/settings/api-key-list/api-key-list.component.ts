@@ -59,7 +59,12 @@ export class ApiKeyListComponent implements OnInit {
     dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result?.action === 'create') {
         this.store.dispatch(ApiKeyActions.createApiKey({
-          request: { name: result.name, projectId: result.projectId, role: result.role },
+          request: {
+            name: result.name,
+            projectId: result.projectId,
+            role: result.role,
+            mcpToolGroups: result.mcpToolGroups,
+          },
         }));
 
         this.actions$.pipe(

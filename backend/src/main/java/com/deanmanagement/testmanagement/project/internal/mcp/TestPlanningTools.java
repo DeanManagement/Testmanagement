@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestSuiteListFilter;
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.CreateTestSuiteRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.TestSuiteResponse;
@@ -28,6 +29,7 @@ import java.util.UUID;
  * Suite and plan tools (PRD-025 §3.4) — the grouping layer above individual test cases.
  */
 @Service
+@InToolGroup(McpToolGroup.AUTHORING)
 @RequiredArgsConstructor
 public class TestPlanningTools {
 

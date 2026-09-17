@@ -4,6 +4,20 @@
  */
 export type ApiKeyRole = 'VIEWER' | 'TESTER';
 
+/**
+ * PRD-027 §9: the units MCP access is granted in. CORE (get_project) is always granted by the
+ * server and is deliberately absent here — it can be neither selected nor withheld.
+ */
+export type McpToolGroup = 'AUTHORING' | 'EXECUTION' | 'REPORTING' | 'PIPELINES' | 'ISSUE_TRACKER';
+
+export const MCP_TOOL_GROUPS: readonly McpToolGroup[] = [
+  'AUTHORING',
+  'EXECUTION',
+  'REPORTING',
+  'PIPELINES',
+  'ISSUE_TRACKER',
+];
+
 export interface ApiKey {
   id: string;
   name: string;
@@ -17,6 +31,8 @@ export interface ApiKey {
   role: ApiKeyRole;
   /** Null while the key still carries the secret it was issued with. */
   rotatedAt: string | null;
+  /** Null when the key may use every MCP tool group. */
+  mcpToolGroups: McpToolGroup[] | null;
 }
 
 export interface ApiKeyCreated {
@@ -28,10 +44,14 @@ export interface ApiKeyCreated {
   projectId: string;
   projectName: string;
   role: ApiKeyRole;
+  /** Null when the key may use every MCP tool group. */
+  mcpToolGroups: McpToolGroup[] | null;
 }
 
 export interface CreateApiKeyRequest {
   name: string;
   projectId: string;
   role: ApiKeyRole;
+  /** Omitted or empty means every MCP tool group. */
+  mcpToolGroups?: McpToolGroup[];
 }

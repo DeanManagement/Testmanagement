@@ -37,6 +37,14 @@
           <th mat-header-cell *matHeaderCellDef>{{ 'settings.apiKeys.role' | translate }}</th>
           <td mat-cell *matCellDef="let key">
             {{ (key.role === 'VIEWER' ? 'settings.apiKeys.roleViewer' : 'settings.apiKeys.roleTester') | translate }}
+            @if (key.mcpToolGroups?.length) {
+              <div class="tool-groups" data-test-id="api-key-tool-groups">
+                {{ 'settings.apiKeys.toolGroupsOnly' | translate }}
+                @for (group of key.mcpToolGroups; track group; let last = $last) {
+                  {{ 'settings.apiKeys.toolGroupShort.' + group | translate }}{{ last ? '' : ', ' }}
+                }
+              </div>
+            }
           </td>
         </ng-container>
 

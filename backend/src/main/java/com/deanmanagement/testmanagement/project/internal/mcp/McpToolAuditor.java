@@ -10,6 +10,7 @@ import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
 
+import java.lang.reflect.Method;
 import java.util.Collection;
 
 import java.util.UUID;
@@ -42,6 +43,7 @@ public class McpToolAuditor {
     private static final int MAX_ERROR_CHARS = 1000;
 
     private final McpInvocationRecorder recorder;
+    private final McpCallerContext callerContext;
 
     @Around("@annotation(mcpTool)")
     public Object audit(ProceedingJoinPoint joinPoint, McpTool mcpTool) throws Throwable {
@@ -52,6 +54,9 @@ public class McpToolAuditor {
         // value behind for the next call on this pooled thread to be attributed to.
         McpCallerHolder.clear();
         try {
+            // Inside the try so a refusal is recorded as REFUSED like any other guard.
+            Method method = ((MethodSignature) joinPoint.getSignature()).getMethod();
+            callerContext.requireAllowed(mcpTool.name(), McpToolGroups.groupOf(method));
             Object result = joinPoint.proceed();
             Created created = describeCreated(result);
             recorder.record(McpCallerHolder.get(), mcpTool.name(), arguments, "SUCCESS", null,

@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.TestSuiteResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestSuiteRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.BulkTestCasesRequest;
@@ -30,6 +31,7 @@ import java.util.UUID;
  * dirty.
  */
 @Service
+@InToolGroup(McpToolGroup.AUTHORING)
 @RequiredArgsConstructor
 public class TestPlanningMaintenanceTools {
 
