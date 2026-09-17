@@ -15,6 +15,7 @@ import { worstFirst } from '../../../shared/utils/test-result-triage';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { applyChartDefaults } from '../../../core/utils/chart-theme';
+import { resultEvidence } from './result-evidence';
 
 Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
 
@@ -36,6 +37,7 @@ Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
   styleUrl: './test-run-report.component.scss',
 })
 export class TestRunReportComponent implements OnInit {
+  protected readonly evidence = resultEvidence;
   private readonly route = inject(ActivatedRoute);
   private readonly testRunApi = inject(TestRunApiService);
   private readonly cdr = inject(ChangeDetectorRef);

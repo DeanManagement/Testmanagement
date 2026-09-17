@@ -94,7 +94,7 @@ public class PdfReportService {
             sb.append("<td>").append(escapeHtml(result.testCaseTitle())).append("</td>");
             sb.append("<td class=\"").append(result.status().name().toLowerCase()).append("\">");
             sb.append(result.status()).append("</td>");
-            sb.append("<td>").append(result.comment() != null ? escapeHtml(result.comment()) : "-").append("</td>");
+            sb.append("<td>").append(escapeHtml(ResultEvidence.of(result)).replace("\n", "<br/>")).append("</td>");
             sb.append("<td>").append(result.defectLink() != null ? escapeHtml(result.defectLink()) : "-").append("</td>");
             sb.append("</tr>\n");
         }
