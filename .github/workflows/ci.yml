@@ -90,19 +90,27 @@ jobs:
           EOF
       - name: Compose refuses to start without secrets (PRD-019)
         run: |
-          if output=$(docker compose --env-file /dev/null config -q 2>&1); then
-            echo "compose accepted missing secrets — default-secret guard broken" >&2
-            exit 1
-          fi
-          # Any failure satisfies the check above, a YAML syntax error included, so make sure it
-          # failed for the right reason.
-          for required in JWT_SECRET DB_PASSWORD; do
-            if ! grep -q "required variable $required" <<<"$output"; then
-              echo "compose failed, but not because $required is missing:" >&2
+          # One variable at a time, with every other one supplied. Compose versions differ in
+          # whether they report every missing variable or stop at the first, so checking them
+          # together would depend on the runner — and any failure at all would satisfy a bare
+          # "did it fail", a YAML syntax error included.
+          required="JWT_SECRET DB_PASSWORD"
+          for missing in $required; do
+            : > guard.env
+            for other in $required; do
+              [ "$other" = "$missing" ] || echo "$other=ci-placeholder" >> guard.env
+            done
+            if output=$(docker compose --env-file guard.env config -q 2>&1); then
+              echo "compose started without $missing — default-secret guard broken" >&2
+              exit 1
+            fi
+            if ! grep -q "required variable $missing" <<<"$output"; then
+              echo "compose failed without $missing, but for another reason:" >&2
               echo "$output" >&2
               exit 1
             fi
           done
+          rm -f guard.env
           # The guard above cannot see an optional secret that has been given a fallback value,
           # which is how a committed JWT secret and encryption key once got in.
           if grep -nE '(PASSWORD|SECRET|KEY): *\$\{[A-Z_]+:-[^}]+\}' docker-compose.yml; then
