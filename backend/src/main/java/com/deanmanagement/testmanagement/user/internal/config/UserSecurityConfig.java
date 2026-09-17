@@ -77,6 +77,9 @@ public class UserSecurityConfig {
                         // which hides the real cause — a wrong URL looks like a rejected key.
                         // The error body carries no message or stack trace by default.
                         .requestMatchers("/error").permitAll()
+                        // Only reachable when app.api-docs.enabled is on; otherwise springdoc registers
+                        // nothing here and these paths 404. Open rather than authenticated because
+                        // Swagger UI is a plain page load that cannot carry the JWT.
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/api/auth/login").permitAll()
                         // PRD-012: the login screen must know which SSO buttons to draw

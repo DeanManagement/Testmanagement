@@ -17,6 +17,13 @@ spring:
         version: 1.0.0
         streamable-http:
           mcp-endpoint: /api/mcp
+# Repeated from the main application.yml for the reason given above: this file shadows it, and
+# without these the API docs would be ON in every test, since that is springdoc's own default.
+springdoc:
+  api-docs:
+    enabled: ${app.api-docs.enabled:false}
+  swagger-ui:
+    enabled: ${app.api-docs.enabled:false}
 app:
   search:
     full-text: false

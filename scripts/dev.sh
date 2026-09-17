@@ -107,7 +107,10 @@ if [[ "$TARGET" == "all" || "$TARGET" == "backend" ]]; then
   check_db
   port_busy "$BACKEND_PORT" && die "port $BACKEND_PORT is already in use (backend running?)"
   log "backend  -> http://localhost:$BACKEND_PORT  (profile: dev)"
+  # API docs are off by default (they are readable without a login); on for local development.
+  # Through `env` because spawn runs "$@", where a bare VAR=value would be taken as the command.
   spawn "backend" "$C_BE" "$BACKEND" \
+    env "API_DOCS_ENABLED=${API_DOCS_ENABLED:-true}" \
     ./mvnw -q spring-boot:run -Dspring-boot.run.profiles=dev
 fi
 

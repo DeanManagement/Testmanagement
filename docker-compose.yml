@@ -51,6 +51,8 @@ services:
       PUBLIC_BASE_URL: ${PUBLIC_BASE_URL:-}
       # SSRF guard for admin-registered build servers; enable only for a CI server on your LAN.
       BUILDSERVER_ALLOW_PRIVATE_TARGETS: ${BUILDSERVER_ALLOW_PRIVATE_TARGETS:-false}
+      # OpenAPI document and Swagger UI; readable without a login when on, so off by default.
+      API_DOCS_ENABLED: ${API_DOCS_ENABLED:-false}
       # PRD-025: the MCP server for AI agents. Off by default — it is a write surface for
       # non-human callers, so switching it on should be deliberate.
       MCP_ENABLED: ${MCP_ENABLED:-false}

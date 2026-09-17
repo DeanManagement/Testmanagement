@@ -83,7 +83,20 @@ info:
     name: testmanagement
     version: ${APP_VERSION:dev}
 
+# The OpenAPI document and Swagger UI describe every endpoint. Off unless a deployment asks for
+# them: served unconditionally, they published the whole API surface to anonymous visitors of an
+# internet-facing instance. One switch, chained like app.mcp.enabled, so the two cannot disagree.
+springdoc:
+  api-docs:
+    enabled: ${app.api-docs.enabled:false}
+  swagger-ui:
+    enabled: ${app.api-docs.enabled:false}
+
 app:
+  api-docs:
+    # Readable WITHOUT a login when on (Swagger UI is a plain page load and cannot send a token).
+    # Enable on a developer machine or a private network, not on a public instance.
+    enabled: ${API_DOCS_ENABLED:false}
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:4200, https://testmanagement.klopsch.org}
   jwt:
