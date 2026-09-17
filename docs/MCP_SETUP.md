@@ -137,14 +137,21 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 **Read** — `get_project`, `search_test_cases`, `get_test_case`, `list_test_case_folders`,
 `list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`, `list_test_runs`,
 `get_test_run`, `list_requirements`, `get_traceability_matrix`, `list_bug_reports`,
-`get_bug_report`, `list_comments`.
+`get_bug_report`, `list_comments`, `list_parameter_sets`.
 
 **Write** (Tester only) — `create_test_case`, `update_test_case`, `create_test_cases_bulk`,
 `create_test_suite`, `create_test_plan`, `create_test_case_folder`,
 `move_test_cases_to_folder`, `create_requirement`, `link_test_cases_to_requirement`,
 `create_test_run`, `record_test_result`, `record_test_results`, `record_step_result`,
 `complete_test_run`, `update_test_run`, `clone_test_run`, `add_comment`, `create_bug_report`,
-`change_bug_report_status`.
+`change_bug_report_status`, `update_test_suite`, `add_test_cases_to_suite`,
+`remove_test_cases_from_suite`, `update_test_plan`, `update_requirement`,
+`unlink_test_case_from_requirement`, `rename_test_case_folder`, `change_test_case_status_bulk`,
+`create_parameter_set`, `update_parameter_set`.
+
+Every `update_*` tool is partial: only the arguments you pass change, and an empty string `""`
+clears a text field. There are no delete tools, and nothing assigns work to a person — both stay
+human actions in the UI.
 
 ### Executing a run
 

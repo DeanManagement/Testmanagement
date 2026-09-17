@@ -12,6 +12,7 @@ import org.jspecify.annotations.Nullable;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -109,6 +110,21 @@ final class McpDtos {
     record PlanDetail(UUID id, String name, TestPlanStatus status, @Nullable LocalDate targetDate,
                       int totalRuns, int completedRuns, int passed, int failed, int blocked,
                       int skipped, int pending, double passRate) {}
+
+    /** @param changed how many cases were actually added or removed; ids already in that state count 0 */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record SuiteMembership(UUID id, String name, int testCaseCount, int changed) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record BulkStatusResult(int updated, TestCaseStatus status) {}
+
+    // --- parameter sets (PRD-015) ------------------------------------------------------------
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record ParameterSet(UUID id, String name, Map<String, String> values) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record ParameterSetList(List<ParameterSet> parameterSets, int total) {}
 
     /** What a create returned, plus the key an agent should quote back to a human. */
     @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -2,6 +2,7 @@ package com.deanmanagement.testmanagement.project.internal.mcp;
 
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestCaseListFilter;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkStatusRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.MoveTestCasesRequest;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseFolderService;
@@ -209,6 +210,38 @@ public class TestCaseTools {
                     new MoveTestCasesRequest(List.of(existing.getId()), folderId), caller.userId());
         }
         return new McpDtos.CreatedTestCase(updated.id(), updated.key(), updated.title(), updated.status());
+    }
+
+    @McpTool(
+            name = "change_test_case_status_bulk",
+            description = """
+                    Set the same status on many test cases at once, up to 100 per call — typically
+                    DRAFT to ACTIVE once a human has reviewed what you wrote, or to DEPRECATED for
+                    cases that no longer apply. status: DRAFT | ACTIVE | DEPRECATED.
+                    Every id must name a test case in this project; if one does not, nothing is
+                    changed. For a single case use update_test_case.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.BulkStatusResult changeTestCaseStatusBulk(
+            @McpToolParam(description = "UUIDs of the test cases to change") Set<UUID> testCaseIds,
+            @McpToolParam(description = "DRAFT, ACTIVE or DEPRECATED") TestCaseStatus status) {
+
+        var caller = callerContext.requireWriter();
+        var request = new BulkStatusRequest(testCaseIds, status);
+        validator.validate(request);
+        // One write per case, as record_test_results charges one per result.
+        writeThrottle.recordWrites(caller.apiKeyId(), testCaseIds.size());
+
+        try {
+            int updated = testCaseService.bulkUpdateStatus(caller.projectId(), request,
+                    caller.userId()).affected();
+            return new McpDtos.BulkStatusResult(updated, status);
+        } catch (IllegalArgumentException unknownIds) {
+            throw new McpToolException("At least one id does not name a test case in this "
+                    + "project, so nothing was changed. Check them with search_test_cases.");
+        }
     }
 
     @McpTool(

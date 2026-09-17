@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.CreateTestCaseFolderRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.UpdateTestCaseFolderRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.MoveTestCasesRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.TestCaseFolderResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
@@ -100,6 +101,29 @@ public class ProjectDiscoveryTools {
                 folderService.create(caller.projectId(), request, caller.userId());
         return new McpDtos.Folder(created.id(), created.name(), created.parentId(),
                 created.testCaseCount(), List.of());
+    }
+
+    @McpTool(
+            name = "rename_test_case_folder",
+            description = """
+                    Rename a folder. Its place in the tree and the test cases in it are unchanged.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.Folder renameTestCaseFolder(
+            @McpToolParam(description = "Folder UUID from list_test_case_folders") UUID folderId,
+            @McpToolParam(description = "New folder name, max 255 characters") String name) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        var request = new UpdateTestCaseFolderRequest(name);
+        validator.validate(request);
+
+        TestCaseFolderResponse renamed =
+                folderService.update(caller.projectId(), folderId, request, caller.userId());
+        return new McpDtos.Folder(renamed.id(), renamed.name(), renamed.parentId(),
+                renamed.testCaseCount(), List.of());
     }
 
     @McpTool(

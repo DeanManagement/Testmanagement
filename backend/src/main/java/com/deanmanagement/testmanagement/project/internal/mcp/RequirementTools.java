@@ -130,6 +130,68 @@ public class RequirementTools {
     }
 
     @McpTool(
+            name = "update_requirement",
+            description = """
+                    Change a requirement's externalId, title or description. Only the fields you
+                    pass are changed; to CLEAR the description pass an empty string "". An
+                    externalId already used by another requirement in this project is refused.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.Requirement updateRequirement(
+            @McpToolParam(description = "Requirement UUID") UUID id,
+            @McpToolParam(description = "New external id, e.g. REQ-12, max 100 characters",
+                    required = false) String externalId,
+            @McpToolParam(description = "New title, max 500 characters", required = false)
+            String title,
+            @McpToolParam(description = "New description; \"\" clears it", required = false)
+            String description) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        if (externalId == null && title == null && description == null) {
+            throw new McpToolException("Nothing to update: pass externalId, title or description.");
+        }
+
+        // Merged here because the service is a full replace; safe only while this method stays
+        // @Transactional — see TestPlanningMaintenanceTools.
+        RequirementResponse current = requirementService.get(caller.projectId(), id);
+        var request = new SaveRequirementRequest(
+                externalId == null ? current.externalId() : externalId,
+                title == null ? current.title() : title,
+                description == null ? current.description() : emptyToNull(description));
+        validator.validate(request);
+
+        return toRequirement(
+                requirementService.update(caller.projectId(), id, request, caller.userId()));
+    }
+
+    @McpTool(
+            name = "unlink_test_case_from_requirement",
+            description = """
+                    Record that a test case does NOT cover a requirement after all. Neither the
+                    requirement nor the test case is deleted. Unlinking a case that was not linked
+                    is harmless. Returns the requirement with the cases still linked.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.Requirement unlinkTestCaseFromRequirement(
+            @McpToolParam(description = "Requirement UUID") UUID requirementId,
+            @McpToolParam(description = "UUID of the test case to unlink") UUID testCaseId) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        if (testCaseId == null) {
+            throw new McpToolException("testCaseId is required.");
+        }
+        requirementService.unlinkTestCase(caller.projectId(), requirementId, testCaseId,
+                caller.userId());
+        return toRequirement(requirementService.get(caller.projectId(), requirementId));
+    }
+
+    @McpTool(
             name = "get_traceability_matrix",
             description = """
                     Which requirements are actually proven, and which only look covered. For each
@@ -161,6 +223,10 @@ public class RequirementTools {
         return new McpDtos.TraceabilityMatrix(mapped, new McpDtos.CoverageSummary(
                 coverage.totalRequirements(), coverage.uncovered(), coverage.untested(),
                 coverage.failing(), coverage.passing(), coverage.coveragePercent()));
+    }
+
+    private static String emptyToNull(String value) {
+        return value.isBlank() ? null : value;
     }
 
     private static McpDtos.Requirement toRequirement(RequirementResponse requirement) {

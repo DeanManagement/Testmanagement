@@ -341,6 +341,17 @@ class McpEndpointApiTest {
                 .contains("clone_test_run")
                 .contains("list_comments")
                 .contains("add_comment")
+                .contains("update_test_suite")
+                .contains("add_test_cases_to_suite")
+                .contains("remove_test_cases_from_suite")
+                .contains("update_test_plan")
+                .contains("update_requirement")
+                .contains("unlink_test_case_from_requirement")
+                .contains("rename_test_case_folder")
+                .contains("change_test_case_status_bulk")
+                .contains("list_parameter_sets")
+                .contains("create_parameter_set")
+                .contains("update_parameter_set")
                 .contains("create_bug_report")
                 .contains("change_bug_report_status");
     }

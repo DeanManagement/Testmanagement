@@ -1,30 +1,14 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
-import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
-import com.deanmanagement.testmanagement.project.internal.entity.Priority;
-import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
-import com.deanmanagement.testmanagement.project.internal.repository.ApiKeyRepository;
-import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
-import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
-import com.deanmanagement.testmanagement.project.internal.service.ProjectService;
 import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.TestPropertySource;
 
-import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -35,83 +19,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
  * harness as {@link McpToolSurfaceApiTest}, and not {@code @Transactional} for the reason given
  * there.
  */
-@SpringBootTest
-@ActiveProfiles("dev")
-@TestPropertySource(properties = "app.mcp.enabled=true")
-class McpRunMaintenanceToolsApiTest {
+class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
 
     @Autowired
-    private ProjectRepository projectRepository;
-    @Autowired
-    private ApiKeyRepository apiKeyRepository;
-    @Autowired
-    private ApiKeyService apiKeyService;
-    @Autowired
-    private ProjectService projectService;
-    @Autowired
     private TestRunService testRunService;
-    @Autowired
-    private McpWriteThrottle writeThrottle;
-    @Autowired
-    private TestCaseTools testCaseTools;
-    @Autowired
-    private TestRunWriteTools testRunWriteTools;
-    @Autowired
-    private TestRunReadTools testRunReadTools;
     @Autowired
     private TestRunMaintenanceTools maintenanceTools;
     @Autowired
     private CommentTools commentTools;
-
-    private Project project;
-    private Project otherProject;
-
-    @BeforeEach
-    void setUp() {
-        writeThrottle.reset();
-        String suffix = Integer.toHexString(new java.util.Random().nextInt(0xFFFFF));
-        project = newProject("MCP Project", "C" + suffix);
-        otherProject = newProject("Other Project", "D" + suffix);
-    }
-
-    @AfterEach
-    void tearDown() {
-        SecurityContextHolder.clearContext();
-        projectService.delete(project.getId(), null);
-        projectService.delete(otherProject.getId(), null);
-    }
-
-    private Project newProject(String name, String key) {
-        Project p = new Project();
-        p.setName(name);
-        p.setKey(key);
-        return projectRepository.save(p);
-    }
-
-    private void authenticateAs(Project target, ProjectRole role) {
-        var created = apiKeyService.create(new CreateApiKeyRequest(
-                "agent-" + role + "-" + target.getKey(), target.getId(), role));
-        UUID serviceUserId = apiKeyRepository.findById(created.id()).orElseThrow()
-                .getServiceUser().getId();
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(serviceUserId.toString(), null,
-                        List.of(new SimpleGrantedAuthority("ROLE_API_KEY"),
-                                new SimpleGrantedAuthority("ROLE_USER"))));
-    }
-
-    private McpDtos.CreatedTestCase createCase(String title, String... stepActions) {
-        List<McpDtos.Step> steps = java.util.Arrays.stream(stepActions)
-                .map(action -> new McpDtos.Step(action, null, null))
-                .toList();
-        return testCaseTools.createTestCase(title, Priority.MEDIUM, null, null, null, null,
-                steps, null, null);
-    }
-
-    private McpDtos.CreatedTestRun runOf(McpDtos.CreatedTestCase... cases) {
-        Set<UUID> ids = java.util.Arrays.stream(cases).map(McpDtos.CreatedTestCase::id)
-                .collect(java.util.stream.Collectors.toSet());
-        return testRunWriteTools.createTestRun("Run", null, ids, null, null);
-    }
 
     // --- record_step_result ----------------------------------------------------------------
 
