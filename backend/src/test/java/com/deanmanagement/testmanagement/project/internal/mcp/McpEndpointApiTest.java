@@ -335,7 +335,12 @@ class McpEndpointApiTest {
         assertThat(tools.body())
                 .contains("create_test_run")
                 .contains("record_test_result")
+                .contains("record_step_result")
                 .contains("complete_test_run")
+                .contains("update_test_run")
+                .contains("clone_test_run")
+                .contains("list_comments")
+                .contains("add_comment")
                 .contains("create_bug_report")
                 .contains("change_bug_report_status");
     }

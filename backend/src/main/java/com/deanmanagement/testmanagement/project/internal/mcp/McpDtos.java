@@ -205,6 +205,33 @@ final class McpDtos {
     record RecordedResults(int recorded, TestRunStatus runStatus, int total, int passed, int failed,
                            int blocked, int skipped, int pending) {}
 
+    /** @param stepNumber 1-based position within the result, which is how the agent addresses it */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record StepOutcome(int stepNumber, String action, TestResultStatus status,
+                       @Nullable String actualResult) {}
+
+    /**
+     * @param resultStatus the parent result's status <em>after</em> the call — it is derived from
+     *                     its steps (worst one wins), so the agent never sets it separately
+     * @param steps        every step of the result, so the agent can see what is still PENDING
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record RecordedStepResult(UUID resultId, UUID testCaseId, String testCaseTitle,
+                              TestResultStatus resultStatus, TestRunStatus runStatus,
+                              List<StepOutcome> steps) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record UpdatedTestRun(UUID id, String key, String name, @Nullable String environment,
+                          TestRunStatus status, @Nullable UUID testPlanId) {}
+
+    // --- comments ----------------------------------------------------------------------------
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record Comment(UUID id, String content, @Nullable String authorName, Instant createdAt) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record CommentList(List<Comment> comments, int total) {}
+
     // --- bug reports (PRD-027) ---------------------------------------------------------------
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

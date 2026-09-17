@@ -137,13 +137,14 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 **Read** — `get_project`, `search_test_cases`, `get_test_case`, `list_test_case_folders`,
 `list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`, `list_test_runs`,
 `get_test_run`, `list_requirements`, `get_traceability_matrix`, `list_bug_reports`,
-`get_bug_report`.
+`get_bug_report`, `list_comments`.
 
 **Write** (Tester only) — `create_test_case`, `update_test_case`, `create_test_cases_bulk`,
 `create_test_suite`, `create_test_plan`, `create_test_case_folder`,
 `move_test_cases_to_folder`, `create_requirement`, `link_test_cases_to_requirement`,
-`create_test_run`, `record_test_result`, `record_test_results`, `complete_test_run`,
-`create_bug_report`, `change_bug_report_status`.
+`create_test_run`, `record_test_result`, `record_test_results`, `record_step_result`,
+`complete_test_run`, `update_test_run`, `clone_test_run`, `add_comment`, `create_bug_report`,
+`change_bug_report_status`.
 
 ### Executing a run
 
@@ -160,13 +161,23 @@ The one sequence you cannot infer from the tool list. An agent that runs tests i
    entries, capped at `MCP_MAX_BULK_SIZE`. Every entry is validated before anything is written, so a
    bad id fails the whole call naming its position and leaves the run untouched; fix that entry and
    resend. Recording is idempotent, so resending is safe.
+
+   **For a case with steps, `record_step_result` records one step at a time** — `stepNumber` is the
+   1-based position from `get_test_case`, and `actualResult` is what you saw there. The case's own
+   status is then derived from its steps (worst one wins, `PENDING` until all are recorded), so use
+   either this or `record_test_result` for a given case, not both: a step recorded after a
+   whole-case outcome recomputes that outcome from the steps.
 3. **`complete_test_run`** — `COMPLETED`, or `ABORTED` if something blocked you part-way. Results
    still pending are reported back, not refused.
 4. **`create_bug_report`** for a real defect, passing the `resultId` from step 2 as `testResultId`
    so the bug is reachable from the failure that produced it.
 
+To re-test after a fix, **`clone_test_run`** opens a fresh `PLANNED` run with the same cases; a
+completed run cannot be reopened over MCP. **`update_test_run`** renames a run, changes its
+environment or files it under a plan — it cannot change the status.
+
 Anywhere a run is named — `get_test_run`, `record_test_result`, `record_test_results`,
-`complete_test_run` — **either the UUID or the key (`PROJ-Run-7`) works**, so you can pass whichever
+`record_step_result`, `complete_test_run`, `update_test_run`, `clone_test_run` — **either the UUID or the key (`PROJ-Run-7`) works**, so you can pass whichever
 the previous call handed you rather than making a round trip to translate one into the other.
 
 **If you already have every result** — a CI job, a test framework's output — do not use these tools.

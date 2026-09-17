@@ -11,7 +11,6 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
-import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.ai.mcp.annotation.McpToolParam;
@@ -336,19 +335,7 @@ public class TestCaseTools {
      * well not exist, and saying "forbidden" would confirm it does (PRD-021 discipline).
      */
     private TestCase resolve(UUID projectId, String idOrKey) {
-        if (idOrKey == null || idOrKey.isBlank()) {
-            throw new McpToolException("idOrKey is required.");
-        }
-        String ref = idOrKey.trim();
-        try {
-            UUID id = UUID.fromString(ref);
-            return testCaseRepository.findById(id)
-                    .filter(tc -> tc.getProject().getId().equals(projectId))
-                    .orElseThrow(() -> new ResourceNotFoundException("TestCase", ref));
-        } catch (IllegalArgumentException notAUuid) {
-            return testCaseRepository.findByKeyAndProjectId(ref, projectId)
-                    .orElseThrow(() -> new ResourceNotFoundException("TestCase", ref));
-        }
+        return McpTestCaseReferences.resolve(testCaseRepository, projectId, idOrKey);
     }
 
     private static Pageable pageable(Integer page, Integer size) {

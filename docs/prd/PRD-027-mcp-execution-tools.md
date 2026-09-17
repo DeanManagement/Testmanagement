@@ -702,8 +702,11 @@ the moment they were fixed.
 - **Per-key tool allow-list** (PRD-025 §9) — promoted from nice-to-have to scheduled. The surface is
   28 tools (§3.1), more than double PRD-025's stated ceiling, and every description rides along on
   every agent turn. An authoring-only key should not pay for execution tools it will never call.
-- **Step-level results from an agent.** `record_test_result` sets the parent status only, so a
-  human editing one step afterwards recomputes the parent from still-PENDING siblings and can
-  overwrite it. Fixing it well means changing the human path too.
+- ~~**Step-level results from an agent.**~~ Shipped 2026-09-17 as `record_step_result`, together
+  with `update_test_run`, `clone_test_run`, `list_comments` and `add_comment` (34 tools). The
+  interaction below is unchanged and documented rather than fixed: `record_test_result` sets the
+  parent status only, so a step recorded afterwards — by a human or by `record_step_result` —
+  recomputes the parent from still-PENDING siblings and can overwrite it. Fixing it well means
+  changing the human path too.
 - **Flaky-test signal from agent runs** (PRD-016) — agent-driven re-runs are a cheap source of the
   repeated executions flaky detection needs, once anyone trusts them enough to feed it.
