@@ -60,7 +60,7 @@ import { CompletionInfo } from '../../../shared/models/test-run.model';
       } @else {
         <div class="message message--warning">
           <mat-icon>warning</mat-icon>
-          <span>{{ 'testRun.complete.warning' | translate:{ failed: data.failed, blocked: data.blocked, worstStatus: data.worstStatus } }}</span>
+          <span>{{ 'testRun.complete.warning' | translate:{ failed: data.failed, blocked: data.blocked, skipped: data.skipped, pending: data.pending } }}</span>
         </div>
       }
     </mat-dialog-content>

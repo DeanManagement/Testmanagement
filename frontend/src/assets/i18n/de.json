@@ -308,7 +308,7 @@
     "reopenReason": "Grund für Wiedereröffnung",
     "complete": {
       "title": "Testlauf abschließen",
-      "warning": "Dieser Testlauf enthält {{failed}} fehlgeschlagene und {{blocked}} blockierte Ergebnisse. Der Status wird auf {{worstStatus}} gesetzt.",
+      "warning": "Nicht alles bestanden: {{failed}} fehlgeschlagen, {{blocked}} blockiert, {{skipped}} übersprungen, {{pending}} nicht ausgeführt. Der Testlauf wird als Abgeschlossen markiert; öffnen Sie ihn erneut, falls Ergebnisse noch geändert werden müssen.",
       "allPassed": "Alle Tests bestanden!",
       "confirm": "Abschließen",
       "cancel": "Abbrechen"

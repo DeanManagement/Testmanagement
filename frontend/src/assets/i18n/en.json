@@ -308,7 +308,7 @@
     "reopenReason": "Reopen reason",
     "complete": {
       "title": "Complete Test Run",
-      "warning": "This run contains {{failed}} failed and {{blocked}} blocked results. The run status will be set to {{worstStatus}}.",
+      "warning": "Not everything passed: {{failed}} failed, {{blocked}} blocked, {{skipped}} skipped, {{pending}} not executed. The run will be marked Completed; reopen it if results still need to change.",
       "allPassed": "All tests passed!",
       "confirm": "Complete",
       "cancel": "Cancel"
