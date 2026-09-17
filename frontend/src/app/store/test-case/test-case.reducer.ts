@@ -5,11 +5,21 @@ import { initialTestCaseState, testCaseAdapter } from './test-case.state';
 export const testCaseReducer = createReducer(
   initialTestCaseState,
 
-  on(TestCaseActions.loadTestCases, (state, { projectId }) => ({
+  // Remembered from every action that names a project, not just the list — see the same block
+  // in test-run.reducer.ts for what went wrong when a page was opened directly.
+  on(
+    TestCaseActions.loadTestCases,
+    TestCaseActions.loadTestCase,
+    TestCaseActions.createTestCase,
+    TestCaseActions.updateTestCase,
+    TestCaseActions.deleteTestCase,
+    (state, { projectId }) => (state.projectId === projectId ? state : { ...state, projectId })
+  ),
+
+  on(TestCaseActions.loadTestCases, (state) => ({
     ...state,
     loading: true,
     error: null,
-    projectId,
   })),
 
   on(TestCaseActions.loadTestCasesSuccess, (state, { testCases, page }) =>
@@ -24,11 +34,6 @@ export const testCaseReducer = createReducer(
     ...state,
     loading: false,
     error,
-  })),
-
-  on(TestCaseActions.createTestCase, (state, { projectId }) => ({
-    ...state,
-    projectId,
   })),
 
   on(TestCaseActions.createTestCaseSuccess, (state, { testCase }) =>

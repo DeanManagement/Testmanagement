@@ -27,11 +27,28 @@ function updateStepInRun(
 export const testRunReducer = createReducer(
   initialTestRunState,
 
-  on(TestRunActions.loadTestRuns, (state, { projectId }) => ({
+  // Every action that starts work in a project says which one, and the store has to remember it:
+  // effects that run afterwards (reload the run after a step, navigate after create or delete)
+  // read it back from here. Only the list used to record it, so a run page opened directly — a
+  // bookmark, a reload, a notification link — left it null, the follow-up request went to
+  // /api/projects/null/… and failed silently, and the case status derived on the server never
+  // showed until the page was reloaded.
+  on(
+    TestRunActions.loadTestRuns,
+    TestRunActions.loadTestRun,
+    TestRunActions.createTestRun,
+    TestRunActions.updateTestRun,
+    TestRunActions.deleteTestRun,
+    TestRunActions.updateTestResult,
+    TestRunActions.updateStepResult,
+    TestRunActions.cloneTestRun,
+    (state, { projectId }) => (state.projectId === projectId ? state : { ...state, projectId })
+  ),
+
+  on(TestRunActions.loadTestRuns, (state) => ({
     ...state,
     loading: true,
     error: null,
-    projectId,
   })),
 
   on(TestRunActions.loadTestRunsSuccess, (state, { testRuns, page }) =>
