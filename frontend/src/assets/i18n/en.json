@@ -839,6 +839,15 @@
     "tokenReplace": "Replace API token",
     "tokenHint": "Stored encrypted. Requires ISSUE_TRACKER_ENCRYPTION_KEY to be configured on the server.",
     "tokenStoredHint": "A token is stored. Leave empty to keep it.",
+    "accountEmail": "Account email",
+    "accountEmailHint": "The Atlassian account the API token belongs to. Jira Cloud signs in with the two together.",
+    "tokenHelp": {
+      "GITLAB": "GitLab: a project or personal access token with the \"api\" scope.",
+      "FORGEJO": "Forgejo / Gitea: an access token with read and write permission on issues.",
+      "GITHUB": "GitHub: a fine-grained personal access token with \"Issues: Read and write\" on this repository, or a classic token with the \"repo\" scope.",
+      "JIRA": "Jira Cloud: an API token from id.atlassian.com, plus the account email. Jira Data Center: a personal access token from your profile. If the project requires extra fields when creating an issue, file it in Jira and link it here.",
+      "LINEAR": "Linear: a personal API key."
+    },
     "active": "Active",
     "activeHint": "When inactive, no calls are made to the tracker and linking is unavailable.",
     "testConnection": "Test connection",

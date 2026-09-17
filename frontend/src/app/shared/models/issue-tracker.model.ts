@@ -13,6 +13,8 @@ export interface IssueTrackerConfig {
   lastError: string | null;
   lastErrorAt: string | null;
   updatedAt: string;
+  /** Jira Cloud only (PRD-029): the account the token belongs to. Not a secret, so it is returned. */
+  authUsername: string | null;
 }
 
 export interface SaveIssueTrackerConfigRequest {
@@ -22,6 +24,8 @@ export interface SaveIssueTrackerConfigRequest {
   /** Omit to keep the stored token — the backend treats absent as "unchanged". */
   apiToken?: string;
   active?: boolean;
+  /** Required by the server for Jira Cloud, ignored for everything else. */
+  authUsername?: string;
 }
 
 export interface IssueTrackerStatus {
@@ -59,6 +63,6 @@ export const PROJECT_REF_HINT: Record<IssueTrackerProviderType, string> = {
   GITLAB: 'group/project or a numeric project id',
   FORGEJO: 'owner/repository',
   GITHUB: 'owner/repository',
-  JIRA: 'project key',
+  JIRA: 'project key, optionally KEY:IssueType (default issue type: Bug)',
   LINEAR: 'team key',
 };

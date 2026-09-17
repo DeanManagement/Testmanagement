@@ -69,3 +69,10 @@
     opacity: 0.8;
   }
 }
+
+// Which token to create and with what rights differs per tracker, and is the step admins get wrong.
+.token-help {
+  margin: -4px 0 16px;
+  font-size: 12px;
+  color: var(--tm-text-secondary);
+}

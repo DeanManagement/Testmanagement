@@ -26,6 +26,7 @@ import {
   PROJECT_REF_HINT,
   SaveIssueTrackerConfigRequest,
 } from '../../shared/models/issue-tracker.model';
+import { BASE_URL_EXAMPLE, baseUrlAfterProviderChange, needsAccountEmail } from './issue-tracker-form';
 
 /**
  * Project-level issue-tracker configuration (PRD-010 §3.5). Admin-only; the route is reachable from
@@ -74,6 +75,7 @@ export class IssueTrackerSettingsComponent implements OnInit {
   formBaseUrl = '';
   formProjectRef = '';
   formToken = '';
+  formAuthUsername = '';
   formActive = true;
 
   ngOnInit(): void {
@@ -111,6 +113,7 @@ export class IssueTrackerSettingsComponent implements OnInit {
             this.formBaseUrl = this.config.baseUrl;
             this.formProjectRef = this.config.projectRef;
             this.formActive = this.config.active;
+            this.formAuthUsername = this.config.authUsername ?? '';
           }
           // Never prefill: the API does not return the token, and a placeholder here would be
           // saved back verbatim.
@@ -129,8 +132,24 @@ export class IssueTrackerSettingsComponent implements OnInit {
     return PROJECT_REF_HINT[this.formProvider];
   }
 
+  get baseUrlPlaceholder(): string {
+    return BASE_URL_EXAMPLE[this.formProvider];
+  }
+
+  /** Jira Cloud only: its API token cannot authenticate without the account it belongs to. */
+  get showAccountEmail(): boolean {
+    return needsAccountEmail(this.formProvider, this.formBaseUrl);
+  }
+
+  onProviderChange(): void {
+    this.formBaseUrl = baseUrlAfterProviderChange(this.formProvider, this.formBaseUrl);
+  }
+
   get canSave(): boolean {
     if (!this.formBaseUrl.trim() || !this.formProjectRef.trim()) {
+      return false;
+    }
+    if (this.showAccountEmail && !this.formAuthUsername.trim()) {
       return false;
     }
     // A token is only mandatory the first time; later saves may keep the stored one.
@@ -151,6 +170,9 @@ export class IssueTrackerSettingsComponent implements OnInit {
     };
     if (this.formToken.trim()) {
       request.apiToken = this.formToken.trim();
+    }
+    if (this.showAccountEmail) {
+      request.authUsername = this.formAuthUsername.trim();
     }
 
     this.api.saveConfig(this.projectId, request)
