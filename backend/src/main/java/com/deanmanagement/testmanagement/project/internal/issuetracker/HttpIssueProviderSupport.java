@@ -12,6 +12,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Shared HTTP plumbing for REST-based issue trackers: client construction, status-to-exception
@@ -83,10 +84,26 @@ abstract class HttpIssueProviderSupport {
         return send(httpRequest, config);
     }
 
+    /**
+     * Like {@link #getJson}, but a 404 is an answer rather than a failure. For looking one issue up
+     * by number, where "there is no such issue" must stay distinguishable from "the token was
+     * rejected" — catching the exception instead would swallow both.
+     */
+    protected Optional<JsonNode> getJsonIfFound(IssueTrackerProvider.DecryptedConfig config, String url) {
+        HttpResponse<String> response = exchange(request(config, url).GET().build(), config);
+        if (response.statusCode() == 404) {
+            return Optional.empty();
+        }
+        return Optional.of(parse(response, config));
+    }
+
     protected JsonNode send(HttpRequest request, IssueTrackerProvider.DecryptedConfig config) {
-        HttpResponse<String> response;
+        return parse(exchange(request, config), config);
+    }
+
+    private HttpResponse<String> exchange(HttpRequest request, IssueTrackerProvider.DecryptedConfig config) {
         try {
-            response = client().send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return client().send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new UpstreamServiceException("Interrupted while calling " + providerName());
@@ -95,7 +112,40 @@ abstract class HttpIssueProviderSupport {
             throw new UpstreamServiceException(
                     "Could not reach " + providerName() + " at " + config.baseUrl(), e);
         }
+    }
 
+    private JsonNode parse(HttpResponse<String> response, IssueTrackerProvider.DecryptedConfig config) {
+        rejectFailure(response, config);
+
+        String body = response.body();
+        if (body == null || body.isBlank()) {
+            throw new UpstreamServiceException(providerName() + " returned an empty response");
+        }
+        if (body.length() > MAX_RESPONSE_BYTES) {
+            throw new UpstreamServiceException(providerName() + " response was too large to process");
+        }
+        // A tracker behind SSO can answer an unauthenticated call with its HTML login page and a
+        // 200 (Jira Data Center behind Seraph does). That is an auth failure wearing a success
+        // status, and must not surface as "malformed response" (PRD-029 §3.2, PRD-026 §3).
+        String contentType = response.headers().firstValue("Content-Type").orElse("");
+        if (contentType.toLowerCase().contains("html")) {
+            throw new UpstreamServiceException(providerName()
+                    + " rejected the configured access token (it answered with a login page)");
+        }
+        try {
+            return objectMapper.readTree(body);
+        } catch (Exception e) {
+            // Deliberately not the parser's message, which would echo response content.
+            throw new UpstreamServiceException(providerName() + " returned a malformed response");
+        }
+    }
+
+    /**
+     * Turns a non-2xx status into the shared failure taxonomy. Overridable because trackers disagree
+     * about what a status means: GitHub signals a rate limit with 403, which here would read as a
+     * rejected token. An override handles its own cases first and then calls this.
+     */
+    protected void rejectFailure(HttpResponse<String> response, IssueTrackerProvider.DecryptedConfig config) {
         int status = response.statusCode();
         if (status == 401 || status == 403) {
             throw new UpstreamServiceException(
@@ -110,20 +160,6 @@ abstract class HttpIssueProviderSupport {
         }
         if (status < 200 || status >= 300) {
             throw new UpstreamServiceException(providerName() + " returned HTTP " + status);
-        }
-
-        String body = response.body();
-        if (body == null || body.isBlank()) {
-            throw new UpstreamServiceException(providerName() + " returned an empty response");
-        }
-        if (body.length() > MAX_RESPONSE_BYTES) {
-            throw new UpstreamServiceException(providerName() + " response was too large to process");
-        }
-        try {
-            return objectMapper.readTree(body);
-        } catch (Exception e) {
-            // Deliberately not the parser's message, which would echo response content.
-            throw new UpstreamServiceException(providerName() + " returned a malformed response");
         }
     }
 
