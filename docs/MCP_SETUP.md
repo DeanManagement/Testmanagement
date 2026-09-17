@@ -137,7 +137,9 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 **Read** — `get_project`, `search_test_cases`, `get_test_case`, `list_test_case_folders`,
 `list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`, `list_test_runs`,
 `get_test_run`, `list_requirements`, `get_traceability_matrix`, `list_bug_reports`,
-`get_bug_report`, `list_comments`, `list_parameter_sets`.
+`get_bug_report`, `list_comments`, `list_parameter_sets`, `list_test_case_versions`,
+`get_test_case_version`, `get_project_dashboard`, `list_flaky_tests`, `get_test_suite_report`,
+`list_pipeline_workflows`, `list_pipeline_runs`, `get_pipeline_run`, `list_issue_links`.
 
 **Write** (Tester only) — `create_test_case`, `update_test_case`, `create_test_cases_bulk`,
 `create_test_suite`, `create_test_plan`, `create_test_case_folder`,
@@ -147,7 +149,8 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `change_bug_report_status`, `update_test_suite`, `add_test_cases_to_suite`,
 `remove_test_cases_from_suite`, `update_test_plan`, `update_requirement`,
 `unlink_test_case_from_requirement`, `rename_test_case_folder`, `move_test_case_folder`, `change_test_case_status_bulk`,
-`create_parameter_set`, `update_parameter_set`.
+`create_parameter_set`, `update_parameter_set`, `trigger_pipeline`, `refresh_pipeline_run`,
+`link_issue`, `create_linked_issue`.
 
 Every `update_*` tool is partial: only the arguments you pass change, and an empty string `""`
 clears a text field. There are no delete tools, and nothing assigns work to a person — both stay
@@ -191,6 +194,19 @@ the previous call handed you rather than making a round trip to translate one in
 `POST /api/external/projects/{key}/test-runs` takes a whole run in one request with the same API
 key, and `…/junit` and `…/cucumber` take report files directly. The MCP tools are for the case where
 results arrive one at a time.
+
+### Tools that reach outside Testmanagement
+
+Three tools act on other systems, and are marked `openWorldHint` so a client can ask before calling
+them:
+
+- **`trigger_pipeline`** starts real CI on a build server. Only workflows an instance administrator
+  has assigned to the key's project can be triggered. The pipeline reports back as a test run: poll
+  **`refresh_pipeline_run`** until `testRunKey` appears, then read it with `get_test_run`.
+- **`create_linked_issue`** files a new issue in the project's external tracker (PRD-010) and links
+  it to a test result; **`link_issue`** attaches one that already exists. They are separate tools so
+  that filing cannot happen by getting an optional argument wrong. Both refuse, pointing at
+  `create_bug_report`, until a project administrator has configured a tracker.
 
 **Bug reports are off by default.** `create_bug_report` refuses until a project administrator
 enables them in the project's settings; an API key cannot, since that needs the `ADMIN` role.

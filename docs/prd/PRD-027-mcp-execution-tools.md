@@ -693,14 +693,16 @@ the moment they were fixed.
 - **`record_test_results_bulk`**, if the singular tool turns out to be the bottleneck rather than
   the throttle. PRD-005's endpoint covers the batch case today and this PRD deliberately does not
   duplicate it.
-- **`link_issue`** over `IssueLinkService` (PRD-010), so a bug can also be filed into GitLab or
-  Forgejo. Complementary rather than alternative: a bug report already carries `testResultId`, which
+- ~~**`link_issue`**~~ Shipped 2026-09-17 as `link_issue`, `create_linked_issue` and
+  `list_issue_links`, alongside version history, the dashboard, flaky tests, the suite report and
+  the pipeline tools (59 tools). Original note: over `IssueLinkService` (PRD-010), so a bug can
+  also be filed into GitLab or Forgejo. Complementary rather than alternative: a bug report already carries `testResultId`, which
   is exactly what `IssueLinkService.link` keys off. Gated on a tracker being configured, which is
   why it is not in v1.
 - **Result-level project audit rows** in `AuditService` — currently only `mcp_tool_invocations`
   records who set a result. A change to the human path as much as the agent one.
 - **Per-key tool allow-list** (PRD-025 §9) — promoted from nice-to-have to scheduled. The surface is
-  28 tools (§3.1), more than double PRD-025's stated ceiling, and every description rides along on
+  now 59 tools (28 when this was written, §3.1), several times PRD-025's stated ceiling, and every description rides along on
   every agent turn. An authoring-only key should not pay for execution tools it will never call.
 - ~~**Step-level results from an agent.**~~ Shipped 2026-09-17 as `record_step_result`, together
   with `update_test_run`, `clone_test_run`, `list_comments` and `add_comment` (34 tools). The

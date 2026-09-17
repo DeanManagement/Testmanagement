@@ -273,6 +273,88 @@ final class McpDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record DuplicateBug(UUID id, String title, BugReportStatus status) {}
 
+    // --- history ------------------------------------------------------------------------------
+
+    /** @param current true for the live state of the case, which is always the highest number */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record VersionSummary(int versionNumber, Instant versionAt, String title, boolean current) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record VersionList(List<VersionSummary> versions, int total) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record VersionDetail(int versionNumber, Instant versionAt, String title,
+                         @Nullable String description, @Nullable String preconditions,
+                         Priority priority, TestCaseStatus status, @Nullable List<String> labels,
+                         List<Step> steps) {}
+
+    // --- reporting ----------------------------------------------------------------------------
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record PassRatePoint(UUID testRunId, String name, @Nullable Instant completedAt,
+                         double passRate) {}
+
+    /** @param latestResultsByStatus each test case counted once, by its most recent result */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record Dashboard(long totalTestCases, long totalTestSuites, long totalTestRuns,
+                     long completedTestRuns, Map<String, Long> testCasesByStatus,
+                     Map<String, Long> testCasesByPriority, Map<String, Long> latestResultsByStatus,
+                     double overallPassRate, List<PassRatePoint> passRateTrend) {}
+
+    /**
+     * @param flakyScore proportion of consecutive PASSED/FAILED pairs that flipped, in [0,1]
+     * @param failRate   proportion of the considered results that failed, in [0,1]
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record FlakyTest(UUID testCaseId, String testCaseKey, String title, double flakyScore,
+                     double failRate, int runsConsidered) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record FlakyTestList(List<FlakyTest> flakyTests, int total) {}
+
+    /** @param status absent when the case has never been executed */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record SuiteCaseResult(UUID testCaseId, String testCaseTitle, @Nullable TestResultStatus status,
+                           @Nullable UUID testRunId, @Nullable String testRunName) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record SuiteReport(UUID id, String name, int total, int passed, int failed, int blocked,
+                       int skipped, int untested, double passRate,
+                       List<SuiteCaseResult> results) {}
+
+    // --- pipelines ----------------------------------------------------------------------------
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record Workflow(UUID id, String name, String serverName, String provider,
+                    @Nullable String defaultRef, @Nullable Map<String, String> defaultParameters) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record WorkflowList(List<Workflow> workflows, int total) {}
+
+    /**
+     * @param testRunKey present once the pipeline has reported results back, which is what turns
+     *                   a pipeline run into a test run the other tools can read
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record PipelineRun(UUID id, @Nullable UUID workflowId, String workflowName, String status,
+                       @Nullable String externalUrl, @Nullable String triggeredRef,
+                       @Nullable UUID testRunId, @Nullable String testRunKey,
+                       @Nullable String errorMessage, Instant createdAt,
+                       @Nullable Instant finishedAt) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record PipelineRunPage(List<PipelineRun> pipelineRuns, int page, int size, long totalElements,
+                           boolean hasMore) {}
+
+    // --- external issues (PRD-010) ------------------------------------------------------------
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record IssueLink(UUID id, UUID testResultId, String provider, String externalId,
+                     @Nullable String url, @Nullable String title, @Nullable String state) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record IssueLinkList(List<IssueLink> issues, int total) {}
+
     // --- requirements and traceability -------------------------------------------------------
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
