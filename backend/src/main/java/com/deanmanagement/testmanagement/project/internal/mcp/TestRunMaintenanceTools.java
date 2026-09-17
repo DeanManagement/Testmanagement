@@ -17,7 +17,8 @@ import java.util.UUID;
 /**
  * Housekeeping on a run that is not recording a result: rename it, re-file it, run it again.
  *
- * <p>Separate from {@link TestRunWriteTools}, which owns the execute-a-run loop. Neither tool here
+ * <p>Separate from {@link TestRunWriteTools} and the recording tools, which own the execute-a-run
+ * loop. Neither tool here
  * can change a run's status — closing is {@code complete_test_run}'s job and reopening stays a
  * human decision (PRD-027 §2).
  */

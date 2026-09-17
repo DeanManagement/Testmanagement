@@ -276,7 +276,7 @@ class McpMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase login = createCase("Login");
         McpDtos.CreatedTestCase logout = createCase("Logout");
 
-        McpDtos.BulkStatusResult result = testCaseTools.changeTestCaseStatusBulk(
+        McpDtos.BulkStatusResult result = testCaseBulkTools.changeTestCaseStatusBulk(
                 Set.of(login.id(), logout.id()), TestCaseStatus.ACTIVE);
 
         assertThat(result.updated()).isEqualTo(2);
@@ -291,7 +291,7 @@ class McpMaintenanceToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
 
-        assertThatThrownBy(() -> testCaseTools.changeTestCaseStatusBulk(
+        assertThatThrownBy(() -> testCaseBulkTools.changeTestCaseStatusBulk(
                 Set.of(login.id(), foreign.id()), TestCaseStatus.ACTIVE))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("nothing was changed");
@@ -364,7 +364,7 @@ class McpMaintenanceToolsApiTest extends McpToolApiTestSupport {
         assertThatThrownBy(() -> planningMaintenanceTools.updateTestSuite(suiteId, "x", null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("TESTER");
-        assertThatThrownBy(() -> testCaseTools.changeTestCaseStatusBulk(Set.of(login.id()),
+        assertThatThrownBy(() -> testCaseBulkTools.changeTestCaseStatusBulk(Set.of(login.id()),
                 TestCaseStatus.ACTIVE))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("TESTER");

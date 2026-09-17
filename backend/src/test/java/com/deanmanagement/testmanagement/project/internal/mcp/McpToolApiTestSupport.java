@@ -51,6 +51,12 @@ abstract class McpToolApiTestSupport {
     protected TestRunWriteTools testRunWriteTools;
     @Autowired
     protected TestRunReadTools testRunReadTools;
+    @Autowired
+    protected TestCaseBulkTools testCaseBulkTools;
+    @Autowired
+    protected TestResultRecordingTools resultRecordingTools;
+    @Autowired
+    protected TestStepRecordingTools stepRecordingTools;
 
     protected Project project;
     protected Project otherProject;

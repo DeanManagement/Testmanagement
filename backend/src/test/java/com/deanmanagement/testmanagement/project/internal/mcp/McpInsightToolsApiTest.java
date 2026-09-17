@@ -73,7 +73,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
         McpDtos.CreatedTestRun run = runOf(login);
-        testRunWriteTools.recordTestResult(run.key(), TestResultStatus.PASSED, login.id(), null,
+        resultRecordingTools.recordTestResult(run.key(), TestResultStatus.PASSED, login.id(), null,
                 null, null);
         testRunWriteTools.completeTestRun(run.key(), null);
 
@@ -113,7 +113,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
         UUID suiteId = planningTools.createTestSuite("Smoke", null,
                 Set.of(login.id(), logout.id())).id();
         McpDtos.CreatedTestRun run = runOf(login);
-        testRunWriteTools.recordTestResult(run.key(), TestResultStatus.FAILED, login.id(), null,
+        resultRecordingTools.recordTestResult(run.key(), TestResultStatus.FAILED, login.id(), null,
                 "broken", null);
         testRunWriteTools.completeTestRun(run.key(), null);
 
