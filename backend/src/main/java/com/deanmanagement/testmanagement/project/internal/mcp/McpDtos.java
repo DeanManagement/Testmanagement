@@ -294,7 +294,11 @@ final class McpDtos {
     record PassRatePoint(UUID testRunId, String name, @Nullable Instant completedAt,
                          double passRate) {}
 
-    /** @param latestResultsByStatus each test case counted once, by its most recent result */
+    /**
+     * @param latestResultsByStatus the results of the most recently completed run only
+     * @param overallPassRate       share of test cases whose most recent executed result, in a
+     *                              completed run, is PASSED — each case counted once
+     */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record Dashboard(long totalTestCases, long totalTestSuites, long totalTestRuns,
                      long completedTestRuns, Map<String, Long> testCasesByStatus,

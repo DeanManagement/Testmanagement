@@ -37,10 +37,15 @@ public class ReportingTools {
     @McpTool(
             name = "get_project_dashboard",
             description = """
-                    The project at a glance: how many cases, suites and runs there are, test cases
-                    by status and priority, where each case's most recent result stands, the
-                    overall pass rate, and the pass-rate trend over recent completed runs. Start
-                    here when asked "how is the project doing".
+                    The project at a glance: how many cases, suites and runs there are, and test
+                    cases by status and priority.
+                    overallPassRate is the project's current health: every test case counted once,
+                    by its most recent executed result in a completed run. latestResultsByStatus is
+                    narrower — the results of the single most recently completed run — and
+                    passRateTrend gives the pass rate of each recent completed run. A small re-test
+                    changes latestResultsByStatus completely and overallPassRate only as far as the
+                    re-tested cases changed. Runs still in progress count towards none of them.
+                    Start here when asked "how is the project doing".
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))

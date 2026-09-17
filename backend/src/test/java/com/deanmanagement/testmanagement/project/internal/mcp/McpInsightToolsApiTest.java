@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -92,6 +93,67 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
 
         assertThat(dashboard.totalTestCases()).isZero();
         assertThat(dashboard.passRateTrend()).isEmpty();
+    }
+
+    /**
+     * Found on production: a 20-case run completed at 75%, then a one-case re-test passed, and the
+     * project's headline pass rate read 100%. "Overall" was the last completed run alone.
+     */
+    @Test
+    void aSmallPassingReTestDoesNotRewriteTheProjectsPassRate() {
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.CreatedTestCase a = createCase("A");
+        McpDtos.CreatedTestCase b = createCase("B");
+        McpDtos.CreatedTestCase c = createCase("C");
+        McpDtos.CreatedTestCase d = createCase("D");
+        completeRun(runOf(a, b, c, d), Map.of(a, TestResultStatus.PASSED, b, TestResultStatus.PASSED,
+                c, TestResultStatus.PASSED, d, TestResultStatus.FAILED));
+        completeRun(runOf(a), Map.of(a, TestResultStatus.PASSED));
+
+        McpDtos.Dashboard dashboard = reportingTools.getProjectDashboard();
+
+        assertThat(dashboard.overallPassRate()).isEqualTo(75.0);
+        assertThat(dashboard.latestResultsByStatus()).containsExactly(Map.entry("PASSED", 1L));
+    }
+
+    @Test
+    void reTestingTheFailedCaseIsWhatMovesThePassRate() {
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.CreatedTestCase a = createCase("A");
+        McpDtos.CreatedTestCase d = createCase("D");
+        completeRun(runOf(a, d), Map.of(a, TestResultStatus.PASSED, d, TestResultStatus.FAILED));
+        completeRun(runOf(d), Map.of(d, TestResultStatus.PASSED));
+
+        assertThat(reportingTools.getProjectDashboard().overallPassRate()).isEqualTo(100.0);
+    }
+
+    /** A result left PENDING in a completed run was never executed, so it is not an outcome. */
+    @Test
+    void aCaseLeftPendingInALaterRunKeepsItsLastRealOutcome() {
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.CreatedTestCase a = createCase("A");
+        McpDtos.CreatedTestCase d = createCase("D");
+        completeRun(runOf(a, d), Map.of(a, TestResultStatus.PASSED, d, TestResultStatus.PASSED));
+        completeRun(runOf(a, d), Map.of(a, TestResultStatus.PASSED));
+
+        assertThat(reportingTools.getProjectDashboard().overallPassRate()).isEqualTo(100.0);
+    }
+
+    @Test
+    void anOpenRunDoesNotCountYet() {
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.CreatedTestCase a = createCase("A");
+        resultRecordingTools.recordTestResult(runOf(a).key(), TestResultStatus.FAILED, a.id(), null,
+                null, null);
+
+        assertThat(reportingTools.getProjectDashboard().overallPassRate()).isZero();
+    }
+
+    private void completeRun(McpDtos.CreatedTestRun run,
+                             Map<McpDtos.CreatedTestCase, TestResultStatus> outcomes) {
+        outcomes.forEach((testCase, status) -> resultRecordingTools.recordTestResult(run.key(),
+                status, testCase.id(), null, null, null));
+        testRunWriteTools.completeTestRun(run.key(), null);
     }
 
     // --- flaky -----------------------------------------------------------------------------

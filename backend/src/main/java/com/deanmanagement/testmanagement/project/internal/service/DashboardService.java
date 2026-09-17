@@ -9,6 +9,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatu
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestSuiteRepository;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +29,7 @@ import java.util.UUID;
 public class DashboardService {
 
     private final TestCaseRepository testCaseRepository;
+    private final TestResultRepository testResultRepository;
     private final TestRunRepository testRunRepository;
     private final TestSuiteRepository testSuiteRepository;
 
@@ -60,24 +63,11 @@ public class DashboardService {
                 })
                 .toList();
 
-        // Compute latest run results breakdown
-        Map<String, Long> latestResultsByStatus = new LinkedHashMap<>();
-        double overallPassRate = 0.0;
         List<TestRun> completedRuns = testRunRepository
                 .findTop10ByProjectIdAndStatusOrderByEndTimeDesc(projectId, TestRunStatus.COMPLETED);
-        if (!completedRuns.isEmpty()) {
-            TestRun latestRun = completedRuns.getFirst();
-            List<TestResult> latestResults = latestRun.getResults();
-            for (TestResultStatus status : TestResultStatus.values()) {
-                long count = latestResults.stream().filter(r -> r.getStatus() == status).count();
-                if (count > 0) {
-                    latestResultsByStatus.put(status.name(), count);
-                }
-            }
-            int latestTotal = latestResults.size();
-            long latestPassed = latestResultsByStatus.getOrDefault("PASSED", 0L);
-            overallPassRate = latestTotal > 0 ? Math.round(latestPassed * 10000.0 / latestTotal) / 100.0 : 0.0;
-        }
+        Map<String, Long> latestResultsByStatus = completedRuns.isEmpty()
+                ? new LinkedHashMap<>() : countByStatus(completedRuns.getFirst().getResults());
+        double overallPassRate = currentPassRate(projectId);
 
         List<PassRateTrendEntry> passRateTrend = new ArrayList<>();
         for (TestRun run : completedRuns) {
@@ -91,5 +81,39 @@ public class DashboardService {
         passRateTrend = passRateTrend.reversed();
 
         return new DashboardResponse(totals, testCasesByStatus, testCasesByPriority, latestResultsByStatus, overallPassRate, recentTestRuns, passRateTrend);
+    }
+
+    /** The results of one run by status, in enum order, leaving out statuses nothing holds. */
+    private static Map<String, Long> countByStatus(List<TestResult> results) {
+        Map<String, Long> counts = new LinkedHashMap<>();
+        for (TestResultStatus status : TestResultStatus.values()) {
+            long count = results.stream().filter(r -> r.getStatus() == status).count();
+            if (count > 0) {
+                counts.put(status.name(), count);
+            }
+        }
+        return counts;
+    }
+
+    /**
+     * The share of test cases whose <em>current</em> outcome is PASSED, each case counted once by
+     * its most recent executed result in a completed run.
+     *
+     * <p>This used to be the pass rate of the last completed run alone, under the name "overall".
+     * A one-case re-test that passed therefore turned a project that had just completed a run at
+     * 75% into a 100% project. Counting per case is also what the suite report does, so the two no
+     * longer contradict each other about the same case.
+     */
+    private double currentPassRate(UUID projectId) {
+        Map<UUID, TestResultStatus> currentOutcome = new HashMap<>();
+        for (Object[] row : testResultRepository.findExecutedOutcomesOfCompletedRunsNewestFirst(projectId)) {
+            currentOutcome.putIfAbsent((UUID) row[0], (TestResultStatus) row[1]);
+        }
+        if (currentOutcome.isEmpty()) {
+            return 0.0;
+        }
+        long passed = currentOutcome.values().stream()
+                .filter(status -> status == TestResultStatus.PASSED).count();
+        return Math.round(passed * 10000.0 / currentOutcome.size()) / 100.0;
     }
 }
