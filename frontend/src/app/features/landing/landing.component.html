@@ -13,9 +13,15 @@
         <button mat-menu-item (click)="switchLanguage('en')" data-test-id="landing-lang-en">English</button>
         <button mat-menu-item (click)="switchLanguage('de')" data-test-id="landing-lang-de">Deutsch</button>
       </mat-menu>
-      <a mat-flat-button routerLink="/login" data-test-id="landing-login-btn">
-        {{ 'landing.nav.login' | translate }}
-      </a>
+      @if (isAuthenticated()) {
+        <a mat-flat-button routerLink="/dashboard" data-test-id="landing-dashboard-btn">
+          {{ 'landing.nav.dashboard' | translate }}
+        </a>
+      } @else {
+        <a mat-flat-button routerLink="/login" data-test-id="landing-login-btn">
+          {{ 'landing.nav.login' | translate }}
+        </a>
+      }
     </div>
   </nav>
 
@@ -24,8 +30,9 @@
     <h1 class="hero-title">{{ 'landing.hero.title' | translate }}</h1>
     <p class="hero-subtitle">{{ 'landing.hero.subtitle' | translate }}</p>
     <div class="hero-actions">
-      <a mat-flat-button routerLink="/login" class="hero-cta" data-test-id="landing-get-started">
-        {{ 'landing.hero.cta' | translate }}
+      <a mat-flat-button [routerLink]="isAuthenticated() ? '/dashboard' : '/login'" class="hero-cta"
+         data-test-id="landing-get-started">
+        {{ (isAuthenticated() ? 'landing.nav.dashboard' : 'landing.hero.cta') | translate }}
       </a>
     </div>
   </section>
