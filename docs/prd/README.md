@@ -129,7 +129,7 @@ Gaps against comparable test-management tools, each grounded in the current code
 
 | PRD | Title | Priority | Size | Status |
 |---|---|---|---|---|
-| [029](PRD-029-jira-github-issue-trackers.md) | Jira & GitHub Issues as Issue Trackers | P1 | M | 📝 Draft |
+| [029](PRD-029-jira-github-issue-trackers.md) | Jira & GitHub Issues as Issue Trackers | P1 | M | ✅ Implemented (manual smoke test open) |
 | [030](PRD-030-shared-steps.md) | Shared / Reusable Steps | P2 | M-L | 📝 Draft |
 | [031](PRD-031-chat-notification-presets.md) | Chat Notification Presets (Slack / Teams / Mattermost) | P2 | S-M | 📝 Draft |
 | [032](PRD-032-environments-configurations.md) | Project Environments | P2 | M | 📝 Draft |

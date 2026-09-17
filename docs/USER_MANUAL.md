@@ -711,12 +711,37 @@ Private and loopback URLs are refused by default as an SSRF guard; an operator c
 
 ### Issue tracker
 
-**Issue Tracker** on a project (project Admin) connects it to **GitLab** or **Forgejo/Gitea**.
+**Issue Tracker** on a project (project Admin) connects it to **GitLab**, **Forgejo/Gitea**,
+**GitHub** or **Jira**.
 
 Provide the instance URL (HTTPS; private addresses rejected by default), the project reference,
 and an API token. The token is stored encrypted and requires `APP_ENCRYPTION_KEY` on the server —
 without it, saving is refused rather than storing the token in plain text. **Test connection**
 verifies it before you save.
+
+| Tracker | Instance URL | Project reference | Token |
+|---|---|---|---|
+| GitLab | `https://gitlab.com` or your instance | `group/project` or the numeric id | project or personal access token, scope `api` |
+| Forgejo / Gitea | the instance root | `owner/repository` | access token with read/write on issues |
+| GitHub | `https://github.com`, or your Enterprise Server's root | `owner/repository` | fine-grained token with *Issues: Read and write* on the repository, or a classic token with `repo` |
+| Jira Cloud | `https://your-site.atlassian.net` | project key, e.g. `WEB` | API token from id.atlassian.com **plus the account email** it belongs to |
+| Jira Data Center | your instance root | project key, e.g. `WEB` | personal access token from your profile (8.14+) |
+
+Notes on the newer two:
+
+- **GitHub.** Pull requests are never offered or linked, although GitHub's API lists them among
+  issues. Typing a number (`123` or `#123`) fetches that issue directly. **Test connection** fails
+  for a repository whose issues are switched off, which is common on forks.
+- **Jira — issue type.** New issues are filed as a **Bug**. To file something else, put it after the
+  key: `WEB:Task`. **Test connection** checks that the project actually has that issue type and
+  lists the ones it offers if not.
+- **Jira — required fields.** If the project's create screen requires fields beyond summary and
+  description (Components, Fix Version, …), filing fails and names them. Create the issue in Jira
+  and **link** it instead; linking always works.
+- **Jira — status.** Open/Closed follows Jira's status *category* (To Do and In Progress are open,
+  Done is closed), so it is right whatever your workflow calls its statuses.
+- **Jira — account email.** The form asks for it only when the URL is an `atlassian.net` site. It
+  is not a secret and is shown again when you reopen the settings.
 
 Once connected, a tester working through a failed result can:
 

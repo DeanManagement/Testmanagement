@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-17 — see §8; manual smoke test against real Jira/GitHub still open |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P1 — the most common reason a team can't adopt the tool |
@@ -182,11 +182,46 @@ the Jira required-fields limitation.
 
 ## 7. Acceptance Criteria
 
-- [ ] `JiraIssueProvider` supports search, create, get and test connection on Jira Cloud and Data Center.
-- [ ] `GitHubIssueProvider` supports the same on GitHub.com and GHES, never linking a pull request.
-- [ ] Jira Cloud config stores the account email in `auth_username`; the token stays encrypted.
-- [ ] Issues filed to Jira render bold, links and code from the templated body.
-- [ ] Jira required-field failures and GitHub secondary rate limits produce specific messages.
-- [ ] Linked-issue state refreshes via the existing poller for both providers.
-- [ ] Settings form lists both providers with correct hints; en/de translations present.
-- [ ] Adapter, config-validation and frontend tests pass; manual smoke test recorded.
+- [x] `JiraIssueProvider` supports search, create, get and test connection on Jira Cloud and Data Center.
+- [x] `GitHubIssueProvider` supports the same on GitHub.com and GHES, never linking a pull request.
+- [x] Jira Cloud config stores the account email in `auth_username`; the token stays encrypted.
+- [x] Issues filed to Jira render bold, links and code from the templated body.
+- [x] Jira required-field failures and GitHub secondary rate limits produce specific messages.
+- [x] Linked-issue state refreshes via the existing poller for both providers.
+- [x] Settings form lists both providers with correct hints; en/de translations present.
+- [ ] Adapter, config-validation and frontend tests pass (**done**); manual smoke test recorded (**open** — needs a real Jira Cloud site and a GitHub token).
+
+## 8. As Built (2026-09-17)
+
+Built as specified, with these differences:
+
+- **Key-shaped search is a lookup, not JQL.** §3.2 specified `text ~ "q" OR key = "q"`. JQL that
+  names an issue key which does not exist is a **400** in Jira, so that query would have failed for
+  every near-miss. A key-shaped query is fetched directly (`GET /issue/{key}`, 404 tolerated) and
+  the text search is the fallback. The GitHub adapter does the same for `#123`, which also keeps
+  numbers off the 30-requests-a-minute search API.
+- **`app.issuetracker.jira.default-issue-type` was not added.** The default is `Bug` and
+  `KEY:IssueType` already overrides it per project; a second, global knob had no user.
+- **Cloud detection is injected for tests.** A stub on 127.0.0.1 can never look like
+  `*.atlassian.net`, so `JiraIssueProvider` takes the detector through a package-private constructor.
+  The suffix is matched on the *parsed host*, so `atlassian.net.evil.example` is never sent Basic
+  credentials; the frontend's `needsAccountEmail` applies the same rule.
+- **`HttpIssueProviderSupport` gained two seams** rather than per-adapter copies of `send`: an
+  overridable `rejectFailure()` (GitHub's 403-is-a-rate-limit, Jira's 400-names-the-fields) and
+  `getJsonIfFound()`, where "no such issue" has to stay distinguishable from "token rejected". The
+  HTML-with-200 guard from §3.2 lives there too, so PRD-026 inherits it.
+- **The moved-issue follow-up (§4) respects the unique key.** `(test_result_id, external_id)` is
+  unique, so the refresher does not rename a link into an id the same result already links.
+- **The account email is dropped on save for every tracker but Jira Cloud**, so switching a
+  project's tracker does not leave a stale address in the row.
+- **Project-reference hints stayed where they were** — English strings in `issue-tracker.model.ts`,
+  the existing pattern — while the new per-tracker token help is translated (en/de).
+
+Tests: `GitHubIssueProviderTest` (15), `JiraIssueProviderTest` (19), `MarkdownToJiraWikiTest` (7),
+four account-email cases in `IssueTrackerApiTest`, two moved-issue cases in
+`IssueStateRefresherTest`, and `issue-tracker-form.spec.ts`. `unsupportedProviderIsRejected…` now
+uses `LINEAR`, the one provider still declared without an adapter. **797 backend tests, 21 frontend
+spec files.**
+
+**Still open:** the manual smoke test. Stubs cannot catch vendor drift, and Jira Cloud's search
+migration is recent.
