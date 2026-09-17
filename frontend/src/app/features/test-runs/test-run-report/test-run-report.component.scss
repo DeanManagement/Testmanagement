@@ -143,9 +143,10 @@
   &:hover { text-decoration: underline !important; }
 }
 
+// Wraps rather than truncating: this cell is the only place the report says why something
+// failed, and step evidence arrives one step per line.
 .comment-cell {
-  max-width: 250px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  max-width: 480px;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
 }
