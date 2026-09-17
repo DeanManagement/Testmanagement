@@ -22,7 +22,9 @@
   padding: 48px 16px;
   color: var(--tm-text-secondary);
 
-  mat-icon {
+  // Direct child only: the "Add Step" button further down in this block has an icon of its own,
+  // and the descendant selector blew that one up to 48px too, poking out above the button.
+  > mat-icon {
     font-size: 48px;
     width: 48px;
     height: 48px;
@@ -89,6 +91,11 @@
 .remove-step {
   color: var(--tm-text-secondary);
   flex-shrink: 0;
+  // Room for Material's invisible 48px touch target. The button itself is 36px and sat flush with
+  // the right edge, so the target stuck out 6px and made the tab body scroll sideways: a horizontal
+  // scrollbar under the steps and a heading clipped at the left once it had scrolled. Measured on
+  // the live page: 6px overflow, 0 with this margin. Keeps the full hit area rather than hiding it.
+  margin-right: 6px;
   &:hover { color: var(--tm-danger); }
 }
 
