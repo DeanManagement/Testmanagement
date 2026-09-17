@@ -24,6 +24,11 @@
         <spring-modulith.version>2.1.0</spring-modulith.version>
         <!-- PRD-025: 2.0.x requires Boot 4.1 + Framework 7, which is what this project is on. -->
         <spring-ai.version>2.0.0</spring-ai.version>
+        <!-- CVE-2026-65182, CVE-2026-65905, CVE-2026-68525 (all CRITICAL: security-constraint and
+             authentication bypass) are fixed in Tomcat 11.0.25. Boot 4.1.0 manages 11.0.22 and
+             even 4.1.1 only reaches 11.0.24, so the version is pinned here. Remove this once the
+             Boot parent manages 11.0.25 or later, or it will hold Tomcat back instead. -->
+        <tomcat.version>11.0.26</tomcat.version>
     </properties>
 
     <dependencyManagement>
