@@ -56,7 +56,10 @@ services:
       MCP_ENABLED: ${MCP_ENABLED:-false}
       # Guardrails against an agent looping, not a security boundary — that is the key's project
       # role. Raise the write budget for a bulk import, lower it if an agent is left unattended.
-      MCP_MAX_WRITES_PER_MINUTE: ${MCP_MAX_WRITES_PER_MINUTE:-60}
+      # These restate application.yml's defaults, and whatever is written here wins, so keep the
+      # two in step: PRD-027 raised the budget to 120 (a run costs one write per test case) and
+      # this still said 60, which quietly halved it for every Docker deployment.
+      MCP_MAX_WRITES_PER_MINUTE: ${MCP_MAX_WRITES_PER_MINUTE:-120}
       MCP_MAX_BULK_SIZE: ${MCP_MAX_BULK_SIZE:-50}
       MCP_MAX_STEPS_PER_CASE: ${MCP_MAX_STEPS_PER_CASE:-100}
       MCP_AUDIT_RETENTION_DAYS: ${MCP_AUDIT_RETENTION_DAYS:-90}
