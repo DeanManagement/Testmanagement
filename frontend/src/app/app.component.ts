@@ -1,7 +1,7 @@
 import { Component, inject } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
-import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from './core/services/auth.service';
+import { LanguageService } from './core/services/language.service';
 
 @Component({
   selector: 'app-root',
@@ -11,12 +11,11 @@ import { AuthService } from './core/services/auth.service';
   styleUrl: './app.component.scss',
 })
 export class AppComponent {
-  private readonly translate = inject(TranslateService);
+  private readonly languageService = inject(LanguageService);
   private readonly authService = inject(AuthService);
 
   constructor() {
-    this.translate.addLangs(['en', 'de']);
-    this.translate.use('en');
+    this.languageService.init();
 
     this.authService.checkAuth();
   }

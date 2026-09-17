@@ -3,7 +3,8 @@ import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
+import { Language, LanguageService } from '../../core/services/language.service';
 
 @Component({
   selector: 'app-landing',
@@ -19,9 +20,9 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
   styleUrl: './landing.component.scss',
 })
 export class LandingComponent {
-  private readonly translate = inject(TranslateService);
+  private readonly languageService = inject(LanguageService);
 
-  switchLanguage(lang: string): void {
-    this.translate.use(lang);
+  switchLanguage(language: Language): void {
+    this.languageService.use(language);
   }
 }
