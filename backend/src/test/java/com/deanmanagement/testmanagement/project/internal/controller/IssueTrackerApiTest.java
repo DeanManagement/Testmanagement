@@ -204,7 +204,68 @@ class IssueTrackerApiTest {
     void supportedProvidersListsOnlyTrackersWithAnAdapter() throws Exception {
         mockMvc.perform(get(configUrl(projectId) + "/providers").with(user(admin)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$", org.hamcrest.Matchers.containsInAnyOrder("GITLAB", "FORGEJO")));
+                // LINEAR is declared in the enum but has no adapter, so it must stay hidden.
+                .andExpect(jsonPath("$", org.hamcrest.Matchers.containsInAnyOrder(
+                        "GITLAB", "FORGEJO", "GITHUB", "JIRA")));
+    }
+
+    // ---- PRD-029: the Jira Cloud account email --------------------------------------------
+
+    private String jiraBody(String baseUrl, String authUsername) {
+        return "{\"provider\":\"JIRA\",\"baseUrl\":\"" + baseUrl + "\",\"projectRef\":\"WEB\","
+                + "\"apiToken\":\"" + TOKEN + "\""
+                + (authUsername == null ? "" : ",\"authUsername\":\"" + authUsername + "\"") + "}";
+    }
+
+    @Test
+    void jiraCloudNeedsTheAccountEmailBecauseItsTokenAloneCannotAuthenticate() throws Exception {
+        mockMvc.perform(put(configUrl(projectId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jiraBody("https://acme.atlassian.net", null))
+                        .with(user(admin)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message", org.hamcrest.Matchers.containsString("account email")));
+    }
+
+    @Test
+    void jiraCloudStoresTheAccountEmailAndReturnsItSinceItIsNotASecret() throws Exception {
+        mockMvc.perform(put(configUrl(projectId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jiraBody("https://acme.atlassian.net", " qa@example.com "))
+                        .with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.provider").value("JIRA"))
+                .andExpect(jsonPath("$.authUsername").value("qa@example.com"))
+                .andExpect(jsonPath("$.apiToken").doesNotExist());
+    }
+
+    @Test
+    void jiraDataCenterNeedsNoAccountEmail() throws Exception {
+        mockMvc.perform(put(configUrl(projectId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jiraBody("https://jira.acme.example", null))
+                        .with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.authUsername").doesNotExist());
+    }
+
+    /** Switching a Jira Cloud config to another tracker must not leave a stale email behind. */
+    @Test
+    void anAccountEmailIsDroppedForATrackerThatDoesNotUseOne() throws Exception {
+        mockMvc.perform(put(configUrl(projectId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(jiraBody("https://acme.atlassian.net", "qa@example.com"))
+                        .with(user(admin)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(put(configUrl(projectId))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"provider\":\"GITHUB\",\"baseUrl\":\"https://github.com\","
+                                + "\"projectRef\":\"acme/webshop\",\"authUsername\":\"qa@example.com\"}")
+                        .with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.provider").value("GITHUB"))
+                .andExpect(jsonPath("$.authUsername").doesNotExist());
     }
 
     @Test
@@ -271,7 +332,9 @@ class IssueTrackerApiTest {
     void unsupportedProviderIsRejectedUntilItHasAnAdapter() throws Exception {
         mockMvc.perform(put(configUrl(projectId))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"provider\":\"JIRA\",\"baseUrl\":\"https://jira.example.com\","
+                        // LINEAR: still declared in the enum, still without an adapter. This used to
+                        // be JIRA, until PRD-029 gave it one.
+                        .content("{\"provider\":\"LINEAR\",\"baseUrl\":\"https://linear.example.com\","
                                 + "\"projectRef\":\"PROJ\",\"apiToken\":\"" + TOKEN + "\"}")
                         .with(user(admin)))
                 .andExpect(status().isBadRequest());

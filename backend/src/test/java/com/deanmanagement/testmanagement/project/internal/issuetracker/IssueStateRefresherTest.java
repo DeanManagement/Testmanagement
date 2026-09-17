@@ -66,6 +66,8 @@ class IssueStateRefresherTest {
     private final AtomicInteger responseCode = new AtomicInteger(200);
     private final AtomicInteger callCount = new AtomicInteger();
     private final AtomicReference<String> issueState = new AtomicReference<>("closed");
+    /** The number the tracker answers under; differs from the link's when the issue has moved. */
+    private final AtomicInteger answeredIssueNumber = new AtomicInteger(1);
 
     private Project project;
     private IssueTrackerConfig config;
@@ -75,8 +77,9 @@ class IssueStateRefresherTest {
         server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
         server.createContext("/", exchange -> {
             callCount.incrementAndGet();
-            byte[] body = ("{\"iid\": 1, \"title\": \"Issue\", \"state\": \"" + issueState.get()
-                    + "\", \"web_url\": \"https://gitlab.test/i/1\"}").getBytes(StandardCharsets.UTF_8);
+            int number = answeredIssueNumber.get();
+            byte[] body = ("{\"iid\": " + number + ", \"title\": \"Issue\", \"state\": \"" + issueState.get()
+                    + "\", \"web_url\": \"https://gitlab.test/i/" + number + "\"}").getBytes(StandardCharsets.UTF_8);
             exchange.getResponseHeaders().add("Content-Type", "application/json");
             exchange.sendResponseHeaders(responseCode.get(), body.length);
             exchange.getResponseBody().write(body);
@@ -144,6 +147,46 @@ class IssueStateRefresherTest {
         assertThat(refreshed).isEqualTo(1);
         assertThat(issueLinkRepository.findById(linkId).orElseThrow().getState()).isEqualTo(IssueState.CLOSED);
         assertThat(issueLinkRepository.findById(linkId).orElseThrow().getStateCheckedAt()).isNotNull();
+    }
+
+    /**
+     * PRD-029 §4. A Jira issue moved to another project answers under its new key (and a tracker
+     * may renumber on transfer). The link has to follow, or every later refresh asks for an id
+     * that no longer exists.
+     */
+    @Test
+    void followsAnIssueThatNowAnswersUnderAnotherId() {
+        UUID linkId = linkOnRunWithStatus(TestRunStatus.IN_PROGRESS, "POLL-R5");
+        answeredIssueNumber.set(9);
+
+        refresher.refreshProject(config);
+
+        IssueLink link = issueLinkRepository.findById(linkId).orElseThrow();
+        assertThat(link.getExternalId()).isEqualTo("group/project#9");
+        assertThat(link.getUrl()).isEqualTo("https://gitlab.test/i/9");
+        assertThat(link.getState()).isEqualTo(IssueState.CLOSED);
+    }
+
+    /** (test_result_id, external_id) is unique, so a rename into an id already linked would fail the save. */
+    @Test
+    void doesNotRenameIntoAnIdTheSameResultAlreadyLinks() {
+        UUID movedId = linkOnRunWithStatus(TestRunStatus.IN_PROGRESS, "POLL-R6");
+        IssueLink moved = issueLinkRepository.findById(movedId).orElseThrow();
+        IssueLink alreadyThere = new IssueLink();
+        alreadyThere.setTestResultId(moved.getTestResultId());
+        alreadyThere.setProvider(IssueTrackerProviderType.GITLAB);
+        alreadyThere.setExternalId("group/project#9");
+        alreadyThere.setUrl("https://gitlab.test/i/9");
+        alreadyThere.setState(IssueState.OPEN);
+        issueLinkRepository.saveAndFlush(alreadyThere);
+        answeredIssueNumber.set(9);
+
+        refresher.refreshProject(config);
+        issueLinkRepository.flush();
+
+        assertThat(issueLinkRepository.findById(movedId).orElseThrow().getExternalId())
+                .isEqualTo("group/project#1");
+        assertThat(issueLinkRepository.findById(movedId).orElseThrow().getState()).isEqualTo(IssueState.CLOSED);
     }
 
     @Test

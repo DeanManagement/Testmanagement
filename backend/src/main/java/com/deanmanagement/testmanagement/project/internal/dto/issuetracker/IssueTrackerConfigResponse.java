@@ -19,6 +19,8 @@ public record IssueTrackerConfigResponse(
         boolean tokenSet,
         String lastError,
         Instant lastErrorAt,
-        Instant updatedAt
+        Instant updatedAt,
+        // Not a secret (PRD-029 §3.1); returned so the settings form can show which account is in use.
+        String authUsername
 ) {
 }

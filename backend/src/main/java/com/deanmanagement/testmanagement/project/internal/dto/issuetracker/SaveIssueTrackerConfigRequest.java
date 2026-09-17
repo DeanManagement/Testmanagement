@@ -15,6 +15,8 @@ public record SaveIssueTrackerConfigRequest(
         @NotBlank @Size(max = 500) String baseUrl,
         @NotBlank @Size(max = 300) String projectRef,
         @Size(max = 500) String apiToken,
-        Boolean active
+        Boolean active,
+        // PRD-029 §3.1: the account email, required for Jira Cloud only and ignored otherwise.
+        @Size(max = 255) String authUsername
 ) {
 }

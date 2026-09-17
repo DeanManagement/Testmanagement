@@ -37,5 +37,10 @@ public interface IssueTrackerProvider {
         public String projectRef() {
             return config.getProjectRef();
         }
+
+        /** Only set for trackers that authenticate with a username and token pair (Jira Cloud). */
+        public String authUsername() {
+            return config.getAuthUsername();
+        }
     }
 }

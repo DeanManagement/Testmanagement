@@ -58,6 +58,7 @@ public class IssueStateRefresher {
             }
             try {
                 Issue issue = provider.get(decrypted, link.getExternalId());
+                followIfMoved(link, issue);
                 link.setState(issue.state());
                 if (issue.title() != null) {
                     link.setTitle(truncate(issue.title()));
@@ -81,6 +82,26 @@ public class IssueStateRefresher {
             }
         }
         return refreshed;
+    }
+
+    /**
+     * A tracker may answer under a different id than the one asked for: a Jira issue moved to
+     * another project comes back under its new key (PRD-029 §4). The link adopts it, or every later
+     * refresh would ask for an id that no longer exists. Left alone when the same result already
+     * links the new id, because (test_result_id, external_id) is unique and the save would fail.
+     */
+    private void followIfMoved(IssueLink link, Issue issue) {
+        String newId = issue.externalId();
+        if (newId == null || newId.equals(link.getExternalId())) {
+            return;
+        }
+        if (issueLinkRepository.findByTestResultIdAndExternalId(link.getTestResultId(), newId).isPresent()) {
+            return;
+        }
+        link.setExternalId(newId);
+        if (issue.url() != null) {
+            link.setUrl(issue.url());
+        }
     }
 
     private static String truncate(String title) {

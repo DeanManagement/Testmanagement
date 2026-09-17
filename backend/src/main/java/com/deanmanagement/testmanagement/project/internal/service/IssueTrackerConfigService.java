@@ -4,7 +4,9 @@ import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.Issue
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueTrackerStatusResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.SaveIssueTrackerConfigRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerConfig;
+import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerProviderType;
 import com.deanmanagement.testmanagement.project.internal.issuetracker.IssueTrackerProvider;
+import com.deanmanagement.testmanagement.project.internal.issuetracker.JiraIssueProvider;
 import com.deanmanagement.testmanagement.project.internal.issuetracker.IssueTrackerProviderRegistry;
 import com.deanmanagement.testmanagement.project.internal.issuetracker.IssueTrackerTokenCipher;
 import com.deanmanagement.testmanagement.project.internal.issuetracker.IssueTrackerUrlValidator;
@@ -70,6 +72,7 @@ public class IssueTrackerConfigService {
             throw new IllegalArgumentException("An API token is required when configuring a tracker");
         }
 
+        config.setAuthUsername(authUsernameFor(request));
         config.setProvider(request.provider());
         config.setBaseUrl(request.baseUrl().trim());
         config.setProjectRef(request.projectRef().trim());
@@ -166,7 +169,26 @@ public class IssueTrackerConfigService {
                 config.getApiTokenEncrypted() != null && !config.getApiTokenEncrypted().isBlank(),
                 config.getLastError(),
                 config.getLastErrorAt(),
-                config.getUpdatedAt());
+                config.getUpdatedAt(),
+                config.getAuthUsername());
+    }
+
+    /**
+     * The account email, which only Jira Cloud uses: its Basic auth is {@code email:apiToken}, so
+     * the token alone cannot authenticate (PRD-029 §3.1). Required there and dropped everywhere
+     * else, so switching a config to another tracker does not leave a stale address behind.
+     */
+    private static String authUsernameFor(SaveIssueTrackerConfigRequest request) {
+        boolean isJiraCloud = request.provider() == IssueTrackerProviderType.JIRA
+                && JiraIssueProvider.isAtlassianCloud(request.baseUrl());
+        if (!isJiraCloud) {
+            return null;
+        }
+        if (isBlank(request.authUsername())) {
+            throw new IllegalArgumentException(
+                    "Jira Cloud needs the account email that the API token belongs to");
+        }
+        return request.authUsername().trim();
     }
 
     private static boolean isBlank(String value) {

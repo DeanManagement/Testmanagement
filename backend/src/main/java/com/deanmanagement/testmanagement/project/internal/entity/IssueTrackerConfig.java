@@ -46,6 +46,14 @@ public class IssueTrackerConfig extends BaseEntity {
     @Column(name = "api_token_encrypted", nullable = false, columnDefinition = "TEXT")
     private String apiTokenEncrypted;
 
+    /**
+     * The account the token belongs to, for trackers that authenticate with a username and token
+     * pair — today only Jira Cloud, whose Basic auth is {@code email:apiToken} (PRD-029 §3.1). Not a
+     * secret, and {@code null} for everything else.
+     */
+    @Column(name = "auth_username", length = 255)
+    private String authUsername;
+
     @Column(nullable = false)
     private boolean active = true;
 
