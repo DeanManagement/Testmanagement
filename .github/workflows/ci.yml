@@ -90,8 +90,23 @@ jobs:
           EOF
       - name: Compose refuses to start without secrets (PRD-019)
         run: |
-          if docker compose --env-file /dev/null config -q 2>/dev/null; then
+          if output=$(docker compose --env-file /dev/null config -q 2>&1); then
             echo "compose accepted missing secrets — default-secret guard broken" >&2
+            exit 1
+          fi
+          # Any failure satisfies the check above, a YAML syntax error included, so make sure it
+          # failed for the right reason.
+          for required in JWT_SECRET DB_PASSWORD; do
+            if ! grep -q "required variable $required" <<<"$output"; then
+              echo "compose failed, but not because $required is missing:" >&2
+              echo "$output" >&2
+              exit 1
+            fi
+          done
+          # The guard above cannot see an optional secret that has been given a fallback value,
+          # which is how a committed JWT secret and encryption key once got in.
+          if grep -nE '(PASSWORD|SECRET|KEY): *\$\{[A-Z_]+:-[^}]+\}' docker-compose.yml; then
+            echo "docker-compose.yml gives a secret a default value (PRD-019)" >&2
             exit 1
           fi
       - name: Start stack

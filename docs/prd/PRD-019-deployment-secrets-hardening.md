@@ -86,3 +86,23 @@ Add to the server block: `X-Content-Type-Options: nosniff`, `Referrer-Policy: st
 - [x] `.env.example` committed; README quick-start updated.
 
 **Note:** base images pinned to major tags (e.g. `postgres:16-alpine`); digest pinning was skipped in favor of Dependabot docker updates (PRD-023), which achieve the same control with less friction.
+
+## Regression and repair (2026-09-17)
+
+Commit `9f7e79c` (2026-08-06, a Material Icons fix) replaced the `:?` guards in
+`docker-compose.yml` with fallback values — a JWT signing secret, `admin123`, a database password
+and, from `6ef7b92`, an AES encryption key — almost certainly local-development convenience swept
+into an unrelated commit. The compose smoke test failed from then on and was not acted on, so for
+six weeks `docker compose up` without a `.env` started an instance on secrets that are public in
+this repository's history.
+
+Repaired: both required variables are `:?` again and the optional secrets default to empty. The CI
+check now also asserts *why* compose failed (any error satisfied it before, a YAML syntax error
+included) and greps for a secret given a `:-` fallback, which is the form the regression took and
+which the original check could not see for the optional ones.
+
+**The committed values are burned and stay in git history.** Any instance started without a `.env`
+between those dates must set a fresh `JWT_SECRET` (everyone re-logs in), change the admin password,
+and set a fresh `APP_ENCRYPTION_KEY` and re-enter stored tracker, build-server and OIDC secrets —
+and rotate those tokens at their source if the database could have been read.
+
