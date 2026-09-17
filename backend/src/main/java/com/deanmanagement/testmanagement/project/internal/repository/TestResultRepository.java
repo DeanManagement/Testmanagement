@@ -15,6 +15,19 @@ import java.util.UUID;
 
 public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
 
+    /**
+     * Every executed result of the project's completed runs as {@code [testCaseId, status]},
+     * newest first, so the first row seen for a test case is its current outcome. PENDING rows are
+     * left out: a result nobody executed is not an outcome, and would otherwise hide the real one
+     * from an earlier run.
+     */
+    // ponytail: scans every executed result of the project per dashboard load; move the
+    // "latest per case" pick into SQL (window function) if a project's history makes this slow.
+    @Query("SELECT r.testCase.id, r.status FROM TestResult r JOIN r.testRun run " +
+           "WHERE run.project.id = :projectId AND run.status = 'COMPLETED' " +
+           "AND r.status <> 'PENDING' ORDER BY r.updatedAt DESC")
+    List<Object[]> findExecutedOutcomesOfCompletedRunsNewestFirst(@Param("projectId") UUID projectId);
+
     @Query("SELECT r FROM TestResult r JOIN FETCH r.testCase JOIN FETCH r.testRun run " +
            "WHERE r.testCase.id IN :testCaseIds AND run.project.id = :projectId " +
            "AND run.status = 'COMPLETED' ORDER BY r.updatedAt DESC")
