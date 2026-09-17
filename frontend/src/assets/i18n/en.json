@@ -1,4 +1,8 @@
 {
+  "validation": {
+    "required": "This field is required",
+    "maxLength": "At most {{max}} characters"
+  },
   "app": {
     "title": "Test Management"
   },
@@ -97,7 +101,8 @@
   },
   "landing": {
     "nav": {
-      "login": "Sign In"
+      "login": "Sign In",
+      "dashboard": "Open dashboard"
     },
     "hero": {
       "title": "Test Management Made Simple",

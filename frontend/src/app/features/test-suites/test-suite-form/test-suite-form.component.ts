@@ -17,11 +17,13 @@ import { selectTestSuiteById } from '../../../store/test-suite/test-suite.select
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectAllTestCases } from '../../../store/test-case/test-case.selectors';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
+import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
 
 @Component({
   selector: 'app-test-suite-form',
   standalone: true,
   imports: [
+    FieldErrorComponent,
     AsyncPipe,
     ReactiveFormsModule,
     RouterLink,

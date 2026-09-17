@@ -18,11 +18,13 @@ import { BugReportStatus, Priority } from '../../../shared/models/bug-report.mod
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { ProjectMember } from '../../../shared/models/project-member.model';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
+import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
 
 @Component({
   selector: 'app-bug-report-form',
   standalone: true,
   imports: [
+    FieldErrorComponent,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,

@@ -19,6 +19,7 @@ import { forkJoin, Observable, of } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
+import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
 
 interface StepImageState {
   id?: string;
@@ -31,6 +32,7 @@ interface StepImageState {
   selector: 'app-test-case-form',
   standalone: true,
   imports: [
+    FieldErrorComponent,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,

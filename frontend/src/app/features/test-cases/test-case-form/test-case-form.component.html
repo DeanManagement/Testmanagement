@@ -13,6 +13,7 @@
               <mat-form-field appearance="outline" class="full-width">
                 <mat-label>{{ 'testCase.form.title' | translate }}</mat-label>
                 <input matInput formControlName="title" data-test-id="test-case-title-input" aria-required="true" />
+                <mat-error><app-field-error [control]="form.controls.title" /></mat-error>
               </mat-form-field>
 
               <mat-form-field appearance="outline" class="full-width">
@@ -83,6 +84,7 @@
                         <mat-form-field appearance="outline" class="step-action">
                           <mat-label>{{ 'testCase.form.action' | translate }}</mat-label>
                           <input matInput formControlName="action" [attr.data-test-id]="'test-case-step-action-' + i" />
+                          <mat-error><app-field-error [control]="step.get('action')!" /></mat-error>
                         </mat-form-field>
                         <mat-form-field appearance="outline" class="step-expected">
                           <mat-label>{{ 'testCase.form.expectedResult' | translate }}</mat-label>

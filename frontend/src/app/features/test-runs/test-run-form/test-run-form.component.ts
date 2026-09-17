@@ -25,11 +25,13 @@ import { ProjectMemberApiService } from '../../../core/services/project-member-a
 import { ProjectMember } from '../../../shared/models/project-member.model';
 import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
 import { TestCase } from '../../../shared/models/test-case.model';
+import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
 
 @Component({
   selector: 'app-test-run-form',
   standalone: true,
   imports: [
+    FieldErrorComponent,
     AsyncPipe,
     ReactiveFormsModule,
     FormsModule,

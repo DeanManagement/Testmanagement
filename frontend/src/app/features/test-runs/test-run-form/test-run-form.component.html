@@ -8,6 +8,7 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{ 'testRun.form.name' | translate }}</mat-label>
           <input matInput formControlName="name" data-test-id="test-run-name-input" />
+          <mat-error><app-field-error [control]="form.controls.name" /></mat-error>
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="full-width">

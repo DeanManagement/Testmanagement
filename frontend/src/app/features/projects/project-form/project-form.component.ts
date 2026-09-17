@@ -13,11 +13,13 @@ import { ProjectActions } from '../../../store/project/project.actions';
 import { selectProjectById } from '../../../store/project/project.selectors';
 import { Project } from '../../../shared/models/project.model';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
+import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
 
 @Component({
   selector: 'app-project-form',
   standalone: true,
   imports: [
+    FieldErrorComponent,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,
