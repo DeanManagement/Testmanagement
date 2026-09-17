@@ -126,13 +126,13 @@ public class TestCaseFolderService {
             orderMap.put(fo.id(), fo);
         }
 
-        validateNoCircularRefs(orderMap);
-
         List<TestCaseFolder> allFolders = folderRepository.findByProjectIdOrderBySortOrderAsc(projectId);
         Map<UUID, TestCaseFolder> folderMap = new HashMap<>();
         for (TestCaseFolder f : allFolders) {
             folderMap.put(f.getId(), f);
         }
+
+        validateNoCircularRefs(allFolders, orderMap);
 
         for (ReorderFoldersRequest.FolderOrder fo : request.folders()) {
             TestCaseFolder folder = folderMap.get(fo.id());
@@ -209,16 +209,33 @@ public class TestCaseFolderService {
         );
     }
 
-    private void validateNoCircularRefs(Map<UUID, ReorderFoldersRequest.FolderOrder> orderMap) {
+    /**
+     * Walks up from every moved folder through the tree <em>as it will be</em>: the stored parents,
+     * overridden by the request.
+     *
+     * <p>Checking the request alone is not enough. A request that names only the folder being
+     * moved — which is what any caller other than the SPA's whole-tree drag-and-drop sends — has
+     * no parent edges to follow, so putting a folder under its own descendant went undetected and
+     * detached that whole subtree from the root.
+     */
+    private void validateNoCircularRefs(List<TestCaseFolder> storedFolders,
+                                        Map<UUID, ReorderFoldersRequest.FolderOrder> orderMap) {
+        Map<UUID, UUID> parentOf = new HashMap<>();
+        for (TestCaseFolder folder : storedFolders) {
+            parentOf.put(folder.getId(), folder.getParent() == null ? null : folder.getParent().getId());
+        }
         for (ReorderFoldersRequest.FolderOrder fo : orderMap.values()) {
+            parentOf.put(fo.id(), fo.parentId());
+        }
+
+        for (UUID moved : orderMap.keySet()) {
             Set<UUID> visited = new HashSet<>();
-            UUID current = fo.id();
+            UUID current = moved;
             while (current != null) {
                 if (!visited.add(current)) {
-                    throw new IllegalArgumentException("Circular folder reference detected for folder: " + fo.id());
+                    throw new IllegalArgumentException("Circular folder reference detected for folder: " + moved);
                 }
-                ReorderFoldersRequest.FolderOrder parent = orderMap.get(current);
-                current = (parent != null) ? parent.parentId() : null;
+                current = parentOf.get(current);
             }
         }
     }
