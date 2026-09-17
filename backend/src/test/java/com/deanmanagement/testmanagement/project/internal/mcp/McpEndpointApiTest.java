@@ -348,6 +348,7 @@ class McpEndpointApiTest {
                 .contains("update_requirement")
                 .contains("unlink_test_case_from_requirement")
                 .contains("rename_test_case_folder")
+                .contains("move_test_case_folder")
                 .contains("change_test_case_status_bulk")
                 .contains("list_parameter_sets")
                 .contains("create_parameter_set")

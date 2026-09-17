@@ -708,14 +708,15 @@ the moment they were fixed.
   parent status only, so a step recorded afterwards — by a human or by `record_step_result` —
   recomputes the parent from still-PENDING siblings and can overwrite it. Fixing it well means
   changing the human path too.
-- ~~**Maintenance of what already exists.**~~ Shipped 2026-09-17 (45 tools): `update_test_suite`,
+- ~~**Maintenance of what already exists.**~~ Shipped 2026-09-17 (46 tools): `update_test_suite`,
   `add_test_cases_to_suite`, `remove_test_cases_from_suite`, `update_test_plan`,
   `update_requirement`, `unlink_test_case_from_requirement`, `rename_test_case_folder`,
   `change_test_case_status_bulk` and the parameter-set tools. The suite, plan, requirement and
   parameter-set services are full replace and the SPA depends on that to clear fields, so these
   tools merge — inside one transaction, which is what makes that safe where PRD-025 §8's merge was
-  not. Moving a folder is **not** shipped: `TestCaseFolderService.reorder` only checks for cycles
-  among the folders named in the request, so a single-folder move can put a folder under its own
-  descendant. That needs fixing on the REST path first.
+  not. `move_test_case_folder` followed once `TestCaseFolderService.reorder` was fixed: it only
+  checked for cycles among the folders named in the request, so a single-folder move — over REST
+  as much as MCP — could put a folder under its own descendant. It now walks the stored tree
+  overlaid with the request.
 - **Flaky-test signal from agent runs** (PRD-016) — agent-driven re-runs are a cheap source of the
   repeated executions flaky detection needs, once anyone trusts them enough to feed it.

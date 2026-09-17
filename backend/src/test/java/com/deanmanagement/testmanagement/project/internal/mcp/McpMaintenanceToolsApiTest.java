@@ -232,6 +232,42 @@ class McpMaintenanceToolsApiTest extends McpToolApiTestSupport {
                 .hasMessageContaining("name");
     }
 
+    @Test
+    void aFolderCanBeMovedUnderAnotherAndBackToTheTopLevel() {
+        authenticateAs(project, ProjectRole.TESTER);
+        UUID backend = discoveryTools.createTestCaseFolder("Backend", null).id();
+        UUID auth = discoveryTools.createTestCaseFolder("Auth", null).id();
+
+        McpDtos.Folder nested = discoveryTools.moveTestCaseFolder(auth, backend);
+        McpDtos.Folder topLevel = discoveryTools.moveTestCaseFolder(auth, null);
+
+        assertThat(nested.parentId()).isEqualTo(backend);
+        assertThat(topLevel.parentId()).isNull();
+    }
+
+    @Test
+    void aFolderCannotBeMovedIntoItsOwnSubfolder() {
+        authenticateAs(project, ProjectRole.TESTER);
+        UUID backend = discoveryTools.createTestCaseFolder("Backend", null).id();
+        UUID auth = discoveryTools.createTestCaseFolder("Auth", backend).id();
+
+        assertThatThrownBy(() -> discoveryTools.moveTestCaseFolder(backend, auth))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("own subfolders");
+    }
+
+    @Test
+    void aFolderCannotBeMovedIntoAnotherProjectsFolder() {
+        authenticateAs(otherProject, ProjectRole.TESTER);
+        UUID foreign = discoveryTools.createTestCaseFolder("Foreign", null).id();
+        SecurityContextHolder.clearContext();
+        authenticateAs(project, ProjectRole.TESTER);
+        UUID mine = discoveryTools.createTestCaseFolder("Mine", null).id();
+
+        assertThatThrownBy(() -> discoveryTools.moveTestCaseFolder(mine, foreign))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
     // --- bulk status -----------------------------------------------------------------------
 
     @Test

@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.mcp;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.CreateTestCaseFolderRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.UpdateTestCaseFolderRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.MoveTestCasesRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.ReorderFoldersRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.TestCaseFolderResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
@@ -10,6 +11,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRep
 import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestSuiteRepository;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseFolderService;
+import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.ai.mcp.annotation.McpToolParam;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /**
@@ -127,6 +130,49 @@ public class ProjectDiscoveryTools {
     }
 
     @McpTool(
+            name = "move_test_case_folder",
+            description = """
+                    Move a folder, with everything in it, under another folder — or to the top
+                    level if you omit parentId. It is placed after the folders already there.
+                    A folder cannot be moved into itself or into one of its own subfolders.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.Folder moveTestCaseFolder(
+            @McpToolParam(description = "UUID of the folder to move") UUID folderId,
+            @McpToolParam(description = "New parent folder id; omit for the top level",
+                    required = false) UUID parentId) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        if (folderId == null) {
+            throw new McpToolException("folderId is required.");
+        }
+
+        List<TestCaseFolderResponse> tree = folderService.getTree(caller.projectId());
+        List<TestCaseFolderResponse> siblings = parentId == null ? tree
+                : find(tree, parentId)
+                        .orElseThrow(() -> new ResourceNotFoundException("TestCaseFolder", parentId))
+                        .children();
+        int sortOrder = siblings.stream()
+                .filter(sibling -> !sibling.id().equals(folderId))
+                .mapToInt(TestCaseFolderResponse::sortOrder)
+                .max().orElse(-1) + 1;
+
+        var request = new ReorderFoldersRequest(
+                List.of(new ReorderFoldersRequest.FolderOrder(folderId, parentId, sortOrder)));
+        try {
+            tree = folderService.reorder(caller.projectId(), request, caller.userId());
+        } catch (IllegalArgumentException circular) {
+            throw new McpToolException("A folder cannot be moved into itself or into one of its "
+                    + "own subfolders. Call list_test_case_folders to see the tree.");
+        }
+        return find(tree, folderId).map(ProjectDiscoveryTools::toFolder)
+                .orElseThrow(() -> new ResourceNotFoundException("TestCaseFolder", folderId));
+    }
+
+    @McpTool(
             name = "move_test_cases_to_folder",
             description = """
                     File existing test cases into a folder. Pass folderId to move them there, or
@@ -150,6 +196,21 @@ public class ProjectDiscoveryTools {
         folderService.moveTestCases(caller.projectId(),
                 new MoveTestCasesRequest(testCaseIds, folderId), caller.userId());
         return new McpDtos.MoveResult(testCaseIds.size(), folderId);
+    }
+
+    private static Optional<TestCaseFolderResponse> find(List<TestCaseFolderResponse> folders,
+                                                         UUID id) {
+        for (TestCaseFolderResponse folder : folders) {
+            if (folder.id().equals(id)) {
+                return Optional.of(folder);
+            }
+            Optional<TestCaseFolderResponse> nested =
+                    find(folder.children() == null ? List.of() : folder.children(), id);
+            if (nested.isPresent()) {
+                return nested;
+            }
+        }
+        return Optional.empty();
     }
 
     private static McpDtos.Folder toFolder(TestCaseFolderResponse folder) {

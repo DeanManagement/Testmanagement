@@ -146,7 +146,7 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `complete_test_run`, `update_test_run`, `clone_test_run`, `add_comment`, `create_bug_report`,
 `change_bug_report_status`, `update_test_suite`, `add_test_cases_to_suite`,
 `remove_test_cases_from_suite`, `update_test_plan`, `update_requirement`,
-`unlink_test_case_from_requirement`, `rename_test_case_folder`, `change_test_case_status_bulk`,
+`unlink_test_case_from_requirement`, `rename_test_case_folder`, `move_test_case_folder`, `change_test_case_status_bulk`,
 `create_parameter_set`, `update_parameter_set`.
 
 Every `update_*` tool is partial: only the arguments you pass change, and an empty string `""`
