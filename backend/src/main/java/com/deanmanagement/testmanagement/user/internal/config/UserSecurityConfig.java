@@ -100,7 +100,13 @@ public class UserSecurityConfig {
                         // decides what to show once it has loaded. Actuator is denied explicitly
                         // first so that widening its exposure later cannot leak through this rule.
                         .requestMatchers("/actuator/**").denyAll()
+                        // HEAD as well as GET: it is GET without the body, and it is what uptime
+                        // monitors, link checkers, proxies and `curl -I` send. Allowing only GET
+                        // answered them 403 on a public page — and, because the rejection happens
+                        // before ShellSecurityHeadersFilter runs, without the caching headers the
+                        // CI smoke test looks for.
                         .requestMatchers(HttpMethod.GET, "/**").permitAll()
+                        .requestMatchers(HttpMethod.HEAD, "/**").permitAll()
                         .anyRequest().denyAll());
         return http.build();
     }
