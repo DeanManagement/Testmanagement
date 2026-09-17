@@ -109,6 +109,15 @@ class McpToolGroupsApiTest {
                 .isIn(McpToolGroup.CORE, McpToolGroup.EXECUTION));
     }
 
+    /** Traceability lives in the requirements class but is a report, so it is placed per method. */
+    @Test
+    void aReportingKeyCanReadTraceabilityButNotEditRequirements() throws Exception {
+        List<String> shown = toolNames(keyWith(EnumSet.of(McpToolGroup.REPORTING)));
+
+        assertThat(shown).contains("get_traceability_matrix", "get_project_dashboard");
+        assertThat(shown).doesNotContain("create_requirement", "list_requirements");
+    }
+
     @Test
     void anUnrestrictedKeyIsShownEverything() throws Exception {
         assertThat(toolNames(keyWith(null)))

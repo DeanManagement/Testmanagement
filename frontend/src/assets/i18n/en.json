@@ -444,7 +444,7 @@
       "toolGroup": {
         "AUTHORING": "Authoring — test cases, folders, suites, plans, requirements",
         "EXECUTION": "Execution — test runs, results, comments, bug reports",
-        "REPORTING": "Reporting — dashboard, flaky tests, suite report",
+        "REPORTING": "Reporting — dashboard, flaky tests, suite report, traceability",
         "PIPELINES": "Pipelines — trigger and follow build-server workflows",
         "ISSUE_TRACKER": "Issue tracker — link and file external issues"
       },

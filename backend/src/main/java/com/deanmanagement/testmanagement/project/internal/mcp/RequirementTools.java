@@ -193,6 +193,9 @@ public class RequirementTools {
         return toRequirement(requirementService.get(caller.projectId(), requirementId));
     }
 
+    // A read-out of coverage rather than authoring, so a reporting-only key can ask what is proven
+    // without being able to edit requirements.
+    @InToolGroup(McpToolGroup.REPORTING)
     @McpTool(
             name = "get_traceability_matrix",
             description = """

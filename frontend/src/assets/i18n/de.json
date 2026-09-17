@@ -444,7 +444,7 @@
       "toolGroup": {
         "AUTHORING": "Erstellung – Testfälle, Ordner, Suiten, Pläne, Anforderungen",
         "EXECUTION": "Ausführung – Testläufe, Ergebnisse, Kommentare, Fehlerberichte",
-        "REPORTING": "Berichte – Dashboard, instabile Tests, Suitenbericht",
+        "REPORTING": "Berichte – Dashboard, instabile Tests, Suitenbericht, Rückverfolgbarkeit",
         "PIPELINES": "Pipelines – Build-Server-Workflows auslösen und verfolgen",
         "ISSUE_TRACKER": "Issue-Tracker – externe Issues verknüpfen und anlegen"
       },

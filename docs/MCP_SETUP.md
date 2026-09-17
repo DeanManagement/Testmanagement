@@ -206,7 +206,7 @@ holds.
 |---|---|
 | Authoring | test cases, folders, suites, plans, requirements, parameter sets, version history |
 | Execution | test runs, results, step results, comments, native bug reports |
-| Reporting | dashboard, flaky tests, suite report |
+| Reporting | dashboard, flaky tests, suite report, traceability matrix |
 | Pipelines | build-server workflows and pipeline runs |
 | Issue tracker | linking and filing issues in the external tracker |
 

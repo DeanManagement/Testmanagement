@@ -17,7 +17,7 @@ public enum McpToolGroup {
     AUTHORING,
     /** Test runs, results, comments and native bug reports. */
     EXECUTION,
-    /** Dashboard, flaky tests and the suite report. */
+    /** Dashboard, flaky tests, the suite report and the traceability matrix. */
     REPORTING,
     /** Build-server workflows and pipeline runs. */
     PIPELINES,
