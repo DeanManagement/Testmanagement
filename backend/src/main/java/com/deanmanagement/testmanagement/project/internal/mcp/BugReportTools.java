@@ -57,8 +57,9 @@ public class BugReportTools {
                     test — the run records that it failed, this records why it matters.
                     priority: LOW | MEDIUM | HIGH | CRITICAL. Filed as OPEN.
                     Pass testResultId (from get_test_run) whenever the bug came out of a run, so
-                    the bug is reachable from the failure that produced it; testRunId links the run
-                    as a whole.
+                    the bug is reachable from the failure that produced it. That links the run too
+                    — do not also pass testRunId. testRunId is for a bug about a run as a whole,
+                    with no single result to blame.
                     stepsToReproduce, expectedBehavior and actualBehavior are what make a report
                     actionable — fill them in rather than putting everything in description.
                     A title matching an already-open bug is refused with that bug's id, so check
@@ -81,7 +82,8 @@ public class BugReportTools {
             String environment,
             @McpToolParam(description = "Test result this bug came from", required = false)
             UUID testResultId,
-            @McpToolParam(description = "Test run this bug came from", required = false)
+            @McpToolParam(description = "Only for a bug about a whole run; taken from testResultId "
+                    + "when that is given", required = false)
             UUID testRunId,
             @McpToolParam(description = "File it even though an open bug has the same title",
                     required = false) Boolean allowDuplicateTitle) {

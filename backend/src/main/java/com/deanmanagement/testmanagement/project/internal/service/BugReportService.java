@@ -88,9 +88,7 @@ public class BugReportService {
         if (request.testResultId() != null) {
             bugReport.setTestResult(requireTestResult(projectId, request.testResultId()));
         }
-        if (request.testRunId() != null) {
-            bugReport.setTestRun(requireTestRun(projectId, request.testRunId()));
-        }
+        bugReport.setTestRun(resolveTestRun(projectId, bugReport.getTestResult(), request.testRunId()));
         if (request.assigneeId() != null) {
             bugReport.setAssignee(requireProjectMember(projectId, request.assigneeId()));
         }
@@ -129,8 +127,7 @@ public class BugReportService {
         // different thing entirely and now fails instead of silently clearing (PRD-027 §3.5).
         bugReport.setTestResult(request.testResultId() == null
                 ? null : requireTestResult(projectId, request.testResultId()));
-        bugReport.setTestRun(request.testRunId() == null
-                ? null : requireTestRun(projectId, request.testRunId()));
+        bugReport.setTestRun(resolveTestRun(projectId, bugReport.getTestResult(), request.testRunId()));
         bugReport.setAssignee(request.assigneeId() == null
                 ? null : requireProjectMember(projectId, request.assigneeId()));
 
@@ -187,6 +184,29 @@ public class BugReportService {
     private TestResult requireTestResult(UUID projectId, UUID testResultId) {
         return testResultRepository.findByIdAndProjectId(testResultId, projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("TestResult", testResultId));
+    }
+
+    /**
+     * The run a bug belongs to. A test result lives in exactly one run, so when the bug is attached
+     * to a result that run is the answer whether or not the caller names it.
+     *
+     * <p>It used to be stored only if the caller sent it. The SPA sends both ids; an agent told to
+     * "pass the resultId so the bug is reachable from its failure" sends one, and every bug it
+     * filed showed no run. Deriving it here fixes every caller at once rather than asking each to
+     * repeat something the server already knows. A run that contradicts the result is refused:
+     * storing both would leave a bug pointing at two different runs depending on which link is read.
+     */
+    private TestRun resolveTestRun(UUID projectId, TestResult testResult, UUID requestedRunId) {
+        if (testResult == null) {
+            return requestedRunId == null ? null : requireTestRun(projectId, requestedRunId);
+        }
+        TestRun resultsRun = testResult.getTestRun();
+        if (requestedRunId != null && !requestedRunId.equals(resultsRun.getId())) {
+            throw new IllegalArgumentException("Test result " + testResult.getId() + " belongs to run "
+                    + resultsRun.getKey() + ", not to run " + requestedRunId
+                    + ". Omit testRunId and the run is taken from the result.");
+        }
+        return resultsRun;
     }
 
     private TestRun requireTestRun(UUID projectId, UUID testRunId) {
