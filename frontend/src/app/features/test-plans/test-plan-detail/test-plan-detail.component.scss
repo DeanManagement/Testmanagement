@@ -204,3 +204,32 @@
 .section-header .group-toggle {
   margin-left: auto;
 }
+
+.sessions-total {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--tm-text-secondary);
+}
+
+.session-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--tm-border);
+  }
+}
+
+.session-charter {
+  flex: 1 1 12rem;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

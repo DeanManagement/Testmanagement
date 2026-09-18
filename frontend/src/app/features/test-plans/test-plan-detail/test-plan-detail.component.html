@@ -189,6 +189,28 @@
       </div>
     }
 
+    @if (summary && summary.sessions.total > 0) {
+      <div class="runs-section tm-card" data-test-id="test-plan-sessions-section">
+        <div class="section-header">
+          <mat-icon>explore</mat-icon>
+          <h3>{{ 'session.title' | translate }}</h3>
+          <span class="sessions-total">
+            {{ 'session.planTotals' | translate: { completed: summary.sessions.completed, total: summary.sessions.total, minutes: summary.sessions.totalMinutes } }}
+          </span>
+        </div>
+        <ul class="session-items">
+          @for (session of summary.sessions.items; track session.id) {
+            <li>
+              <a [routerLink]="['/projects', projectId, 'exploratory-sessions', session.id]" class="item-link">{{ session.key }}</a>
+              <span class="badge badge--{{ session.status | lowercase }}">{{ 'testRun.status.' + session.status | translate }}</span>
+              <span class="session-charter">{{ session.charter }}</span>
+              <span class="secondary-cell">{{ session.minutes }} min</span>
+            </li>
+          }
+        </ul>
+      </div>
+    }
+
     <div class="history-section tm-card" data-test-id="test-plan-history-section">
       <h3>{{ 'history.title' | translate }}</h3>
       <app-entity-history [projectId]="projectId" [entityId]="planId"></app-entity-history>

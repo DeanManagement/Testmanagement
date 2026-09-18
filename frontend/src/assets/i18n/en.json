@@ -1105,5 +1105,49 @@
       "testersToo": "Testers and admins",
       "tooFewReviewers": "Fewer than two members can approve, so some cases may have nobody to review them."
     }
+  },
+  "session": {
+    "title": "Exploratory sessions",
+    "description": "Time-boxed exploration against a charter. Log what you notice as you go, then debrief.",
+    "cardHint": "Time-boxed exploration with a note log",
+    "new": "New session",
+    "empty": "No exploratory sessions yet.",
+    "charter": "Charter",
+    "plan": "Test plan",
+    "tester": "Tester",
+    "minutesOf": "{{elapsed}} of {{timebox}} min",
+    "overtime": "Over the time box",
+    "start": "Start session",
+    "complete": "Complete",
+    "abort": "Abort",
+    "debrief": "Debrief",
+    "debriefHint": "What did you cover, what did you find, what's left?",
+    "noteType": "Note type",
+    "noteTypes": {
+      "NOTE": "Note",
+      "BUG": "Bug",
+      "QUESTION": "Question",
+      "IDEA": "Idea"
+    },
+    "notePlaceholder": "What did you notice? Enter saves, Alt+1..4 picks the type, paste attaches a screenshot",
+    "attachHint": "Attach a screenshot",
+    "addNote": "Add",
+    "log": "Session log",
+    "noNotes": "No notes yet.",
+    "fileBug": "File bug",
+    "screenshot": "Screenshot",
+    "deleteNoteConfirm": "Delete this note?",
+    "bugsFound": "Bugs found",
+    "foundIn": "Found in session",
+    "planTotals": "{{completed}} of {{total}} completed · {{minutes}} min",
+    "mine": "My exploratory sessions",
+    "form": {
+      "title": "New exploratory session",
+      "charterHint": "e.g. Explore checkout with unusual currencies to discover rounding problems",
+      "timebox": "Time box (minutes)",
+      "timeboxHint": "Between {{min}} and {{max}} minutes",
+      "none": "None",
+      "create": "Create"
+    }
   }
 }

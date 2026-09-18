@@ -1,0 +1,87 @@
+.session-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.page-hint {
+  color: var(--tm-text-secondary);
+  margin: 0.25rem 0 1rem;
+}
+
+.status-filter {
+  width: 220px;
+}
+
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.session-row {
+  display: block;
+  padding: 1rem 1.25rem;
+  color: inherit;
+  text-decoration: none;
+  border: 1px solid var(--tm-border);
+  border-radius: 12px;
+  background: var(--tm-surface);
+
+  &:hover {
+    border-color: var(--tm-accent);
+  }
+}
+
+.row-top {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.session-key {
+  font-family: monospace;
+  color: var(--tm-text-secondary);
+}
+
+.charter {
+  margin: 0.5rem 0;
+  white-space: pre-line;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--tm-text-secondary);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--tm-text-secondary);
+}

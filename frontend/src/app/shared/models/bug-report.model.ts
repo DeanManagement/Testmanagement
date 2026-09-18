@@ -24,6 +24,9 @@ export interface BugReport {
   createdAt: string;
   updatedAt: string;
   projectKey: string | null;
+  /** PRD-034: the exploratory session it was found in. */
+  exploratorySessionId: string | null;
+  exploratorySessionKey: string | null;
 }
 
 export interface CreateBugReportRequest {
@@ -37,6 +40,8 @@ export interface CreateBugReportRequest {
   testResultId?: string;
   testRunId?: string;
   assigneeId?: string;
+  /** PRD-034: filed from this exploratory session. */
+  exploratorySessionId?: string;
 }
 
 export interface UpdateBugReportRequest {

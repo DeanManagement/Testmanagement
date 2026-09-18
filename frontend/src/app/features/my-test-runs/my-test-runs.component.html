@@ -22,6 +22,30 @@
       <mat-spinner diameter="40"></mat-spinner>
     </div>
   } @else {
+    <!-- Exploratory sessions assigned to me (PRD-034) -->
+    @if (mySessions$ | async; as sessions) {
+      @if (sessions.length > 0) {
+        <section class="run-section" data-test-id="my-sessions">
+          <h3 class="section-title">
+            <mat-icon>explore</mat-icon>
+            {{ 'session.mine' | translate }}
+            <span class="section-count">{{ sessions.length }}</span>
+          </h3>
+          <ul class="session-list">
+            @for (session of sessions; track session.id) {
+              <li>
+                <a [routerLink]="['/projects', session.projectId, 'exploratory-sessions', session.id]" class="item-link">
+                  {{ session.key }}
+                </a>
+                <span class="badge badge--{{ session.status | lowercase }}">{{ 'testRun.status.' + session.status | translate }}</span>
+                <span class="session-charter">{{ session.charter }}</span>
+              </li>
+            }
+          </ul>
+        </section>
+      }
+    }
+
     <!-- In Progress Section -->
     @if (inProgressRuns$ | async; as inProgressRuns) {
       <section class="run-section">

@@ -1,0 +1,183 @@
+.session-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.back-link {
+  align-self: flex-start;
+}
+
+.tm-card {
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--tm-border);
+  border-radius: 12px;
+  background: var(--tm-surface);
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 16px;
+    font-weight: 600;
+  }
+}
+
+.hero-top,
+.note-head {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.session-key {
+  font-family: monospace;
+  color: var(--tm-text-secondary);
+}
+
+.charter {
+  font-size: 1.1rem;
+  margin: 0.75rem 0;
+  white-space: pre-line;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  font-size: 0.85rem;
+  color: var(--tm-text-secondary);
+
+  span, a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: inherit;
+  }
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+}
+
+.clock {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+
+  mat-progress-bar {
+    flex: 1 1 12rem;
+  }
+
+  &.overtime {
+    --mdc-linear-progress-active-indicator-color: var(--tm-warn);
+    --mat-progress-bar-active-indicator-color: var(--tm-warn);
+  }
+}
+
+.overtime-label {
+  color: var(--tm-warn);
+  font-weight: 600;
+}
+
+.note-input {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.note-field {
+  flex: 1 1 16rem;
+}
+
+.attach {
+  cursor: pointer;
+  display: inline-flex;
+  color: var(--tm-text-secondary);
+}
+
+.pending-image {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.85rem;
+  color: var(--tm-text-secondary);
+}
+
+.full-width {
+  width: 100%;
+}
+
+.debrief-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.bug-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.bug-status {
+  margin-left: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--tm-text-secondary);
+}
+
+.note {
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--tm-border);
+
+  &:first-of-type {
+    border-top: none;
+  }
+}
+
+.note-type {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--tm-subtle-bg);
+}
+
+.note--bug .note-type {
+  color: var(--tm-danger);
+}
+
+.note-time {
+  font-size: 0.8rem;
+  color: var(--tm-text-secondary);
+}
+
+.note-body {
+  margin: 0.5rem 0 0;
+  white-space: pre-line;
+}
+
+.note-image {
+  display: block;
+  max-width: 100%;
+  max-height: 360px;
+  margin-top: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--tm-border);
+}
+
+.empty {
+  margin: 0;
+  color: var(--tm-text-secondary);
+}

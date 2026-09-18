@@ -1105,5 +1105,49 @@
       "testersToo": "Tester und Admins",
       "tooFewReviewers": "Weniger als zwei Mitglieder dürfen freigeben. Für manche Testfälle gibt es dann niemanden zum Prüfen."
     }
+  },
+  "session": {
+    "title": "Explorative Sessions",
+    "description": "Zeitlich begrenzte Erkundung entlang einer Charter. Notiere unterwegs, was dir auffällt, und ziehe danach Bilanz.",
+    "cardHint": "Zeitlich begrenztes exploratives Testen mit Notizen",
+    "new": "Neue Session",
+    "empty": "Noch keine explorativen Sessions.",
+    "charter": "Charter",
+    "plan": "Testplan",
+    "tester": "Tester",
+    "minutesOf": "{{elapsed}} von {{timebox}} Min.",
+    "overtime": "Zeitbudget überschritten",
+    "start": "Session starten",
+    "complete": "Abschliessen",
+    "abort": "Abbrechen",
+    "debrief": "Nachbesprechung",
+    "debriefHint": "Was hast du abgedeckt, was gefunden, was bleibt offen?",
+    "noteType": "Notiztyp",
+    "noteTypes": {
+      "NOTE": "Notiz",
+      "BUG": "Fehler",
+      "QUESTION": "Frage",
+      "IDEA": "Idee"
+    },
+    "notePlaceholder": "Was ist dir aufgefallen? Enter speichert, Alt+1..4 wählt den Typ, Einfügen hängt einen Screenshot an",
+    "attachHint": "Screenshot anhängen",
+    "addNote": "Hinzufügen",
+    "log": "Session-Protokoll",
+    "noNotes": "Noch keine Notizen.",
+    "fileBug": "Fehler melden",
+    "screenshot": "Screenshot",
+    "deleteNoteConfirm": "Diese Notiz löschen?",
+    "bugsFound": "Gefundene Fehler",
+    "foundIn": "Gefunden in Session",
+    "planTotals": "{{completed}} von {{total}} abgeschlossen · {{minutes}} Min.",
+    "mine": "Meine explorativen Sessions",
+    "form": {
+      "title": "Neue explorative Session",
+      "charterHint": "z. B. Checkout mit ungewöhnlichen Währungen erkunden, um Rundungsfehler zu finden",
+      "timebox": "Zeitbudget (Minuten)",
+      "timeboxHint": "Zwischen {{min}} und {{max}} Minuten",
+      "none": "Keine",
+      "create": "Erstellen"
+    }
   }
 }

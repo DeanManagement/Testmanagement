@@ -24,6 +24,8 @@ import {
 import { environmentNamesOf, filterByEnvironment } from './environment-filter';
 import { TestRun } from '../../shared/models/test-run.model';
 
+import { ExploratorySessionApiService } from '../../core/services/exploratory-session-api.service';
+
 @Component({
   selector: 'app-my-test-runs',
   standalone: true,
@@ -48,6 +50,8 @@ export class MyTestRunsComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  /** My planned and running exploratory sessions, across projects. */
+  readonly mySessions$ = inject(ExploratorySessionApiService).assignedToMe();
 
   /** Bound to ?environment= like the other list filters (PRD-032). */
   readonly environmentFilter$ = this.route.queryParamMap.pipe(map((params) => params.get('environment') ?? ''));

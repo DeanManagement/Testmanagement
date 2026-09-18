@@ -1,0 +1,129 @@
+@if (session; as s) {
+  <div class="session-container">
+    <a mat-button [routerLink]="['/projects', projectId, 'exploratory-sessions']" class="back-link">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'common.back' | translate }}
+    </a>
+
+    <div class="tm-card hero" data-test-id="session-hero">
+      <div class="hero-top">
+        <span class="session-key">{{ s.key }}</span>
+        <span class="badge badge--{{ s.status | lowercase }}" data-test-id="session-status">{{ 'testRun.status.' + s.status | translate }}</span>
+        <span class="spacer"></span>
+        @if (s.status === 'PLANNED') {
+          <button mat-flat-button (click)="start()" [disabled]="saving" data-test-id="session-start-btn">
+            <mat-icon>play_arrow</mat-icon>{{ 'session.start' | translate }}
+          </button>
+        }
+      </div>
+      <p class="charter" data-test-id="session-charter">{{ s.charter }}</p>
+      <div class="meta">
+        @if (s.testerName) { <span><mat-icon>person</mat-icon>{{ s.testerName }}</span> }
+        @if (s.environment) { <span><mat-icon>dns</mat-icon>{{ s.environment }}</span> }
+        @if (s.testPlanName) {
+          <a [routerLink]="['/projects', projectId, 'test-plans', s.testPlanId]"><mat-icon>flag</mat-icon>{{ s.testPlanName }}</a>
+        }
+      </div>
+
+      @if (s.startedAt) {
+        <div class="clock" [class.overtime]="progress.overtime" data-test-id="session-clock">
+          <mat-progress-bar mode="determinate" [value]="progress.percent"></mat-progress-bar>
+          <span>{{ 'session.minutesOf' | translate: { elapsed: elapsed, timebox: s.timeboxMinutes } }}</span>
+          @if (progress.overtime) { <span class="overtime-label">{{ 'session.overtime' | translate }}</span> }
+        </div>
+      }
+    </div>
+
+    @if (acceptsNotes) {
+      <div class="tm-card note-input" data-test-id="session-note-input">
+        <mat-button-toggle-group [(ngModel)]="noteType" [hideSingleSelectionIndicator]="true"
+                                 [attr.aria-label]="'session.noteType' | translate">
+          @for (type of noteTypes; track type; let i = $index) {
+            <mat-button-toggle [value]="type" [matTooltip]="'Alt+' + (i + 1)">
+              {{ 'session.noteTypes.' + type | translate }}
+            </mat-button-toggle>
+          }
+        </mat-button-toggle-group>
+        <mat-form-field appearance="outline" class="note-field" subscriptSizing="dynamic">
+          <input matInput [(ngModel)]="noteBody" (keydown)="onNoteKeydown($event)" (paste)="onNotePaste($event)"
+                 [placeholder]="'session.notePlaceholder' | translate" maxlength="10000"
+                 data-test-id="session-note-body" />
+        </mat-form-field>
+        <label class="attach" [matTooltip]="'session.attachHint' | translate">
+          <mat-icon>{{ pendingImage ? 'image' : 'add_photo_alternate' }}</mat-icon>
+          <input type="file" accept="image/png,image/jpeg,image/gif,image/webp" (change)="onImagePicked($event)" hidden />
+        </label>
+        <button mat-flat-button (click)="addNote()" [disabled]="!noteBody.trim() || saving" data-test-id="session-add-note-btn">
+          {{ 'session.addNote' | translate }}
+        </button>
+        @if (pendingImage) {
+          <span class="pending-image">{{ pendingImage.name }}
+            <button mat-icon-button (click)="pendingImage = null" [attr.aria-label]="'common.delete' | translate">
+              <mat-icon>close</mat-icon>
+            </button>
+          </span>
+        }
+      </div>
+    }
+
+    @if (s.status === 'IN_PROGRESS' || s.status === 'COMPLETED' || s.status === 'ABORTED') {
+      <div class="tm-card debrief" data-test-id="session-debrief">
+        <h3>{{ 'session.debrief' | translate }}</h3>
+        <mat-form-field appearance="outline" class="full-width" subscriptSizing="dynamic">
+          <textarea matInput rows="3" [(ngModel)]="summary" [placeholder]="'session.debriefHint' | translate"
+                    data-test-id="session-summary"></textarea>
+        </mat-form-field>
+        <div class="debrief-actions">
+          @if (s.status === 'IN_PROGRESS') {
+            <button mat-button (click)="abort()" [disabled]="saving" data-test-id="session-abort-btn">{{ 'session.abort' | translate }}</button>
+            <button mat-flat-button (click)="complete()" [disabled]="saving" data-test-id="session-complete-btn">
+              <mat-icon>check</mat-icon>{{ 'session.complete' | translate }}
+            </button>
+          } @else {
+            <button mat-stroked-button (click)="saveSummary()" [disabled]="saving">{{ 'common.save' | translate }}</button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (s.bugs?.length) {
+      <div class="tm-card" data-test-id="session-bugs">
+        <h3>{{ 'session.bugsFound' | translate }}</h3>
+        <ul class="bug-list">
+          @for (bug of s.bugs; track bug.id) {
+            <li><a [routerLink]="['/projects', projectId, 'bug-reports', bug.id]">{{ bug.title }}</a>
+              <span class="bug-status">{{ bug.status }}</span></li>
+          }
+        </ul>
+      </div>
+    }
+
+    <div class="tm-card log" data-test-id="session-log">
+      <h3>{{ 'session.log' | translate }}</h3>
+      @if (!s.notes?.length) {
+        <p class="empty">{{ 'session.noNotes' | translate }}</p>
+      }
+      @for (note of s.notes; track note.id) {
+        <div class="note note--{{ note.type | lowercase }}" data-test-id="session-note">
+          <div class="note-head">
+            <span class="note-type">{{ 'session.noteTypes.' + note.type | translate }}</span>
+            <span class="note-time">{{ note.occurredAt | localizedDate: 'shortTime' }}</span>
+            <span class="spacer"></span>
+            @if (note.type === 'BUG') {
+              <button mat-stroked-button (click)="fileBug(note)" data-test-id="session-file-bug-btn">
+                <mat-icon>pest_control</mat-icon>{{ 'session.fileBug' | translate }}
+              </button>
+            }
+            <button mat-icon-button (click)="deleteNote(note)" [attr.aria-label]="'common.delete' | translate">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+          <p class="note-body">{{ note.body }}</p>
+          @if (note.hasImage) {
+            <img class="note-image" [src]="imageUrl(note) | authImage" [alt]="'session.screenshot' | translate" />
+          }
+        </div>
+      }
+    </div>
+  </div>
+}

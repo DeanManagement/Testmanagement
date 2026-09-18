@@ -56,4 +56,24 @@ export interface TestPlanSummary {
   pending: number;
   passRate: number;
   runs: TestPlanRunSummary[];
+  /** PRD-034: exploration for this plan, kept apart from run counts and pass rate. */
+  sessions: TestPlanSessions;
+}
+
+export interface TestPlanSessions {
+  total: number;
+  completed: number;
+  totalMinutes: number;
+  items: TestPlanSessionItem[];
+}
+
+export interface TestPlanSessionItem {
+  id: string;
+  key: string;
+  charter: string;
+  status: string;
+  testerName: string | null;
+  startedAt: string | null;
+  endedAt: string | null;
+  minutes: number;
 }

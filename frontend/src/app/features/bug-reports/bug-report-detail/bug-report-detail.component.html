@@ -97,7 +97,7 @@
         }
       </div>
 
-      @if (bug.testCaseTitle || bug.testRunName) {
+      @if (bug.testCaseTitle || bug.testRunName || bug.exploratorySessionId) {
         <div class="detail-section tm-card" data-test-id="bug-report-detail-links">
           <h3>{{ 'bugReport.detail.linkedItems' | translate }}</h3>
           @if (bug.testCaseTitle && bug.testResultId) {
@@ -114,6 +114,14 @@
               <a [routerLink]="['/projects', projectId, 'test-runs', bug.testRunId]" class="item-link" data-test-id="bug-report-detail-run-link">
                 {{ bug.testRunName }}
               </a>
+            </p>
+          }
+          @if (bug.exploratorySessionId) {
+            <p>
+              <mat-icon class="link-icon">explore</mat-icon>
+              {{ 'session.foundIn' | translate }}:
+              <a [routerLink]="['/projects', projectId, 'exploratory-sessions', bug.exploratorySessionId]" class="item-link"
+                 data-test-id="bug-report-detail-session-link">{{ bug.exploratorySessionKey }}</a>
             </p>
           }
         </div>

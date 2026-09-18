@@ -1,0 +1,50 @@
+<div class="session-container">
+  <div class="page-header">
+    <div>
+      <h1 data-test-id="session-list-title">{{ 'session.title' | translate }}</h1>
+      <p class="page-hint">{{ 'session.description' | translate }}</p>
+    </div>
+    <button mat-flat-button (click)="openCreate()" data-test-id="session-create-btn">
+      <mat-icon>add</mat-icon>
+      {{ 'session.new' | translate }}
+    </button>
+  </div>
+
+  <mat-form-field appearance="outline" class="status-filter">
+    <mat-label>{{ 'filter.status' | translate }}</mat-label>
+    <mat-select [(ngModel)]="statusFilter" (selectionChange)="load()" data-test-id="session-status-filter">
+      <mat-option value="">{{ 'filter.allStatuses' | translate }}</mat-option>
+      @for (status of statuses; track status) {
+        <mat-option [value]="status">{{ 'testRun.status.' + status | translate }}</mat-option>
+      }
+    </mat-select>
+  </mat-form-field>
+
+  @if (loading && sessions.length === 0) {
+    <div class="state"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else if (sessions.length === 0) {
+    <div class="state" data-test-id="session-empty">
+      <mat-icon>explore</mat-icon>
+      <p>{{ 'session.empty' | translate }}</p>
+    </div>
+  } @else {
+    <div class="session-list">
+      @for (session of sessions; track session.id) {
+        <a class="tm-card session-row" [routerLink]="['/projects', projectId, 'exploratory-sessions', session.id]"
+           data-test-id="session-row">
+          <div class="row-top">
+            <span class="session-key">{{ session.key }}</span>
+            <span class="badge badge--{{ session.status | lowercase }}">{{ 'testRun.status.' + session.status | translate }}</span>
+          </div>
+          <p class="charter">{{ session.charter }}</p>
+          <div class="meta">
+            @if (session.testerName) { <span><mat-icon>person</mat-icon>{{ session.testerName }}</span> }
+            @if (session.environment) { <span><mat-icon>dns</mat-icon>{{ session.environment }}</span> }
+            @if (session.testPlanName) { <span><mat-icon>flag</mat-icon>{{ session.testPlanName }}</span> }
+            <span><mat-icon>timer</mat-icon>{{ 'session.minutesOf' | translate: { elapsed: elapsed(session), timebox: session.timeboxMinutes } }}</span>
+          </div>
+        </a>
+      }
+    </div>
+  }
+</div>

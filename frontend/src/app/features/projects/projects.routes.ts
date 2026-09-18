@@ -32,6 +32,11 @@ export const projectsRoutes: Routes = [
       import('../test-suites/test-suites.routes').then((m) => m.testSuitesRoutes),
   },
   {
+    path: ':id/exploratory-sessions',
+    loadChildren: () =>
+      import('../exploratory-sessions/exploratory-sessions.routes').then((m) => m.exploratorySessionsRoutes),
+  },
+  {
     path: ':id/test-runs',
     loadChildren: () =>
       import('../test-runs/test-runs.routes').then((m) => m.testRunsRoutes),

@@ -52,6 +52,8 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
   private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
+  /** Set when filing from an exploratory session; links the new bug to it. */
+  exploratorySessionId: string | null = null;
   bugId = '';
   isEdit = false;
   saving = false;
@@ -101,6 +103,14 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     if (params['testCaseTitle']) {
       this.form.patchValue({ title: `Bug: ${params['testCaseTitle']}` });
     }
+    // PRD-034: filed from an exploratory session note.
+    if (params['title']) {
+      this.form.patchValue({ title: params['title'] });
+    }
+    if (params['description']) {
+      this.form.patchValue({ description: params['description'] });
+    }
+    this.exploratorySessionId = params['exploratorySessionId'] ?? null;
 
     if (this.isEdit && this.projectId) {
       this.store.dispatch(BugReportActions.loadBugReport({ projectId: this.projectId, id: this.bugId }));
@@ -168,6 +178,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             testResultId: value.testResultId || undefined,
             testRunId: value.testRunId || undefined,
             assigneeId: value.assigneeId || undefined,
+            exploratorySessionId: this.exploratorySessionId ?? undefined,
           },
         })
       );
