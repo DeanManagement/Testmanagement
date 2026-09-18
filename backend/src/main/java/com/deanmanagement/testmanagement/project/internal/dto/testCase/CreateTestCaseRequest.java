@@ -4,6 +4,8 @@ import com.deanmanagement.testmanagement.project.internal.dto.TestStepRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -23,11 +25,19 @@ public record CreateTestCaseRequest(
         @Valid List<TestStepRequest> steps,
         UUID folderId,
         /* PRD-035: keyed by field name; see CustomFieldValueWriter for null and clearing rules. */
-        Map<String, Object> customFields
+        Map<String, Object> customFields,
+        /* PRD-036: expected minutes for one execution, 1-1440; null means not estimated. */
+        @Min(1) @Max(1440) Integer estimateMinutes
 ) {
     public CreateTestCaseRequest(String title, String description, String preconditions, Priority priority,
                                  TestCaseStatus status, Set<String> labels, List<TestStepRequest> steps,
+                                 UUID folderId, Map<String, Object> customFields) {
+        this(title, description, preconditions, priority, status, labels, steps, folderId, customFields, null);
+    }
+
+    public CreateTestCaseRequest(String title, String description, String preconditions, Priority priority,
+                                 TestCaseStatus status, Set<String> labels, List<TestStepRequest> steps,
                                  UUID folderId) {
-        this(title, description, preconditions, priority, status, labels, steps, folderId, null);
+        this(title, description, preconditions, priority, status, labels, steps, folderId, null, null);
     }
 }

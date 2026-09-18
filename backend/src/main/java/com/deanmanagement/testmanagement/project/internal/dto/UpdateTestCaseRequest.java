@@ -3,6 +3,8 @@ package com.deanmanagement.testmanagement.project.internal.dto;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Size;
 
 import java.util.List;
@@ -24,10 +26,18 @@ public record UpdateTestCaseRequest(
         Set<String> labels,
         @Valid List<TestStepRequest> steps,
         /* PRD-035: keyed by field name; see CustomFieldValueWriter for null and clearing rules. */
-        Map<String, Object> customFields
+        Map<String, Object> customFields,
+        /* PRD-036: null leaves the estimate alone; 0 clears it. */
+        @Min(0) @Max(1440) Integer estimateMinutes
 ) {
     public UpdateTestCaseRequest(String title, String description, String preconditions, Priority priority,
+                                 TestCaseStatus status, Set<String> labels, List<TestStepRequest> steps,
+                                 Map<String, Object> customFields) {
+        this(title, description, preconditions, priority, status, labels, steps, customFields, null);
+    }
+
+    public UpdateTestCaseRequest(String title, String description, String preconditions, Priority priority,
                                  TestCaseStatus status, Set<String> labels, List<TestStepRequest> steps) {
-        this(title, description, preconditions, priority, status, labels, steps, null);
+        this(title, description, preconditions, priority, status, labels, steps, null, null);
     }
 }

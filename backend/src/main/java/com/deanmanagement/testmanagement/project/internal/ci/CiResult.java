@@ -14,7 +14,9 @@ public record CiResult(
         String title,
         TestResultStatus status,
         String message,
-        List<CiStep> steps
+        List<CiStep> steps,
+        /** How long the test took (PRD-036); null when the report does not say. */
+        Long durationMs
 ) {
     public record CiStep(String name, TestResultStatus status) {
     }

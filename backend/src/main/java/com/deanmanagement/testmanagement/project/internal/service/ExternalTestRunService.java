@@ -71,6 +71,7 @@ public class ExternalTestRunService {
             result.setStatus(resultReq.status());
             result.setComment(resultReq.comment());
             result.setDefectLink(resultReq.defectLink());
+            result.setDurationMs(resultReq.durationMs());
             run.getResults().add(result);
 
             if (resultReq.stepResults() != null && !resultReq.stepResults().isEmpty()) {

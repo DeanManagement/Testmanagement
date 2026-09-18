@@ -145,6 +145,10 @@ public class TestCaseService {
         if (request.priority() != null) tc.setPriority(request.priority());
         if (request.status() != null) tc.setStatus(request.status());
         if (request.labels() != null) tc.setLabels(request.labels());
+        if (request.estimateMinutes() != null) {
+            // 0 clears: null already means "unchanged", and an estimate of nothing is no estimate.
+            tc.setEstimateMinutes(request.estimateMinutes() == 0 ? null : request.estimateMinutes());
+        }
         customFieldWriter.write(tc, request.customFields(), mode);
         if (request.steps() != null) {
             Map<Integer, StepImage> existingImages = new HashMap<>();

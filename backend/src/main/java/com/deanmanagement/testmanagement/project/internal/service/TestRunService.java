@@ -479,6 +479,7 @@ public class TestRunService {
         result.setStatus(request.status());
         result.setComment(request.comment());
         result.setDefectLink(request.defectLink());
+        result.setDurationMs(request.durationMs());
 
         result = testResultRepository.save(result);
         if (request.status() == TestResultStatus.FAILED) {
@@ -501,6 +502,10 @@ public class TestRunService {
         result.setStatus(request.status());
         result.setComment(request.comment());
         result.setDefectLink(request.defectLink());
+        // Null leaves it alone; it also survives a return to PENDING, because the effort was real.
+        if (request.durationMs() != null) {
+            result.setDurationMs(request.durationMs());
+        }
 
         result = testResultRepository.save(result);
         if (request.status() == TestResultStatus.FAILED) {

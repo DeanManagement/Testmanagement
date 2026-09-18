@@ -61,6 +61,10 @@ public class TestCase extends BaseEntity {
     @Column(name = "current_version", nullable = false)
     private int currentVersion = 1;
 
+    /** How long one execution is expected to take (PRD-036); null when nobody has estimated it. */
+    @Column(name = "estimate_minutes")
+    private Integer estimateMinutes;
+
     /**
      * Who approved which version (PRD-033). Null on cases that were never approved, including
      * ACTIVE cases from before review was switched on. {@code approvedVersion} keeps naming the

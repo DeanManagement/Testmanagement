@@ -17,6 +17,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CucumberJsonParser {
 
+    private static final long NANOS_PER_MILLI = 1_000_000L;
+
     private final ObjectMapper objectMapper;
 
     public List<CiResult> parse(byte[] json) {
@@ -55,6 +57,8 @@ public class CucumberJsonParser {
         StringBuilder failureMessage = new StringBuilder();
         boolean anyFailed = false;
         boolean anyPassed = false;
+        long durationNanos = 0;
+        boolean anyDuration = false;
 
         if (element.steps() != null) {
             for (Step step : element.steps()) {
@@ -68,6 +72,10 @@ public class CucumberJsonParser {
                 }
                 if (mapped == TestResultStatus.PASSED) {
                     anyPassed = true;
+                }
+                if (step.result() != null && step.result().duration() != null && step.result().duration() >= 0) {
+                    durationNanos += step.result().duration();
+                    anyDuration = true;
                 }
                 String stepName = (step.keyword() != null ? step.keyword() : "")
                         + (step.name() != null ? step.name() : "");
@@ -85,7 +93,9 @@ public class CucumberJsonParser {
         }
 
         String message = failureMessage.isEmpty() ? null : failureMessage.toString().trim();
-        return new CiResult(featureName, title, status, message, steps);
+        // A scenario's duration is the sum of its steps' (nanoseconds); null when no step reports one.
+        Long durationMs = anyDuration ? durationNanos / NANOS_PER_MILLI : null;
+        return new CiResult(featureName, title, status, message, steps, durationMs);
     }
 
     private TestResultStatus mapStatus(String status) {
@@ -109,6 +119,6 @@ public class CucumberJsonParser {
     private record Step(String keyword, String name, Result result) {
     }
 
-    private record Result(String status, @JsonProperty("error_message") String errorMessage) {
+    private record Result(String status, @JsonProperty("error_message") String errorMessage, Long duration) {
     }
 }

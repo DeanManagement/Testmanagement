@@ -22,7 +22,9 @@ public record TestCaseVersionResponse(
         List<StepSnapshot> steps,
         UUID createdBy,
         /* PRD-035: values by field name; empty for versions saved before custom fields existed. */
-        Map<String, Object> customFields
+        Map<String, Object> customFields,
+        /* PRD-036 */
+        Integer estimateMinutes
 ) {
     public record StepSnapshot(
             int orderIndex,

@@ -68,6 +68,9 @@ public class TestCaseVersion extends BaseEntity {
     @Column(name = "steps_snapshot", nullable = false, columnDefinition = "TEXT")
     private String stepsSnapshot;
 
+    @Column(name = "estimate_minutes")
+    private Integer estimateMinutes;
+
     /** JSON object of custom field values by name, as the case had them (PRD-035). */
     @Column(name = "custom_fields_json", columnDefinition = "TEXT")
     private String customFieldsJson;

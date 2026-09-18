@@ -12,10 +12,12 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,9 +28,22 @@ import java.util.List;
 @NoArgsConstructor
 public class TestResult extends BaseEntity {
 
+    @Setter(AccessLevel.NONE)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TestResultStatus status;
+
+    /**
+     * When the result left PENDING (PRD-036); null while pending, and for results recorded before
+     * this existed. Kept in step by {@link #setStatus}, never by callers.
+     */
+    @Setter(AccessLevel.NONE)
+    @Column(name = "executed_at")
+    private Instant executedAt;
+
+    /** Measured effort in milliseconds (PRD-036): the execution timer, a manual edit, or a CI report. */
+    @Column(name = "duration_ms")
+    private Long durationMs;
 
     @Column(columnDefinition = "TEXT")
     private String comment;
@@ -67,4 +82,19 @@ public class TestResult extends BaseEntity {
 
     @OneToMany(mappedBy = "testResult", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<StepResult> stepResults = new ArrayList<>();
+
+    /**
+     * The one place {@code executedAt} is decided, so every path that sets a status follows the
+     * same rule (PRD-036 §3.2): leaving PENDING stamps it, returning to PENDING clears it, and a
+     * correction such as PASSED to FAILED keeps it, because the result was already executed.
+     * Hibernate reads fields directly, so loading a row never passes through here.
+     */
+    public void setStatus(TestResultStatus status) {
+        if (status == TestResultStatus.PENDING) {
+            this.executedAt = null;
+        } else if (status != null && this.executedAt == null) {
+            this.executedAt = Instant.now();
+        }
+        this.status = status;
+    }
 }

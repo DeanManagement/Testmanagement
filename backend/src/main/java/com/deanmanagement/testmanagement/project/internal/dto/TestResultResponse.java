@@ -18,6 +18,9 @@ public record TestResultResponse(
         /** Which parameter set this executed (PRD-015); null for an ordinary case. */
         String parameterSetName,
         List<StepResultResponse> stepResults,
+        /** When it left PENDING, and the measured effort (PRD-036); both null when unknown. */
+        Instant executedAt,
+        Long durationMs,
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,

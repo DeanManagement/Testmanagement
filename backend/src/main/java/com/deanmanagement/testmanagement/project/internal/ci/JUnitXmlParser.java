@@ -10,6 +10,8 @@ import org.w3c.dom.NodeList;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.ByteArrayInputStream;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,7 +66,23 @@ public class JUnitXmlParser {
             status = TestResultStatus.PASSED;
         }
 
-        return new CiResult(suiteName, title, status, message, List.of());
+        return new CiResult(suiteName, title, status, message, List.of(), durationMs(testcase.getAttribute("time")));
+    }
+
+    /**
+     * JUnit's {@code time} is decimal seconds. A missing, negative or unparseable value (some tools
+     * write a comma decimal) means "unknown": a duration is never a reason to fail an upload.
+     */
+    static Long durationMs(String seconds) {
+        if (seconds == null || seconds.isBlank()) {
+            return null;
+        }
+        try {
+            BigDecimal value = new BigDecimal(seconds.trim());
+            return value.signum() < 0 ? null : value.movePointRight(3).setScale(0, RoundingMode.HALF_UP).longValueExact();
+        } catch (ArithmeticException | NumberFormatException e) {
+            return null;
+        }
     }
 
     private String messageOf(Element el) {

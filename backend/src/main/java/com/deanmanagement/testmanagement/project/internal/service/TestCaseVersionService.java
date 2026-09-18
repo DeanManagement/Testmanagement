@@ -62,6 +62,7 @@ public class TestCaseVersionService {
         version.setLabels(String.join(",", testCase.getLabels()));
         version.setStepsSnapshot(serialiseSteps(testCase.getSteps()));
         version.setCustomFieldsJson(serialiseCustomFields(testCase));
+        version.setEstimateMinutes(testCase.getEstimateMinutes());
         versionRepository.save(version);
 
         testCase.setCurrentVersion(testCase.getCurrentVersion() + 1);
@@ -122,7 +123,8 @@ public class TestCaseVersionService {
                 testCase.getLabels().stream().sorted().toList(),
                 steps,
                 testCase.getUpdatedBy(),
-                CustomFieldValueMaps.toMap(testCase.getCustomFieldValues()));
+                CustomFieldValueMaps.toMap(testCase.getCustomFieldValues()),
+                testCase.getEstimateMinutes());
     }
 
     private TestCaseVersionResponse fromSnapshot(TestCaseVersion version) {
@@ -138,7 +140,8 @@ public class TestCaseVersionService {
                 parseLabels(version.getLabels()),
                 deserialiseSteps(version.getStepsSnapshot()),
                 version.getCreatedBy(),
-                deserialiseCustomFields(version.getCustomFieldsJson()));
+                deserialiseCustomFields(version.getCustomFieldsJson()),
+                version.getEstimateMinutes());
     }
 
     private String serialiseSteps(List<TestStep> steps) {

@@ -31,6 +31,8 @@ public record TestCaseResponse(
         Instant approvedAt,
         Integer approvedVersion,
         /* PRD-035: values keyed by field name, in display order (CustomFieldValueMaps). */
-        Map<String, Object> customFields
+        Map<String, Object> customFields,
+        /* PRD-036 */
+        Integer estimateMinutes
 ) {
 }

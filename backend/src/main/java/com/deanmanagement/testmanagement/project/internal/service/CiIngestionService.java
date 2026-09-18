@@ -94,6 +94,7 @@ public class CiIngestionService {
             result.setExecutedVersion(testCase.getCurrentVersion());
             result.setStatus(ciResult.status());
             result.setComment(ciResult.message());
+            result.setDurationMs(ciResult.durationMs());
             run.getResults().add(result);
 
             List<TestStep> steps = testCase.getSteps();
