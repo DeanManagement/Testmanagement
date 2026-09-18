@@ -1,5 +1,9 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import java.time.Instant;
+import java.time.Duration;
+import java.time.Clock;
+import com.deanmanagement.testmanagement.project.internal.repository.ExploratorySessionRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.CreateTestPlanRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanResponse;
@@ -38,6 +42,8 @@ public class TestPlanService {
     private final AuditService auditService;
     private final UserService userService;
     private final ProjectMemberRepository projectMemberRepository;
+    private final ExploratorySessionRepository sessionRepository;
+    private final Clock clock;
 
     /**
      * Resolves an assignee who must already be a member of this project (PRD-027 §3.5).
@@ -117,8 +123,28 @@ public class TestPlanService {
                 plan.getId(), plan.getName(), plan.getStatus(), plan.getTargetDate(),
                 totalRuns, completedRuns, totalResults,
                 passed, failed, blocked, skipped, pending, passRate,
-                runSummaries
+                runSummaries, sessionsSummary(planId)
         );
+    }
+
+    private TestPlanSummaryResponse.SessionsSummary sessionsSummary(UUID planId) {
+        Instant now = clock.instant();
+        List<TestPlanSummaryResponse.SessionItem> items = sessionRepository.findByTestPlanIdOrderByCreatedAtAsc(planId)
+                .stream()
+                .map(s -> new TestPlanSummaryResponse.SessionItem(s.getId(), s.getKey(), s.getCharter(), s.getStatus(),
+                        s.getTester() != null ? s.getTester().getDisplayName() : null,
+                        s.getStartedAt(), s.getEndedAt(), minutesSpent(s.getStartedAt(), s.getEndedAt(), now)))
+                .toList();
+        int completed = (int) items.stream().filter(i -> i.status() == TestRunStatus.COMPLETED).count();
+        long totalMinutes = items.stream().mapToLong(TestPlanSummaryResponse.SessionItem::minutes).sum();
+        return new TestPlanSummaryResponse.SessionsSummary(items.size(), completed, totalMinutes, items);
+    }
+
+    private static long minutesSpent(Instant startedAt, Instant endedAt, Instant now) {
+        if (startedAt == null) {
+            return 0;
+        }
+        return Duration.between(startedAt, endedAt != null ? endedAt : now).toMinutes();
     }
 
     @Transactional

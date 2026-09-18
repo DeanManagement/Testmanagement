@@ -40,6 +40,14 @@ public interface ProjectEnvironmentRepository extends JpaRepository<ProjectEnvir
     @Query("SELECT COUNT(b) FROM BugReport b WHERE b.projectEnvironment.id = :id")
     long countBugs(@Param("id") UUID id);
 
+    /** PRD-034: sessions keep only the reference, not a name copy. */
+    @Query("SELECT COUNT(s) FROM ExploratorySession s WHERE s.environment.id = :id")
+    long countSessions(@Param("id") UUID id);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE ExploratorySession s SET s.environment = :target WHERE s.environment = :source")
+    int repointSessions(@Param("source") ProjectEnvironment source, @Param("target") ProjectEnvironment target);
+
     /** Points runs at {@code target} (which may equal {@code source}) and rewrites their name copy. */
     @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE TestRun r SET r.projectEnvironment = :target, r.environment = :name "

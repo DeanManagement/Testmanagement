@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import java.time.Clock;
+import com.deanmanagement.testmanagement.project.internal.repository.ExploratorySessionRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.CreateTestPlanRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanResponse;
@@ -51,6 +53,12 @@ class TestPlanServiceTest {
 
     @Mock
     private UserService userService;
+
+    @Mock
+    private ExploratorySessionRepository sessionRepository;
+
+    @Mock
+    private Clock clock;
 
     @InjectMocks
     private TestPlanService testPlanService;

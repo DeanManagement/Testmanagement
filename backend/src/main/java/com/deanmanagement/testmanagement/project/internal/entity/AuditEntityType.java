@@ -11,5 +11,6 @@ public enum AuditEntityType {
     BUG_REPORT,
     TEST_CASE_FOLDER,
     REQUIREMENT,
-    ENVIRONMENT
+    ENVIRONMENT,
+    EXPLORATORY_SESSION
 }

@@ -67,6 +67,11 @@ public class BugReport extends BaseEntity {
     @JoinColumn(name = "test_run_id")
     private TestRun testRun;
 
+    /** The exploratory session this bug was found in (PRD-034), if any. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exploratory_session_id")
+    private ExploratorySession exploratorySession;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id")
     private User assignee;

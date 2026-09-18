@@ -27,6 +27,9 @@ public record BugReportResponse(
         String reporterName,
         Instant createdAt,
         Instant updatedAt,
-        String projectKey
+        String projectKey,
+        /* PRD-034: the exploratory session this bug was found in, if any. */
+        UUID exploratorySessionId,
+        String exploratorySessionKey
 ) {
 }

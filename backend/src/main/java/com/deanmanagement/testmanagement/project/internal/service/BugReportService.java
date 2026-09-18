@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.repository.ExploratorySessionRepository;
+import com.deanmanagement.testmanagement.project.internal.entity.ExploratorySession;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.ChangeBugStatusRequest;
@@ -51,6 +53,7 @@ public class BugReportService {
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
     private final ProjectEnvironmentService environmentService;
+    private final ExploratorySessionRepository exploratorySessionRepository;
 
     public List<BugReportResponse> findByProject(UUID projectId) {
         requireBugReportsEnabled(projectId);
@@ -93,7 +96,19 @@ public class BugReportService {
         bugReport.setPriority(request.priority());
         bugReport.setStatus(BugReportStatus.OPEN);
         bugReport.setProject(project);
-        bugReport.assignEnvironment(environmentService.resolve(projectId, request.environmentId(), request.environment()));
+        UUID environmentId = request.environmentId();
+        if (request.exploratorySessionId() != null) {
+            ExploratorySession session = exploratorySessionRepository
+                    .findByIdAndProjectId(request.exploratorySessionId(), projectId)
+                    .orElseThrow(() -> new ResourceNotFoundException("ExploratorySession", request.exploratorySessionId()));
+            bugReport.setExploratorySession(session);
+            boolean namedEnvironment = environmentId != null
+                    || (request.environment() != null && !request.environment().isBlank());
+            if (!namedEnvironment && session.getEnvironment() != null) {
+                environmentId = session.getEnvironment().getId();
+            }
+        }
+        bugReport.assignEnvironment(environmentService.resolve(projectId, environmentId, request.environment()));
 
         if (request.testResultId() != null) {
             bugReport.setTestResult(requireTestResult(projectId, request.testResultId()));
@@ -285,7 +300,9 @@ public class BugReportService {
                 reporterName,
                 response.createdAt(),
                 response.updatedAt(),
-                response.projectKey()
+                response.projectKey(),
+                response.exploratorySessionId(),
+                response.exploratorySessionKey()
         );
     }
 }

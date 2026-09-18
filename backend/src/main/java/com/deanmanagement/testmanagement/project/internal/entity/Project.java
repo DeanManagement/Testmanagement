@@ -38,6 +38,9 @@ public class Project extends BaseEntity {
     @Column(name = "next_test_run_number", nullable = false)
     private int nextTestRunNumber = 1;
 
+    @Column(name = "next_session_number", nullable = false)
+    private int nextSessionNumber = 1;
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMember> members = new ArrayList<>();
 

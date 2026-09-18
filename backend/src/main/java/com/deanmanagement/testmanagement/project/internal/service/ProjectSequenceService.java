@@ -37,6 +37,15 @@ public class ProjectSequenceService {
         return number;
     }
 
+    /** PRD-034: numbers {@code PROJ-Session-N} keys, under the same row lock as the others. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public int nextSessionNumber(UUID projectId) {
+        Project project = lock(projectId);
+        int number = project.getNextSessionNumber();
+        project.setNextSessionNumber(number + 1);
+        return number;
+    }
+
     private Project lock(UUID projectId) {
         return projectRepository.findByIdForUpdate(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));

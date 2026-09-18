@@ -15,6 +15,7 @@ public interface ProjectMapper {
     @Mapping(target = "key", ignore = true)
     @Mapping(target = "nextTestCaseNumber", ignore = true)
     @Mapping(target = "nextTestRunNumber", ignore = true)
+    @Mapping(target = "nextSessionNumber", ignore = true)
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "members", ignore = true)
     @Mapping(target = "testCases", ignore = true)

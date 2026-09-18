@@ -66,4 +66,6 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
                                          @Param("statuses") Collection<BugReportStatus> statuses,
                                          @Param("staleBefore") Instant staleBefore,
                                          Pageable pageable);
+
+    java.util.List<BugReport> findByExploratorySessionIdOrderByCreatedAtAsc(UUID sessionId);
 }

@@ -127,9 +127,11 @@ public class ProjectEnvironmentService {
         ProjectEnvironment environment = require(projectId, id);
         long runs = environmentRepository.countRuns(id);
         long bugs = environmentRepository.countBugs(id);
-        if (runs + bugs > 0) {
+        long sessions = environmentRepository.countSessions(id);
+        if (runs + bugs + sessions > 0) {
             throw new ConflictException("Environment '" + environment.getName() + "' is used by " + runs
-                    + " run(s) and " + bugs + " bug report(s); archive it or merge it into another instead");
+                    + " run(s), " + bugs + " bug report(s) and " + sessions
+                    + " exploratory session(s); archive it or merge it into another instead");
         }
         environmentRepository.delete(environment);
         auditService.log(projectId, userId, AuditAction.DELETED, AuditEntityType.ENVIRONMENT,
@@ -148,6 +150,7 @@ public class ProjectEnvironmentService {
         String targetName = target.getName();
         environmentRepository.repointRuns(source, target, targetName);
         environmentRepository.repointBugs(source, target, targetName);
+        environmentRepository.repointSessions(source, target);
         environmentRepository.deleteById(sourceId);
         auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.ENVIRONMENT,
                 targetId, targetName, "Merged in: " + sourceName);

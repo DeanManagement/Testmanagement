@@ -16,5 +16,7 @@ public abstract class BugReportMapper {
     @Mapping(target = "assigneeName", source = "assignee.displayName")
     @Mapping(target = "reporterName", ignore = true)
     @Mapping(target = "projectKey", source = "project.key")
+    @Mapping(target = "exploratorySessionId", source = "exploratorySession.id")
+    @Mapping(target = "exploratorySessionKey", source = "exploratorySession.key")
     public abstract BugReportResponse toResponse(BugReport bugReport);
 }
