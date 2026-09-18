@@ -148,6 +148,12 @@ public class TestCaseImportExportService {
 
     // ---- Import ----
 
+    /**
+     * Read-write: it used to inherit the class's read-only transaction, which every create joined,
+     * so rows were reported imported but never written. Rows are validated before their create,
+     * so a refused row is skipped without marking the transaction rollback-only.
+     */
+    @Transactional
     public ImportResultResponse importData(UUID projectId, String fileName, byte[] content,
                                            boolean dryRun, UUID userId) {
         String text = stripBom(new String(content, StandardCharsets.UTF_8));
