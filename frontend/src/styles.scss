@@ -217,6 +217,7 @@ a {
   &--pending   { background: #f1f5f9; color: #64748b; }
   &--draft     { background: #e2e8f0; color: #475569; }
   &--active    { background: #dcfce7; color: #166534; }
+  &--in_review { background: #ede9fe; color: #5b21b6; }
   &--deprecated { background: #fee2e2; color: #991b1b; }
   &--passed    { background: #dcfce7; color: #166534; }
   &--failed    { background: #fee2e2; color: #991b1b; }
@@ -238,6 +239,7 @@ a {
   &--pending   { background: #262d36; color: #9aa7b4; }
   &--draft     { background: #2b3441; color: #b6c2d1; }
   &--active    { background: #14351f; color: #7ee2a0; }
+  &--in_review { background: #2a2140; color: #c4b5fd; }
   &--deprecated { background: #3d1f24; color: #ff9d95; }
   &--passed    { background: #14351f; color: #7ee2a0; }
   &--failed    { background: #3d1f24; color: #ff9d95; }

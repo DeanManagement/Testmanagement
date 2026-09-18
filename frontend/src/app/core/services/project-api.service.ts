@@ -45,6 +45,11 @@ export class ProjectApiService {
     });
   }
 
+  /** PRD-033: whether test cases need approval, and who may give it. */
+  updateReviewSettings(projectId: string, reviewRequired: boolean, reviewerMinRole: 'ADMIN' | 'TESTER'): Observable<Project> {
+    return this.http.put<Project>(`${this.baseUrl}/${projectId}/settings/review`, { reviewRequired, reviewerMinRole });
+  }
+
   toggleBugReports(projectId: string, enabled: boolean): Observable<Project> {
     return this.http.put<Project>(`${this.baseUrl}/${projectId}/settings/bug-reports`, { enabled });
   }

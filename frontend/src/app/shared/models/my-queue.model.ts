@@ -10,6 +10,8 @@ export interface MyQueueResponse {
   inProgressRuns: InProgressRunItem[];
   staleBugReports: StaleBugReportItem[];
   oldDraftTestCases: OldDraftTestCaseItem[];
+  /** PRD-033: cases in review that I may approve. */
+  awaitingReview: ReviewTestCaseItem[];
 }
 
 export interface DueTestPlanItem {
@@ -44,6 +46,16 @@ export interface StaleBugReportItem {
 }
 
 export interface OldDraftTestCaseItem {
+  id: string;
+  key: string;
+  title: string;
+  projectId: string;
+  projectKey: string;
+  projectName: string;
+  updatedAt: string;
+}
+
+export interface ReviewTestCaseItem {
   id: string;
   key: string;
   title: string;

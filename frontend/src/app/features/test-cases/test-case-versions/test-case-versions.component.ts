@@ -112,6 +112,13 @@ export class TestCaseVersionsComponent implements OnChanges {
       });
   }
 
+  /** Shows the diff between two versions, e.g. the last approved one and the current (PRD-033). */
+  compareVersions(from: number, to: number): void {
+    this.leftVersion = from;
+    this.rightVersion = to;
+    this.compare();
+  }
+
   compare(): void {
     if (this.leftVersion === null || this.rightVersion === null || this.comparing) {
       return;

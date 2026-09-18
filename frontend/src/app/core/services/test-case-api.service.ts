@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BulkOperationResponse, CreateTestCaseRequest, ImportResult, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
+import { BulkOperationResponse, CreateTestCaseRequest, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 import { Page } from '../../shared/models/page.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
 
@@ -57,6 +57,25 @@ export class TestCaseApiService {
 
   update(projectId: string, id: string, request: UpdateTestCaseRequest): Observable<TestCase> {
     return this.http.put<TestCase>(`${this.baseUrl(projectId)}/${id}`, request);
+  }
+
+  // ---- Review (PRD-033) ----
+
+  reviewCapabilities(projectId: string, id: string): Observable<ReviewCapabilities> {
+    return this.http.get<ReviewCapabilities>(`${this.baseUrl(projectId)}/${id}/review-capabilities`);
+  }
+
+  submitForReview(projectId: string, id: string): Observable<TestCase> {
+    return this.http.post<TestCase>(`${this.baseUrl(projectId)}/${id}/submit-review`, {});
+  }
+
+  /** version: the one the reviewer read; the server refuses (409) if the case moved on since. */
+  approve(projectId: string, id: string, version: number): Observable<TestCase> {
+    return this.http.post<TestCase>(`${this.baseUrl(projectId)}/${id}/approve`, { version });
+  }
+
+  requestChanges(projectId: string, id: string, comment?: string): Observable<TestCase> {
+    return this.http.post<TestCase>(`${this.baseUrl(projectId)}/${id}/request-changes`, { comment });
   }
 
   delete(projectId: string, id: string): Observable<void> {

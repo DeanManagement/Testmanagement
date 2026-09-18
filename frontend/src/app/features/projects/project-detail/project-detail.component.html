@@ -102,6 +102,35 @@
           data-test-id="project-settings-bug-reports-toggle">
         </mat-slide-toggle>
       </div>
+      <div class="setting-item setting-item--stacked">
+        <div class="setting-row">
+          <div class="setting-info">
+            <h4>{{ 'review.settings.title' | translate }}</h4>
+            <p class="setting-description">{{ 'review.settings.description' | translate }}</p>
+          </div>
+          <mat-slide-toggle
+            [checked]="project.reviewRequired"
+            (change)="updateReview($event.checked, project.reviewerMinRole)"
+            data-test-id="project-settings-review-toggle">
+          </mat-slide-toggle>
+        </div>
+        @if (project.reviewRequired) {
+          <mat-form-field appearance="outline" class="reviewer-role" subscriptSizing="dynamic">
+            <mat-label>{{ 'review.settings.reviewers' | translate }}</mat-label>
+            <mat-select [value]="project.reviewerMinRole" (selectionChange)="updateReview(true, $event.value)"
+                        data-test-id="project-settings-reviewer-role">
+              <mat-option value="ADMIN">{{ 'review.settings.adminsOnly' | translate }}</mat-option>
+              <mat-option value="TESTER">{{ 'review.settings.testersToo' | translate }}</mat-option>
+            </mat-select>
+          </mat-form-field>
+          @if (eligibleReviewers(project.reviewerMinRole) < 2) {
+            <p class="setting-warning" data-test-id="project-settings-review-warning">
+              <mat-icon>warning</mat-icon>
+              {{ 'review.settings.tooFewReviewers' | translate }}
+            </p>
+          }
+        }
+      </div>
       <div class="setting-item">
         <div class="setting-info">
           <h4>{{ 'environment.title' | translate }}</h4>

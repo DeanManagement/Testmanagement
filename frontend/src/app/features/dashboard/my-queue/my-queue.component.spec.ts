@@ -25,6 +25,7 @@ describe('MyQueueComponent', () => {
     inProgressRuns: [],
     staleBugReports: [],
     oldDraftTestCases: [],
+    awaitingReview: [],
   };
 
   beforeEach(() => {
@@ -73,6 +74,24 @@ describe('MyQueueComponent', () => {
     // An empty queue renders nothing at all — the widget is deliberately invisible rather than
     // showing an empty container.
     expect(fixture.nativeElement.querySelector('[data-test-id="my-queue"]')).toBeNull();
+  });
+
+  it('lists cases awaiting my review', async () => {
+    await respondWith({
+      ...EMPTY,
+      awaitingReview: [{
+        id: 'c5f3e4d6-0000-0000-0000-000000000003',
+        key: 'TES-7',
+        title: 'Checkout with voucher',
+        projectId: 'b4e2d3c5-0000-0000-0000-000000000002',
+        projectKey: 'TES',
+        projectName: 'Test',
+        updatedAt: '2026-08-06T08:00:00Z',
+      }],
+    });
+
+    const bucket: HTMLElement | null = fixture.nativeElement.querySelector('[data-test-id="my-queue-awaiting-review"]');
+    expect(bucket?.textContent).toContain('Checkout with voucher');
   });
 
   it('clears the spinner and renders the card when there is something to do', async () => {

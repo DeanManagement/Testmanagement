@@ -12,6 +12,25 @@
         </mat-card-title>
       </mat-card-header>
       <mat-card-content>
+        @if (queue.awaitingReview.length) {
+          <section class="bucket" data-test-id="my-queue-awaiting-review">
+            <h3>
+              <mat-icon>rate_review</mat-icon>
+              {{ 'myQueue.awaitingReview' | translate }}
+            </h3>
+            <ul>
+              @for (item of queue.awaitingReview; track item.id) {
+                <li>
+                  <a [routerLink]="['/projects', item.projectId, 'test-cases', item.id]">
+                    <span class="project-key">{{ item.key }}</span>
+                    <span class="item-title">{{ item.title }}</span>
+                  </a>
+                  <span class="meta">{{ item.updatedAt | localizedDate }}</span>
+                </li>
+              }
+            </ul>
+          </section>
+        }
         @if (queue.dueTestPlans.length) {
           <section class="bucket" data-test-id="my-queue-due-plans">
             <h3>

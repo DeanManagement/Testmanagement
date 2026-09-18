@@ -31,6 +31,14 @@
         </table>
       </div>
     }
+
+    @if (preview.warnings.length > 0) {
+      <ul class="import-warnings" data-test-id="import-warnings">
+        @for (w of preview.warnings; track w.row) {
+          <li>{{ 'import.row' | translate }} {{ w.row }}: {{ w.message }}</li>
+        }
+      </ul>
+    }
   }
 </mat-dialog-content>
 <mat-dialog-actions align="end">

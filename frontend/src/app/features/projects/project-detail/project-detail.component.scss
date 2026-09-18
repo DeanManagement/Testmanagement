@@ -177,6 +177,31 @@ h1 {
   padding: 12px 0;
 }
 
+.setting-item--stacked {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+}
+
+.setting-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.reviewer-role {
+  max-width: 320px;
+}
+
+.setting-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--tm-warn);
+  font-size: 13px;
+}
+
 .setting-info {
   h4 {
     margin: 0 0 4px 0;

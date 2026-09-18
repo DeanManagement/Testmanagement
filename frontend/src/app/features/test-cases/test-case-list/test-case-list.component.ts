@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -32,13 +32,15 @@ import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectAllTestCases, selectTestCasesLoading, selectSelectedTestCaseIds, selectHasSelection, selectTestCasePage } from '../../../store/test-case/test-case.selectors';
 import { TestCaseFolderActions } from '../../../store/test-case-folder/test-case-folder.actions';
 import { selectFolderTree } from '../../../store/test-case-folder/test-case-folder.selectors';
-import { BulkStatusDialogComponent } from '../bulk-status-dialog/bulk-status-dialog.component';
+import { BulkStatusDialogComponent, BulkStatusDialogData } from '../bulk-status-dialog/bulk-status-dialog.component';
+import { statusLabelKey } from '../review/review-status';
+import { ProjectApiService } from '../../../core/services/project-api.service';
 import { BulkAddToSuiteDialogComponent } from '../bulk-add-to-suite-dialog/bulk-add-to-suite-dialog.component';
 import { FolderNameDialogComponent, FolderNameDialogData } from '../folder-name-dialog/folder-name-dialog.component';
 import { TestSuiteApiService } from '../../../core/services/test-suite-api.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
-import { Priority, TestCase, TestCaseQuery, TestCaseStatus } from '../../../shared/models/test-case.model';
+import { Priority, TestCase, TestCaseQuery, TestCaseStatus, ALL_TEST_CASE_STATUSES } from '../../../shared/models/test-case.model';
 
 interface FlatFolderNode {
   id: string;
@@ -89,6 +91,8 @@ export class TestCaseListComponent implements OnInit {
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly projectApi = inject(ProjectApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   /** Upper bound for cross-page bulk selection (PRD-022 §4.4). */
   private static readonly MAX_SELECTION = 500;
@@ -113,7 +117,10 @@ export class TestCaseListComponent implements OnInit {
   priorityFilter: Priority | '' = '';
   sortActive = 'updatedAt';
   sortDirection: 'asc' | 'desc' = 'desc';
-  allStatuses: TestCaseStatus[] = ['DRAFT', 'ACTIVE', 'DEPRECATED'];
+  allStatuses: TestCaseStatus[] = ALL_TEST_CASE_STATUSES;
+  /** PRD-033: ACTIVE reads as "Approved", and bulk status can't set it. */
+  reviewRequired = false;
+  readonly statusLabelKey = statusLabelKey;
   allPriorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
   private readonly searchChange$ = new Subject<void>();
@@ -151,6 +158,11 @@ export class TestCaseListComponent implements OnInit {
     }
 
     this.store.dispatch(TestCaseFolderActions.loadFolders({ projectId: this.projectId }));
+    this.projectApi.getById(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((project) => {
+        this.reviewRequired = project.reviewRequired;
+        this.cdr.detectChanges();
+      });
     this.folders$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(folders => {
       this.dataSource.data = folders;
     });
@@ -376,7 +388,10 @@ export class TestCaseListComponent implements OnInit {
   }
 
   bulkUpdateStatus(selectedIds: string[]): void {
-    const dialogRef = this.dialog.open(BulkStatusDialogComponent, { width: '400px' });
+    const dialogRef = this.dialog.open(BulkStatusDialogComponent, {
+      width: '400px',
+      data: { reviewRequired: this.reviewRequired } as BulkStatusDialogData,
+    });
     dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(status => {
       if (status) {
         this.store.dispatch(TestCaseActions.bulkUpdateStatus({

@@ -137,4 +137,6 @@ export interface TestRunReport {
   pending: number;
   passRate: number;
   results: TestResult[];
+  /** PRD-033: results executed against wording that was never approved; empty without review. */
+  unapprovedResultIds: string[];
 }

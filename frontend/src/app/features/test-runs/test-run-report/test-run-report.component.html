@@ -83,6 +83,11 @@
                 <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link">
                   {{ result.testCaseTitle }}
                 </a>
+                @if (report.unapprovedResultIds.includes(result.id)) {
+                  <span class="unapproved" data-test-id="report-unapproved-wording">
+                    {{ 'review.unapprovedWording' | translate: { version: result.executedVersion } }}
+                  </span>
+                }
               </td>
             </ng-container>
 

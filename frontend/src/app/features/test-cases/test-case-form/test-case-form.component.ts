@@ -28,6 +28,9 @@ interface StepImageState {
   removed?: boolean;
 }
 
+import { selectableStatuses } from '../review/review-status';
+import { ProjectApiService } from '../../../core/services/project-api.service';
+
 @Component({
   selector: 'app-test-case-form',
   standalone: true,
@@ -55,6 +58,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
   private readonly router = inject(Router);
   private readonly testCaseApi = inject(TestCaseApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly projectApi = inject(ProjectApiService);
   private readonly destroyRef = inject(DestroyRef);
 
   editMode = false;
@@ -64,7 +68,10 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
   dirty = false;
 
   priorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-  statuses: TestCaseStatus[] = ['DRAFT', 'ACTIVE', 'DEPRECATED'];
+  statuses: TestCaseStatus[] = selectableStatuses(false);
+  /** PRD-033: under review ACTIVE is set by approving, so the form doesn't offer it. */
+  private reviewRequired = false;
+  private loadedStatus: TestCaseStatus | null = null;
 
   stepImages = new Map<number, StepImageState>();
 
@@ -85,6 +92,11 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.testCaseId = this.route.snapshot.paramMap.get('tcId');
+    this.projectApi.getById(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((project) => {
+      this.reviewRequired = project.reviewRequired;
+      this.statuses = selectableStatuses(this.reviewRequired, this.loadedStatus);
+      this.cdr.detectChanges();
+    });
     const folderId = this.route.snapshot.queryParamMap.get('folderId');
 
     if (this.testCaseId) {
@@ -100,6 +112,8 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
             status: tc.status,
             labels: tc.labels?.join(', ') ?? '',
           });
+          this.loadedStatus = tc.status;
+          this.statuses = selectableStatuses(this.reviewRequired, this.loadedStatus);
           this.steps.clear();
           this.stepImages.clear();
           tc.steps?.forEach((step, index) => {

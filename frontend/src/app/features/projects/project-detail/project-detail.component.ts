@@ -9,6 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTableModule } from '@angular/material/table';
 import { MatSelectModule } from '@angular/material/select';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDialog } from '@angular/material/dialog';
 import { FormsModule } from '@angular/forms';
@@ -24,6 +25,8 @@ import { ProjectMemberApiService } from '../../../core/services/project-member-a
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { AddMemberDialogComponent } from './add-member-dialog/add-member-dialog.component';
 
+import { eligibleReviewerCount } from '../../test-cases/review/review-status';
+
 @Component({
   selector: 'app-project-detail',
   standalone: true,
@@ -37,6 +40,7 @@ import { AddMemberDialogComponent } from './add-member-dialog/add-member-dialog.
     MatChipsModule,
     MatTableModule,
     MatSelectModule,
+    MatFormFieldModule,
     MatSlideToggleModule,
     TranslateModule,
   ],
@@ -103,6 +107,19 @@ export class ProjectDetailComponent implements OnInit {
       this.store.dispatch(ProjectActions.loadProjects());
       this.cdr.detectChanges();
     });
+  }
+
+  updateReview(reviewRequired: boolean, reviewerMinRole: 'ADMIN' | 'TESTER'): void {
+    this.projectApi.updateReviewSettings(this.projectId, reviewRequired, reviewerMinRole)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.store.dispatch(ProjectActions.loadProjects());
+        this.cdr.detectChanges();
+      });
+  }
+
+  eligibleReviewers(minRole: 'ADMIN' | 'TESTER'): number {
+    return eligibleReviewerCount(this.members, minRole);
   }
 
   private loadMembers(): void {

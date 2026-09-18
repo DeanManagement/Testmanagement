@@ -138,6 +138,7 @@ export class ProjectDashboardComponent implements OnInit {
     const data = this.dashboard.testCasesByStatus;
     const statusColors: Record<string, string> = {
       DRAFT: '#9e9e9e',
+      IN_REVIEW: '#7c3aed',
       ACTIVE: '#4caf50',
       DEPRECATED: '#ff9800',
     };

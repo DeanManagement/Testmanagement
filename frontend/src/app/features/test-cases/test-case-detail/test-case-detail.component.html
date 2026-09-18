@@ -23,7 +23,7 @@
         <h1 data-test-id="test-case-detail-title">{{ tc.title }}</h1>
         <div class="hero-badges">
           <span class="badge badge--{{ tc.priority | lowercase }}" data-test-id="test-case-detail-priority">{{ 'priority.' + tc.priority | translate }}</span>
-          <span class="badge badge--{{ tc.status | lowercase }}" data-test-id="test-case-detail-status">{{ 'testCaseStatus.' + tc.status | translate }}</span>
+          <span class="badge badge--{{ tc.status | lowercase }}" data-test-id="test-case-detail-status">{{ statusLabelKey(tc.status, reviewRequired) | translate }}</span>
         </div>
       </div>
       @if (tc.description) {
@@ -64,6 +64,12 @@
         </div>
       </div>
     }
+
+    <div class="review-section tm-card" data-test-id="test-case-review-section">
+      <h3>{{ 'review.title' | translate }}</h3>
+      <app-test-case-review [projectId]="projectId" [testCase]="tc"
+                            (changed)="onReviewChanged()" (compareApproved)="compareWithApproved($event, tc)" />
+    </div>
 
     <div class="environment-results-section tm-card" data-test-id="test-case-environment-results-section">
       <h3>{{ 'environment.results.title' | translate }}</h3>
@@ -107,10 +113,10 @@
         [canEdit]="true"></app-test-case-parameters>
     </div>
 
-    <div class="versions-section tm-card" data-test-id="test-case-versions-section">
+    <div class="versions-section tm-card" data-test-id="test-case-versions-section" #versionsSection>
       <h3>{{ 'version.title' | translate }}</h3>
       <p class="section-hint">{{ 'version.hint' | translate }}</p>
-      <app-test-case-versions [projectId]="projectId" [testCaseId]="testCaseId"></app-test-case-versions>
+      <app-test-case-versions #versions [projectId]="projectId" [testCaseId]="testCaseId"></app-test-case-versions>
     </div>
 
     <div class="history-section tm-card" data-test-id="test-case-history-section">

@@ -14,7 +14,10 @@ export interface TestStepRequest {
 }
 
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
-export type TestCaseStatus = 'DRAFT' | 'ACTIVE' | 'DEPRECATED';
+/** With a project's review switch on (PRD-033), ACTIVE means approved. */
+export type TestCaseStatus = 'DRAFT' | 'IN_REVIEW' | 'ACTIVE' | 'DEPRECATED';
+
+export const ALL_TEST_CASE_STATUSES: TestCaseStatus[] = ['DRAFT', 'IN_REVIEW', 'ACTIVE', 'DEPRECATED'];
 
 export interface TestCase {
   id: string;
@@ -31,6 +34,19 @@ export interface TestCase {
   updatedAt: string;
   createdBy?: string;
   updatedBy?: string;
+  currentVersion: number;
+  /** PRD-033: null when never approved, including ACTIVE cases from before review was on. */
+  approvedBy: string | null;
+  approvedAt: string | null;
+  approvedVersion: number | null;
+}
+
+/** What the caller may do in a case's review; reason explains a refused approve. */
+export interface ReviewCapabilities {
+  reviewRequired: boolean;
+  canSubmit: boolean;
+  canApprove: boolean;
+  reason: string | null;
 }
 
 export interface CreateTestCaseRequest {
@@ -69,6 +85,8 @@ export interface ImportResult {
   skipped: number;
   dryRun: boolean;
   errors: ImportError[];
+  /** Rows imported with a change, e.g. ACTIVE as IN_REVIEW under review (PRD-033). */
+  warnings: ImportError[];
 }
 
 export interface TestCaseQuery {

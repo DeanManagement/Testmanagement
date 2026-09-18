@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -29,10 +29,15 @@ import { TestCaseParametersComponent } from '../test-case-parameters/test-case-p
 
 import { EnvironmentResultsComponent } from '../environment-results/environment-results.component';
 
+import { TestCaseReviewComponent } from '../review/test-case-review.component';
+import { statusLabelKey } from '../review/review-status';
+import { ProjectApiService } from '../../../core/services/project-api.service';
+
 @Component({
   selector: 'app-test-case-detail',
   standalone: true,
   imports: [
+    TestCaseReviewComponent,
     EnvironmentResultsComponent,
     AsyncPipe,
     LowerCasePipe,
@@ -58,10 +63,17 @@ export class TestCaseDetailComponent implements OnInit {
   private readonly testCaseApi = inject(TestCaseApiService);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly projectApi = inject(ProjectApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   projectId = '';
   testCaseId = '';
   testCase$: Observable<TestCase | undefined> = of(undefined);
+  /** PRD-033: whether ACTIVE means approved in this project. */
+  reviewRequired = false;
+  readonly statusLabelKey = statusLabelKey;
+  @ViewChild('versions') private versions?: TestCaseVersionsComponent;
+  @ViewChild('versionsSection') private versionsSection?: ElementRef<HTMLElement>;
   getStepImageUrl(imageId: string): string {
     return this.testCaseApi.getStepImageUrl(imageId);
   }
@@ -79,6 +91,11 @@ export class TestCaseDetailComponent implements OnInit {
     if (this.projectId && this.testCaseId) {
       this.store.dispatch(TestCaseActions.loadTestCase({ projectId: this.projectId, id: this.testCaseId }));
       this.testCase$ = this.store.select(selectTestCaseById(this.testCaseId));
+      this.projectApi.getById(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe((project) => {
+          this.reviewRequired = project.reviewRequired;
+          this.cdr.detectChanges();
+        });
       this.comments$ = this.store.select(selectCommentsForEntity('TEST_CASE', this.testCaseId));
       this.store.dispatch(CommentActions.loadComments({
         projectId: this.projectId,
@@ -86,6 +103,21 @@ export class TestCaseDetailComponent implements OnInit {
         entityId: this.testCaseId,
       }));
     }
+  }
+
+  /** Review actions change status and may add a comment (request changes). */
+  onReviewChanged(): void {
+    this.store.dispatch(TestCaseActions.loadTestCase({ projectId: this.projectId, id: this.testCaseId }));
+    this.store.dispatch(CommentActions.loadComments({
+      projectId: this.projectId,
+      entityType: 'TEST_CASE',
+      entityId: this.testCaseId,
+    }));
+  }
+
+  compareWithApproved(approvedVersion: number, testCase: TestCase): void {
+    this.versions?.compareVersions(approvedVersion, testCase.currentVersion);
+    this.versionsSection?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   deleteTestCase(testCase: TestCase): void {

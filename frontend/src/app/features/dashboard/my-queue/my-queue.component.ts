@@ -55,7 +55,8 @@ export class MyQueueComponent implements OnInit {
       queue.dueTestPlans.length === 0 &&
       queue.inProgressRuns.length === 0 &&
       queue.staleBugReports.length === 0 &&
-      queue.oldDraftTestCases.length === 0
+      queue.oldDraftTestCases.length === 0 &&
+      queue.awaitingReview.length === 0
     );
   });
 

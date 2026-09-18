@@ -185,7 +185,8 @@
     "duePlans": "Bald fällige Testpläne",
     "inProgressRuns": "Laufende Testdurchläufe",
     "staleBugs": "Bug-Meldungen ohne aktuelle Aktivität",
-    "oldDrafts": "Alte Testfall-Entwürfe"
+    "oldDrafts": "Alte Testfall-Entwürfe",
+    "awaitingReview": "Wartet auf meine Prüfung"
   },
   "commandPalette": {
     "placeholder": "Projekte, Testfälle, Durchläufe, Bugs suchen…",
@@ -418,7 +419,9 @@
   "testCaseStatus": {
     "DRAFT": "Entwurf",
     "ACTIVE": "Aktiv",
-    "DEPRECATED": "Veraltet"
+    "DEPRECATED": "Veraltet",
+    "IN_REVIEW": "In Prüfung",
+    "APPROVED": "Freigegeben"
   },
   "stepResult": {
     "results": "Ergebnisse",
@@ -1081,6 +1084,26 @@
       "explanation": "Verschiebt ihre {{runs}} Testläufe und {{bugs}} Fehlerberichte in die gewählte Umgebung und löscht danach \"{{name}}\". Das kann nicht rückgängig gemacht werden.",
       "target": "Zusammenführen mit",
       "confirm": "Zusammenführen"
+    }
+  },
+  "review": {
+    "title": "Prüfung",
+    "submit": "Zur Prüfung einreichen",
+    "approve": "v{{version}} freigeben",
+    "requestChanges": "Änderungen anfordern",
+    "comment": "Kommentar (optional, wird mit \"Änderungen anfordern\" gesendet)",
+    "approvedLine": "v{{version}} freigegeben von {{name}} am {{date}}",
+    "compareWithApproved": "Mit freigegebener Version vergleichen",
+    "legacyApproved": "Freigegeben, bevor die Prüfung für dieses Projekt eingeschaltet wurde.",
+    "bulkHint": "Freigegeben wird ein Testfall nur durch die Freigabe in der Prüfung.",
+    "unapprovedWording": "Nicht freigegebener Wortlaut ausgeführt (v{{version}})",
+    "settings": {
+      "title": "Prüfung von Testfällen",
+      "description": "Testfälle werden erst freigegeben, nachdem ein anderes Mitglied sie geprüft hat. Änderungen am Wortlaut schicken einen freigegebenen Testfall zurück in die Prüfung.",
+      "reviewers": "Wer darf freigeben",
+      "adminsOnly": "Projekt-Admins",
+      "testersToo": "Tester und Admins",
+      "tooFewReviewers": "Weniger als zwei Mitglieder dürfen freigeben. Für manche Testfälle gibt es dann niemanden zum Prüfen."
     }
   }
 }

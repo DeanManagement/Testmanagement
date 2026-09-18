@@ -185,7 +185,8 @@
     "duePlans": "Test plans due soon",
     "inProgressRuns": "Test runs in progress",
     "staleBugs": "Bug reports without recent activity",
-    "oldDrafts": "Old draft test cases"
+    "oldDrafts": "Old draft test cases",
+    "awaitingReview": "Awaiting my review"
   },
   "commandPalette": {
     "placeholder": "Search projects, test cases, runs, bug reports…",
@@ -418,7 +419,9 @@
   "testCaseStatus": {
     "DRAFT": "Draft",
     "ACTIVE": "Active",
-    "DEPRECATED": "Deprecated"
+    "DEPRECATED": "Deprecated",
+    "IN_REVIEW": "In review",
+    "APPROVED": "Approved"
   },
   "stepResult": {
     "results": "Results",
@@ -1081,6 +1084,26 @@
       "explanation": "Moves its {{runs}} runs and {{bugs}} bug reports to the environment you pick, then deletes \"{{name}}\". This can't be undone.",
       "target": "Merge into",
       "confirm": "Merge"
+    }
+  },
+  "review": {
+    "title": "Review",
+    "submit": "Submit for review",
+    "approve": "Approve v{{version}}",
+    "requestChanges": "Request changes",
+    "comment": "Comment (optional, sent with \"Request changes\")",
+    "approvedLine": "Approved v{{version}} by {{name}} on {{date}}",
+    "compareWithApproved": "Compare with approved version",
+    "legacyApproved": "Approved before review was switched on for this project.",
+    "bulkHint": "Approved is set only by approving a case in review.",
+    "unapprovedWording": "Executed unapproved wording (v{{version}})",
+    "settings": {
+      "title": "Test case review",
+      "description": "Cases become Approved only after another member reviews them. Edits to the wording send an approved case back to review.",
+      "reviewers": "Who can approve",
+      "adminsOnly": "Project admins",
+      "testersToo": "Testers and admins",
+      "tooFewReviewers": "Fewer than two members can approve, so some cases may have nobody to review them."
     }
   }
 }
