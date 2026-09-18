@@ -78,6 +78,7 @@ public class TestRunService {
     private final ParameterSetService parameterSetService;
     private final ApplicationEventPublisher eventPublisher;
     private final ProjectSequenceService projectSequenceService;
+    private final RunEventPublisher runEventPublisher;
 
     private static final List<TestResultStatus> SEVERITY_ORDER = List.of(
             TestResultStatus.FAILED, TestResultStatus.BLOCKED, TestResultStatus.SKIPPED,
@@ -370,38 +371,12 @@ public class TestRunService {
 
         if (request.status() != null && request.status() != oldStatus) {
             if (request.status() == TestRunStatus.IN_PROGRESS && oldStatus == TestRunStatus.PLANNED) {
-                publishRunEvent(WebhookEventType.RUN_STARTED, run);
+                runEventPublisher.publishStarted(run);
             } else if (request.status() == TestRunStatus.COMPLETED) {
-                publishRunEvent(WebhookEventType.RUN_COMPLETED, run);
-                long failed = run.getResults().stream()
-                        .filter(r -> r.getStatus() == TestResultStatus.FAILED).count();
-                if (failed > 0) {
-                    publishRunEvent(WebhookEventType.RUN_FAILED, run);
-                }
+                runEventPublisher.publishFinished(run);
             }
         }
         return testRunMapper.toResponse(run);
-    }
-
-    private void publishRunEvent(WebhookEventType type, TestRun run) {
-        List<TestResult> results = run.getResults();
-        int total = results.size();
-        int passed = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.PASSED).count();
-        int failed = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.FAILED).count();
-        int blocked = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.BLOCKED).count();
-        int skipped = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.SKIPPED).count();
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("runId", run.getId().toString());
-        data.put("runKey", run.getKey());
-        data.put("name", run.getName());
-        data.put("status", run.getStatus().name());
-        data.put("total", total);
-        data.put("passed", passed);
-        data.put("failed", failed);
-        data.put("blocked", blocked);
-        data.put("skipped", skipped);
-        data.put("passRate", total > 0 ? Math.round((passed * 1000.0) / total) / 10.0 : 0.0);
-        eventPublisher.publishEvent(new WebhookEvent(type, run.getProject().getId(), data));
     }
 
     private void publishTestFailedEvent(TestRun run, TestResult result) {
@@ -409,6 +384,7 @@ public class TestRunService {
         data.put("runId", run.getId().toString());
         data.put("runKey", run.getKey());
         data.put("testCaseId", result.getTestCase() != null ? result.getTestCase().getId().toString() : null);
+        data.put("testCaseKey", result.getTestCase() != null ? result.getTestCase().getKey() : null);
         data.put("testCaseTitle", result.getTestCase() != null ? result.getTestCase().getTitle() : null);
         eventPublisher.publishEvent(new WebhookEvent(WebhookEventType.TEST_FAILED, run.getProject().getId(), data));
     }

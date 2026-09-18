@@ -53,6 +53,9 @@ class ExternalTestRunServiceTest {
     @Mock
     private PipelineRunLinker pipelineRunLinker;
 
+    @Mock
+    private RunEventPublisher runEventPublisher;
+
     @InjectMocks
     private ExternalTestRunService externalTestRunService;
 

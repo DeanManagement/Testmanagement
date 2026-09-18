@@ -4,6 +4,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.Webhook;
 import com.deanmanagement.testmanagement.project.internal.entity.WebhookDelivery;
 import com.deanmanagement.testmanagement.project.internal.entity.WebhookEventType;
+import com.deanmanagement.testmanagement.project.internal.entity.WebhookFormat;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.WebhookDeliveryRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.WebhookRepository;
@@ -152,5 +153,62 @@ class WebhookDeliveryIntegrationTest {
     void unsubscribedEvent_noDelivery() {
         dispatchService.dispatch(WebhookEventType.BUG_REPORT_CREATED, projectId, Map.of());
         assertThat(deliveries()).isEmpty();
+    }
+
+    private UUID addHook(WebhookFormat format, WebhookEventType... events) {
+        Webhook webhook = new Webhook();
+        webhook.setProject(projectRepository.findById(projectId).orElseThrow());
+        webhook.setUrl("http://127.0.0.1:" + server.getAddress().getPort() + "/hook");
+        webhook.setSecret(SECRET);
+        webhook.setFormat(format);
+        webhook.setEvents(Set.of(events));
+        return webhookRepository.save(webhook).getId();
+    }
+
+    private String storedBody(UUID hookId) {
+        return deliveryRepository.findByWebhookIdOrderByCreatedAtDesc(hookId, PageRequest.of(0, 1))
+                .getContent().get(0).getRequestBody();
+    }
+
+    @Test
+    void eachFormatGetsItsOwnStoredBody() {
+        UUID slackId = addHook(WebhookFormat.SLACK, WebhookEventType.RUN_COMPLETED);
+        UUID teamsId = addHook(WebhookFormat.TEAMS, WebhookEventType.RUN_COMPLETED);
+
+        dispatchService.dispatch(WebhookEventType.RUN_COMPLETED, projectId,
+                Map.of("runKey", "HOOK-Run-1", "name", "Nightly", "failed", 0));
+
+        assertThat(storedBody(webhookId)).contains("\"event\":\"RUN_COMPLETED\"");
+        assertThat(storedBody(slackId)).contains("\"attachments\"").contains("HOOK-Run-1 · Nightly");
+        assertThat(storedBody(teamsId)).contains("AdaptiveCard");
+    }
+
+    @Test
+    void chatHookSubscribedToCompletedSkipsTheDuplicateFailedEvent() {
+        UUID slackId = addHook(WebhookFormat.SLACK, WebhookEventType.RUN_COMPLETED, WebhookEventType.RUN_FAILED);
+
+        dispatchService.dispatch(WebhookEventType.RUN_FAILED, projectId, Map.of("failed", 1));
+
+        assertThat(deliveryRepository.findByWebhookIdOrderByCreatedAtDesc(slackId, PageRequest.of(0, 5)))
+                .isEmpty();
+    }
+
+    @Test
+    void chatHookSubscribedOnlyToFailedStillReceivesIt() {
+        UUID slackId = addHook(WebhookFormat.SLACK, WebhookEventType.RUN_FAILED);
+
+        dispatchService.dispatch(WebhookEventType.RUN_FAILED, projectId, Map.of("failed", 1));
+
+        assertThat(storedBody(slackId)).contains("failed");
+    }
+
+    @Test
+    void sendTest_toChatHookPostsAChatMessage() {
+        UUID slackId = addHook(WebhookFormat.SLACK, WebhookEventType.RUN_COMPLETED);
+
+        dispatchService.sendTest(slackId);
+
+        assertThat(lastBody.get()).contains("Test message from Testmanagement for project HOOK")
+                .doesNotContain("\"test\":true");
     }
 }

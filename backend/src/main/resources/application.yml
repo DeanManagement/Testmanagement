@@ -93,6 +93,9 @@ springdoc:
     enabled: ${app.api-docs.enabled:false}
 
 app:
+  # Public URL of this instance. Used for links in chat notifications (PRD-031) and, via
+  # app.buildserver.public-base-url, as TM_BASE_URL for triggered pipelines. Optional.
+  public-base-url: ${PUBLIC_BASE_URL:}
   api-docs:
     # Readable WITHOUT a login when on (Swagger UI is a plain page load and cannot send a token).
     # Enable on a developer machine or a private network, not on a public instance.

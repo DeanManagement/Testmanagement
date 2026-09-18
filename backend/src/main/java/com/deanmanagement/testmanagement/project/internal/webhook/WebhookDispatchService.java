@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.webhook;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.Webhook;
 import com.deanmanagement.testmanagement.project.internal.entity.WebhookEventType;
+import com.deanmanagement.testmanagement.project.internal.entity.WebhookFormat;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.WebhookRepository;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
@@ -10,15 +11,13 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import tools.jackson.databind.ObjectMapper;
 
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.time.Instant;
-import java.util.LinkedHashMap;
+import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -39,7 +38,7 @@ public class WebhookDispatchService {
     private final WebhookSigner signer;
     private final WebhookUrlValidator urlValidator;
     private final WebhookProperties properties;
-    private final ObjectMapper objectMapper;
+    private final WebhookPayloadBuilder payloadBuilder;
 
     private HttpClient httpClient;
 
@@ -63,15 +62,29 @@ public class WebhookDispatchService {
         if (project == null) {
             return;
         }
-        String body = buildPayload(type, project, data);
+        Map<WebhookFormat, String> bodies = new EnumMap<>(WebhookFormat.class);
         for (Webhook hook : hooks) {
+            if (isRedundantForChat(hook, type)) {
+                continue;
+            }
             try {
+                String body = bodies.computeIfAbsent(hook.getFormat(),
+                        format -> payloadBuilder.build(format, type, project, data));
                 UUID deliveryId = deliveryStore.createPending(hook.getId(), type, body);
                 deliver(deliveryId);
             } catch (Exception e) {
                 log.warn("Failed to enqueue webhook delivery for {}: {}", hook.getId(), e.getMessage());
             }
         }
+    }
+
+    /**
+     * A failed run publishes RUN_COMPLETED and then RUN_FAILED. A chat hook subscribed to both
+     * would post twice, and the completed message already shows the failure, so it skips the second.
+     */
+    private static boolean isRedundantForChat(Webhook hook, WebhookEventType type) {
+        return hook.getFormat().isChat() && type == WebhookEventType.RUN_FAILED
+                && hook.getEvents().contains(WebhookEventType.RUN_COMPLETED);
     }
 
     /** Performs one delivery attempt for an existing (pending) delivery, updating its state. */
@@ -94,11 +107,7 @@ public class WebhookDispatchService {
         Webhook hook = webhookRepository.findById(webhookId)
                 .orElseThrow(() -> new ResourceNotFoundException("Webhook", webhookId));
         WebhookEventType sampleEvent = hook.getEvents().stream().findFirst().orElse(WebhookEventType.RUN_COMPLETED);
-        Project project = hook.getProject();
-        Map<String, Object> data = new LinkedHashMap<>();
-        data.put("test", true);
-        data.put("message", "This is a test delivery from Testmanagement.");
-        String body = buildPayload(sampleEvent, project, data);
+        String body = payloadBuilder.buildTest(hook.getFormat(), sampleEvent, hook.getProject());
         UUID deliveryId = deliveryStore.createPending(webhookId, sampleEvent, body);
         deliver(deliveryId);
         return deliveryId;
@@ -118,16 +127,5 @@ public class WebhookDispatchService {
                 .build();
         HttpResponse<String> response = client().send(request, HttpResponse.BodyHandlers.ofString());
         return response.statusCode();
-    }
-
-    private String buildPayload(WebhookEventType type, Project project, Map<String, Object> data) {
-        Map<String, Object> payload = new LinkedHashMap<>();
-        payload.put("event", type.name());
-        payload.put("projectId", project.getId().toString());
-        payload.put("projectKey", project.getKey());
-        payload.put("projectName", project.getName());
-        payload.put("timestamp", Instant.now().toString());
-        payload.put("data", data != null ? data : Map.of());
-        return objectMapper.writeValueAsString(payload);
     }
 }

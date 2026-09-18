@@ -34,6 +34,7 @@ public class ExternalTestRunService {
     private final ProjectSequenceService projectSequenceService;
     private final ExternalRefResolver refResolver;
     private final PipelineRunLinker pipelineRunLinker;
+    private final RunEventPublisher runEventPublisher;
 
     /**
      * @param projectRef the project key or UUID from the URL.
@@ -99,6 +100,8 @@ public class ExternalTestRunService {
 
         run = testRunRepository.save(run);
         pipelineRunLinker.attach(pipelineRun, run);
+        // Run-level only: one TEST_FAILED per ingested result would flood chat channels (PRD-031).
+        runEventPublisher.publishFinished(run);
         return testRunMapper.toResponse(run);
     }
 }

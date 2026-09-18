@@ -45,4 +45,8 @@ public class Webhook extends BaseEntity {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private WebhookFormat format = WebhookFormat.GENERIC;
 }

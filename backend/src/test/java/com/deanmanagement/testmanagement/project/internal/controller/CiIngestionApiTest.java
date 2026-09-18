@@ -8,6 +8,8 @@ import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepo
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
+import com.deanmanagement.testmanagement.project.internal.entity.WebhookEventType;
+import com.deanmanagement.testmanagement.project.internal.webhook.WebhookEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +17,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.event.ApplicationEvents;
+import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -32,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("dev")
 @AutoConfigureMockMvc
 @Transactional
+@RecordApplicationEvents
 class CiIngestionApiTest {
 
     @Autowired
@@ -45,6 +50,8 @@ class CiIngestionApiTest {
 
     @Autowired
     private TestPlanRepository testPlanRepository;
+    @Autowired
+    private ApplicationEvents applicationEvents;
 
     private UUID projectId;
     private String apiKey;
@@ -161,6 +168,18 @@ class CiIngestionApiTest {
                         hasItem(containsString("expected 2 but was 3"))));
 
         assertThat(testCaseRepository.countByProjectId(projectId)).isEqualTo(4);
+    }
+
+    /** PRD-031: run-level events only, never one TEST_FAILED per ingested result. */
+    @Test
+    void junit_publishesRunEventsButNoPerTestEvents() throws Exception {
+        mockMvc.perform(post("/api/external/projects/{k}/test-runs/junit", KEY)
+                        .header("X-API-Key", apiKey)
+                        .contentType(MediaType.APPLICATION_XML).content(SUREFIRE_XML))
+                .andExpect(status().isCreated());
+
+        assertThat(applicationEvents.stream(WebhookEvent.class).map(WebhookEvent::type))
+                .containsExactly(WebhookEventType.RUN_COMPLETED, WebhookEventType.RUN_FAILED);
     }
 
     @Test
