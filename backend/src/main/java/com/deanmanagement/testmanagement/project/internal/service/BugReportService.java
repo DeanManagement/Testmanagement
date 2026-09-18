@@ -50,10 +50,20 @@ public class BugReportService {
     private final BugReportMapper bugReportMapper;
     private final AuditService auditService;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProjectEnvironmentService environmentService;
 
     public List<BugReportResponse> findByProject(UUID projectId) {
         requireBugReportsEnabled(projectId);
         return toResponsesWithReporters(bugReportRepository.findByProjectIdWithDetails(projectId));
+    }
+
+    /** Bug reports seen in one environment (PRD-032). */
+    public List<BugReportResponse> findByProjectAndEnvironment(UUID projectId, UUID environmentId) {
+        requireBugReportsEnabled(projectId);
+        return toResponsesWithReporters(bugReportRepository.findByProjectIdWithDetails(projectId).stream()
+                .filter(b -> b.getProjectEnvironment() != null
+                        && b.getProjectEnvironment().getId().equals(environmentId))
+                .toList());
     }
 
     public BugReportResponse findById(UUID projectId, UUID id) {
@@ -82,8 +92,8 @@ public class BugReportService {
         bugReport.setActualBehavior(request.actualBehavior());
         bugReport.setPriority(request.priority());
         bugReport.setStatus(BugReportStatus.OPEN);
-        bugReport.setEnvironment(request.environment());
         bugReport.setProject(project);
+        bugReport.assignEnvironment(environmentService.resolve(projectId, request.environmentId(), request.environment()));
 
         if (request.testResultId() != null) {
             bugReport.setTestResult(requireTestResult(projectId, request.testResultId()));
@@ -120,7 +130,8 @@ public class BugReportService {
         bugReport.setActualBehavior(request.actualBehavior());
         bugReport.setPriority(request.priority());
         bugReport.setStatus(request.status());
-        bugReport.setEnvironment(request.environment());
+        // The SPA sends the whole object, so null clears the environment like the other fields.
+        bugReport.assignEnvironment(environmentService.resolve(projectId, request.environmentId(), request.environment()));
 
         // Null means "clear the link" here, deliberately — the SPA sends the whole object, so an
         // absent assignee is how a human unassigns. A supplied id that does not resolve is a

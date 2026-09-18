@@ -8,6 +8,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepo
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
+import com.deanmanagement.testmanagement.project.internal.service.ProjectEnvironmentService;
 import com.deanmanagement.testmanagement.project.internal.entity.WebhookEventType;
 import com.deanmanagement.testmanagement.project.internal.webhook.WebhookEvent;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,6 +53,8 @@ class CiIngestionApiTest {
     private TestPlanRepository testPlanRepository;
     @Autowired
     private ApplicationEvents applicationEvents;
+    @Autowired
+    private ProjectEnvironmentService environmentService;
 
     private UUID projectId;
     private String apiKey;
@@ -180,6 +183,21 @@ class CiIngestionApiTest {
 
         assertThat(applicationEvents.stream(WebhookEvent.class).map(WebhookEvent::type))
                 .containsExactly(WebhookEventType.RUN_COMPLETED, WebhookEventType.RUN_FAILED);
+    }
+
+    /** PRD-032: a CI upload naming an existing environment in another case joins it. */
+    @Test
+    void junit_environmentNameResolvesToTheExistingEntry() throws Exception {
+        environmentService.resolve(projectId, null, "staging");
+
+        mockMvc.perform(post("/api/external/projects/{k}/test-runs/junit", KEY)
+                        .header("X-API-Key", apiKey)
+                        .param("environment", "Staging")
+                        .contentType(MediaType.APPLICATION_XML).content(JEST_XML))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.environment").value("staging"));
+
+        assertThat(environmentService.list(projectId, true)).hasSize(1);
     }
 
     @Test

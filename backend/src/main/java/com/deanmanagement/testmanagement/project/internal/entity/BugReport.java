@@ -47,6 +47,14 @@ public class BugReport extends BaseEntity {
 
     private String environment;
 
+    /**
+     * Source of truth for the environment (PRD-032); {@code environment} is a copy of its name
+     * kept for the many read paths. Set both through {@link #assignEnvironment}.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "environment_id")
+    private ProjectEnvironment projectEnvironment;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
@@ -62,4 +70,9 @@ public class BugReport extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id")
     private User assignee;
+
+    public void assignEnvironment(ProjectEnvironment environment) {
+        this.projectEnvironment = environment;
+        this.environment = environment != null ? environment.getName() : null;
+    }
 }

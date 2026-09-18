@@ -79,6 +79,7 @@ public class TestRunService {
     private final ApplicationEventPublisher eventPublisher;
     private final ProjectSequenceService projectSequenceService;
     private final RunEventPublisher runEventPublisher;
+    private final ProjectEnvironmentService environmentService;
 
     private static final List<TestResultStatus> SEVERITY_ORDER = List.of(
             TestResultStatus.FAILED, TestResultStatus.BLOCKED, TestResultStatus.SKIPPED,
@@ -208,6 +209,7 @@ public class TestRunService {
 
         TestRun run = testRunMapper.toEntity(request);
         run.setProject(project);
+        run.assignEnvironment(environmentService.resolve(projectId, request.environmentId(), request.environment()));
         run.setStatus(TestRunStatus.PLANNED);
         int runNumber = projectSequenceService.nextTestRunNumber(projectId);
         run.setKey(project.getKey() + "-Run-" + runNumber);
@@ -283,11 +285,16 @@ public class TestRunService {
                 .map(r -> r.getTestCase().getId())
                 .collect(Collectors.toSet());
 
+        // The clone keeps the source's environment unless the request names one ("" clears it).
+        boolean keepsEnvironment = request.environmentId() == null && request.environment() == null;
         CreateTestRunRequest createRequest = new CreateTestRunRequest(
                 request.name(),
                 request.environment(),
                 testCaseIds,
                 null,
+                null,
+                keepsEnvironment && source.getProjectEnvironment() != null
+                        ? source.getProjectEnvironment().getId() : request.environmentId(),
                 null
         );
         TestRunResponse response = create(projectId, createRequest, userId);
@@ -313,8 +320,9 @@ public class TestRunService {
             }
             run.setName(request.name());
         }
-        if (request.environment() != null) {
-            run.setEnvironment(request.environment());
+        // Null (both) means unchanged; "" clears; an id wins over a name (PRD-032 §3.2).
+        if (request.environmentId() != null || request.environment() != null) {
+            run.assignEnvironment(environmentService.resolve(projectId, request.environmentId(), request.environment()));
         }
 
         if (request.testPlanId() != null) {

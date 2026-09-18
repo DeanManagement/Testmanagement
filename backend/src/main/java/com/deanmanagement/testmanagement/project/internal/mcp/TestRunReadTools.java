@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.TestRunSummaryResp
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestRunListFilter;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
+import com.deanmanagement.testmanagement.project.internal.service.ProjectEnvironmentService;
 import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
 import lombok.RequiredArgsConstructor;
@@ -43,8 +44,26 @@ public class TestRunReadTools {
 
     private final McpCallerContext callerContext;
     private final TestRunService testRunService;
+    private final ProjectEnvironmentService environmentService;
     private final com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository
             testRunRepository;
+
+    @McpTool(
+            name = "list_environments",
+            description = """
+                    The project's environments, e.g. staging or Chrome · Production. Pass one of
+                    these names as the environment of a run or bug report instead of inventing a
+                    new one: an unknown name is registered as a new environment. Archived
+                    environments are left out.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
+    public McpDtos.EnvironmentList listEnvironments() {
+        var caller = callerContext.require();
+        return new McpDtos.EnvironmentList(environmentService.list(caller.projectId(), false).stream()
+                .map(e -> new McpDtos.Environment(e.id(), e.name(), e.description()))
+                .toList());
+    }
 
     @McpTool(
             name = "list_test_runs",
@@ -69,7 +88,7 @@ public class TestRunReadTools {
 
         Page<TestRunSummaryResponse> result = testRunService.findByProject(caller.projectId(),
                 new TestRunListFilter(query == null || query.isBlank() ? null : query,
-                        status, null, null, null),
+                        status, null, null, null, null),
                 pageable);
 
         List<McpDtos.TestRunSummary> runs = result.getContent().stream()

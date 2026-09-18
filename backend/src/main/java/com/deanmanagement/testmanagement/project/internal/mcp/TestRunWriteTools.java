@@ -61,7 +61,7 @@ public class TestRunWriteTools {
     @Transactional
     public McpDtos.CreatedTestRun createTestRun(
             @McpToolParam(description = "Run name, max 255 characters") String name,
-            @McpToolParam(description = "Environment the run targets, e.g. staging", required = false)
+            @McpToolParam(description = "Environment the run targets; prefer a name from list_environments", required = false)
             String environment,
             @McpToolParam(description = "UUIDs of test cases to seed the run with", required = false)
             Set<UUID> testCaseIds,

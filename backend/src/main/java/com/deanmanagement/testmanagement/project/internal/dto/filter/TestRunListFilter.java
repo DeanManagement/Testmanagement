@@ -14,6 +14,7 @@ public record TestRunListFilter(
         List<TestRunStatus> status,
         UUID testPlanId,
         UUID executorId,
-        Instant startedAfter
+        Instant startedAfter,
+        UUID environmentId
 ) {
 }

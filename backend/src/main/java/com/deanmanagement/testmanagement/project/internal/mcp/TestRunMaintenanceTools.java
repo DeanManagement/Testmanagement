@@ -47,7 +47,7 @@ public class TestRunMaintenanceTools {
     public McpDtos.UpdatedTestRun updateTestRun(
             @McpToolParam(description = "Test run UUID or key, e.g. PROJ-Run-7") String runIdOrKey,
             @McpToolParam(description = "New name, max 255 characters", required = false) String name,
-            @McpToolParam(description = "New environment, e.g. staging; \"\" clears it",
+            @McpToolParam(description = "New environment, a name from list_environments; \"\" clears it",
                     required = false) String environment,
             @McpToolParam(description = "File the run under this test plan", required = false)
             UUID testPlanId) {
@@ -87,7 +87,7 @@ public class TestRunMaintenanceTools {
             @McpToolParam(description = "UUID or key of the run to copy, e.g. PROJ-Run-7")
             String runIdOrKey,
             @McpToolParam(description = "Name of the new run, max 255 characters") String name,
-            @McpToolParam(description = "Environment of the new run, e.g. staging", required = false)
+            @McpToolParam(description = "Environment of the new run; omit to keep the source run's, \"\" for none", required = false)
             String environment) {
 
         var caller = callerContext.requireWriter();

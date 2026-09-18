@@ -37,6 +37,14 @@ public class TestRun extends BaseEntity {
 
     private String environment;
 
+    /**
+     * Source of truth for the environment (PRD-032); {@code environment} is a copy of its name
+     * kept for the many read paths. Set both through {@link #assignEnvironment}.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "environment_id")
+    private ProjectEnvironment projectEnvironment;
+
     private Instant startTime;
 
     private Instant endTime;
@@ -68,4 +76,9 @@ public class TestRun extends BaseEntity {
 
     @OneToOne(mappedBy = "testRun", fetch = FetchType.LAZY)
     private AllureReport allureReport;
+
+    public void assignEnvironment(ProjectEnvironment environment) {
+        this.projectEnvironment = environment;
+        this.environment = environment != null ? environment.getName() : null;
+    }
 }

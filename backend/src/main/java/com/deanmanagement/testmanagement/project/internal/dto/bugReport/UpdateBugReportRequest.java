@@ -19,6 +19,7 @@ public record UpdateBugReportRequest(
         String environment,
         UUID testResultId,
         UUID testRunId,
-        UUID assigneeId
+        UUID assigneeId,
+        UUID environmentId
 ) {
 }

@@ -16,6 +16,11 @@ public record UpdateTestRunRequest(
         String environment,
         TestRunStatus status,
         String reopenReason,
-        UUID testPlanId
+        UUID testPlanId,
+        UUID environmentId
 ) {
+    public UpdateTestRunRequest(String name, String environment, TestRunStatus status, String reopenReason,
+                                UUID testPlanId) {
+        this(name, environment, status, reopenReason, testPlanId, null);
+    }
 }

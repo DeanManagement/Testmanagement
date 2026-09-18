@@ -159,6 +159,12 @@ final class McpDtos {
                           TestRunStatus status, int total, int passed, int failed, int blocked,
                           int skipped, int pending, @Nullable Instant endTime) {}
 
+    /** An entry of the project's environment catalogue (PRD-032). */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record Environment(UUID id, String name, @Nullable String description) {}
+
+    record EnvironmentList(List<Environment> environments) {}
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record TestRunPage(List<TestRunSummary> testRuns, int page, int size, long totalElements,
                        boolean hasMore) {}

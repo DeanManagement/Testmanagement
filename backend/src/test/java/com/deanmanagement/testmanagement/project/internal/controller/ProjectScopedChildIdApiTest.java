@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
+import com.deanmanagement.testmanagement.project.internal.service.ProjectEnvironmentService;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
@@ -73,6 +74,7 @@ class ProjectScopedChildIdApiTest {
     @Autowired private TestRunRepository testRunRepository;
     @Autowired private TestResultRepository testResultRepository;
     @Autowired private BugReportRepository bugReportRepository;
+    @Autowired private ProjectEnvironmentService environmentService;
 
     private String admin;
 
@@ -168,6 +170,24 @@ class ProjectScopedChildIdApiTest {
     void createRun_withAnotherProjectsTestPlan_isNotFound() throws Exception {
         createRun("{\"name\":\"R\",\"testPlanId\":\"" + theirPlanId + "\"}")
                 .andExpect(status().isNotFound());
+    }
+
+    /** PRD-032: an environment id is scoped like every other child id. */
+    @Test
+    void createRun_withAnotherProjectsEnvironment_isNotFound() throws Exception {
+        UUID theirEnvironmentId = environmentService.resolve(theirs.getId(), null, "staging").getId();
+
+        createRun("{\"name\":\"R\",\"environmentId\":\"" + theirEnvironmentId + "\"}")
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void createRun_withOwnEnvironmentId_takesItsName() throws Exception {
+        UUID ourEnvironmentId = environmentService.resolve(ours.getId(), null, "Staging").getId();
+
+        createRun("{\"name\":\"R\",\"environmentId\":\"" + ourEnvironmentId + "\"}")
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.environment").value("Staging"));
     }
 
     @Test

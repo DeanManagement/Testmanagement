@@ -24,6 +24,12 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of("NOT_FOUND", ex.getMessage()));
     }
 
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponse.of("CONFLICT", ex.getMessage()));
+    }
+
     @ExceptionHandler(DuplicateKeyException.class)
     public ResponseEntity<ErrorResponse> handleDuplicate(DuplicateKeyException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)

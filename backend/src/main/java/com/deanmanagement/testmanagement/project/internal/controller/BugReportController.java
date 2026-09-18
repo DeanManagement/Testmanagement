@@ -38,9 +38,13 @@ public class BugReportController {
     @GetMapping
     @RequireProjectRole
     public List<BugReportResponse> findAll(@PathVariable UUID projectId,
-                                           @RequestParam(required = false) UUID testResultId) {
+                                           @RequestParam(required = false) UUID testResultId,
+                                           @RequestParam(required = false) UUID environmentId) {
         if (testResultId != null) {
             return bugReportService.findByTestResult(projectId, testResultId);
+        }
+        if (environmentId != null) {
+            return bugReportService.findByProjectAndEnvironment(projectId, environmentId);
         }
         return bugReportService.findByProject(projectId);
     }

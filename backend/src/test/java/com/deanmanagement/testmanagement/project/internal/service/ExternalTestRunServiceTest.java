@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.testrun.ExternalTe
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.TestRunMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectEnvironment;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
@@ -55,6 +56,9 @@ class ExternalTestRunServiceTest {
 
     @Mock
     private RunEventPublisher runEventPublisher;
+
+    @Mock
+    private ProjectEnvironmentService environmentService;
 
     @InjectMocks
     private ExternalTestRunService externalTestRunService;
@@ -122,8 +126,11 @@ class ExternalTestRunServiceTest {
                 TEST_CASE_KEY, TestResultStatus.FAILED, "Login failed", "BUG-123", stepResults
         );
         var request = new ExternalCreateTestRunRequest("CI Run", "staging", List.of(resultReq));
+        ProjectEnvironment staging = new ProjectEnvironment();
+        staging.setName("staging");
 
         when(refResolver.resolveProject(PROJECT_KEY)).thenReturn(project);
+        when(environmentService.resolve(PROJECT_ID, null, "staging")).thenReturn(staging);
         when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.of(testCase));
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));
         when(testRunMapper.toResponse(any(TestRun.class))).thenReturn(sampleRunResponse());

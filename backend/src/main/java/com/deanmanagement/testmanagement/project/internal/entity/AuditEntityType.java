@@ -10,5 +10,6 @@ public enum AuditEntityType {
     TEST_PLAN,
     BUG_REPORT,
     TEST_CASE_FOLDER,
-    REQUIREMENT
+    REQUIREMENT,
+    ENVIRONMENT
 }

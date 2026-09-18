@@ -52,6 +52,10 @@ public final class TestRunSpecifications {
                 predicates.add(cb.equal(root.get("executor").get("id"), filter.executorId()));
             }
 
+            if (filter.environmentId() != null) {
+                predicates.add(cb.equal(root.get("projectEnvironment").get("id"), filter.environmentId()));
+            }
+
             if (filter.startedAfter() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), filter.startedAfter()));
             }

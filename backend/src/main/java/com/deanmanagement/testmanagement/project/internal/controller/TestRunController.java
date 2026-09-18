@@ -65,8 +65,10 @@ public class TestRunController {
                                          @RequestParam(required = false) UUID executorId,
                                          @RequestParam(required = false)
                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startedAfter,
+                                         @RequestParam(required = false) UUID environmentId,
                                          @PageableDefault(size = PageableUtils.DEFAULT_SIZE) Pageable pageable) {
-        TestRunListFilter filter = new TestRunListFilter(q, status, testPlanId, executorId, startedAfter);
+        TestRunListFilter filter = new TestRunListFilter(q, status, testPlanId, executorId, startedAfter,
+                environmentId);
         return testRunService.findByProject(projectId, filter, PageableUtils.normalize(pageable));
     }
 

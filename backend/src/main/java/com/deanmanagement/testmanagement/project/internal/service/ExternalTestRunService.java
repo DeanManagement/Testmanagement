@@ -35,6 +35,7 @@ public class ExternalTestRunService {
     private final ExternalRefResolver refResolver;
     private final PipelineRunLinker pipelineRunLinker;
     private final RunEventPublisher runEventPublisher;
+    private final ProjectEnvironmentService environmentService;
 
     /**
      * @param projectRef the project key or UUID from the URL.
@@ -50,7 +51,7 @@ public class ExternalTestRunService {
 
         TestRun run = new TestRun();
         run.setName(request.name());
-        run.setEnvironment(request.environment());
+        run.assignEnvironment(environmentService.resolve(project.getId(), null, request.environment()));
         run.setProject(project);
         run.setStatus(TestRunStatus.COMPLETED);
         run.setStartTime(now);

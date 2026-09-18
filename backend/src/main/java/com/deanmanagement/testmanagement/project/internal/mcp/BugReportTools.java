@@ -78,7 +78,7 @@ public class BugReportTools {
             String expectedBehavior,
             @McpToolParam(description = "What actually happened", required = false)
             String actualBehavior,
-            @McpToolParam(description = "Where it was seen, e.g. staging", required = false)
+            @McpToolParam(description = "Where it was seen; prefer a name from list_environments", required = false)
             String environment,
             @McpToolParam(description = "Test result this bug came from", required = false)
             UUID testResultId,
@@ -112,7 +112,7 @@ public class BugReportTools {
         // No assigneeId: deciding who fixes a bug is a human's call (PRD-025 §3.4).
         var request = new CreateBugReportRequest(title, description, stepsToReproduce,
                 expectedBehavior, actualBehavior, priority, environment, testResultId, testRunId,
-                null);
+                null, null);
         validator.validate(request);
 
         return detail(enabled(() ->
