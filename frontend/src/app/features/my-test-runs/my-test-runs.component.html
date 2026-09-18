@@ -1,6 +1,20 @@
 <div class="list-container">
   <div class="list-header">
     <h2>{{ 'myTestRuns.title' | translate }}</h2>
+    @if (environmentNames$ | async; as environmentNames) {
+      @if (environmentNames.length > 0) {
+        <mat-form-field appearance="outline" class="environment-filter">
+          <mat-label>{{ 'environment.label' | translate }}</mat-label>
+          <mat-select [ngModel]="environmentFilter$ | async" (selectionChange)="setEnvironmentFilter($event.value)"
+                      data-test-id="my-test-runs-environment-filter">
+            <mat-option value="">{{ 'environment.all' | translate }}</mat-option>
+            @for (name of environmentNames; track name) {
+              <mat-option [value]="name">{{ name }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      }
+    }
   </div>
 
   @if (activeLoading$ | async) {

@@ -5,15 +5,18 @@ import { MatDialogModule, MAT_DIALOG_DATA, MatDialogRef } from '@angular/materia
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TranslateModule } from '@ngx-translate/core';
+import { EnvironmentInputComponent } from '../../../shared/components/environment-input/environment-input.component';
 
 export interface CloneTestRunDialogData {
+  projectId: string;
   name: string;
   environment: string;
 }
 
 export interface CloneTestRunDialogResult {
   name: string;
-  environment?: string;
+  /** Always sent: prefilled with the source's, so "" means the admin cleared it (PRD-032). */
+  environment: string;
 }
 
 @Component({
@@ -26,6 +29,7 @@ export interface CloneTestRunDialogResult {
     MatFormFieldModule,
     MatInputModule,
     TranslateModule,
+    EnvironmentInputComponent,
   ],
   template: `
     <h2 mat-dialog-title id="clone-test-run-dialog-title">{{ 'testRun.cloneDialog.title' | translate }}</h2>
@@ -34,10 +38,8 @@ export interface CloneTestRunDialogResult {
         <mat-label>{{ 'testRun.cloneDialog.name' | translate }}</mat-label>
         <input matInput [(ngModel)]="name" required aria-required="true" />
       </mat-form-field>
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ 'testRun.cloneDialog.environment' | translate }}</mat-label>
-        <input matInput [(ngModel)]="environment" />
-      </mat-form-field>
+      <app-environment-input [projectId]="data.projectId" labelKey="testRun.cloneDialog.environment"
+                             testId="clone-test-run-environment" [(ngModel)]="environment" />
     </mat-dialog-content>
     <mat-dialog-actions align="end">
       <button mat-button (click)="onCancel()">{{ 'testRun.cloneDialog.cancel' | translate }}</button>
@@ -53,7 +55,7 @@ export interface CloneTestRunDialogResult {
 })
 export class CloneTestRunDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<CloneTestRunDialogComponent>);
-  private readonly data: CloneTestRunDialogData = inject(MAT_DIALOG_DATA);
+  readonly data: CloneTestRunDialogData = inject(MAT_DIALOG_DATA);
 
   name = `Copy of ${this.data.name}`;
   environment = this.data.environment ?? '';
@@ -65,7 +67,7 @@ export class CloneTestRunDialogComponent {
   onConfirm(): void {
     const result: CloneTestRunDialogResult = {
       name: this.name.trim(),
-      environment: this.environment.trim() || undefined,
+      environment: this.environment.trim(),
     };
     this.dialogRef.close(result);
   }

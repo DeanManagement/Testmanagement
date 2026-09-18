@@ -314,7 +314,10 @@
       "filterByFolder": "Nach Ordner filtern",
       "allFolders": "Alle Ordner",
       "pickerHint": "Wählen Sie die Testfälle für diesen Lauf aus.",
-      "searchTestCases": "Testfälle suchen..."
+      "searchTestCases": "Testfälle suchen...",
+      "multiEnvironment": "Auf mehreren Umgebungen ausführen",
+      "environments": "Umgebungen",
+      "multiEnvironmentHint": "Ein Testlauf je Umgebung, höchstens {{max}}."
     },
     "status": {
       "PLANNED": "Geplant",
@@ -1043,6 +1046,41 @@
       "tester": "Sie dürfen Testfälle schreiben und Läufe durchführen, daher werden die Kapitel dazu angezeigt.",
       "viewer": "Sie haben Leserechte, daher behandelt dieses Handbuch das Lesen und Nachvollziehen von Testergebnissen.",
       "none": "Sie sind noch in keinem Projekt Mitglied. Bitten Sie einen Administrator um Aufnahme."
+    }
+  },
+  "environment": {
+    "label": "Umgebung",
+    "all": "Alle Umgebungen",
+    "addNew": "\"{{name}}\" hinzufügen",
+    "unspecified": "Nicht angegeben",
+    "groupBy": "Nach Umgebung gruppieren",
+    "passRate": "Erfolgsquote",
+    "title": "Umgebungen",
+    "description": "Wo Tests laufen, z. B. Staging oder Chrome · Production. Testläufe und Fehlerberichte wählen aus dieser Liste.",
+    "manage": "Umgebungen verwalten",
+    "newName": "Neue Umgebung",
+    "add": "Hinzufügen",
+    "empty": "Noch keine Umgebungen. Sie werden auch automatisch angelegt, wenn ein Testlauf, Fehlerbericht oder CI-Upload eine neue nennt.",
+    "reorder": "Zum Sortieren ziehen",
+    "rename": "Umbenennen",
+    "archived": "Archiviert",
+    "usage": "{{runs}} Testläufe · {{bugs}} Fehlerberichte",
+    "activeHint": "Aktive Umgebungen werden in der Auswahl angeboten. Archivierte bleiben an vergangenen Testläufen.",
+    "inUseHint": "In Verwendung. Archiviere sie oder führe sie mit einer anderen Umgebung zusammen.",
+    "deleteConfirm": "Die Umgebung \"{{name}}\" löschen?",
+    "results": {
+      "title": "Letztes Ergebnis je Umgebung",
+      "empty": "Noch nicht ausgeführt.",
+      "status": "Status",
+      "run": "Testlauf",
+      "date": "Datum"
+    },
+    "merge": {
+      "action": "Zusammenführen mit…",
+      "title": "\"{{name}}\" zusammenführen",
+      "explanation": "Verschiebt ihre {{runs}} Testläufe und {{bugs}} Fehlerberichte in die gewählte Umgebung und löscht danach \"{{name}}\". Das kann nicht rückgängig gemacht werden.",
+      "target": "Zusammenführen mit",
+      "confirm": "Zusammenführen"
     }
   }
 }

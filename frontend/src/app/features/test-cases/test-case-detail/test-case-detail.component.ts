@@ -27,10 +27,13 @@ import { EntityHistoryComponent } from '../../../shared/components/entity-histor
 import { TestCaseVersionsComponent } from '../test-case-versions/test-case-versions.component';
 import { TestCaseParametersComponent } from '../test-case-parameters/test-case-parameters.component';
 
+import { EnvironmentResultsComponent } from '../environment-results/environment-results.component';
+
 @Component({
   selector: 'app-test-case-detail',
   standalone: true,
   imports: [
+    EnvironmentResultsComponent,
     AsyncPipe,
     LowerCasePipe,
     RouterLink,

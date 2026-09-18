@@ -1,0 +1,84 @@
+<div class="environment-container">
+  <div class="page-header">
+    <a mat-button [routerLink]="['/projects', projectId]" class="back-link" data-test-id="environment-back">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'common.back' | translate }}
+    </a>
+    <h1 data-test-id="environment-title">{{ 'environment.title' | translate }}</h1>
+  </div>
+
+  <p class="page-hint">{{ 'environment.description' | translate }}</p>
+
+  <form class="tm-card add-card" (ngSubmit)="add()">
+    <mat-form-field appearance="outline" class="add-field">
+      <mat-label>{{ 'environment.newName' | translate }}</mat-label>
+      <input matInput name="newName" [(ngModel)]="newName" maxlength="255" data-test-id="environment-new-name">
+    </mat-form-field>
+    <button mat-flat-button type="submit" [disabled]="!newName.trim()" data-test-id="environment-add-btn">
+      <mat-icon>add</mat-icon>
+      {{ 'environment.add' | translate }}
+    </button>
+  </form>
+
+  @if (loading && environments.length === 0) {
+    <div class="spinner-container"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else if (environments.length === 0) {
+    <div class="empty-state" data-test-id="environment-empty">
+      <mat-icon>dns</mat-icon>
+      <p>{{ 'environment.empty' | translate }}</p>
+    </div>
+  } @else {
+    <div class="tm-card environment-list" cdkDropList (cdkDropListDropped)="drop($event)" data-test-id="environment-list">
+      @for (environment of environments; track environment.id) {
+        <div class="environment-row" cdkDrag [class.archived]="environment.archived" data-test-id="environment-row">
+          <mat-icon class="drag-handle" cdkDragHandle [attr.aria-label]="'environment.reorder' | translate">drag_indicator</mat-icon>
+
+          <div class="environment-main">
+            @if (editingId === environment.id) {
+              <mat-form-field appearance="outline" class="rename-field" subscriptSizing="dynamic">
+                <input matInput [(ngModel)]="editingName" maxlength="255"
+                       (keydown.enter)="saveRename(environment)" (keydown.escape)="cancelRename()"
+                       [attr.aria-label]="'environment.rename' | translate" data-test-id="environment-rename-input">
+              </mat-form-field>
+              <button mat-icon-button (click)="saveRename(environment)" [attr.aria-label]="'common.save' | translate">
+                <mat-icon>check</mat-icon>
+              </button>
+              <button mat-icon-button (click)="cancelRename()" [attr.aria-label]="'common.cancel' | translate">
+                <mat-icon>close</mat-icon>
+              </button>
+            } @else {
+              <span class="environment-name">{{ environment.name }}</span>
+              @if (environment.archived) {
+                <span class="archived-badge">{{ 'environment.archived' | translate }}</span>
+              }
+              <span class="usage">
+                {{ 'environment.usage' | translate: { runs: environment.runCount, bugs: environment.bugCount } }}
+              </span>
+            }
+          </div>
+
+          <div class="environment-actions">
+            <mat-slide-toggle [checked]="!environment.archived" (change)="setArchived(environment, !$event.checked)"
+                              [matTooltip]="'environment.activeHint' | translate" data-test-id="environment-active-toggle">
+            </mat-slide-toggle>
+            <button mat-icon-button (click)="startRename(environment)" [attr.aria-label]="'environment.rename' | translate"
+                    data-test-id="environment-rename-btn">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button mat-icon-button (click)="merge(environment)" [disabled]="environments.length < 2"
+                    [matTooltip]="'environment.merge.action' | translate"
+                    [attr.aria-label]="'environment.merge.action' | translate" data-test-id="environment-merge-btn">
+              <mat-icon>merge</mat-icon>
+            </button>
+            <span [matTooltip]="isInUse(environment) ? ('environment.inUseHint' | translate) : ''">
+              <button mat-icon-button class="danger" (click)="remove(environment)" [disabled]="isInUse(environment)"
+                      [attr.aria-label]="'common.delete' | translate" data-test-id="environment-delete-btn">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </span>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

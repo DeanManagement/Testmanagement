@@ -314,7 +314,10 @@
       "filterByFolder": "Filter by folder",
       "allFolders": "All folders",
       "pickerHint": "Select test cases to include in this run.",
-      "searchTestCases": "Search test cases..."
+      "searchTestCases": "Search test cases...",
+      "multiEnvironment": "Run on multiple environments",
+      "environments": "Environments",
+      "multiEnvironmentHint": "One run per environment, up to {{max}}."
     },
     "status": {
       "PLANNED": "Planned",
@@ -1043,6 +1046,41 @@
       "tester": "You can write test cases and carry out runs, so the authoring chapters are shown.",
       "viewer": "You have read access, so this manual covers reading and following test results.",
       "none": "You are not a member of any project yet. Ask an administrator to add you."
+    }
+  },
+  "environment": {
+    "label": "Environment",
+    "all": "All environments",
+    "addNew": "Add \"{{name}}\"",
+    "unspecified": "Unspecified",
+    "groupBy": "Group by environment",
+    "passRate": "Pass rate",
+    "title": "Environments",
+    "description": "Where tests run, e.g. Staging or Chrome · Production. Runs and bug reports pick from this list.",
+    "manage": "Manage environments",
+    "newName": "New environment",
+    "add": "Add",
+    "empty": "No environments yet. They are also added automatically when a run, bug report or CI upload names a new one.",
+    "reorder": "Drag to reorder",
+    "rename": "Rename",
+    "archived": "Archived",
+    "usage": "{{runs}} runs · {{bugs}} bug reports",
+    "activeHint": "Active environments are offered in pickers. Archived ones stay on past runs.",
+    "inUseHint": "In use. Archive it, or merge it into another environment.",
+    "deleteConfirm": "Delete the environment \"{{name}}\"?",
+    "results": {
+      "title": "Latest result by environment",
+      "empty": "Not executed yet.",
+      "status": "Status",
+      "run": "Run",
+      "date": "Date"
+    },
+    "merge": {
+      "action": "Merge into…",
+      "title": "Merge \"{{name}}\"",
+      "explanation": "Moves its {{runs}} runs and {{bugs}} bug reports to the environment you pick, then deletes \"{{name}}\". This can't be undone.",
+      "target": "Merge into",
+      "confirm": "Merge"
     }
   }
 }

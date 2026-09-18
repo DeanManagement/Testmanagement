@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -23,6 +23,9 @@ import { TestRun, TestRunQuery, TestRunStatus } from '../../../shared/models/tes
 import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-test-run-dialog/clone-test-run-dialog.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { AutomationPanelComponent } from '../../automation/automation-panel.component';
+
+import { EnvironmentApiService } from '../../../core/services/environment-api.service';
+import { ProjectEnvironment } from '../../../shared/models/environment.model';
 
 @Component({
   selector: 'app-test-run-list',
@@ -54,6 +57,8 @@ export class TestRunListComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly environmentApi = inject(EnvironmentApiService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   projectId = '';
   testRuns$ = this.store.select(selectAllTestRuns);
@@ -63,6 +68,9 @@ export class TestRunListComponent implements OnInit {
   displayedColumns = ['key', 'name', 'environment', 'status', 'results', 'actions'];
   searchTerm = '';
   statusFilter: TestRunStatus | '' = '';
+  environmentFilter = '';
+  /** Archived ones included: they still label historical runs. */
+  environments: ProjectEnvironment[] = [];
   sortActive = 'updatedAt';
   sortDirection: 'asc' | 'desc' = 'desc';
   allStatuses: TestRunStatus[] = ['PLANNED', 'IN_PROGRESS', 'COMPLETED', 'ABORTED'];
@@ -79,18 +87,26 @@ export class TestRunListComponent implements OnInit {
     this.route.queryParamMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       this.searchTerm = params.get('q') ?? '';
       this.statusFilter = (params.get('status') as TestRunStatus) ?? '';
+      this.environmentFilter = params.get('environmentId') ?? '';
       this.sortActive = params.get('sort')?.split(',')[0] ?? 'updatedAt';
       this.sortDirection = (params.get('sort')?.split(',')[1] as 'asc' | 'desc') ?? 'desc';
 
       this.currentQuery = {
         q: this.searchTerm || undefined,
         status: this.statusFilter ? [this.statusFilter] : undefined,
+        environmentId: this.environmentFilter || undefined,
         page: params.get('page') ? Number(params.get('page')) : 0,
         size: params.get('size') ? Number(params.get('size')) : 50,
         sort: params.get('sort') ?? 'updatedAt,desc',
       };
       this.store.dispatch(TestRunActions.loadTestRuns({ projectId: this.projectId, query: this.currentQuery }));
     });
+
+    this.environmentApi.getAll(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((environments) => {
+        this.environments = environments;
+        this.cdr.detectChanges();
+      });
 
     this.searchChange$
       .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
@@ -100,7 +116,12 @@ export class TestRunListComponent implements OnInit {
   applyFilters(): void {
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { q: this.searchTerm || null, status: this.statusFilter || null, page: null },
+      queryParams: {
+        q: this.searchTerm || null,
+        status: this.statusFilter || null,
+        environmentId: this.environmentFilter || null,
+        page: null,
+      },
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });
@@ -135,7 +156,7 @@ export class TestRunListComponent implements OnInit {
 
   cloneTestRun(run: TestRun): void {
     const dialogRef = this.dialog.open(CloneTestRunDialogComponent, {
-      data: { name: run.name, environment: run.environment },
+      data: { projectId: this.projectId, name: run.name, environment: run.environment ?? '' },
     });
     dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result: CloneTestRunDialogResult | undefined) => {
       if (result) {

@@ -102,9 +102,46 @@
         <div class="section-header">
           <mat-icon>play_circle</mat-icon>
           <h3>{{ 'testPlan.detail.testRuns' | translate }}</h3>
+          @if (summary.runs.length > 0) {
+            <mat-slide-toggle class="group-toggle" [checked]="groupByEnvironment"
+                              (change)="groupByEnvironment = $event.checked" data-test-id="test-plan-group-by-environment">
+              {{ 'environment.groupBy' | translate }}
+            </mat-slide-toggle>
+          }
         </div>
         @if (summary.runs.length === 0) {
           <p class="empty-hint">{{ 'testPlan.detail.noRuns' | translate }}</p>
+        } @else if (groupByEnvironment) {
+          <div class="table-scroll">
+            <table mat-table [dataSource]="environmentRollups" class="data-table" data-test-id="test-plan-environment-table">
+              <ng-container matColumnDef="environment">
+                <th mat-header-cell *matHeaderCellDef>{{ 'environment.label' | translate }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.environment ?? ('environment.unspecified' | translate) }}</td>
+              </ng-container>
+              <ng-container matColumnDef="runs">
+                <th mat-header-cell *matHeaderCellDef>{{ 'testPlan.detail.testRuns' | translate }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.runs }}</td>
+              </ng-container>
+              <ng-container matColumnDef="total">
+                <th mat-header-cell *matHeaderCellDef>{{ 'report.total' | translate }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.total }}</td>
+              </ng-container>
+              <ng-container matColumnDef="passed">
+                <th mat-header-cell *matHeaderCellDef>{{ 'report.passed' | translate }}</th>
+                <td mat-cell *matCellDef="let row" class="passed-cell">{{ row.passed }}</td>
+              </ng-container>
+              <ng-container matColumnDef="failed">
+                <th mat-header-cell *matHeaderCellDef>{{ 'report.failed' | translate }}</th>
+                <td mat-cell *matCellDef="let row" class="failed-cell">{{ row.failed }}</td>
+              </ng-container>
+              <ng-container matColumnDef="passRate">
+                <th mat-header-cell *matHeaderCellDef>{{ 'environment.passRate' | translate }}</th>
+                <td mat-cell *matCellDef="let row">{{ row.passRate === null ? '-' : row.passRate + '%' }}</td>
+              </ng-container>
+              <tr mat-header-row *matHeaderRowDef="environmentColumns"></tr>
+              <tr mat-row *matRowDef="let row; columns: environmentColumns"></tr>
+            </table>
+          </div>
         } @else {
           <div class="table-scroll">
             <table mat-table [dataSource]="summary.runs" class="data-table" data-test-id="test-plan-runs-table">

@@ -503,7 +503,7 @@ export class TestRunDetailComponent implements OnInit {
 
   cloneTestRun(run: TestRun): void {
     const dialogRef = this.dialog.open(CloneTestRunDialogComponent, {
-      data: { name: run.name, environment: run.environment },
+      data: { projectId: this.projectId, name: run.name, environment: run.environment ?? '' },
     });
     dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result: CloneTestRunDialogResult | undefined) => {
       if (result) {

@@ -8,6 +8,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -37,10 +38,13 @@ Chart.register(
   CategoryScale, LinearScale, Tooltip, Legend
 );
 
+import { EnvironmentRollup, runsByEnvironment } from './runs-by-environment';
+
 @Component({
   selector: 'app-test-plan-detail',
   standalone: true,
   imports: [
+    MatSlideToggleModule,
     AsyncPipe,
     DecimalPipe,
     LowerCasePipe,
@@ -75,6 +79,9 @@ export class TestPlanDetailComponent implements OnInit {
   testPlan$: Observable<TestPlan | undefined> = of(undefined);
   summary: TestPlanSummary | null = null;
   runColumns = ['name', 'environment', 'status', 'total', 'passed', 'failed'];
+  environmentColumns = ['environment', 'runs', 'total', 'passed', 'failed', 'passRate'];
+  groupByEnvironment = false;
+  environmentRollups: EnvironmentRollup[] = [];
 
   private resultDoughnutChart: Chart | null = null;
   private runStatusBarChart: Chart | null = null;
@@ -108,6 +115,7 @@ export class TestPlanDetailComponent implements OnInit {
   private loadSummary(): void {
     this.testPlanApi.getSummary(this.projectId, this.planId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((summary) => {
       this.summary = summary;
+      this.environmentRollups = runsByEnvironment(summary.runs);
       this.cdr.detectChanges();
       this.renderCharts();
     });

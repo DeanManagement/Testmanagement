@@ -67,6 +67,7 @@ export interface TestRunQuery {
   status?: TestRunStatus[];
   testPlanId?: string;
   executorId?: string;
+  environmentId?: string;
   startedAfter?: string;
   page?: number;
   size?: number;
@@ -79,7 +80,12 @@ export interface CreateTestRunRequest {
   testCaseIds?: string[];
   testPlanId?: string;
   executorId?: string;
+  /** Only for createAcrossEnvironments: one run per id (PRD-032). */
+  environmentIds?: string[];
 }
+
+/** Server-side limit on environmentIds in one request. */
+export const MAX_ENVIRONMENTS_PER_REQUEST = 20;
 
 export interface UpdateTestRunRequest {
   name: string;

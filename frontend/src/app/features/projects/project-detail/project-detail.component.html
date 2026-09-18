@@ -104,6 +104,16 @@
       </div>
       <div class="setting-item">
         <div class="setting-info">
+          <h4>{{ 'environment.title' | translate }}</h4>
+          <p class="setting-description">{{ 'environment.description' | translate }}</p>
+        </div>
+        <a mat-stroked-button [routerLink]="['/projects', project.id, 'environments']" data-test-id="project-settings-environments-link">
+          <mat-icon>dns</mat-icon>
+          {{ 'environment.manage' | translate }}
+        </a>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
           <h4>{{ 'webhook.title' | translate }}</h4>
           <p class="setting-description">{{ 'webhook.description' | translate }}</p>
         </div>

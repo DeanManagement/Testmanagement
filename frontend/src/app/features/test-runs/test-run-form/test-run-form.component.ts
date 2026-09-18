@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angul
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators, FormsModule } from '@angular/forms';
 import { take } from 'rxjs/operators';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
@@ -12,6 +12,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSelectModule } from '@angular/material/select';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TranslateModule } from '@ngx-translate/core';
 import { AsyncPipe } from '@angular/common';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
@@ -26,6 +27,11 @@ import { ProjectMember } from '../../../shared/models/project-member.model';
 import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
 import { TestCase } from '../../../shared/models/test-case.model';
 import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
+import { EnvironmentInputComponent } from '../../../shared/components/environment-input/environment-input.component';
+import { EnvironmentApiService } from '../../../core/services/environment-api.service';
+import { TestRunApiService } from '../../../core/services/test-run-api.service';
+import { ProjectEnvironment } from '../../../shared/models/environment.model';
+import { MAX_ENVIRONMENTS_PER_REQUEST } from '../../../shared/models/test-run.model';
 
 @Component({
   selector: 'app-test-run-form',
@@ -44,7 +50,9 @@ import { FieldErrorComponent } from '../../../shared/components/field-error/fiel
     MatSelectModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatSlideToggleModule,
     TranslateModule,
+    EnvironmentInputComponent,
   ],
   templateUrl: './test-run-form.component.html',
   styleUrl: './test-run-form.component.scss',
@@ -56,8 +64,15 @@ export class TestRunFormComponent implements OnInit {
   private readonly memberApi = inject(ProjectMemberApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly environmentApi = inject(EnvironmentApiService);
+  private readonly testRunApi = inject(TestRunApiService);
+  private readonly router = inject(Router);
 
   projectId = '';
+  environments: ProjectEnvironment[] = [];
+  multiEnvironment = false;
+  selectedEnvironmentIds: string[] = [];
+  readonly maxEnvironments = MAX_ENVIRONMENTS_PER_REQUEST;
   saving = false;
   selectedTestCaseIds = new Set<string>();
   selectedFolderId: string | null = null;
@@ -83,6 +98,10 @@ export class TestRunFormComponent implements OnInit {
       this.store.dispatch(TestCaseFolderActions.loadFolders({ projectId: this.projectId }));
       this.memberApi.getByProject(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((m) => {
         this.members = m;
+        this.cdr.detectChanges();
+      });
+      this.environmentApi.getActive(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((e) => {
+        this.environments = e;
         this.cdr.detectChanges();
       });
     }
@@ -136,9 +155,23 @@ export class TestRunFormComponent implements OnInit {
     }
   }
 
+  get canSubmit(): boolean {
+    if (this.form.invalid || this.saving) {
+      return false;
+    }
+    return !this.multiEnvironment
+      || (this.selectedEnvironmentIds.length > 0 && this.selectedEnvironmentIds.length <= this.maxEnvironments);
+  }
+
   onSubmit(): void {
-    if (this.form.invalid) return;
+    if (!this.canSubmit) return;
     this.saving = true;
+    if (this.multiEnvironment) {
+      this.createAcrossEnvironments();
+      return;
+    }
+    // Saving by name may register a new environment, so the cached list is stale afterwards.
+    this.environmentApi.invalidate(this.projectId);
 
     this.store.dispatch(
       TestRunActions.createTestRun({
@@ -152,5 +185,23 @@ export class TestRunFormComponent implements OnInit {
         },
       })
     );
+  }
+
+  /** One run per selected environment, then the run list filtered to the new runs' name. */
+  private createAcrossEnvironments(): void {
+    const name = this.form.value.name!;
+    this.testRunApi.createAcrossEnvironments(this.projectId, {
+      name,
+      testCaseIds: [...this.selectedTestCaseIds],
+      testPlanId: this.form.value.testPlanId || undefined,
+      executorId: this.form.value.executorId || undefined,
+      environmentIds: this.selectedEnvironmentIds,
+    }).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: () => this.router.navigate(['/projects', this.projectId, 'test-runs'], { queryParams: { q: name } }),
+      error: () => {
+        this.saving = false;
+        this.cdr.detectChanges();
+      },
+    });
   }
 }

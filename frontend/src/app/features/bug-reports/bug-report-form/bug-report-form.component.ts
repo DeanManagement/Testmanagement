@@ -19,6 +19,8 @@ import { ProjectMemberApiService } from '../../../core/services/project-member-a
 import { ProjectMember } from '../../../shared/models/project-member.model';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
+import { EnvironmentInputComponent } from '../../../shared/components/environment-input/environment-input.component';
+import { EnvironmentApiService } from '../../../core/services/environment-api.service';
 
 @Component({
   selector: 'app-bug-report-form',
@@ -34,12 +36,14 @@ import { FieldErrorComponent } from '../../../shared/components/field-error/fiel
     MatCardModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    EnvironmentInputComponent,
     TranslateModule,
   ],
   templateUrl: './bug-report-form.component.html',
   styleUrl: './bug-report-form.component.scss',
 })
 export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
+  private readonly environmentApi = inject(EnvironmentApiService);
   private readonly fb = inject(FormBuilder);
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
@@ -127,6 +131,8 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     this.saving = true;
 
     const value = this.form.value;
+    // Saving by name may register a new environment, so the cached list is stale afterwards.
+    this.environmentApi.invalidate(this.projectId);
     if (this.isEdit) {
       this.store.dispatch(
         BugReportActions.updateBugReport({

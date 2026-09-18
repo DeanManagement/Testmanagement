@@ -32,7 +32,7 @@ export const TestRunActions = createActionGroup({
     'Delete Screenshot': props<{ runId: string; resultId: string; stepResultId: string; screenshotId: string }>(),
     'Delete Screenshot Success': props<{ runId: string; resultId: string; stepResultId: string }>(),
     'Delete Screenshot Failure': props<{ error: string }>(),
-    'Clone Test Run': props<{ projectId: string; runId: string; request: { name: string; environment?: string } }>(),
+    'Clone Test Run': props<{ projectId: string; runId: string; request: { name: string; environment: string } }>(),
     'Clone Test Run Success': props<{ testRun: TestRun }>(),
     'Clone Test Run Failure': props<{ error: string }>(),
     'Upload Allure Report': props<{ projectId: string; testRunId: string; testRunKey: string; file: File }>(),

@@ -57,10 +57,8 @@
         </mat-form-field>
       }
 
-      <mat-form-field appearance="outline" class="third-width">
-        <mat-label>{{ 'bugReport.form.environment' | translate }}</mat-label>
-        <input matInput formControlName="environment" data-test-id="bug-report-form-environment" />
-      </mat-form-field>
+      <app-environment-input class="third-width" [projectId]="projectId" labelKey="bugReport.form.environment"
+                             testId="bug-report-form-environment" formControlName="environment" />
     </div>
 
     <mat-form-field appearance="outline" class="full-width">

@@ -1,5 +1,9 @@
 import { Component, inject, OnInit } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { combineLatest, map, Observable } from 'rxjs';
+import { FormsModule } from '@angular/forms';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, LowerCasePipe } from '@angular/common';
 import { LocalizedDatePipe } from '../../shared/pipes/localized-date.pipe';
@@ -17,6 +21,8 @@ import {
   selectMyCompletedTestRunsLoading,
   selectMyCompletedTestRunsLoaded,
 } from '../../store/test-run/test-run.selectors';
+import { environmentNamesOf, filterByEnvironment } from './environment-filter';
+import { TestRun } from '../../shared/models/test-run.model';
 
 @Component({
   selector: 'app-my-test-runs',
@@ -30,6 +36,9 @@ import {
     MatIconModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    MatFormFieldModule,
+    MatSelectModule,
+    FormsModule,
     TranslateModule,
   ],
   templateUrl: './my-test-runs.component.html',
@@ -37,11 +46,21 @@ import {
 })
 export class MyTestRunsComponent implements OnInit {
   private readonly store = inject(Store);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
-  inProgressRuns$ = this.store.select(selectMyInProgressTestRuns);
-  plannedRuns$ = this.store.select(selectMyPlannedTestRuns);
+  /** Bound to ?environment= like the other list filters (PRD-032). */
+  readonly environmentFilter$ = this.route.queryParamMap.pipe(map((params) => params.get('environment') ?? ''));
+  readonly environmentNames$ = combineLatest([
+    this.store.select(selectMyInProgressTestRuns),
+    this.store.select(selectMyPlannedTestRuns),
+    this.store.select(selectMyCompletedTestRuns),
+  ]).pipe(map((lists) => environmentNamesOf(lists.flat())));
+
+  inProgressRuns$ = this.filtered(this.store.select(selectMyInProgressTestRuns));
+  plannedRuns$ = this.filtered(this.store.select(selectMyPlannedTestRuns));
   activeLoading$ = this.store.select(selectMyActiveTestRunsLoading);
-  completedRuns$ = this.store.select(selectMyCompletedTestRuns);
+  completedRuns$ = this.filtered(this.store.select(selectMyCompletedTestRuns));
   completedLoading$ = this.store.select(selectMyCompletedTestRunsLoading);
   completedLoaded$ = this.store.select(selectMyCompletedTestRunsLoaded);
 
@@ -53,5 +72,19 @@ export class MyTestRunsComponent implements OnInit {
 
   loadCompleted(): void {
     this.store.dispatch(TestRunActions.loadMyCompletedTestRuns());
+  }
+
+  setEnvironmentFilter(name: string): void {
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { environment: name || null },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  private filtered(runs$: Observable<TestRun[]>): Observable<TestRun[]> {
+    return combineLatest([runs$, this.environmentFilter$]).pipe(
+      map(([runs, environment]) => filterByEnvironment(runs, environment)));
   }
 }

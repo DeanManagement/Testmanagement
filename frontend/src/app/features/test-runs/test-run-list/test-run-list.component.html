@@ -30,6 +30,17 @@
         }
       </mat-select>
     </mat-form-field>
+    @if (environments.length > 0) {
+      <mat-form-field appearance="outline" class="filter-select">
+        <mat-label>{{ 'environment.label' | translate }}</mat-label>
+        <mat-select [(ngModel)]="environmentFilter" (selectionChange)="applyFilters()" data-test-id="test-run-environment-filter">
+          <mat-option value="">{{ 'environment.all' | translate }}</mat-option>
+          @for (environment of environments; track environment.id) {
+            <mat-option [value]="environment.id">{{ environment.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
   </div>
 
   @if (loading$ | async) {

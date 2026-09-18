@@ -11,10 +11,25 @@
           <mat-error><app-field-error [control]="form.controls.name" /></mat-error>
         </mat-form-field>
 
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>{{ 'testRun.form.environment' | translate }}</mat-label>
-          <input matInput formControlName="environment" placeholder="e.g. staging, production" data-test-id="test-run-environment-input" />
-        </mat-form-field>
+        <mat-slide-toggle [checked]="multiEnvironment" (change)="multiEnvironment = $event.checked"
+                          class="multi-environment-toggle" data-test-id="test-run-multi-environment-toggle">
+          {{ 'testRun.form.multiEnvironment' | translate }}
+        </mat-slide-toggle>
+        @if (multiEnvironment) {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'testRun.form.environments' | translate }}</mat-label>
+            <mat-select multiple [(ngModel)]="selectedEnvironmentIds" [ngModelOptions]="{ standalone: true }"
+                        data-test-id="test-run-environments-select">
+              @for (environment of environments; track environment.id) {
+                <mat-option [value]="environment.id">{{ environment.name }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>{{ 'testRun.form.multiEnvironmentHint' | translate: { max: maxEnvironments } }}</mat-hint>
+          </mat-form-field>
+        } @else {
+          <app-environment-input [projectId]="projectId" labelKey="testRun.form.environment"
+                                 testId="test-run-environment-input" formControlName="environment" />
+        }
 
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{ 'testRun.form.executor' | translate }}</mat-label>
@@ -89,7 +104,7 @@
 
         <div class="actions">
           <a mat-button [routerLink]="['/projects', projectId, 'test-runs']" data-test-id="test-run-form-cancel">{{ 'common.cancel' | translate }}</a>
-          <button mat-flat-button type="submit" [disabled]="form.invalid || saving" data-test-id="test-run-form-submit">
+          <button mat-flat-button type="submit" [disabled]="!canSubmit" data-test-id="test-run-form-submit">
             @if (saving) {
               <mat-spinner diameter="20"></mat-spinner>
             } @else {

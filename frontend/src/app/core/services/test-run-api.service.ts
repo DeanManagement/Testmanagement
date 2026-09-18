@@ -33,6 +33,7 @@ export class TestRunApiService {
     (query.status ?? []).forEach((s) => (params = params.append('status', s)));
     if (query.testPlanId) params = params.set('testPlanId', query.testPlanId);
     if (query.executorId) params = params.set('executorId', query.executorId);
+    if (query.environmentId) params = params.set('environmentId', query.environmentId);
     if (query.startedAfter) params = params.set('startedAfter', query.startedAfter);
     if (query.page != null) params = params.set('page', String(query.page));
     if (query.size != null) params = params.set('size', String(query.size));
@@ -64,6 +65,11 @@ export class TestRunApiService {
     return this.http.post<TestRun>(this.baseUrl(projectId), request);
   }
 
+  /** One run per entry of request.environmentIds, named "<name> · <environment>" (PRD-032). */
+  createAcrossEnvironments(projectId: string, request: CreateTestRunRequest): Observable<TestRun[]> {
+    return this.http.post<TestRun[]>(`${this.baseUrl(projectId)}/across-environments`, request);
+  }
+
   update(projectId: string, id: string, request: UpdateTestRunRequest): Observable<TestRun> {
     return this.http.put<TestRun>(`${this.baseUrl(projectId)}/${id}`, request);
   }
@@ -72,7 +78,7 @@ export class TestRunApiService {
     return this.http.delete<void>(`${this.baseUrl(projectId)}/${id}`);
   }
 
-  clone(projectId: string, runId: string, request: { name: string; environment?: string }): Observable<TestRun> {
+  clone(projectId: string, runId: string, request: { name: string; environment: string }): Observable<TestRun> {
     return this.http.post<TestRun>(`${this.baseUrl(projectId)}/${runId}/clone`, request);
   }
 

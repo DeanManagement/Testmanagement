@@ -65,6 +65,11 @@
       </div>
     }
 
+    <div class="environment-results-section tm-card" data-test-id="test-case-environment-results-section">
+      <h3>{{ 'environment.results.title' | translate }}</h3>
+      <app-environment-results [projectId]="projectId" [testCaseId]="testCaseId" />
+    </div>
+
     <div class="comments-section tm-card" data-test-id="test-case-comments-section">
       <h3>{{ 'comment.title' | translate }}</h3>
       @if (commentsLoading$ | async) {

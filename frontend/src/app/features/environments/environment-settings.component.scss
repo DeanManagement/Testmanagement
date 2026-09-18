@@ -1,0 +1,131 @@
+.environment-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.page-hint {
+  color: var(--tm-text-secondary);
+  margin: 0.25rem 0 1.25rem;
+}
+
+.tm-card {
+  border: 1px solid var(--tm-border);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  background: var(--tm-surface);
+}
+
+.add-card {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.add-field {
+  flex: 1 1 16rem;
+}
+
+.environment-list {
+  padding: 0.25rem 0;
+}
+
+.environment-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--tm-surface);
+
+  & + & {
+    border-top: 1px solid var(--tm-border);
+  }
+
+  &.archived .environment-name {
+    color: var(--tm-text-secondary);
+    text-decoration: line-through;
+  }
+}
+
+.drag-handle {
+  cursor: grab;
+  color: var(--tm-text-secondary);
+  flex-shrink: 0;
+}
+
+.environment-main {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.environment-name {
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.archived-badge {
+  font-size: 0.72rem;
+  padding: 0.1rem 0.5rem;
+  border-radius: 999px;
+  background: var(--tm-subtle-bg);
+}
+
+.usage {
+  font-size: 0.8rem;
+  color: var(--tm-text-secondary);
+}
+
+.rename-field {
+  flex: 1 1 12rem;
+}
+
+.environment-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.15rem;
+  flex-shrink: 0;
+
+  .danger:not([disabled]) {
+    color: #c5221f;
+  }
+}
+
+.cdk-drag-preview {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.spinner-container,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 2rem;
+  color: var(--tm-text-secondary);
+}
+
+@media (max-width: 600px) {
+  .environment-row {
+    flex-wrap: wrap;
+  }
+
+  .environment-actions {
+    margin-left: auto;
+  }
+}
