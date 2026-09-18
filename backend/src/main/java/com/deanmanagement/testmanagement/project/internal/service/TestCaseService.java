@@ -51,6 +51,7 @@ public class TestCaseService {
     private final TestResultRepository testResultRepository;
     private final ProjectSequenceService projectSequenceService;
     private final TestCaseReviewService reviewService;
+    private final CustomFieldValueWriter customFieldWriter;
 
     public Page<TestCaseResponse> findByProject(UUID projectId, TestCaseListFilter filter, Pageable pageable) {
         Set<UUID> folderIds = null;
@@ -72,6 +73,13 @@ public class TestCaseService {
 
     @Transactional
     public TestCaseResponse create(UUID projectId, CreateTestCaseRequest request, UUID userId) {
+        return create(projectId, request, userId, CustomFieldWriteMode.INTERACTIVE);
+    }
+
+    /** {@code mode} decides whether required custom fields must be filled (PRD-035 §3.3). */
+    @Transactional
+    public TestCaseResponse create(UUID projectId, CreateTestCaseRequest request, UUID userId,
+                                   CustomFieldWriteMode mode) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
@@ -80,6 +88,7 @@ public class TestCaseService {
         reviewService.checkStatusWrite(project, null, tc.getStatus(), userId);
         tc.setLabels(request.labels() != null ? request.labels() : new HashSet<>());
         tc.setSteps(buildSteps(request.steps(), tc));
+        customFieldWriter.write(tc, request.customFields(), mode);
 
         if (request.folderId() != null) {
             TestCaseFolder folder = folderRepository.findById(request.folderId())
@@ -129,6 +138,7 @@ public class TestCaseService {
         if (request.priority() != null) tc.setPriority(request.priority());
         if (request.status() != null) tc.setStatus(request.status());
         if (request.labels() != null) tc.setLabels(request.labels());
+        customFieldWriter.write(tc, request.customFields(), CustomFieldWriteMode.INTERACTIVE);
         if (request.steps() != null) {
             Map<Integer, StepImage> existingImages = new HashMap<>();
             for (TestStep oldStep : tc.getSteps()) {

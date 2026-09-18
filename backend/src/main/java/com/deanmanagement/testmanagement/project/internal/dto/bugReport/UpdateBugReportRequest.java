@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
+import java.util.Map;
 import java.util.UUID;
 
 public record UpdateBugReportRequest(
@@ -20,6 +21,15 @@ public record UpdateBugReportRequest(
         UUID testResultId,
         UUID testRunId,
         UUID assigneeId,
-        UUID environmentId
+        UUID environmentId,
+        /* PRD-035: keyed by field name; see CustomFieldValueWriter for null and clearing rules. */
+        Map<String, Object> customFields
 ) {
+    public UpdateBugReportRequest(String title, String description, String stepsToReproduce,
+                                  String expectedBehavior, String actualBehavior, Priority priority,
+                                  BugReportStatus status, String environment, UUID testResultId, UUID testRunId,
+                                  UUID assigneeId, UUID environmentId) {
+        this(title, description, stepsToReproduce, expectedBehavior, actualBehavior, priority, status, environment,
+                testResultId, testRunId, assigneeId, environmentId, null);
+    }
 }

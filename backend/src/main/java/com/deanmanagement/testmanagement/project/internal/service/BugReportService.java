@@ -54,6 +54,7 @@ public class BugReportService {
     private final ApplicationEventPublisher eventPublisher;
     private final ProjectEnvironmentService environmentService;
     private final ExploratorySessionRepository exploratorySessionRepository;
+    private final CustomFieldValueWriter customFieldWriter;
 
     public List<BugReportResponse> findByProject(UUID projectId) {
         requireBugReportsEnabled(projectId);
@@ -83,6 +84,13 @@ public class BugReportService {
 
     @Transactional
     public BugReportResponse create(UUID projectId, CreateBugReportRequest request, UUID userId) {
+        return create(projectId, request, userId, CustomFieldWriteMode.INTERACTIVE);
+    }
+
+    /** {@code mode} decides whether required custom fields must be filled (PRD-035 §3.3). */
+    @Transactional
+    public BugReportResponse create(UUID projectId, CreateBugReportRequest request, UUID userId,
+                                    CustomFieldWriteMode mode) {
         requireBugReportsEnabled(projectId);
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
@@ -96,6 +104,7 @@ public class BugReportService {
         bugReport.setPriority(request.priority());
         bugReport.setStatus(BugReportStatus.OPEN);
         bugReport.setProject(project);
+        customFieldWriter.write(bugReport, request.customFields(), mode);
         UUID environmentId = request.environmentId();
         if (request.exploratorySessionId() != null) {
             ExploratorySession session = exploratorySessionRepository
@@ -156,6 +165,7 @@ public class BugReportService {
         bugReport.setTestRun(resolveTestRun(projectId, bugReport.getTestResult(), request.testRunId()));
         bugReport.setAssignee(request.assigneeId() == null
                 ? null : requireProjectMember(projectId, request.assigneeId()));
+        customFieldWriter.write(bugReport, request.customFields(), CustomFieldWriteMode.INTERACTIVE);
 
         bugReport = bugReportRepository.save(bugReport);
         auditService.log(projectId, userId, AuditAction.UPDATED,
@@ -302,7 +312,8 @@ public class BugReportService {
                 response.updatedAt(),
                 response.projectKey(),
                 response.exploratorySessionId(),
-                response.exploratorySessionKey()
+                response.exploratorySessionKey(),
+                response.customFields()
         );
     }
 }

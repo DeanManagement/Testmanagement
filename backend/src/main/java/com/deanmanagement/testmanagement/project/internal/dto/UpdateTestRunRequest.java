@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.dto;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import jakarta.validation.constraints.Size;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -17,10 +18,17 @@ public record UpdateTestRunRequest(
         TestRunStatus status,
         String reopenReason,
         UUID testPlanId,
-        UUID environmentId
+        UUID environmentId,
+        /* PRD-035: keyed by field name; see CustomFieldValueWriter for null and clearing rules. */
+        Map<String, Object> customFields
 ) {
     public UpdateTestRunRequest(String name, String environment, TestRunStatus status, String reopenReason,
                                 UUID testPlanId) {
-        this(name, environment, status, reopenReason, testPlanId, null);
+        this(name, environment, status, reopenReason, testPlanId, null, null);
+    }
+
+    public UpdateTestRunRequest(String name, String environment, TestRunStatus status, String reopenReason,
+                                UUID testPlanId, UUID environmentId) {
+        this(name, environment, status, reopenReason, testPlanId, environmentId, null);
     }
 }

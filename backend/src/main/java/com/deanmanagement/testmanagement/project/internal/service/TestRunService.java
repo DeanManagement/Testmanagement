@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
 import com.deanmanagement.testmanagement.project.internal.dto.CompletionInfoResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CloneTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestResultRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestRunRequest;
@@ -82,6 +83,7 @@ public class TestRunService {
     private final RunEventPublisher runEventPublisher;
     private final ProjectEnvironmentService environmentService;
     private final TestCaseReviewService reviewService;
+    private final CustomFieldValueWriter customFieldWriter;
 
     private static final int MAX_RUN_NAME_LENGTH = 255;
 
@@ -208,6 +210,13 @@ public class TestRunService {
 
     @Transactional
     public TestRunResponse create(UUID projectId, CreateTestRunRequest request, UUID userId) {
+        return create(projectId, request, userId, CustomFieldWriteMode.INTERACTIVE);
+    }
+
+    /** {@code mode} decides whether required custom fields must be filled (PRD-035 §3.3). */
+    @Transactional
+    public TestRunResponse create(UUID projectId, CreateTestRunRequest request, UUID userId,
+                                  CustomFieldWriteMode mode) {
         if (request.environmentIds() != null && !request.environmentIds().isEmpty()) {
             throw new IllegalArgumentException("environmentIds creates several runs; use /test-runs/across-environments");
         }
@@ -220,6 +229,7 @@ public class TestRunService {
         run.setStatus(TestRunStatus.PLANNED);
         int runNumber = projectSequenceService.nextTestRunNumber(projectId);
         run.setKey(project.getKey() + "-Run-" + runNumber);
+        customFieldWriter.write(run, request.customFields(), mode);
 
         if (request.testPlanId() != null) {
             TestPlan testPlan = testPlanRepository.findByIdAndProjectId(request.testPlanId(), projectId)
@@ -278,7 +288,8 @@ public class TestRunService {
         return environments.stream()
                 .map(environment -> create(projectId, new CreateTestRunRequest(
                         runNameFor(request.name(), environment), null, request.testCaseIds(),
-                        request.testPlanId(), request.executorId(), environment.getId(), null), userId))
+                        request.testPlanId(), request.executorId(), environment.getId(), null,
+                        request.customFields()), userId))
                 .toList();
     }
 
@@ -335,9 +346,11 @@ public class TestRunService {
                 null,
                 keepsEnvironment && source.getProjectEnvironment() != null
                         ? source.getProjectEnvironment().getId() : request.environmentId(),
-                null
+                null,
+                CustomFieldValueMaps.toMap(source.getCustomFieldValues())
         );
-        TestRunResponse response = create(projectId, createRequest, userId);
+        // MACHINE: a clone copies what the source had, even if a field became required since.
+        TestRunResponse response = create(projectId, createRequest, userId, CustomFieldWriteMode.MACHINE);
         auditService.log(projectId, userId, AuditAction.CLONED,
                 AuditEntityType.TEST_RUN, response.id(), response.name(),
                 "Cloned from: " + source.getName());
@@ -372,6 +385,7 @@ public class TestRunService {
                     .orElseThrow(() -> new ResourceNotFoundException("TestPlan", request.testPlanId()));
             run.setTestPlan(testPlan);
         }
+        customFieldWriter.write(run, request.customFields(), CustomFieldWriteMode.INTERACTIVE);
 
         TestRunStatus oldStatus = run.getStatus();
         if (request.status() != null) {

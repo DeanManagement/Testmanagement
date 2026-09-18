@@ -5,6 +5,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.testCase.CreateTes
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
+import com.deanmanagement.testmanagement.project.internal.service.CustomFieldWriteMode;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -44,7 +45,7 @@ public class McpTestCaseWriter {
                 labels, toStepRequests(steps), folderId);
         validator.validate(request);
 
-        TestCaseResponse response = testCaseService.create(projectId, request, userId);
+        TestCaseResponse response = testCaseService.create(projectId, request, userId, CustomFieldWriteMode.MACHINE);
         return new McpDtos.CreatedTestCase(response.id(), response.key(), response.title(),
                 response.status());
     }

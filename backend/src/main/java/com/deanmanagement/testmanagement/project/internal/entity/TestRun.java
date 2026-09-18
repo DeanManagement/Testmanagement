@@ -77,6 +77,10 @@ public class TestRun extends BaseEntity {
     @OneToOne(mappedBy = "testRun", fetch = FetchType.LAZY)
     private AllureReport allureReport;
 
+    /** PRD-035. Lazy; the global batch fetch size keeps list pages to one query per page. */
+    @OneToMany(mappedBy = "testRun", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CustomFieldValue> customFieldValues = new ArrayList<>();
+
     public void assignEnvironment(ProjectEnvironment environment) {
         this.projectEnvironment = environment;
         this.environment = environment != null ? environment.getName() : null;

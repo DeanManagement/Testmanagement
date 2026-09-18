@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.entity;
 import com.deanmanagement.testmanagement.shared.BaseEntity;
 import com.deanmanagement.testmanagement.user.User;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,10 +11,14 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "bug_reports")
@@ -75,6 +80,10 @@ public class BugReport extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id")
     private User assignee;
+
+    /** PRD-035. Lazy; the global batch fetch size keeps list pages to one query per page. */
+    @OneToMany(mappedBy = "bugReport", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CustomFieldValue> customFieldValues = new ArrayList<>();
 
     public void assignEnvironment(ProjectEnvironment environment) {
         this.projectEnvironment = environment;

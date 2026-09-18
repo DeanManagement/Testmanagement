@@ -94,4 +94,8 @@ public class TestCase extends BaseEntity {
 
     @ManyToMany(mappedBy = "testCases")
     private Set<TestSuite> testSuites = new HashSet<>();
+
+    /** PRD-035. Lazy; the global batch fetch size keeps list pages to one query per page. */
+    @OneToMany(mappedBy = "testCase", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<CustomFieldValue> customFieldValues = new ArrayList<>();
 }

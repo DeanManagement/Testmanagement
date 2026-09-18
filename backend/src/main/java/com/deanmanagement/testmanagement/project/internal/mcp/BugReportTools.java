@@ -7,6 +7,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.bugReport.CreateBu
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportService;
+import com.deanmanagement.testmanagement.project.internal.service.CustomFieldWriteMode;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
 import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
 import lombok.RequiredArgsConstructor;
@@ -116,7 +117,7 @@ public class BugReportTools {
         validator.validate(request);
 
         return detail(enabled(() ->
-                bugReportService.create(caller.projectId(), request, caller.userId())));
+                bugReportService.create(caller.projectId(), request, caller.userId(), CustomFieldWriteMode.MACHINE)));
     }
 
     @McpTool(

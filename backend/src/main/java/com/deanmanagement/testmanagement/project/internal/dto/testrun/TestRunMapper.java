@@ -6,10 +6,11 @@ import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.StepResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
+import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = CustomFieldValueMaps.class)
 public abstract class TestRunMapper {
 
     @Mapping(target = "executorName", source = "executor.displayName")
@@ -19,6 +20,7 @@ public abstract class TestRunMapper {
     @Mapping(target = "allureReportId", source = "allureReport.id")
     @Mapping(target = "projectId", source = "project.id")
     @Mapping(target = "projectKey", source = "project.key")
+    @Mapping(target = "customFields", expression = "java(CustomFieldValueMaps.toMap(testRun.getCustomFieldValues()))")
     public abstract TestRunResponse toResponse(TestRun testRun);
 
     @Mapping(target = "testCaseId", source = "testCase.id")
@@ -48,5 +50,6 @@ public abstract class TestRunMapper {
     @Mapping(target = "updatedAt", ignore = true)
     @Mapping(target = "testPlan", ignore = true)
     @Mapping(target = "allureReport", ignore = true)
+    @Mapping(target = "customFieldValues", ignore = true)
     public abstract TestRun toEntity(CreateTestRunRequest request);
 }

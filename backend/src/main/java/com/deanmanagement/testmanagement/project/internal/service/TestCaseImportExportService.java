@@ -143,7 +143,7 @@ public class TestCaseImportExportService {
                     warnings.add(new ImportError(row.rowNumber(), "status ACTIVE imported as IN_REVIEW: this project requires review"));
                 }
                 if (!dryRun) {
-                    testCaseService.create(projectId, request, userId);
+                    testCaseService.create(projectId, request, userId, CustomFieldWriteMode.MACHINE);
                 }
                 imported++;
             } catch (IllegalArgumentException e) {

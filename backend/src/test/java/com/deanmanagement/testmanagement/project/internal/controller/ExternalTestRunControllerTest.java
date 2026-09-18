@@ -24,6 +24,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -91,7 +92,7 @@ class ExternalTestRunControllerTest {
                 null, null, null,
                 null, null, null,
                 null, null,
-                List.of(), NOW, NOW, null, null
+                List.of(), NOW, NOW, null, null, Map.of()
         );
     }
 

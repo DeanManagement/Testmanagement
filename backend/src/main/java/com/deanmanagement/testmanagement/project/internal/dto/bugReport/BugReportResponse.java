@@ -4,6 +4,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 
 import java.time.Instant;
+import java.util.Map;
 import java.util.UUID;
 
 public record BugReportResponse(
@@ -30,6 +31,8 @@ public record BugReportResponse(
         String projectKey,
         /* PRD-034: the exploratory session this bug was found in, if any. */
         UUID exploratorySessionId,
-        String exploratorySessionKey
+        String exploratorySessionKey,
+        /* PRD-035: values keyed by field name, in display order (CustomFieldValueMaps). */
+        Map<String, Object> customFields
 ) {
 }

@@ -1,10 +1,11 @@
 package com.deanmanagement.testmanagement.project.internal.dto.bugReport;
 
 import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
+import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = CustomFieldValueMaps.class)
 public abstract class BugReportMapper {
 
     @Mapping(target = "projectId", source = "project.id")
@@ -18,5 +19,6 @@ public abstract class BugReportMapper {
     @Mapping(target = "projectKey", source = "project.key")
     @Mapping(target = "exploratorySessionId", source = "exploratorySession.id")
     @Mapping(target = "exploratorySessionKey", source = "exploratorySession.key")
+    @Mapping(target = "customFields", expression = "java(CustomFieldValueMaps.toMap(bugReport.getCustomFieldValues()))")
     public abstract BugReportResponse toResponse(BugReport bugReport);
 }

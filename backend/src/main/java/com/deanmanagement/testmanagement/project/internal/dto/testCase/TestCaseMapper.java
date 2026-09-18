@@ -3,13 +3,15 @@ package com.deanmanagement.testmanagement.project.internal.dto.testCase;
 import com.deanmanagement.testmanagement.project.internal.dto.TestStepResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
+import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", imports = CustomFieldValueMaps.class)
 public abstract class TestCaseMapper {
 
     @Mapping(target = "folderId", expression = "java(testCase.getFolder() != null ? testCase.getFolder().getId() : null)")
+    @Mapping(target = "customFields", expression = "java(CustomFieldValueMaps.toMap(testCase.getCustomFieldValues()))")
     public abstract TestCaseResponse toResponse(TestCase testCase);
 
     @Mapping(target = "imageId", expression = "java(step.getImage() != null ? step.getImage().getId() : null)")
@@ -23,5 +25,6 @@ public abstract class TestCaseMapper {
     @Mapping(target = "testSuites", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)
+    @Mapping(target = "customFieldValues", ignore = true)
     public abstract TestCase toEntity(CreateTestCaseRequest request);
 }

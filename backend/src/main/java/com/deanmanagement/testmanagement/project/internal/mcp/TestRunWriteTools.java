@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.TestSuiteResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
+import com.deanmanagement.testmanagement.project.internal.service.CustomFieldWriteMode;
 import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import com.deanmanagement.testmanagement.project.internal.service.TestSuiteService;
 import lombok.RequiredArgsConstructor;
@@ -90,7 +91,8 @@ public class TestRunWriteTools {
                 caller.userId());
         validator.validate(request);
 
-        TestRunResponse run = testRunService.create(caller.projectId(), request, caller.userId());
+        TestRunResponse run = testRunService.create(caller.projectId(), request, caller.userId(),
+                CustomFieldWriteMode.MACHINE);
         return new McpDtos.CreatedTestRun(run.id(), run.key(), run.name(), run.status(),
                 run.results() == null ? 0 : run.results().size());
     }

@@ -4,6 +4,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 public record TestRunResponse(
@@ -26,6 +27,8 @@ public record TestRunResponse(
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,
-        UUID updatedBy
+        UUID updatedBy,
+        /* PRD-035: values keyed by field name, in display order (CustomFieldValueMaps). */
+        Map<String, Object> customFields
 ) {
 }
