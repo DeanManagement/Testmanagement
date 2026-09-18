@@ -82,7 +82,21 @@
       "TEST_FAILED": "Test fehlgeschlagen",
       "PLAN_COMPLETED": "Plan abgeschlossen",
       "BUG_REPORT_CREATED": "Fehlerbericht erstellt"
-    }
+    },
+    "format": "Format",
+    "formats": {
+      "GENERIC": "Generisches JSON",
+      "SLACK": "Slack · Mattermost · Rocket.Chat",
+      "TEAMS": "Microsoft Teams"
+    },
+    "formatHint": {
+      "GENERIC": "Signiertes JSON für einen eigenen Empfänger.",
+      "SLACK": "URL eines Incoming Webhooks einfügen (Discord: /slack anhängen). Links benötigen PUBLIC_BASE_URL.",
+      "TEAMS": "URL eines Teams-Workflows-Webhook-Triggers einfügen. Links benötigen PUBLIC_BASE_URL."
+    },
+    "setupDocs": "Anleitung",
+    "replaceUrl": "URL ersetzen",
+    "testFailedChatHint": "Für Chats nicht verfügbar: Eine Nachricht pro fehlgeschlagenem Test würde den Kanal fluten. Testlauf-Nachrichten listen die fehlgeschlagenen Tests auf."
   },
   "nav": {
     "dashboard": "Dashboard",

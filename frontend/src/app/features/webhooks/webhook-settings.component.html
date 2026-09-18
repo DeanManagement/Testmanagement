@@ -19,20 +19,48 @@
     <div class="tm-card form-card" data-test-id="webhook-form">
       <h2>{{ (editingId ? 'webhook.editTitle' : 'webhook.createTitle') | translate }}</h2>
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ 'webhook.url' | translate }}</mat-label>
-        <input matInput [(ngModel)]="formUrl" placeholder="https://example.com/hook" data-test-id="webhook-url-input">
+        <mat-label>{{ 'webhook.format' | translate }}</mat-label>
+        <mat-select [value]="formFormat" (selectionChange)="changeFormat($event.value)" data-test-id="webhook-format-select">
+          @for (format of allFormats; track format) {
+            <mat-option [value]="format">{{ 'webhook.formats.' + format | translate }}</mat-option>
+          }
+        </mat-select>
+        <mat-hint>
+          {{ 'webhook.formatHint.' + formFormat | translate }}
+          @if (setupDocs[formFormat]; as docs) {
+            <a [href]="docs" target="_blank" rel="noopener noreferrer">{{ 'webhook.setupDocs' | translate }}</a>
+          }
+        </mat-hint>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ editingId ? ('webhook.secretEdit' | translate) : ('webhook.secret' | translate) }}</mat-label>
-        <input matInput type="password" [(ngModel)]="formSecret" data-test-id="webhook-secret-input">
-      </mat-form-field>
+      @if (formEditingUrl) {
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'webhook.url' | translate }}</mat-label>
+          <input matInput [(ngModel)]="formUrl" placeholder="https://example.com/hook" data-test-id="webhook-url-input">
+        </mat-form-field>
+      } @else {
+        <div class="masked-url" data-test-id="webhook-masked-url">
+          <span class="webhook-url">{{ formMaskedUrl }}</span>
+          <button mat-button type="button" (click)="replaceUrl()" data-test-id="webhook-replace-url-btn">
+            {{ 'webhook.replaceUrl' | translate }}
+          </button>
+        </div>
+      }
+
+      @if (!isChatFormat(formFormat)) {
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ editingId ? ('webhook.secretEdit' | translate) : ('webhook.secret' | translate) }}</mat-label>
+          <input matInput type="password" [(ngModel)]="formSecret" data-test-id="webhook-secret-input">
+        </mat-form-field>
+      }
 
       <div class="events-group">
         <span class="events-label">{{ 'webhook.events' | translate }}</span>
         @for (event of allEvents; track event) {
           <mat-checkbox
             [checked]="formEvents.has(event)"
+            [disabled]="!isEventAllowed(formFormat, event)"
+            [matTooltip]="isEventAllowed(formFormat, event) ? '' : ('webhook.testFailedChatHint' | translate)"
             (change)="toggleEvent(event, $event.checked)"
             data-test-id="webhook-event-checkbox">
             {{ 'webhook.event.' + event | translate }}
@@ -61,7 +89,10 @@
       <div class="tm-card webhook-row" data-test-id="webhook-row">
         <div class="webhook-main">
           <div class="webhook-info">
-            <span class="webhook-url">{{ webhook.url }}</span>
+            <div class="webhook-title">
+              <span class="format-badge" data-test-id="webhook-format-badge">{{ 'webhook.formats.' + webhook.format | translate }}</span>
+              <span class="webhook-url">{{ webhook.url }}</span>
+            </div>
             <div class="webhook-events">
               @for (event of webhook.events; track event) {
                 <span class="event-chip">{{ 'webhook.event.' + event | translate }}</span>

@@ -12,6 +12,8 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTableModule } from '@angular/material/table';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { DatePipe } from '@angular/common';
@@ -20,10 +22,19 @@ import { WebhookApiService } from '../../core/services/webhook-api.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import {
   ALL_WEBHOOK_EVENTS,
+  ALL_WEBHOOK_FORMATS,
   Webhook,
   WebhookDelivery,
   WebhookEventType,
+  WebhookFormat,
 } from '../../shared/models/webhook.model';
+import {
+  eventsAfterFormatChange,
+  FORMAT_SETUP_DOCS,
+  isChatFormat,
+  isEventAllowed,
+  isWebhookFormValid,
+} from './webhook-form';
 
 @Component({
   selector: 'app-webhook-settings',
@@ -40,6 +51,8 @@ import {
     MatInputModule,
     MatCheckboxModule,
     MatTableModule,
+    MatSelectModule,
+    MatTooltipModule,
     MatProgressSpinnerModule,
     TranslateModule,
   ],
@@ -59,6 +72,10 @@ export class WebhookSettingsComponent implements OnInit {
   webhooks: Webhook[] = [];
   loading = false;
   readonly allEvents = ALL_WEBHOOK_EVENTS;
+  readonly allFormats = ALL_WEBHOOK_FORMATS;
+  readonly setupDocs = FORMAT_SETUP_DOCS;
+  readonly isChatFormat = isChatFormat;
+  readonly isEventAllowed = isEventAllowed;
   deliveryColumns = ['event', 'status', 'attempt', 'createdAt'];
 
   // Inline create/edit form state
@@ -68,6 +85,10 @@ export class WebhookSettingsComponent implements OnInit {
   formSecret = '';
   formEvents = new Set<WebhookEventType>();
   formActive = true;
+  formFormat: WebhookFormat = 'GENERIC';
+  /** Existing chat webhooks show their masked URL until the admin chooses to replace it. */
+  formEditingUrl = true;
+  formMaskedUrl = '';
 
   // Delivery log state
   expandedWebhookId: string | null = null;
@@ -100,16 +121,32 @@ export class WebhookSettingsComponent implements OnInit {
     this.formSecret = '';
     this.formEvents = new Set();
     this.formActive = true;
+    this.formFormat = 'GENERIC';
+    this.formEditingUrl = true;
+    this.formMaskedUrl = '';
     this.formOpen = true;
   }
 
   openEdit(webhook: Webhook): void {
     this.editingId = webhook.id;
-    this.formUrl = webhook.url;
+    this.formFormat = webhook.format;
+    this.formEditingUrl = !isChatFormat(webhook.format);
+    this.formMaskedUrl = this.formEditingUrl ? '' : webhook.url;
+    this.formUrl = this.formEditingUrl ? webhook.url : '';
     this.formSecret = '';
     this.formEvents = new Set(webhook.events);
     this.formActive = webhook.active;
     this.formOpen = true;
+  }
+
+  changeFormat(format: WebhookFormat): void {
+    this.formFormat = format;
+    this.formEvents = eventsAfterFormatChange(format, this.formEvents, this.editingId === null);
+  }
+
+  replaceUrl(): void {
+    this.formEditingUrl = true;
+    this.formUrl = '';
   }
 
   cancelForm(): void {
@@ -125,19 +162,25 @@ export class WebhookSettingsComponent implements OnInit {
   }
 
   get formValid(): boolean {
-    return this.formUrl.trim().length > 0
-      && this.formEvents.size > 0
-      && (this.editingId !== null || this.formSecret.trim().length > 0);
+    return isWebhookFormValid({
+      format: this.formFormat,
+      isNew: this.editingId === null,
+      editingUrl: this.formEditingUrl,
+      url: this.formUrl,
+      secret: this.formSecret,
+      events: this.formEvents,
+    });
   }
 
   save(): void {
     const events = Array.from(this.formEvents);
     if (this.editingId) {
       this.api.update(this.projectId, this.editingId, {
-        url: this.formUrl,
+        url: this.formEditingUrl ? this.formUrl : undefined,
         secret: this.formSecret.trim() ? this.formSecret : undefined,
         events,
         active: this.formActive,
+        format: this.formFormat,
       }).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
         this.formOpen = false;
         this.load();
@@ -145,9 +188,10 @@ export class WebhookSettingsComponent implements OnInit {
     } else {
       this.api.create(this.projectId, {
         url: this.formUrl,
-        secret: this.formSecret,
+        secret: this.formSecret.trim() ? this.formSecret : undefined,
         events,
         active: this.formActive,
+        format: this.formFormat,
       }).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
         this.formOpen = false;
         this.load();
@@ -156,8 +200,8 @@ export class WebhookSettingsComponent implements OnInit {
   }
 
   toggleActive(webhook: Webhook, active: boolean): void {
+    // No url: a chat webhook's is masked, and an omitted url keeps the stored one.
     this.api.update(this.projectId, webhook.id, {
-      url: webhook.url,
       events: webhook.events,
       active,
     }).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => this.load());

@@ -82,7 +82,21 @@
       "TEST_FAILED": "Test failed",
       "PLAN_COMPLETED": "Plan completed",
       "BUG_REPORT_CREATED": "Bug report created"
-    }
+    },
+    "format": "Format",
+    "formats": {
+      "GENERIC": "Generic JSON",
+      "SLACK": "Slack · Mattermost · Rocket.Chat",
+      "TEAMS": "Microsoft Teams"
+    },
+    "formatHint": {
+      "GENERIC": "Signed JSON for your own receiver.",
+      "SLACK": "Paste an incoming-webhook URL (Discord: append /slack). Links need PUBLIC_BASE_URL.",
+      "TEAMS": "Paste the URL of a Teams Workflows webhook trigger. Links need PUBLIC_BASE_URL."
+    },
+    "setupDocs": "How to create one",
+    "replaceUrl": "Replace URL",
+    "testFailedChatHint": "Not available for chat: one message per failed test would flood the channel. Run messages list the failed tests."
   },
   "nav": {
     "dashboard": "Dashboard",
