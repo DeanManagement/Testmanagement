@@ -108,6 +108,13 @@ public class TestCaseService {
 
     @Transactional
     public TestCaseResponse update(UUID projectId, UUID id, UpdateTestCaseRequest request, UUID userId) {
+        return update(projectId, id, request, userId, CustomFieldWriteMode.INTERACTIVE);
+    }
+
+    /** {@code mode} decides whether required custom fields must be filled (PRD-035 §3.3). */
+    @Transactional
+    public TestCaseResponse update(UUID projectId, UUID id, UpdateTestCaseRequest request, UUID userId,
+                                   CustomFieldWriteMode mode) {
         TestCase tc = testCaseRepository.findById(id)
                 .filter(t -> t.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestCase", id));
@@ -138,7 +145,7 @@ public class TestCaseService {
         if (request.priority() != null) tc.setPriority(request.priority());
         if (request.status() != null) tc.setStatus(request.status());
         if (request.labels() != null) tc.setLabels(request.labels());
-        customFieldWriter.write(tc, request.customFields(), CustomFieldWriteMode.INTERACTIVE);
+        customFieldWriter.write(tc, request.customFields(), mode);
         if (request.steps() != null) {
             Map<Integer, StepImage> existingImages = new HashMap<>();
             for (TestStep oldStep : tc.getSteps()) {

@@ -146,7 +146,7 @@ class McpToolSurfaceApiTest {
 
     private McpDtos.CreatedTestCase createCase(String title) {
         return testCaseTools.createTestCase(title, Priority.MEDIUM, null, null, null, null,
-                null, null, null);
+                null, null, null, null);
     }
 
     // --- scoping ---------------------------------------------------------------------------
@@ -177,7 +177,7 @@ class McpToolSurfaceApiTest {
 
         assertThatThrownBy(() -> testCaseTools.getTestCase(foreign.id().toString()))
                 .isInstanceOf(ResourceNotFoundException.class);
-        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null)
+        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null, null)
                 .testCases())
                 .noneMatch(tc -> tc.id().equals(foreign.id()));
     }
@@ -240,7 +240,7 @@ class McpToolSurfaceApiTest {
                 null, Set.of("auth"),
                 List.of(new McpDtos.Step("Open the login page", "The form is shown", null),
                         new McpDtos.Step("Submit valid credentials", "The dashboard opens", null)),
-                null, null);
+                null, null, null);
 
         assertThat(created.status()).isEqualTo(TestCaseStatus.DRAFT);
         assertThat(created.key()).startsWith(project.getKey() + "-");
@@ -256,10 +256,10 @@ class McpToolSurfaceApiTest {
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.CreatedTestCase created = testCaseTools.createTestCase(
                 "Original title", Priority.LOW, "Original description", "Original preconditions",
-                null, null, null, null, null);
+                null, null, null, null, null, null);
 
         testCaseTools.updateTestCase(created.key(), null, null, null, Priority.CRITICAL, null,
-                null, null, null);
+                null, null, null, null);
 
         McpDtos.TestCaseDetail detail = testCaseTools.getTestCase(created.key());
         assertThat(detail.priority()).isEqualTo(Priority.CRITICAL);
@@ -273,9 +273,9 @@ class McpToolSurfaceApiTest {
     void updateTestCase_anEmptyStringClearsATextField() {
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.CreatedTestCase created = testCaseTools.createTestCase("Has a description",
-                Priority.LOW, "Something to remove", null, null, null, null, null, null);
+                Priority.LOW, "Something to remove", null, null, null, null, null, null, null);
 
-        testCaseTools.updateTestCase(created.key(), null, "", null, null, null, null, null, null);
+        testCaseTools.updateTestCase(created.key(), null, "", null, null, null, null, null, null, null);
 
         assertThat(testCaseTools.getTestCase(created.key()).description()).isEmpty();
     }
@@ -288,7 +288,7 @@ class McpToolSurfaceApiTest {
         McpDtos.CreatedTestCase created = createCase("A real title");
 
         assertThatThrownBy(() ->
-                testCaseTools.updateTestCase(created.key(), "  ", null, null, null, null, null, null, null))
+                testCaseTools.updateTestCase(created.key(), "  ", null, null, null, null, null, null, null, null))
                 .hasMessageContaining("title");
     }
 
@@ -310,7 +310,7 @@ class McpToolSurfaceApiTest {
                 new com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder
                         .CreateTestCaseFolderRequest("Authentication", null), null).id();
 
-        testCaseTools.updateTestCase(created.key(), null, null, null, null, null, null, null, folderId);
+        testCaseTools.updateTestCase(created.key(), null, null, null, null, null, null, null, folderId, null);
 
         assertThat(testCaseTools.getTestCase(created.key()).folderId()).isEqualTo(folderId);
     }
@@ -335,7 +335,7 @@ class McpToolSurfaceApiTest {
         createCase("Search returns results");
 
         McpDtos.CreatedTestCase second = testCaseTools.createTestCase("Search returns results",
-                Priority.MEDIUM, null, null, null, null, null, null, true);
+                Priority.MEDIUM, null, null, null, null, null, null, null, true);
 
         assertThat(second.id()).isNotNull();
     }
@@ -370,7 +370,7 @@ class McpToolSurfaceApiTest {
 
         assertThat(result.dryRun()).isTrue();
         assertThat(result.created()).isEqualTo(1);
-        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null)
+        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null, null)
                 .totalElements()).isZero();
     }
 

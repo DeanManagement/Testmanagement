@@ -16,7 +16,9 @@ import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestResultRe
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.SetExecutorRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestRunListFilter;
+import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
+import com.deanmanagement.testmanagement.project.internal.service.CustomFieldFilterParser;
 import com.deanmanagement.testmanagement.project.internal.service.PdfReportService;
 import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
@@ -32,6 +34,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -55,6 +58,7 @@ public class TestRunController {
 
     private final TestRunService testRunService;
     private final PdfReportService pdfReportService;
+    private final CustomFieldFilterParser customFieldFilterParser;
 
     @GetMapping
     @RequireProjectRole
@@ -66,9 +70,10 @@ public class TestRunController {
                                          @RequestParam(required = false)
                                          @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startedAfter,
                                          @RequestParam(required = false) UUID environmentId,
+                                         @RequestParam MultiValueMap<String, String> params,
                                          @PageableDefault(size = PageableUtils.DEFAULT_SIZE) Pageable pageable) {
         TestRunListFilter filter = new TestRunListFilter(q, status, testPlanId, executorId, startedAfter,
-                environmentId);
+                environmentId, customFieldFilterParser.parse(projectId, CustomFieldEntityType.TEST_RUN, params));
         return testRunService.findByProject(projectId, filter, PageableUtils.normalize(pageable));
     }
 

@@ -68,6 +68,8 @@ public final class TestCaseSpecifications {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("updatedAt"), filter.updatedAfter()));
             }
 
+            predicates.addAll(CustomFieldSpecifications.matchAll(query, cb, root, "testCase", filter.customFields()));
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }

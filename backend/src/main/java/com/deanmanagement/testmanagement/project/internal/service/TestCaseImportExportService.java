@@ -8,6 +8,8 @@ import com.deanmanagement.testmanagement.project.internal.dto.io.ImportResultRes
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.CreateTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldResponse;
+import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
@@ -25,11 +27,16 @@ import java.io.StringReader;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * Import/export of a project's test cases as JSON or CSV (PRD-004). Import validates per row and
@@ -45,12 +52,16 @@ public class TestCaseImportExportService {
             {"title", "description", "preconditions", "priority", "status", "labels", "steps"};
     private static final String STEP_PAIR_SEPARATOR = ";;";
     private static final String LABEL_SEPARATOR = ";";
+    /** Custom field columns are named {@code cf:<Field name>} (PRD-035 §3.7). */
+    private static final String CUSTOM_FIELD_COLUMN_PREFIX = "cf:";
 
     private final TestCaseRepository testCaseRepository;
     private final TestCaseMapper testCaseMapper;
     private final TestCaseService testCaseService;
     private final ObjectMapper objectMapper;
     private final ProjectRepository projectRepository;
+    private final CustomFieldService customFieldService;
+    private final CustomFieldValueWriter customFieldWriter;
 
     // ---- Export ----
 
@@ -66,19 +77,26 @@ public class TestCaseImportExportService {
         if (excel) {
             sw.write('﻿'); // UTF-8 BOM so Excel detects encoding
         }
-        CSVFormat format = CSVFormat.DEFAULT.builder().setHeader(CSV_HEADERS).build();
+        // Archived fields too: their values are kept, so a round trip must not drop them (PRD-035 §4).
+        List<String> fieldNames = customFieldService.list(projectId, CustomFieldEntityType.TEST_CASE).stream()
+                .map(CustomFieldResponse::name)
+                .toList();
+        List<String> headers = new ArrayList<>(List.of(CSV_HEADERS));
+        fieldNames.forEach(name -> headers.add(CUSTOM_FIELD_COLUMN_PREFIX + name));
+        CSVFormat format = CSVFormat.DEFAULT.builder().setHeader(headers.toArray(String[]::new)).build();
         try (CSVPrinter printer = new CSVPrinter(sw, format)) {
             for (TestCaseResponse tc : testCaseRepository.findByProjectIdWithSteps(projectId).stream()
                     .map(testCaseMapper::toResponse).toList()) {
-                printer.printRecord(
+                List<Object> cells = new ArrayList<>(Arrays.<Object>asList(
                         csvSafe(tc.title()),
                         csvSafe(tc.description()),
                         csvSafe(tc.preconditions()),
                         tc.priority(),
                         tc.status(),
                         csvSafe(tc.labels() == null ? "" : String.join(LABEL_SEPARATOR, tc.labels())),
-                        csvSafe(encodeSteps(tc))
-                );
+                        csvSafe(encodeSteps(tc))));
+                fieldNames.forEach(name -> cells.add(customFieldCell(tc.customFields().get(name))));
+                printer.printRecord(cells);
             }
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -101,6 +119,21 @@ public class TestCaseImportExportService {
             return "'" + value;
         }
         return value;
+    }
+
+    /** Multi-select options joined by ';'. Numbers skip csvSafe: a negative one is not a formula. */
+    private static String customFieldCell(Object value) {
+        if (value == null) {
+            return "";
+        }
+        if (value instanceof BigDecimal number) {
+            return number.toPlainString();
+        }
+        if (value instanceof List<?> options) {
+            return csvSafe(options.stream().map(Object::toString)
+                    .collect(Collectors.joining(CustomFieldValueWriter.MULTI_SELECT_SEPARATOR)));
+        }
+        return csvSafe(value.toString());
     }
 
     private String encodeSteps(TestCaseResponse tc) {
@@ -142,6 +175,9 @@ public class TestCaseImportExportService {
                     request = withStatus(request, TestCaseStatus.IN_REVIEW);
                     warnings.add(new ImportError(row.rowNumber(), "status ACTIVE imported as IN_REVIEW: this project requires review"));
                 }
+                // Checked here rather than left to create(), so a dry run reports the same errors and a
+                // bad row fails before it reaches the write transaction.
+                customFieldWriter.validate(projectId, CustomFieldEntityType.TEST_CASE, request.customFields());
                 if (!dryRun) {
                     testCaseService.create(projectId, request, userId, CustomFieldWriteMode.MACHINE);
                 }
@@ -157,12 +193,12 @@ public class TestCaseImportExportService {
     /** Raw, unvalidated import row. */
     private record RowData(int rowNumber, String title, String description, String preconditions,
                            String priority, String status, List<String> labels,
-                           List<TestStepRequest> steps) {
+                           List<TestStepRequest> steps, Map<String, Object> customFields) {
     }
 
     private static CreateTestCaseRequest withStatus(CreateTestCaseRequest r, TestCaseStatus status) {
         return new CreateTestCaseRequest(r.title(), r.description(), r.preconditions(), r.priority(), status,
-                r.labels(), r.steps(), r.folderId());
+                r.labels(), r.steps(), r.folderId(), r.customFields());
     }
 
     private CreateTestCaseRequest toRequest(RowData row) {
@@ -173,7 +209,7 @@ public class TestCaseImportExportService {
         TestCaseStatus status = parseEnum(TestCaseStatus.class, row.status(), TestCaseStatus.DRAFT, "status");
         Set<String> labels = row.labels() == null ? Set.of() : new LinkedHashSet<>(row.labels());
         return new CreateTestCaseRequest(row.title().trim(), emptyToNull(row.description()),
-                emptyToNull(row.preconditions()), priority, status, labels, row.steps(), null);
+                emptyToNull(row.preconditions()), priority, status, labels, row.steps(), null, row.customFields());
     }
 
     private <E extends Enum<E>> E parseEnum(Class<E> type, String value, E fallback, String field) {
@@ -209,13 +245,26 @@ public class TestCaseImportExportService {
                         get(record, "priority"),
                         get(record, "status"),
                         parseLabels(get(record, "labels")),
-                        parseSteps(get(record, "steps"))
+                        parseSteps(get(record, "steps")),
+                        customFieldCells(record, parser.getHeaderNames())
                 ));
             }
         } catch (IOException e) {
             throw new IllegalArgumentException("Could not read CSV: " + e.getMessage());
         }
         return rows;
+    }
+
+    /** Blank cells are left out, so an empty column never clears or fails anything. */
+    private Map<String, Object> customFieldCells(CSVRecord record, List<String> headers) {
+        Map<String, Object> values = new LinkedHashMap<>();
+        for (String header : headers) {
+            String value = header.startsWith(CUSTOM_FIELD_COLUMN_PREFIX) ? get(record, header) : null;
+            if (value != null && !value.isBlank()) {
+                values.put(header.substring(CUSTOM_FIELD_COLUMN_PREFIX.length()), value);
+            }
+        }
+        return values;
     }
 
     private String get(CSVRecord record, String column) {
@@ -275,14 +324,15 @@ public class TestCaseImportExportService {
                 }
             }
             rows.add(new RowData(i + 1, item.title(), item.description(), item.preconditions(),
-                    item.priority(), item.status(), item.labels(), steps));
+                    item.priority(), item.status(), item.labels(), steps, item.customFields()));
         }
         return rows;
     }
 
     /** JSON import shape; server-managed fields (id, key, timestamps) are ignored on read. */
     private record JsonItem(String title, String description, String preconditions, String priority,
-                            String status, List<String> labels, List<Step> steps) {
+                            String status, List<String> labels, List<Step> steps,
+                            Map<String, Object> customFields) {
         private record Step(String action, String expectedResult, String testData) {
         }
     }

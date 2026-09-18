@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -38,11 +39,11 @@ public class McpTestCaseWriter {
                                           Priority priority, String description,
                                           String preconditions, TestCaseStatus status,
                                           Set<String> labels, List<McpDtos.Step> steps,
-                                          UUID folderId) {
+                                          UUID folderId, Map<String, Object> customFields) {
         var request = new CreateTestCaseRequest(
                 title, description, preconditions, priority,
                 status == null ? TestCaseStatus.DRAFT : status,
-                labels, toStepRequests(steps), folderId);
+                labels, toStepRequests(steps), folderId, customFields);
         validator.validate(request);
 
         TestCaseResponse response = testCaseService.create(projectId, request, userId, CustomFieldWriteMode.MACHINE);

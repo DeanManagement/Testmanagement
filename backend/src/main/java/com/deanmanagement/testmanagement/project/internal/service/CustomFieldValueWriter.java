@@ -40,6 +40,8 @@ public class CustomFieldValueWriter {
     public static final int MAX_TEXT_LENGTH = 500;
     private static final int MAX_DECIMAL_PLACES = 4;
     private static final int MAX_INTEGER_DIGITS = 15;
+    /** Joins MULTI_SELECT options in CSV cells and single-string writes (PRD-035 §3.7). */
+    public static final String MULTI_SELECT_SEPARATOR = ";";
 
     private final CustomFieldDefinitionRepository definitionRepository;
 
@@ -82,7 +84,31 @@ public class CustomFieldValueWriter {
         }
     }
 
+    /**
+     * Checks names and values as {@link #write} would, without writing anything. For dry runs
+     * (PRD-035 §3.7), so they report the same errors a real import would hit.
+     */
+    public void validate(UUID projectId, CustomFieldEntityType entityType, Map<String, Object> values) {
+        if (values != null && !values.isEmpty()) {
+            parseAll(definitionRepository.findByProjectIdAndEntityTypeOrderByOrderIndexAscNameAsc(projectId, entityType),
+                    values);
+        }
+    }
+
     private static void apply(List<CustomFieldDefinition> definitions, Owner owner, Map<String, Object> values) {
+        // Parse everything before touching the entity, so a bad value leaves it unchanged.
+        parseAll(definitions, values).forEach((field, newValues) -> {
+            owner.values().removeIf(v -> v.getField().getId().equals(field.getId()));
+            for (CustomFieldValue value : newValues) {
+                value.setField(field);
+                owner.attach().accept(value);
+                owner.values().add(value);
+            }
+        });
+    }
+
+    private static Map<CustomFieldDefinition, List<CustomFieldValue>> parseAll(List<CustomFieldDefinition> definitions,
+                                                                                Map<String, Object> values) {
         Map<String, CustomFieldDefinition> byName = new LinkedHashMap<>();
         definitions.forEach(d -> byName.put(normalize(d.getName()), d));
 
@@ -92,21 +118,12 @@ public class CustomFieldValueWriter {
             throw new IllegalArgumentException("Unknown custom field(s): " + String.join(", ", unknown)
                     + ". Valid fields: " + (valid.isEmpty() ? "none" : valid));
         }
-
-        // Parse everything before touching the entity, so a bad value leaves it unchanged.
         Map<CustomFieldDefinition, List<CustomFieldValue>> parsed = new LinkedHashMap<>();
         values.forEach((name, raw) -> {
             CustomFieldDefinition field = byName.get(normalize(name));
             parsed.put(field, parse(field, raw));
         });
-        parsed.forEach((field, newValues) -> {
-            owner.values().removeIf(v -> v.getField().getId().equals(field.getId()));
-            for (CustomFieldValue value : newValues) {
-                value.setField(field);
-                owner.attach().accept(value);
-                owner.values().add(value);
-            }
-        });
+        return parsed;
     }
 
     private static void requireFilled(List<CustomFieldDefinition> definitions, List<CustomFieldValue> values) {
@@ -190,9 +207,8 @@ public class CustomFieldValueWriter {
     }
 
     private static List<CustomFieldValue> parseMultiSelect(CustomFieldDefinition field, Object raw) {
-        Collection<?> items = raw instanceof Collection<?> c ? c : List.of(raw);
         List<String> options = new ArrayList<>();
-        for (Object item : items) {
+        for (Object item : multiSelectItems(raw)) {
             String text = requireText(field, item).trim();
             if (!text.isEmpty()) {
                 String option = canonicalOption(field, text);
@@ -202,6 +218,17 @@ public class CustomFieldValueWriter {
             }
         }
         return options.stream().map(CustomFieldValueWriter::textValue).toList();
+    }
+
+    /** A list, or one string of ;-separated options as a CSV cell holds; options can't contain ';'. */
+    private static Collection<?> multiSelectItems(Object raw) {
+        if (raw instanceof Collection<?> items) {
+            return items;
+        }
+        if (raw instanceof String text) {
+            return List.of(text.split(MULTI_SELECT_SEPARATOR));
+        }
+        return List.of(raw);
     }
 
     /** Options match ignoring case; the stored label is always the definition's spelling. */

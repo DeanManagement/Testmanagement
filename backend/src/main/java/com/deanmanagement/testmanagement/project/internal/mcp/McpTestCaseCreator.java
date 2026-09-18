@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -29,7 +30,7 @@ class McpTestCaseCreator {
                                            Priority priority, String description,
                                            String preconditions, TestCaseStatus status,
                                            Set<String> labels, List<McpDtos.Step> steps,
-                                           UUID folderId,
+                                           UUID folderId, Map<String, Object> customFields,
                                            TestCaseDuplicateDetector.Index duplicateIndex) {
         if (priority == null) {
             throw new McpToolException("priority is required: LOW, MEDIUM, HIGH or CRITICAL.");
@@ -48,6 +49,6 @@ class McpTestCaseCreator {
         }
         // Its own transaction, so one bad item in a bulk call cannot take the others with it.
         return writer.create(caller.projectId(), caller.userId(), title, priority, description,
-                preconditions, status, labels, steps, folderId);
+                preconditions, status, labels, steps, folderId, customFields);
     }
 }

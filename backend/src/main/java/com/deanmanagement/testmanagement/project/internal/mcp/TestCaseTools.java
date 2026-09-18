@@ -6,10 +6,13 @@ import com.deanmanagement.testmanagement.project.internal.dto.filter.TestCaseLis
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.MoveTestCasesRequest;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseFolderService;
+import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.service.CustomFieldFilterParser;
+import com.deanmanagement.testmanagement.project.internal.service.CustomFieldWriteMode;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +24,10 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
@@ -46,6 +52,7 @@ public class TestCaseTools {
     private final McpTestCaseCreator creator;
     private final McpValidator validator;
     private final McpWriteThrottle writeThrottle;
+    private final CustomFieldFilterParser customFieldFilterParser;
 
     // --- read ------------------------------------------------------------------------------
 
@@ -58,6 +65,8 @@ public class TestCaseTools {
                     status: DRAFT | IN_REVIEW | ACTIVE | DEPRECATED. priority: LOW | MEDIUM | HIGH | CRITICAL.
                     Results are paged; check totalElements and hasMore before concluding something
                     does not exist.
+                    customFields: by field NAME (see list_custom_fields), e.g. {"Component": "Checkout"};
+                    a list value matches any of its entries; a TEXT field matches a substring.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
@@ -76,6 +85,8 @@ public class TestCaseTools {
             @McpToolParam(description = "With folderId: also include cases in its subfolders, default false",
                     required = false)
             Boolean includeSubfolders,
+            @McpToolParam(description = "Only cases whose custom fields match, keyed by field name",
+                    required = false) Map<String, Object> customFields,
             @McpToolParam(description = "Zero-based page number, default 0", required = false)
             Integer page,
             @McpToolParam(description = "Page size, default 50, max 200", required = false)
@@ -84,7 +95,9 @@ public class TestCaseTools {
         var caller = callerContext.require();
         Pageable pageable = pageable(page, size);
         var filter = new TestCaseListFilter(blankToNull(query), status, priority, labels, folderId,
-                Boolean.TRUE.equals(includeSubfolders), false, null);
+                Boolean.TRUE.equals(includeSubfolders), false, null,
+                customFieldFilterParser.parse(caller.projectId(), CustomFieldEntityType.TEST_CASE,
+                        asFilterParams(customFields)));
 
         Page<TestCaseResponse> result =
                 testCaseService.findByProject(caller.projectId(), filter, pageable);
@@ -117,7 +130,8 @@ public class TestCaseTools {
                 response.folderId(),
                 response.steps() == null ? List.of() : response.steps().stream()
                         .map(s -> new McpDtos.Step(s.action(), s.expectedResult(), s.testData()))
-                        .toList());
+                        .toList(),
+                response.customFields());
     }
 
     // --- write -----------------------------------------------------------------------------
@@ -133,6 +147,8 @@ public class TestCaseTools {
                     approved and is refused here: use IN_REVIEW.
                     steps: ordered; each has an action, an optional expectedResult and optional
                     testData. Order comes from the array, not from any index you supply.
+                    customFields: keyed by field NAME, not id — call list_custom_fields for names,
+                    types and options. MULTI_SELECT takes an array; DATE is yyyy-MM-dd.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
@@ -149,6 +165,8 @@ public class TestCaseTools {
             @McpToolParam(description = "Ordered steps", required = false) List<McpDtos.Step> steps,
             @McpToolParam(description = "Folder to file it under; omit for the project root", required = false)
             UUID folderId,
+            @McpToolParam(description = "Custom field values keyed by field name", required = false)
+            Map<String, Object> customFields,
             @McpToolParam(description = "Set true only to override a refused duplicate", required = false)
             Boolean allowDuplicateTitle) {
 
@@ -157,7 +175,7 @@ public class TestCaseTools {
         var index = Boolean.TRUE.equals(allowDuplicateTitle)
                 ? null : duplicateDetector.index(caller.projectId());
         return creator.create(caller, title, priority, description, preconditions, status, labels,
-                steps, folderId, index);
+                steps, folderId, customFields, index);
     }
 
     @McpTool(
@@ -168,6 +186,8 @@ public class TestCaseTools {
                     labels or steps pass an empty array.
                     Pass steps only if you mean to replace the whole ordered list — doing so
                     discards any screenshots a human attached to steps that no longer exist.
+                    customFields: keyed by field NAME, not id; only the names you pass change, and
+                    a null value clears that field.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
@@ -185,7 +205,9 @@ public class TestCaseTools {
             Set<String> labels,
             @McpToolParam(description = "Replaces the whole ordered step list; [] clears it", required = false)
             List<McpDtos.Step> steps,
-            @McpToolParam(description = "Move the case to this folder", required = false) UUID folderId) {
+            @McpToolParam(description = "Move the case to this folder", required = false) UUID folderId,
+            @McpToolParam(description = "Custom field values keyed by field name; null clears one",
+                    required = false) Map<String, Object> customFields) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
@@ -197,11 +219,11 @@ public class TestCaseTools {
         // unconditionally, which forced a read-then-merge here — and that made the agent the
         // author of fields it never touched, quietly reverting a human's concurrent edit.
         var request = new UpdateTestCaseRequest(title, description, preconditions, priority, status,
-                labels, steps == null ? null : McpTestCaseWriter.toStepRequests(steps));
+                labels, steps == null ? null : McpTestCaseWriter.toStepRequests(steps), customFields);
         validator.validate(request);
 
-        TestCaseResponse updated =
-                testCaseService.update(caller.projectId(), existing.getId(), request, caller.userId());
+        TestCaseResponse updated = testCaseService.update(caller.projectId(), existing.getId(), request,
+                caller.userId(), CustomFieldWriteMode.MACHINE);
 
         if (folderId != null) {
             // Folder membership is not part of UpdateTestCaseRequest; it moves separately.
@@ -226,6 +248,21 @@ public class TestCaseTools {
         return PageableUtils.normalize(PageRequest.of(
                 page == null || page < 0 ? 0 : page,
                 size == null || size < 1 ? PageableUtils.DEFAULT_SIZE : size));
+    }
+
+    /** An equality map as the {@code cf.<name>} parameters the list endpoint takes. */
+    private static Map<String, List<String>> asFilterParams(Map<String, Object> customFields) {
+        Map<String, List<String>> params = new LinkedHashMap<>();
+        if (customFields != null) {
+            customFields.forEach((name, value) -> {
+                if (value instanceof Collection<?> values) {
+                    params.put(CustomFieldFilterParser.PARAM_PREFIX + name, values.stream().map(String::valueOf).toList());
+                } else if (value != null) {
+                    params.put(CustomFieldFilterParser.PARAM_PREFIX + name, List.of(value.toString()));
+                }
+            });
+        }
+        return params;
     }
 
     private static String blankToNull(String value) {

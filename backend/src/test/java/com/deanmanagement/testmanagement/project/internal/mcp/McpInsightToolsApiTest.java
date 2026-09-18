@@ -31,7 +31,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login", "Open page");
         testCaseTools.updateTestCase(login.key(), "Sign in", null, null, null, null, null, null,
-                null);
+                null, null);
 
         McpDtos.VersionList history = historyTools.listTestCaseVersions(login.key());
 

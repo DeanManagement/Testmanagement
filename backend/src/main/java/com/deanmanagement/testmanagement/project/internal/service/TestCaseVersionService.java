@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
 import com.deanmanagement.testmanagement.project.internal.dto.version.TestCaseVersionResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.version.TestCaseVersionSummary;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
@@ -18,7 +19,9 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -58,6 +61,7 @@ public class TestCaseVersionService {
         version.setApprovedVersion(testCase.getApprovedVersion());
         version.setLabels(String.join(",", testCase.getLabels()));
         version.setStepsSnapshot(serialiseSteps(testCase.getSteps()));
+        version.setCustomFieldsJson(serialiseCustomFields(testCase));
         versionRepository.save(version);
 
         testCase.setCurrentVersion(testCase.getCurrentVersion() + 1);
@@ -117,7 +121,8 @@ public class TestCaseVersionService {
                 testCase.getStatus(),
                 testCase.getLabels().stream().sorted().toList(),
                 steps,
-                testCase.getUpdatedBy());
+                testCase.getUpdatedBy(),
+                CustomFieldValueMaps.toMap(testCase.getCustomFieldValues()));
     }
 
     private TestCaseVersionResponse fromSnapshot(TestCaseVersion version) {
@@ -132,7 +137,8 @@ public class TestCaseVersionService {
                 version.getStatus(),
                 parseLabels(version.getLabels()),
                 deserialiseSteps(version.getStepsSnapshot()),
-                version.getCreatedBy());
+                version.getCreatedBy(),
+                deserialiseCustomFields(version.getCustomFieldsJson()));
     }
 
     private String serialiseSteps(List<TestStep> steps) {
@@ -159,6 +165,28 @@ public class TestCaseVersionService {
         } catch (Exception e) {
             // A corrupt snapshot must not take out the History tab for every other version.
             return List.of();
+        }
+    }
+
+    private String serialiseCustomFields(TestCase testCase) {
+        try {
+            return objectMapper.writeValueAsString(CustomFieldValueMaps.toMap(testCase.getCustomFieldValues()));
+        } catch (Exception e) {
+            // Same reasoning as serialiseSteps: failing the edit beats silently losing history.
+            throw new IllegalStateException("Could not snapshot the test case custom fields");
+        }
+    }
+
+    private Map<String, Object> deserialiseCustomFields(String json) {
+        if (json == null || json.isBlank()) {
+            return Map.of();
+        }
+        try {
+            return objectMapper.readValue(json, new TypeReference<LinkedHashMap<String, Object>>() {
+            });
+        } catch (Exception e) {
+            // A corrupt snapshot must not take out the History tab for every other version.
+            return Map.of();
         }
     }
 

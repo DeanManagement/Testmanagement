@@ -1,6 +1,8 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
+import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
@@ -78,7 +80,12 @@ final class McpDtos {
     record TestCaseDetail(UUID id, String key, String title, @Nullable String description,
                           @Nullable String preconditions, TestCaseStatus status, Priority priority,
                           @Nullable Set<String> labels, @Nullable UUID folderId,
-                          List<Step> steps) {}
+                          List<Step> steps, @Nullable Map<String, Object> customFields) {}
+
+    /** A custom field definition (PRD-035); agents write values keyed by {@code name}. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record CustomField(String name, CustomFieldEntityType entityType, CustomFieldType fieldType,
+                       @Nullable List<String> options, boolean required, boolean archived) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record Folder(UUID id, String name, @Nullable UUID parentId, long testCaseCount,

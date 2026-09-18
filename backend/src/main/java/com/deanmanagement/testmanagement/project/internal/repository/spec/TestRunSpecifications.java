@@ -60,6 +60,8 @@ public final class TestRunSpecifications {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("startTime"), filter.startedAfter()));
             }
 
+            predicates.addAll(CustomFieldSpecifications.matchAll(query, cb, root, "testRun", filter.customFields()));
+
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }

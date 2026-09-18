@@ -5,6 +5,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** One historical state of a test case (PRD-011). */
@@ -19,7 +20,9 @@ public record TestCaseVersionResponse(
         TestCaseStatus status,
         List<String> labels,
         List<StepSnapshot> steps,
-        UUID createdBy
+        UUID createdBy,
+        /* PRD-035: values by field name; empty for versions saved before custom fields existed. */
+        Map<String, Object> customFields
 ) {
     public record StepSnapshot(
             int orderIndex,

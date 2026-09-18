@@ -12,11 +12,13 @@ import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseR
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestCaseListFilter;
 import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
+import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.dto.environment.EnvironmentResultResponse;
 import com.deanmanagement.testmanagement.project.internal.service.ProjectEnvironmentService;
+import com.deanmanagement.testmanagement.project.internal.service.CustomFieldFilterParser;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +30,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -52,6 +55,7 @@ public class TestCaseController {
     private final TestCaseService testCaseService;
     private final ProjectEnvironmentService environmentService;
     private final TestCaseReviewService reviewService;
+    private final CustomFieldFilterParser customFieldFilterParser;
 
     @GetMapping
     @RequireProjectRole
@@ -65,10 +69,11 @@ public class TestCaseController {
                                           @RequestParam(required = false, defaultValue = "false") boolean rootOnly,
                                           @RequestParam(required = false)
                                           @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant updatedAfter,
+                                          @RequestParam MultiValueMap<String, String> params,
                                           @PageableDefault(size = PageableUtils.DEFAULT_SIZE) Pageable pageable) {
         TestCaseListFilter filter =
                 new TestCaseListFilter(q, status, priority, label, folderId, includeSubfolders, rootOnly,
-                        updatedAfter);
+                        updatedAfter, customFieldFilterParser.parse(projectId, CustomFieldEntityType.TEST_CASE, params));
         return testCaseService.findByProject(projectId, filter, PageableUtils.normalize(pageable));
     }
 

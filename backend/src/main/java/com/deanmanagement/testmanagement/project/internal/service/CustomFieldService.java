@@ -36,8 +36,6 @@ public class CustomFieldService {
 
     public static final int MAX_ACTIVE_FIELDS_PER_ENTITY_TYPE = 20;
     public static final int MAX_OPTIONS = 50;
-    /** Multi-select values are joined with it in CSV (PRD-035 §3.7), so an option can't contain it. */
-    private static final String OPTION_SEPARATOR = ";";
 
     private final CustomFieldDefinitionRepository definitionRepository;
     private final CustomFieldValueRepository valueRepository;
@@ -204,8 +202,9 @@ public class CustomFieldService {
                 throw new IllegalArgumentException("Options must be at most "
                         + CustomFieldValueWriter.MAX_TEXT_LENGTH + " characters");
             }
-            if (label.contains(OPTION_SEPARATOR)) {
-                throw new IllegalArgumentException("Option '" + label + "' must not contain '" + OPTION_SEPARATOR + "'");
+            if (label.contains(CustomFieldValueWriter.MULTI_SELECT_SEPARATOR)) {
+                throw new IllegalArgumentException("Option '" + label + "' must not contain '"
+                        + CustomFieldValueWriter.MULTI_SELECT_SEPARATOR + "'");
             }
             if (!seen.add(CustomFieldValueWriter.normalize(label))) {
                 throw new IllegalArgumentException("Duplicate option '" + label + "'");

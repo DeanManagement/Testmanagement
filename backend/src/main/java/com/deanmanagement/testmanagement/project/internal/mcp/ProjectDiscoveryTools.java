@@ -6,11 +6,13 @@ import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.Upd
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.MoveTestCasesRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.ReorderFoldersRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.TestCaseFolderResponse;
+import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestSuiteRepository;
+import com.deanmanagement.testmanagement.project.internal.service.CustomFieldService;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseFolderService;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +42,7 @@ public class ProjectDiscoveryTools {
     private final TestCaseFolderService folderService;
     private final McpWriteThrottle writeThrottle;
     private final McpValidator validator;
+    private final CustomFieldService customFieldService;
 
     // Identity, not authoring: a key restricted to running tests still has to be able to ask
     // which project it is scoped to and what role it holds.
@@ -66,6 +69,28 @@ public class ProjectDiscoveryTools {
                 testSuiteRepository.countByProjectId(project.getId()),
                 testPlanRepository.countByProjectId(project.getId()),
                 caller.role().name());
+    }
+
+    @McpTool(
+            name = "list_custom_fields",
+            description = """
+                    The project's custom fields (PRD-035): extra typed attributes on test cases,
+                    test runs and bug reports. Call this before writing customFields anywhere —
+                    values are keyed by field NAME, not id, and an unknown name is refused.
+                    fieldType: TEXT (max 500 chars) | NUMBER | DATE (yyyy-MM-dd) | SELECT (one of
+                    options) | MULTI_SELECT (an array of options). Archived fields keep their values
+                    but should not be filled in.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
+    public List<McpDtos.CustomField> listCustomFields(
+            @McpToolParam(description = "Only fields of TEST_CASE, TEST_RUN or BUG_REPORT; omit for all",
+                    required = false) CustomFieldEntityType entityType) {
+        var caller = callerContext.require();
+        return customFieldService.list(caller.projectId(), entityType).stream()
+                .map(f -> new McpDtos.CustomField(f.name(), f.entityType(), f.fieldType(),
+                        f.options().isEmpty() ? null : f.options(), f.required(), f.archived()))
+                .toList();
     }
 
     @McpTool(

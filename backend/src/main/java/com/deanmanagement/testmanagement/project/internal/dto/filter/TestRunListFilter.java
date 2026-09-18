@@ -15,6 +15,12 @@ public record TestRunListFilter(
         UUID testPlanId,
         UUID executorId,
         Instant startedAfter,
-        UUID environmentId
+        UUID environmentId,
+        /* PRD-035: each must match; see CustomFieldCriterion. */
+        List<CustomFieldCriterion> customFields
 ) {
+    public TestRunListFilter(String q, List<TestRunStatus> status, UUID testPlanId, UUID executorId,
+                             Instant startedAfter, UUID environmentId) {
+        this(q, status, testPlanId, executorId, startedAfter, environmentId, List.of());
+    }
 }
