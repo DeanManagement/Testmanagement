@@ -41,6 +41,8 @@ import { TestSuiteApiService } from '../../../core/services/test-suite-api.servi
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
 import { Priority, TestCase, TestCaseQuery, TestCaseStatus, ALL_TEST_CASE_STATUSES } from '../../../shared/models/test-case.model';
+import { CustomFieldFiltersComponent } from '../../../shared/components/custom-fields/custom-field-filters.component';
+import { readCustomFieldParams } from '../../../shared/components/custom-fields/custom-field-filter-params';
 
 interface FlatFolderNode {
   id: string;
@@ -56,6 +58,7 @@ interface FlatFolderNode {
   selector: 'app-test-case-list',
   standalone: true,
   imports: [
+    CustomFieldFiltersComponent,
     AsyncPipe,
     LowerCasePipe,
     RouterLink,
@@ -183,6 +186,7 @@ export class TestCaseListComponent implements OnInit {
         priority: this.priorityFilter ? [this.priorityFilter] : undefined,
         folderId: this.selectedFolderId,
         includeSubfolders: this.includeSubfolders,
+        customFieldParams: readCustomFieldParams(params),
         page: params.get('page') ? Number(params.get('page')) : 0,
         size: params.get('size') ? Number(params.get('size')) : 50,
         sort: params.get('sort') ?? 'updatedAt,desc',

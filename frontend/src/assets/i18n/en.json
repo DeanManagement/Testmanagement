@@ -1149,5 +1149,59 @@
       "none": "None",
       "create": "Create"
     }
+  },
+  "customField": {
+    "title": "Custom fields",
+    "description": "Extra typed fields on this project's test cases, test runs and bug reports, such as Component, Sprint or Customer.",
+    "manage": "Manage custom fields",
+    "add": "Add field",
+    "empty": "No custom fields yet.",
+    "full": "At most {{max}} active fields; archive one first.",
+    "required": "Required",
+    "archived": "Archived",
+    "activeHint": "Active. Switch off to archive: the field is hidden from forms and filters, and its values are kept.",
+    "reorder": "Drag to reorder",
+    "deleteConfirm": "Delete the custom field \"{{name}}\"?",
+    "forceDelete": {
+      "title": "Delete field and its values?",
+      "message": "\"{{name}}\" holds values. Deleting it discards them on every item, and this cannot be undone.",
+      "archiveInstead": "To keep the values, cancel and archive the field instead."
+    },
+    "entityType": {
+      "TEST_CASE": "Test cases",
+      "TEST_RUN": "Test runs",
+      "BUG_REPORT": "Bug reports"
+    },
+    "type": {
+      "TEXT": "Text",
+      "NUMBER": "Number",
+      "DATE": "Date",
+      "SELECT": "Single select",
+      "MULTI_SELECT": "Multi select"
+    },
+    "dialog": {
+      "addTitle": "Add custom field",
+      "editTitle": "Edit custom field",
+      "name": "Name",
+      "type": "Type",
+      "typeFixed": "The type can't be changed. Create a new field and archive this one.",
+      "options": "Options",
+      "optionLabel": "Option {{index}}",
+      "addOption": "Add option",
+      "removeOption": "Remove option",
+      "renameHint": "Editing an option renames it everywhere it is used. An option that is in use can't be removed.",
+      "required": "Required",
+      "requiredHint": "People must fill it in when saving a form. Imports, CI uploads and API agents are never blocked.",
+      "optionsRequired": "Add at least one option.",
+      "tooManyOptions": "At most {{max}} options.",
+      "duplicateOption": "Each option must be different.",
+      "optionSeparator": "Options can't contain a semicolon."
+    },
+    "filters": {
+      "more": "More filters",
+      "from": "{{name}} from",
+      "to": "{{name}} to",
+      "clear": "Clear"
+    }
   }
 }

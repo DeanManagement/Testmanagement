@@ -150,6 +150,16 @@
       </div>
       <div class="setting-item">
         <div class="setting-info">
+          <h4>{{ 'customField.title' | translate }}</h4>
+          <p class="setting-description">{{ 'customField.description' | translate }}</p>
+        </div>
+        <a mat-stroked-button [routerLink]="['/projects', project.id, 'custom-fields']" data-test-id="project-settings-custom-fields-link">
+          <mat-icon>tune</mat-icon>
+          {{ 'customField.manage' | translate }}
+        </a>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
           <h4>{{ 'webhook.title' | translate }}</h4>
           <p class="setting-description">{{ 'webhook.description' | translate }}</p>
         </div>

@@ -41,6 +41,7 @@
         </mat-select>
       </mat-form-field>
     }
+    <app-custom-field-filters [projectId]="projectId" entityType="TEST_RUN" />
   </div>
 
   @if (loading$ | async) {

@@ -26,6 +26,8 @@ export class TestCaseApiService {
       params = params.set('rootOnly', 'true');
     }
     if (query.updatedAfter) params = params.set('updatedAfter', query.updatedAfter);
+    Object.entries(query.customFieldParams ?? {}).forEach(([name, values]) =>
+      values.forEach((value) => (params = params.append(name, value))));
     if (query.page != null) params = params.set('page', String(query.page));
     if (query.size != null) params = params.set('size', String(query.size));
     if (query.sort) params = params.set('sort', query.sort);

@@ -1,3 +1,5 @@
+import { CustomFieldValues } from './custom-field.model';
+
 export type BugReportStatus = 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'CLOSED' | 'WONTFIX';
 
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
@@ -27,6 +29,8 @@ export interface BugReport {
   /** PRD-034: the exploratory session it was found in. */
   exploratorySessionId: string | null;
   exploratorySessionKey: string | null;
+  /** PRD-035: only fields that hold a value, in display order. */
+  customFields: CustomFieldValues;
 }
 
 export interface CreateBugReportRequest {
@@ -42,6 +46,7 @@ export interface CreateBugReportRequest {
   assigneeId?: string;
   /** PRD-034: filed from this exploratory session. */
   exploratorySessionId?: string;
+  customFields?: CustomFieldValues;
 }
 
 export interface UpdateBugReportRequest {
@@ -56,4 +61,5 @@ export interface UpdateBugReportRequest {
   testResultId?: string;
   testRunId?: string;
   assigneeId?: string;
+  customFields?: CustomFieldValues;
 }

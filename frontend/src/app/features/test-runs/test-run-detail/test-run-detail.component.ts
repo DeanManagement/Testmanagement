@@ -49,11 +49,13 @@ import { WatchToggleComponent } from '../../../shared/components/watch-toggle/wa
 import { IssueLinksComponent } from '../../../shared/components/issue-links/issue-links.component';
 import { IssueTrackerApiService } from '../../../core/services/issue-tracker-api.service';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
+import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
 
 @Component({
   selector: 'app-test-run-detail',
   standalone: true,
   imports: [
+    CustomFieldsDisplayComponent,
     AsyncPipe,
     LocalizedDatePipe,
     LowerCasePipe,

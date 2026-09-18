@@ -1,0 +1,72 @@
+<div class="custom-field-container">
+  <div class="page-header">
+    <a mat-button [routerLink]="['/projects', projectId]" class="back-link" data-test-id="custom-field-back">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'common.back' | translate }}
+    </a>
+    <h1 data-test-id="custom-field-title">{{ 'customField.title' | translate }}</h1>
+  </div>
+
+  <p class="page-hint">{{ 'customField.description' | translate }}</p>
+
+  @if (loading && fieldsByType.TEST_CASE.length + fieldsByType.TEST_RUN.length + fieldsByType.BUG_REPORT.length === 0) {
+    <div class="spinner-container"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else {
+    @for (entityType of entityTypes; track entityType) {
+      <section class="tm-card" [attr.data-test-id]="'custom-field-section-' + entityType">
+        <div class="section-header">
+          <h2>{{ 'customField.entityType.' + entityType | translate }}</h2>
+          <span [matTooltip]="isFull(entityType) ? ('customField.full' | translate: { max: maxActive }) : ''">
+            <button mat-stroked-button (click)="add(entityType)" [disabled]="isFull(entityType)"
+                    [attr.data-test-id]="'custom-field-add-' + entityType">
+              <mat-icon>add</mat-icon>
+              {{ 'customField.add' | translate }}
+            </button>
+          </span>
+        </div>
+
+        @if (fieldsByType[entityType].length === 0) {
+          <p class="empty" data-test-id="custom-field-empty">{{ 'customField.empty' | translate }}</p>
+        } @else {
+          <div class="field-list" cdkDropList (cdkDropListDropped)="drop(entityType, $event)">
+            @for (field of fieldsByType[entityType]; track field.id) {
+              <div class="field-row" cdkDrag [class.archived]="field.archived" data-test-id="custom-field-row">
+                <mat-icon class="drag-handle" cdkDragHandle [attr.aria-label]="'customField.reorder' | translate">drag_indicator</mat-icon>
+
+                <div class="field-main">
+                  <span class="field-name">{{ field.name }}</span>
+                  <span class="badge">{{ 'customField.type.' + field.fieldType | translate }}</span>
+                  @if (field.required) {
+                    <span class="badge">{{ 'customField.required' | translate }}</span>
+                  }
+                  @if (field.archived) {
+                    <span class="badge">{{ 'customField.archived' | translate }}</span>
+                  }
+                  @if (field.options.length > 0) {
+                    <span class="options">{{ field.options.join(', ') }}</span>
+                  }
+                </div>
+
+                <div class="field-actions">
+                  <mat-slide-toggle [checked]="!field.archived" (change)="setArchived(field, !$event.checked)"
+                                    [matTooltip]="'customField.activeHint' | translate"
+                                    [attr.aria-label]="'customField.activeHint' | translate"
+                                    data-test-id="custom-field-active-toggle">
+                  </mat-slide-toggle>
+                  <button mat-icon-button (click)="edit(field)" [attr.aria-label]="'common.edit' | translate"
+                          data-test-id="custom-field-edit-btn">
+                    <mat-icon>edit</mat-icon>
+                  </button>
+                  <button mat-icon-button class="danger" (click)="remove(field)"
+                          [attr.aria-label]="'common.delete' | translate" data-test-id="custom-field-delete-btn">
+                    <mat-icon>delete</mat-icon>
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    }
+  }
+</div>

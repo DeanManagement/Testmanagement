@@ -20,6 +20,8 @@ import { take } from 'rxjs/operators';
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
+import { CustomFieldsFormComponent } from '../../../shared/components/custom-fields/custom-fields-form.component';
+import { CustomFieldValues } from '../../../shared/models/custom-field.model';
 
 interface StepImageState {
   id?: string;
@@ -35,6 +37,7 @@ import { ProjectApiService } from '../../../core/services/project-api.service';
   selector: 'app-test-case-form',
   standalone: true,
   imports: [
+    CustomFieldsFormComponent,
     FieldErrorComponent,
     ReactiveFormsModule,
     RouterLink,
@@ -82,6 +85,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
     priority: ['MEDIUM' as Priority],
     status: ['DRAFT' as TestCaseStatus],
     labels: [''],
+    customFields: this.fb.control<CustomFieldValues>({}),
     steps: this.fb.array([]),
   });
 
@@ -111,6 +115,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
             priority: tc.priority,
             status: tc.status,
             labels: tc.labels?.join(', ') ?? '',
+            customFields: tc.customFields ?? {},
           });
           this.loadedStatus = tc.status;
           this.statuses = selectableStatuses(this.reviewRequired, this.loadedStatus);
@@ -229,6 +234,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
       status: this.form.value.status as TestCaseStatus,
       labels,
       steps,
+      customFields: this.form.value.customFields ?? undefined,
     };
 
     const pendingImages = new Map(this.stepImages);

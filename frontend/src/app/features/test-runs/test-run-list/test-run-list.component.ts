@@ -26,11 +26,14 @@ import { AutomationPanelComponent } from '../../automation/automation-panel.comp
 
 import { EnvironmentApiService } from '../../../core/services/environment-api.service';
 import { ProjectEnvironment } from '../../../shared/models/environment.model';
+import { CustomFieldFiltersComponent } from '../../../shared/components/custom-fields/custom-field-filters.component';
+import { readCustomFieldParams } from '../../../shared/components/custom-fields/custom-field-filter-params';
 
 @Component({
   selector: 'app-test-run-list',
   standalone: true,
   imports: [
+    CustomFieldFiltersComponent,
     AsyncPipe,
     LowerCasePipe,
     RouterLink,
@@ -95,6 +98,7 @@ export class TestRunListComponent implements OnInit {
         q: this.searchTerm || undefined,
         status: this.statusFilter ? [this.statusFilter] : undefined,
         environmentId: this.environmentFilter || undefined,
+        customFieldParams: readCustomFieldParams(params),
         page: params.get('page') ? Number(params.get('page')) : 0,
         size: params.get('size') ? Number(params.get('size')) : 50,
         sort: params.get('sort') ?? 'updatedAt,desc',

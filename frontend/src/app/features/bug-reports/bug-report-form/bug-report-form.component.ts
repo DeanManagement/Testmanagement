@@ -19,6 +19,8 @@ import { ProjectMemberApiService } from '../../../core/services/project-member-a
 import { ProjectMember } from '../../../shared/models/project-member.model';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
+import { CustomFieldsFormComponent } from '../../../shared/components/custom-fields/custom-fields-form.component';
+import { CustomFieldValues } from '../../../shared/models/custom-field.model';
 import { EnvironmentInputComponent } from '../../../shared/components/environment-input/environment-input.component';
 import { EnvironmentApiService } from '../../../core/services/environment-api.service';
 
@@ -26,6 +28,7 @@ import { EnvironmentApiService } from '../../../core/services/environment-api.se
   selector: 'app-bug-report-form',
   standalone: true,
   imports: [
+    CustomFieldsFormComponent,
     FieldErrorComponent,
     ReactiveFormsModule,
     RouterLink,
@@ -75,6 +78,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     testResultId: [''],
     testRunId: [''],
     assigneeId: [''],
+    customFields: this.fb.control<CustomFieldValues>({}),
   });
 
   ngOnInit(): void {
@@ -128,6 +132,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             testResultId: bug.testResultId || '',
             testRunId: bug.testRunId || '',
             assigneeId: bug.assigneeId || '',
+            customFields: bug.customFields ?? {},
           });
           this.cdr.detectChanges();
         }
@@ -160,6 +165,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             testResultId: value.testResultId || undefined,
             testRunId: value.testRunId || undefined,
             assigneeId: value.assigneeId || undefined,
+            customFields: value.customFields ?? undefined,
           },
         })
       );
@@ -179,6 +185,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             testRunId: value.testRunId || undefined,
             assigneeId: value.assigneeId || undefined,
             exploratorySessionId: this.exploratorySessionId ?? undefined,
+            customFields: value.customFields ?? undefined,
           },
         })
       );

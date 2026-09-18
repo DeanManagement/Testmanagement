@@ -6,6 +6,7 @@ import { ActivityFeedComponent } from './activity-feed/activity-feed.component';
 import { ProjectDashboardComponent } from './project-dashboard/project-dashboard.component';
 import { WebhookSettingsComponent } from '../webhooks/webhook-settings.component';
 import { EnvironmentSettingsComponent } from '../environments/environment-settings.component';
+import { CustomFieldSettingsComponent } from '../custom-fields/custom-field-settings.component';
 import { IssueTrackerSettingsComponent } from '../issue-tracker/issue-tracker-settings.component';
 import { RequirementsComponent } from '../requirements/requirements.component';
 import { unsavedChangesGuard } from '../../core/guards/unsaved-changes.guard';
@@ -19,6 +20,7 @@ export const projectsRoutes: Routes = [
   { path: ':id/dashboard', component: ProjectDashboardComponent },
   { path: ':id/webhooks', component: WebhookSettingsComponent },
   { path: ':id/environments', component: EnvironmentSettingsComponent },
+  { path: ':id/custom-fields', component: CustomFieldSettingsComponent },
   { path: ':id/issue-tracker', component: IssueTrackerSettingsComponent },
   { path: ':id/requirements', component: RequirementsComponent },
   {

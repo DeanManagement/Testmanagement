@@ -1,3 +1,5 @@
+import { CustomFieldValues } from './custom-field.model';
+
 export type TestRunStatus = 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'ABORTED';
 export type TestResultStatus = 'PENDING' | 'PASSED' | 'FAILED' | 'BLOCKED' | 'SKIPPED';
 
@@ -60,6 +62,8 @@ export interface TestRun {
   updatedAt: string;
   createdBy?: string;
   updatedBy?: string;
+  /** PRD-035: on detail responses; only fields that hold a value, in display order. */
+  customFields?: CustomFieldValues;
 }
 
 export interface TestRunQuery {
@@ -69,6 +73,8 @@ export interface TestRunQuery {
   executorId?: string;
   environmentId?: string;
   startedAfter?: string;
+  /** PRD-035: raw `cf.<name>` filter parameters, passed through to the API as they are. */
+  customFieldParams?: Record<string, string[]>;
   page?: number;
   size?: number;
   sort?: string;
@@ -82,6 +88,7 @@ export interface CreateTestRunRequest {
   executorId?: string;
   /** Only for createAcrossEnvironments: one run per id (PRD-032). */
   environmentIds?: string[];
+  customFields?: CustomFieldValues;
 }
 
 /** Server-side limit on environmentIds in one request. */

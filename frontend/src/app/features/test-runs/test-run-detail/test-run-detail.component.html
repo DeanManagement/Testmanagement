@@ -115,6 +115,7 @@
           <span><strong>{{ 'testRun.reopenReason' | translate }}:</strong> {{ run.reopenReason }}</span>
         </div>
       }
+      <app-custom-fields-display [values]="run.customFields" />
     </div>
 
     @if (run.results?.length) {

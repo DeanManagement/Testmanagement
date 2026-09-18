@@ -1,3 +1,5 @@
+import { CustomFieldValues } from './custom-field.model';
+
 export interface TestStep {
   id: string;
   action: string;
@@ -39,6 +41,8 @@ export interface TestCase {
   approvedBy: string | null;
   approvedAt: string | null;
   approvedVersion: number | null;
+  /** PRD-035: only fields that hold a value, in display order. */
+  customFields: CustomFieldValues;
 }
 
 /** What the caller may do in a case's review; reason explains a refused approve. */
@@ -58,6 +62,7 @@ export interface CreateTestCaseRequest {
   labels?: string[];
   steps?: TestStepRequest[];
   folderId?: string;
+  customFields?: CustomFieldValues;
 }
 
 export interface UpdateTestCaseRequest {
@@ -68,6 +73,7 @@ export interface UpdateTestCaseRequest {
   status?: TestCaseStatus;
   labels?: string[];
   steps?: TestStepRequest[];
+  customFields?: CustomFieldValues;
 }
 
 export interface BulkOperationResponse {
@@ -99,6 +105,8 @@ export interface TestCaseQuery {
   includeSubfolders?: boolean;
   rootOnly?: boolean;
   updatedAfter?: string;
+  /** PRD-035: raw `cf.<name>` filter parameters, passed through to the API as they are. */
+  customFieldParams?: Record<string, string[]>;
   page?: number;
   size?: number;
   sort?: string;

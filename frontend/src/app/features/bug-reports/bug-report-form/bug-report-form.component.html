@@ -71,6 +71,8 @@
       </mat-select>
     </mat-form-field>
 
+    <app-custom-fields-form [projectId]="projectId" entityType="BUG_REPORT" formControlName="customFields" />
+
     <div class="form-actions">
       <a mat-stroked-button [routerLink]="['/projects', projectId, 'bug-reports']" data-test-id="bug-report-form-cancel">
         {{ 'common.cancel' | translate }}

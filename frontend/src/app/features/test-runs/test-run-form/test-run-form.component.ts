@@ -27,6 +27,8 @@ import { ProjectMember } from '../../../shared/models/project-member.model';
 import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
 import { TestCase } from '../../../shared/models/test-case.model';
 import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
+import { CustomFieldsFormComponent } from '../../../shared/components/custom-fields/custom-fields-form.component';
+import { CustomFieldValues } from '../../../shared/models/custom-field.model';
 import { EnvironmentInputComponent } from '../../../shared/components/environment-input/environment-input.component';
 import { EnvironmentApiService } from '../../../core/services/environment-api.service';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
@@ -37,6 +39,7 @@ import { MAX_ENVIRONMENTS_PER_REQUEST } from '../../../shared/models/test-run.mo
   selector: 'app-test-run-form',
   standalone: true,
   imports: [
+    CustomFieldsFormComponent,
     FieldErrorComponent,
     AsyncPipe,
     ReactiveFormsModule,
@@ -88,6 +91,7 @@ export class TestRunFormComponent implements OnInit {
     environment: [''],
     testPlanId: [''],
     executorId: [''],
+    customFields: this.fb.control<CustomFieldValues>({}),
   });
 
   ngOnInit(): void {
@@ -182,6 +186,7 @@ export class TestRunFormComponent implements OnInit {
           testCaseIds: [...this.selectedTestCaseIds],
           testPlanId: this.form.value.testPlanId || undefined,
           executorId: this.form.value.executorId || undefined,
+          customFields: this.form.value.customFields ?? undefined,
         },
       })
     );
@@ -196,6 +201,7 @@ export class TestRunFormComponent implements OnInit {
       testPlanId: this.form.value.testPlanId || undefined,
       executorId: this.form.value.executorId || undefined,
       environmentIds: this.selectedEnvironmentIds,
+      customFields: this.form.value.customFields ?? undefined,
     }).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => this.router.navigate(['/projects', this.projectId, 'test-runs'], { queryParams: { q: name } }),
       error: () => {

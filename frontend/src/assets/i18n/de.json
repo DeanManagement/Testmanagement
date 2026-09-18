@@ -485,7 +485,7 @@
       "rotate": "Schlüssel neu generieren",
       "revokeAction": "Schlüssel widerrufen",
       "rotateTitle": "API-Schlüssel neu generieren?",
-      "rotateMessage": "Für «{{name}}» wird ein neues Geheimnis ausgestellt.",
+      "rotateMessage": "Für \"{{name}}\" wird ein neues Geheimnis ausgestellt.",
       "rotateWarning": "Der bisherige Schlüssel funktioniert ab sofort nicht mehr. Jede CI-Pipeline und jeder KI-Agent, der ihn verwendet, schlägt fehl, bis Sie den neuen hinterlegt haben. Projekt, Rolle und Verlauf des Schlüssels bleiben erhalten.",
       "rotatedAt": "Neu generiert",
       "neverRotated": "Nie"
@@ -1148,6 +1148,60 @@
       "timeboxHint": "Zwischen {{min}} und {{max}} Minuten",
       "none": "Keine",
       "create": "Erstellen"
+    }
+  },
+  "customField": {
+    "title": "Benutzerdefinierte Felder",
+    "description": "Zusätzliche typisierte Felder für Testfälle, Testläufe und Fehlerberichte dieses Projekts, etwa Komponente, Sprint oder Kunde.",
+    "manage": "Benutzerdefinierte Felder verwalten",
+    "add": "Feld hinzufügen",
+    "empty": "Noch keine benutzerdefinierten Felder.",
+    "full": "Höchstens {{max}} aktive Felder; archivieren Sie zuerst eines.",
+    "required": "Pflichtfeld",
+    "archived": "Archiviert",
+    "activeHint": "Aktiv. Ausschalten archiviert das Feld: Es verschwindet aus Formularen und Filtern, seine Werte bleiben erhalten.",
+    "reorder": "Zum Sortieren ziehen",
+    "deleteConfirm": "Das benutzerdefinierte Feld \"{{name}}\" löschen?",
+    "forceDelete": {
+      "title": "Feld samt Werten löschen?",
+      "message": "\"{{name}}\" enthält Werte. Beim Löschen gehen sie bei allen Einträgen verloren; das lässt sich nicht rückgängig machen.",
+      "archiveInstead": "Um die Werte zu behalten, abbrechen und das Feld stattdessen archivieren."
+    },
+    "entityType": {
+      "TEST_CASE": "Testfälle",
+      "TEST_RUN": "Testläufe",
+      "BUG_REPORT": "Fehlerberichte"
+    },
+    "type": {
+      "TEXT": "Text",
+      "NUMBER": "Zahl",
+      "DATE": "Datum",
+      "SELECT": "Einfachauswahl",
+      "MULTI_SELECT": "Mehrfachauswahl"
+    },
+    "dialog": {
+      "addTitle": "Benutzerdefiniertes Feld hinzufügen",
+      "editTitle": "Benutzerdefiniertes Feld bearbeiten",
+      "name": "Name",
+      "type": "Typ",
+      "typeFixed": "Der Typ lässt sich nicht ändern. Legen Sie ein neues Feld an und archivieren Sie dieses.",
+      "options": "Optionen",
+      "optionLabel": "Option {{index}}",
+      "addOption": "Option hinzufügen",
+      "removeOption": "Option entfernen",
+      "renameHint": "Das Bearbeiten einer Option benennt sie überall um, wo sie verwendet wird. Eine verwendete Option lässt sich nicht entfernen.",
+      "required": "Pflichtfeld",
+      "requiredHint": "Personen müssen es beim Speichern eines Formulars ausfüllen. Importe, CI-Uploads und API-Agenten werden nie blockiert.",
+      "optionsRequired": "Fügen Sie mindestens eine Option hinzu.",
+      "tooManyOptions": "Höchstens {{max}} Optionen.",
+      "duplicateOption": "Jede Option muss sich unterscheiden.",
+      "optionSeparator": "Optionen dürfen kein Semikolon enthalten."
+    },
+    "filters": {
+      "more": "Weitere Filter",
+      "from": "{{name}} von",
+      "to": "{{name}} bis",
+      "clear": "Zurücksetzen"
     }
   }
 }

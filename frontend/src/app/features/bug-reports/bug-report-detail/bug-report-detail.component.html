@@ -54,6 +54,7 @@
           {{ bug.createdAt | localizedDate:'medium' }}
         </span>
       </div>
+      <app-custom-fields-display [values]="bug.customFields" />
 
       <div class="status-change">
         <mat-form-field appearance="outline" class="status-select">

@@ -51,6 +51,8 @@
                 <input matInput formControlName="labels" data-test-id="test-case-labels-input" />
                 <mat-hint>{{ 'testCase.form.labelsHint' | translate }}</mat-hint>
               </mat-form-field>
+
+              <app-custom-fields-form [projectId]="projectId" entityType="TEST_CASE" formControlName="customFields" />
             </div>
           </mat-tab>
 

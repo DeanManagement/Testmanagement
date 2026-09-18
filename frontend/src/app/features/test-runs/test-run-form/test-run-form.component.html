@@ -55,6 +55,8 @@
           }
         }
 
+        <app-custom-fields-form [projectId]="projectId" entityType="TEST_RUN" formControlName="customFields" />
+
         <div class="test-cases-picker" data-test-id="test-run-tc-picker">
           <h3>{{ 'testSuite.form.testCases' | translate }}</h3>
           <p class="picker-hint">{{ 'testRun.form.pickerHint' | translate }}</p>

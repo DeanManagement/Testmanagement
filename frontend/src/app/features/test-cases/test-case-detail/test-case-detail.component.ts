@@ -32,11 +32,13 @@ import { EnvironmentResultsComponent } from '../environment-results/environment-
 import { TestCaseReviewComponent } from '../review/test-case-review.component';
 import { statusLabelKey } from '../review/review-status';
 import { ProjectApiService } from '../../../core/services/project-api.service';
+import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
 
 @Component({
   selector: 'app-test-case-detail',
   standalone: true,
   imports: [
+    CustomFieldsDisplayComponent,
     TestCaseReviewComponent,
     EnvironmentResultsComponent,
     AsyncPipe,
