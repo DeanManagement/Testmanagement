@@ -81,6 +81,7 @@ public class TestRunService {
     private final ProjectSequenceService projectSequenceService;
     private final RunEventPublisher runEventPublisher;
     private final ProjectEnvironmentService environmentService;
+    private final TestCaseReviewService reviewService;
 
     private static final int MAX_RUN_NAME_LENGTH = 255;
 
@@ -183,7 +184,7 @@ public class TestRunService {
                 run.getId(), run.getName(), run.getEnvironment(), run.getStatus(),
                 run.getStartTime(), run.getEndTime(),
                 total, passed, failed, blocked, skipped, pending, passRate,
-                resultResponses
+                resultResponses, reviewService.resultsOnUnapprovedWording(run.getProject(), results)
         );
     }
 

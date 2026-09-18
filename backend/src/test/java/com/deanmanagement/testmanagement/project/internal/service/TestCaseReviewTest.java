@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.dto.myqueue.MyQueueResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.ci.CiResult;
 import com.deanmanagement.testmanagement.project.internal.dto.TestStepRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestCaseRequest;
@@ -77,6 +79,10 @@ class TestCaseReviewTest {
     private CommentRepository commentRepository;
     @Autowired
     private EntityManager entityManager;
+    @Autowired
+    private TestRunService testRunService;
+    @Autowired
+    private MyQueueService myQueueService;
 
     private Project project;
     private UUID author;
@@ -417,6 +423,88 @@ class TestCaseReviewTest {
             assertThat(result.warnings()).isEmpty();
             assertThat(testCaseRepository.findFirstByProjectIdAndTitle(project.getId(), "Imported").orElseThrow()
                     .getStatus()).isEqualTo(TestCaseStatus.ACTIVE);
+        }
+    }
+
+    @Nested
+    class RunReports {
+
+        private UUID runWith(UUID testCaseId) {
+            return testRunService.create(project.getId(), new CreateTestRunRequest("Run", null, Set.of(testCaseId),
+                    null, null), author).id();
+        }
+
+        private Set<UUID> flaggedIn(UUID runId) {
+            return testRunService.getReport(project.getId(), runId).unapprovedResultIds();
+        }
+
+        @Test
+        void approvedWordingIsNotFlagged() {
+            UUID runId = runWith(approvedCase().id());
+
+            assertThat(flaggedIn(runId)).isEmpty();
+        }
+
+        @Test
+        void wordingInReviewIsFlaggedButEarlierApprovedRunsStayClean() {
+            TestCaseResponse approved = approvedCase();
+            UUID approvedRun = runWith(approved.id());
+            testCaseService.update(project.getId(), approved.id(), new UpdateTestCaseRequest("Reworded", null, null,
+                    null, null, null, null), as(tester));
+
+            UUID laterRun = runWith(approved.id());
+
+            assertThat(flaggedIn(laterRun)).hasSize(1);
+            assertThat(flaggedIn(approvedRun)).as("v1 was approved when it ran").isEmpty();
+        }
+
+        @Test
+        void casesApprovedBeforeReviewWasSwitchedOnAreNotFlagged() {
+            reviewOff();
+            as(author);
+            TestCaseResponse legacy = testCaseService.create(project.getId(), new CreateTestCaseRequest("Legacy",
+                    null, null, Priority.LOW, TestCaseStatus.ACTIVE, Set.of(), List.of(), null), author);
+            project.setReviewRequired(true);
+            projectRepository.save(project);
+
+            assertThat(flaggedIn(runWith(legacy.id()))).isEmpty();
+        }
+
+        @Test
+        void nothingIsFlaggedWithoutReview() {
+            UUID runId = runWith(draftBy(author).id());
+            reviewOff();
+
+            assertThat(flaggedIn(runId)).isEmpty();
+        }
+    }
+
+    @Nested
+    class Queue {
+
+        private List<UUID> queuedFor(UUID userId) {
+            return myQueueService.buildFor(userId).awaitingReview().stream()
+                    .map(MyQueueResponse.ReviewTestCaseItem::id).toList();
+        }
+
+        @Test
+        void listsCasesAwaitingAnEligibleReviewer() {
+            UUID id = inReviewBy(author).id();
+            as(admin);
+
+            assertThat(queuedFor(admin)).containsExactly(id);
+            assertThat(queuedFor(author)).as("not your own").isEmpty();
+            assertThat(queuedFor(tester)).as("below the reviewer role").isEmpty();
+        }
+
+        @Test
+        void includesTestersWhenTheyMayReview() {
+            project.setReviewerMinRole(ProjectRole.TESTER);
+            projectRepository.save(project);
+            UUID id = inReviewBy(author).id();
+            as(admin);
+
+            assertThat(queuedFor(tester)).containsExactly(id);
         }
     }
 }

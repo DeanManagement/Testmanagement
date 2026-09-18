@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.repository;
 
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import org.springframework.data.domain.Pageable;
@@ -79,4 +80,23 @@ public interface TestCaseRepository extends JpaRepository<TestCase, UUID>, JpaSp
                                                  @Param("status") TestCaseStatus status,
                                                  @Param("staleBefore") Instant staleBefore,
                                                  Pageable pageable);
+
+    /**
+     * Cases waiting for a review the user may give (PRD-033): IN_REVIEW, in a project where the
+     * user's membership meets the reviewer role (ADMIN always; TESTER when the project lets
+     * testers review, or doesn't require review at all), and neither written nor last edited by
+     * the user. Oldest first, since they've waited longest.
+     */
+    @Query("SELECT tc FROM TestCase tc JOIN FETCH tc.project p, ProjectMember m " +
+            "WHERE m.project = p AND m.user.id = :userId AND tc.status = :inReview " +
+            "AND (tc.createdBy IS NULL OR tc.createdBy <> :userId) " +
+            "AND (tc.updatedBy IS NULL OR tc.updatedBy <> :userId) " +
+            "AND (m.role = :admin OR (m.role = :tester " +
+            "     AND (p.reviewRequired = false OR p.reviewerMinRole = :tester))) " +
+            "ORDER BY tc.updatedAt ASC")
+    List<TestCase> findAwaitingReviewBy(@Param("userId") UUID userId,
+                                        @Param("inReview") TestCaseStatus inReview,
+                                        @Param("admin") ProjectRole admin,
+                                        @Param("tester") ProjectRole tester,
+                                        Pageable pageable);
 }

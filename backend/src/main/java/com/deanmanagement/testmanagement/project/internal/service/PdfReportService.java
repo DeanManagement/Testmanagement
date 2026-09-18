@@ -91,7 +91,12 @@ public class PdfReportService {
         sb.append("</tr>\n");
         for (TestResultResponse result : report.results()) {
             sb.append("<tr>");
-            sb.append("<td>").append(escapeHtml(result.testCaseTitle())).append("</td>");
+            sb.append("<td>").append(escapeHtml(result.testCaseTitle()));
+            if (report.unapprovedResultIds().contains(result.id())) {
+                sb.append("<br/><span class=\"unapproved\">Executed unapproved wording (v")
+                        .append(result.executedVersion()).append(")</span>");
+            }
+            sb.append("</td>");
             sb.append("<td class=\"").append(result.status().name().toLowerCase()).append("\">");
             sb.append(result.status()).append("</td>");
             sb.append("<td>").append(escapeHtml(ResultEvidence.of(result)).replace("\n", "<br/>")).append("</td>");
@@ -246,5 +251,6 @@ public class PdfReportService {
             .blocked { color: #ff9800; font-weight: bold; }
             .skipped { color: #9e9e9e; font-weight: bold; }
             .pending { color: #2196f3; font-weight: bold; }
+            .unapproved { color: #b45309; font-size: 9px; }
             """;
 }

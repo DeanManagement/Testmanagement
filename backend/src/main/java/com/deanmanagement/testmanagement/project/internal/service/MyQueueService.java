@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.dto.myqueue.MyQueueResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
@@ -122,6 +123,20 @@ public class MyQueueService {
                         tc.getUpdatedAt()))
                 .toList();
 
-        return new MyQueueResponse(dueTestPlans, inProgressRuns, staleBugReports, oldDraftTestCases);
+        List<MyQueueResponse.ReviewTestCaseItem> awaitingReview = testCaseRepository
+                .findAwaitingReviewBy(userId, TestCaseStatus.IN_REVIEW, ProjectRole.ADMIN, ProjectRole.TESTER, limit)
+                .stream()
+                .map(tc -> new MyQueueResponse.ReviewTestCaseItem(
+                        tc.getId(),
+                        tc.getKey(),
+                        tc.getTitle(),
+                        tc.getProject().getId(),
+                        tc.getProject().getKey(),
+                        tc.getProject().getName(),
+                        tc.getUpdatedAt()))
+                .toList();
+
+        return new MyQueueResponse(dueTestPlans, inProgressRuns, staleBugReports, oldDraftTestCases,
+                awaitingReview);
     }
 }

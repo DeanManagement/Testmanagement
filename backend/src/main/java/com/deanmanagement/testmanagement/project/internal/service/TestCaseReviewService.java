@@ -1,5 +1,9 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import java.util.Set;
+import java.util.HashSet;
+import com.deanmanagement.testmanagement.project.internal.repository.TestCaseVersionRepository;
+import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.access.ProjectAccessService;
 import com.deanmanagement.testmanagement.project.internal.dto.TestStepRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestCaseRequest;
@@ -47,6 +51,7 @@ public class TestCaseReviewService {
     private final AuditService auditService;
     private final CommentService commentService;
     private final TestCaseMapper testCaseMapper;
+    private final TestCaseVersionRepository versionRepository;
 
     /**
      * The status a plain write (create, update, bulk, MCP) may set. With review on, ACTIVE is
@@ -83,6 +88,43 @@ public class TestCaseReviewService {
                 && testCase.getStatus() == TestCaseStatus.ACTIVE) {
             testCase.setStatus(TestCaseStatus.IN_REVIEW);
         }
+    }
+
+    /**
+     * Results executed against wording that was never approved (PRD-033 §3.4), for the run report.
+     * A version counts as approved if it is the live approval or a snapshot records it as such, so
+     * an old result on a then-approved version isn't flagged just because a newer one exists.
+     * ACTIVE cases approved before review was switched on (no approval recorded) aren't flagged.
+     */
+    public Set<UUID> resultsOnUnapprovedWording(Project project, List<TestResult> results) {
+        if (!project.isReviewRequired()) {
+            return Set.of();
+        }
+        List<UUID> caseIds = results.stream()
+                .filter(r -> r.getTestCase() != null && r.getExecutedVersion() != null)
+                .map(r -> r.getTestCase().getId())
+                .distinct()
+                .toList();
+        if (caseIds.isEmpty()) {
+            return Set.of();
+        }
+        Set<String> approvedSnapshots = versionRepository.findApprovedVersionKeys(caseIds);
+        Set<UUID> flagged = new HashSet<>();
+        for (TestResult result : results) {
+            TestCase testCase = result.getTestCase();
+            Integer executed = result.getExecutedVersion();
+            if (testCase == null || executed == null) {
+                continue;
+            }
+            boolean legacyApproved = testCase.getApprovedVersion() == null
+                    && testCase.getStatus() == TestCaseStatus.ACTIVE;
+            boolean approved = executed.equals(testCase.getApprovedVersion())
+                    || approvedSnapshots.contains(testCase.getId() + ":" + executed);
+            if (!approved && !legacyApproved) {
+                flagged.add(result.getId());
+            }
+        }
+        return flagged;
     }
 
     /** True when the update changes title, description, preconditions or steps. */

@@ -21,7 +21,8 @@ public record MyQueueResponse(
         List<DueTestPlanItem> dueTestPlans,
         List<InProgressRunItem> inProgressRuns,
         List<StaleBugReportItem> staleBugReports,
-        List<OldDraftTestCaseItem> oldDraftTestCases
+        List<OldDraftTestCaseItem> oldDraftTestCases,
+        List<ReviewTestCaseItem> awaitingReview
 ) {
 
     /** A test plan I am assigned to that is due within the next week (or overdue). */
@@ -59,6 +60,17 @@ public record MyQueueResponse(
 
     /** A test case I authored that is still in DRAFT after two weeks. */
     public record OldDraftTestCaseItem(
+            UUID id,
+            String key,
+            String title,
+            UUID projectId,
+            String projectKey,
+            String projectName,
+            Instant updatedAt
+    ) {}
+
+    /** A test case in review that I may approve (PRD-033): not mine, and I hold the reviewer role. */
+    public record ReviewTestCaseItem(
             UUID id,
             String key,
             String title,

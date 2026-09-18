@@ -5,6 +5,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 
 import java.time.Instant;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 public record TestRunReportResponse(
@@ -21,6 +22,8 @@ public record TestRunReportResponse(
         int skipped,
         int pending,
         double passRate,
-        List<TestResultResponse> results
+        List<TestResultResponse> results,
+        /* PRD-033: results executed against wording that was never approved; empty without review. */
+        Set<UUID> unapprovedResultIds
 ) {
 }
