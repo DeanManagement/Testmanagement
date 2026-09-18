@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-18 — see §8; bug report list filtering left out |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P3 — driver-dependent (the first "we need a Component / Sprint / Customer field" request) |
@@ -150,11 +150,71 @@ Out of scope. The Postgres path relies on `GENERATED ALWAYS AS … STORED` `tsve
 - **Risk:** Medium. Touches every write path of three entities and three list queries; the single `validateAndWrite` entry point and per-path tests contain that. Performance risk is low at the 50-user target given the per-field indexes and the 20-field cap.
 
 ## 7. Acceptance Criteria
-- [ ] Project admins can define, reorder, archive and (force-)delete typed custom fields for test cases, test runs and bug reports.
-- [ ] Values are validated by type and options, stored vendor-neutrally, and cascade-deleted with their owner.
-- [ ] Forms and detail pages show custom fields; `required` is enforced for interactive writes only.
-- [ ] Test case and test run lists filter by custom fields via URL-bound parameters with correct pagination.
-- [ ] CSV/JSON import (with dry run) and export include test case custom fields.
-- [ ] Test case version snapshots include custom field values.
-- [ ] MCP tools read and write custom fields by name; `list_custom_fields` exists.
-- [ ] Tests pass on H2; migration verified against Postgres.
+- [x] Project admins can define, reorder, archive and (force-)delete typed custom fields for test cases, test runs and bug reports.
+- [x] Values are validated by type and options, stored vendor-neutrally, and cascade-deleted with their owner.
+- [x] Forms and detail pages show custom fields; `required` is enforced for interactive writes only.
+- [x] Test case and test run lists filter by custom fields via URL-bound parameters with correct pagination.
+- [x] CSV/JSON import (with dry run) and export include test case custom fields.
+- [x] Test case version snapshots include custom field values.
+- [x] MCP tools read and write custom fields by name; `list_custom_fields` exists.
+- [x] Tests pass on H2; migration verified against Postgres.
+
+## 8. As Built (2026-09-18)
+
+Built as specified, with these differences:
+
+- **Values are a lazy `@OneToMany` on each owner, not loaded by a separate repository query.** §3.3
+  wanted `findByTestCaseIdIn` to avoid another eagerly-joined collection. The collection is lazy and
+  `default_batch_fetch_size: 100` is already global, so list pages cost one extra query, and every
+  existing `toResponse` path (MCP, lists, clone) carries `customFields` without being patched.
+- **Bug report list filtering was left out.** It is not an acceptance criterion and would first need
+  paging and filtering added to that list (§3.5 called it a prerequisite). Bug reports have the
+  fields on their form and detail page.
+- **`CustomFieldValueWriter` is separate from `CustomFieldService`** (definitions), and takes the
+  owner entity rather than an id: it edits the owner's collection in place, inside the owner's
+  transaction. `validate(...)` checks a map without writing, which the import uses per row.
+- **Required is enforced on an update only when the request carries `customFields`.** A status-only
+  edit is never blocked by a field that became required later (§4). Creates always check it.
+  Interactive means the REST API; MCP creates and updates, import and run clones are MACHINE.
+- **Option renames are explicit.** `PUT` takes `options` (the whole new list) plus
+  `renamedOptions` (old label to new), which is how the server tells a rename from a removal.
+- **Options match ignoring case and are stored in the definition's spelling.** They can't contain
+  `;`, which joins multi-select values in CSV. A single string written to a MULTI_SELECT is split
+  on `;`, so a CSV cell and an API list go through the same path.
+- **Output format:** NUMBER without trailing zeros (`12.5`), DATE as `yyyy-MM-dd`, MULTI_SELECT in
+  option order. Only fields that hold a value appear, in display order, so an archived field shows
+  on a detail page exactly when it holds one.
+- **Filters:** a field literally named `Size.min` wins over a range on `Size`. `.min`/`.max` on a
+  field that is not NUMBER or DATE, an unknown name and an unknown option are all 400.
+- **CSV export includes archived fields** (§4) and numbers skip `csvSafe`: a negative number is not
+  a formula. Text still gets the apostrophe, which survives a round trip as for every other cell.
+- **Editing custom fields is not a PRD-033 content edit**, so it does not send an approved case
+  back to review.
+- **Frontend:** DATE uses the native `<input type="date">` rather than `mat-datepicker`: it already
+  yields `yyyy-MM-dd` and needs no timezone conversion. The field type is locked in the edit
+  dialog. The dialog saves itself and stays open on a refusal, so the server's reason shows
+  without losing the edits. Runs have no edit form, so run fields are set at creation (or through
+  the API). "More filters" is an inline panel rather than a menu, with the `cf.*` query parameters
+  as its state. No NgRx slice: definitions are cached in `CustomFieldApiService`.
+
+Two existing bugs surfaced and were fixed in their own commits:
+
+- **Imports wrote nothing** (`16790c6`). `importData` inherited the class-level read-only
+  transaction, so rows were reported imported and never committed. The API tests missed it
+  because they run inside a test transaction. `TestCaseImportPersistenceTest` now checks what is
+  actually committed.
+- **The run form's case search crashed the picker** (`d166e85`): `ngModel` inside the reactive
+  form without `standalone` (NG01350), as soon as a project had test cases.
+
+Tests: `CustomFieldServiceTest` (16), `CustomFieldValuesTest` (25, including the CHECK and cascade
+through JDBC), `CustomFieldFilterTest` (13, including page counts with multi-select rows),
+`CustomFieldImportExportTest` (6, with the version snapshot), `CustomFieldApiTest` (6, RBAC),
+`McpCustomFieldToolsApiTest` (5), `TestCaseImportPersistenceTest` (2); frontend
+`custom-field-values`, `custom-field-filter-params`, `custom-field-options` and
+`custom-fields-form.component` specs. **1001 backend tests, 32 frontend spec files (175 tests).**
+V59 applied on PostgreSQL 16 with Hibernate schema validation passing.
+
+Checked in a browser against PostgreSQL: the settings page, the edit dialog's refusal of an
+in-use option, a shared `cf.` filter link, the test case form with all five types, save, and the
+detail page. **Still open:** the bug report form, drag reordering, the force-delete prompts, the
+run detail page and the German strings were not clicked through.

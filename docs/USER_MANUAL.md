@@ -307,6 +307,42 @@ delete them. **Bulk delete refuses cases that already have results** — retire 
 them Deprecated instead. (Deleting a single case from its own page has no such guard and takes its
 results with it, so prefer bulk delete when you want the safety net.)
 
+### Custom fields
+
+When labels aren't enough (`component:checkout` has no fixed list, no numbers, no dates), a
+project admin can add typed fields under **Custom fields** on the project page. Each field
+belongs to test cases, test runs or bug reports, and is one of:
+
+| Type | Holds |
+|---|---|
+| Text | one line, up to 500 characters |
+| Number | a decimal with up to 4 decimal places |
+| Date | a calendar date |
+| Single select | one option from a list you define |
+| Multi select | any number of options from a list you define |
+
+A project can have 20 active fields per kind of item, and 50 options per list. Drag to reorder;
+the order is the order on forms and detail pages.
+
+- **Required** fields must be filled in when a person saves a form. Imports, CI uploads and API
+  agents are never blocked by them, and items that existed before the field aren't invalid: the
+  form asks the next time someone edits them.
+- **Archive** a field (the switch) to retire it. It disappears from forms and filters and keeps
+  its values, which still show on detail pages and in exports. Switch it back on at any time.
+- **Delete** removes a field for good. If it holds values you are asked a second time, because
+  they are discarded everywhere.
+- A field's **type can't change**. Create a new field and archive the old one.
+- Editing an option **renames it everywhere** it is used. An option that is in use can't be
+  removed; rename it, or archive the field.
+
+Fields appear on the test case, test run and bug report forms, and on their detail pages once they
+hold a value. Run fields are filled in when the run is started.
+
+**Filtering** — on the test case and test run lists, **More filters** has one control per field:
+a list of options (any of the chosen ones matches), a text fragment, or a from/to range for
+numbers and dates. Like every other filter it lives in the URL, so a filtered list can be
+bookmarked or shared.
+
 ---
 
 ## 6. Importing and exporting test cases
@@ -324,7 +360,11 @@ Columns: `title`, `description`, `preconditions`, `priority`, `status`, `labels`
 - **Labels** are separated by semicolons: `smoke;regression`
 - **Steps** are `action|expectedResult` pairs joined by double semicolons:
   `Open login|Form appears;;Enter credentials|Dashboard loads`
-- Unknown columns are ignored, so you can import a spreadsheet with extra columns as-is.
+- **Custom fields** are columns named `cf:<Field name>`, for example `cf:Component`. Multi-select
+  options are separated by semicolons, dates are `yyyy-MM-dd`. In JSON they are a
+  `"customFields": { "Component": "Checkout", "Browsers": ["Chrome", "Firefox"] }` object. A field
+  name or option the project doesn't have fails that row.
+- Other unknown columns are ignored, so you can import a spreadsheet with extra columns as-is.
 
 Always use **Preview (dry run)** first. It validates every row and saves nothing, then reports
 how many rows would be imported, how many skipped, and the row number and reason for each
@@ -336,9 +376,12 @@ CSV cannot carry per-step test data. Use JSON if you need it.
 
 **Export** offers three formats:
 
-- **JSON** — round-trips everything, including step test data
+- **JSON** — round-trips everything, including step test data and custom fields
 - **CSV** — for spreadsheets and diffing
 - **CSV (Excel)** — same, with a byte-order mark so Excel opens UTF-8 correctly
+
+CSV has one `cf:<Field name>` column per test case custom field, archived ones included, so
+exporting and importing again loses nothing.
 
 Values that begin with `=`, `+`, `-`, `@`, a tab or a carriage return are prefixed with an
 apostrophe on export, so spreadsheets treat them as text rather than formulas.

@@ -135,6 +135,7 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 ## 4. Tools
 
 **Read** — `get_project`, `search_test_cases`, `get_test_case`, `list_test_case_folders`,
+`list_custom_fields`,
 `list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`, `list_test_runs`,
 `get_test_run`, `list_requirements`, `get_traceability_matrix`, `list_bug_reports`,
 `get_bug_report`, `list_comments`, `list_parameter_sets`, `list_test_case_versions`,
@@ -155,6 +156,12 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 Every `update_*` tool is partial: only the arguments you pass change, and an empty string `""`
 clears a text field. There are no delete tools, and nothing assigns work to a person — both stay
 human actions in the UI.
+
+**Custom fields** (`customFields` on `get_test_case`, `create_test_case`, `update_test_case` and as
+a filter on `search_test_cases`) are keyed by field **name**, not id. Call `list_custom_fields`
+first for the names, types and options; an unknown name is refused with the valid ones listed.
+On update only the names you pass change, and a `null` value clears that field. A field marked
+required never blocks an agent.
 
 ### Executing a run
 

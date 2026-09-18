@@ -28,7 +28,7 @@ Testmanagement/
 │       └── main/resources/
 │           ├── application.yml
 │           ├── application-dev.yml
-│           ├── db/migration/ # Flyway SQL migrations (V1-V46), vendor-neutral
+│           ├── db/migration/ # Flyway SQL migrations (V1-V59), vendor-neutral
 │           └── db/specific/  # Vendor-only migrations ({vendor} = postgresql | h2)
 ├── frontend/                 # Angular 21 project
 │   ├── Dockerfile
