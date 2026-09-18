@@ -11,6 +11,8 @@ import com.deanmanagement.testmanagement.project.internal.access.RequireProjectR
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
+import com.deanmanagement.testmanagement.project.internal.dto.environment.EnvironmentResultResponse;
+import com.deanmanagement.testmanagement.project.internal.service.ProjectEnvironmentService;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -44,6 +46,7 @@ import java.util.UUID;
 public class TestCaseController {
 
     private final TestCaseService testCaseService;
+    private final ProjectEnvironmentService environmentService;
 
     @GetMapping
     @RequireProjectRole
@@ -68,6 +71,14 @@ public class TestCaseController {
     @RequireProjectRole
     public TestCaseResponse findById(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testCaseService.findById(projectId, id);
+    }
+
+    /** The case's latest executed result in each environment (PRD-032). */
+    @GetMapping("/{id}/results/by-environment")
+    @RequireProjectRole
+    public List<EnvironmentResultResponse> latestResultsByEnvironment(@PathVariable UUID projectId,
+                                                                      @PathVariable UUID id) {
+        return environmentService.latestResultsByEnvironment(projectId, id);
     }
 
     @PostMapping

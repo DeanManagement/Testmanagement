@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
+import org.springframework.data.domain.PageRequest;
+import com.deanmanagement.testmanagement.project.internal.service.ProjectEnvironmentService;
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.BuildServerConfig;
 import com.deanmanagement.testmanagement.project.internal.entity.BuildServerProviderType;
@@ -73,6 +75,8 @@ class BuildServerApiTest {
     private PipelineRunRepository pipelineRunRepository;
     @Autowired
     private ApiKeyService apiKeyService;
+    @Autowired
+    private ProjectEnvironmentService environmentService;
 
     private static final String TOKEN = "not-a-real-build-token";
     private static final String JUNIT_XML = """
@@ -299,6 +303,58 @@ class BuildServerApiTest {
         PipelineRun linked = pipelineRunRepository.findById(pipelineRun.getId()).orElseThrow();
         assertThat(linked.getTestRun()).isNotNull();
         assertThat(linked.getTestRun().getName()).isEqualTo("Nightly regression");
+    }
+
+    /**
+     * PRD-032: the chosen environment reaches the workflow as TM_ENVIRONMENT. The stub server is
+     * unreachable, so only the parameters recorded before the provider call are checked.
+     */
+    @Test
+    void triggerWithAnEnvironment_passesTmEnvironment() throws Exception {
+        BuildWorkflow workflow = saveWorkflow(saveServer(), "Nightly");
+        assign(project, workflow);
+        UUID environmentId = environmentService.resolve(project.getId(), null, "Staging").getId();
+
+        mockMvc.perform(post("/api/projects/" + project.getId() + "/workflows/" + workflow.getId() + "/trigger")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"environmentId\":\"" + environmentId + "\"}")
+                .with(user(tester)));
+
+        assertThat(pipelineRunRepository.findByProjectIdOrderByCreatedAtDesc(project.getId(), PageRequest.of(0, 1))
+                .getContent().get(0).getParameters()).contains("\"TM_ENVIRONMENT\":\"Staging\"");
+    }
+
+    @Test
+    void reportedRun_inheritsTmEnvironment_whenTheUploadNamesNone() throws Exception {
+        PipelineRun pipelineRun = savePipelineRun(project, saveWorkflow(saveServer(), "Nightly"));
+        pipelineRun.setParameters("{\"TM_ENVIRONMENT\":\"staging\"}");
+        pipelineRunRepository.save(pipelineRun);
+        String apiKey = apiKeyService.create(new CreateApiKeyRequest("ci", project.getId(), null)).rawKey();
+
+        mockMvc.perform(post("/api/external/projects/AUT/test-runs/junit")
+                        .header("X-API-Key", apiKey)
+                        .param("pipelineRunId", pipelineRun.getId().toString())
+                        .contentType(MediaType.APPLICATION_XML)
+                        .content(JUNIT_XML))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.environment").value("staging"));
+    }
+
+    @Test
+    void reportedRun_keepsTheEnvironmentTheUploadNamed() throws Exception {
+        PipelineRun pipelineRun = savePipelineRun(project, saveWorkflow(saveServer(), "Nightly"));
+        pipelineRun.setParameters("{\"TM_ENVIRONMENT\":\"staging\"}");
+        pipelineRunRepository.save(pipelineRun);
+        String apiKey = apiKeyService.create(new CreateApiKeyRequest("ci", project.getId(), null)).rawKey();
+
+        mockMvc.perform(post("/api/external/projects/AUT/test-runs/junit")
+                        .header("X-API-Key", apiKey)
+                        .param("pipelineRunId", pipelineRun.getId().toString())
+                        .param("environment", "production")
+                        .contentType(MediaType.APPLICATION_XML)
+                        .content(JUNIT_XML))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.environment").value("production"));
     }
 
     @Test

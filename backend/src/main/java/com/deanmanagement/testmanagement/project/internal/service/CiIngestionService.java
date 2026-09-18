@@ -67,7 +67,8 @@ public class CiIngestionService {
         // An unnamed run from a triggered pipeline is named after the workflow that produced it.
         run.setName(runName != null && !runName.isBlank() ? runName
                 : pipelineRun != null ? pipelineRun.getWorkflowName() : "CI import");
-        run.assignEnvironment(environmentService.resolve(project.getId(), null, environment));
+        run.assignEnvironment(environmentService.resolve(project.getId(), null,
+                pipelineRunLinker.environmentFor(pipelineRun, environment)));
         run.setProject(project);
         run.setStatus(TestRunStatus.COMPLETED);
         run.setStartTime(now);

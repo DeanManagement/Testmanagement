@@ -2,12 +2,15 @@ package com.deanmanagement.testmanagement.project.internal.service;
 
 import com.deanmanagement.testmanagement.project.internal.dto.environment.CreateEnvironmentRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.environment.EnvironmentResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.environment.EnvironmentResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.environment.UpdateEnvironmentRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectEnvironment;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectEnvironmentRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.shared.exception.ConflictException;
 import com.deanmanagement.testmanagement.shared.exception.DuplicateKeyException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
@@ -15,7 +18,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -34,6 +39,8 @@ public class ProjectEnvironmentService {
     private final ProjectEnvironmentRepository environmentRepository;
     private final ProjectRepository projectRepository;
     private final AuditService auditService;
+    private final TestCaseRepository testCaseRepository;
+    private final TestResultRepository testResultRepository;
 
     public List<EnvironmentResponse> list(UUID projectId, boolean includeArchived) {
         Map<UUID, Long> runCounts = toCounts(environmentRepository.countRunsByEnvironment(projectId));
@@ -146,6 +153,28 @@ public class ProjectEnvironmentService {
                 targetId, targetName, "Merged in: " + sourceName);
         return toResponse(require(projectId, targetId),
                 environmentRepository.countRuns(targetId), environmentRepository.countBugs(targetId));
+    }
+
+    /** The newest executed result of a test case in each environment, most recent first. */
+    public List<EnvironmentResultResponse> latestResultsByEnvironment(UUID projectId, UUID testCaseId) {
+        testCaseRepository.findByIdAndProjectId(testCaseId, projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("TestCase", testCaseId));
+        // ponytail: loads the case's whole result history and keeps the first per environment;
+        // a window-function query if a single case ever has tens of thousands of results.
+        Map<UUID, EnvironmentResultResponse> latest = new LinkedHashMap<>();
+        EnvironmentResultResponse unspecified = null;
+        for (EnvironmentResultResponse row : testResultRepository.findExecutedResultsNewestFirst(projectId, testCaseId)) {
+            if (row.environmentId() == null) {
+                unspecified = unspecified != null ? unspecified : row;
+            } else {
+                latest.putIfAbsent(row.environmentId(), row);
+            }
+        }
+        List<EnvironmentResultResponse> rows = new ArrayList<>(latest.values());
+        if (unspecified != null) {
+            rows.add(unspecified);
+        }
+        return rows;
     }
 
     private ProjectEnvironment require(UUID projectId, UUID id) {

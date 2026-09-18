@@ -45,6 +45,7 @@ public class PipelineRunService {
     public static final String VAR_PIPELINE_RUN_ID = "TM_PIPELINE_RUN_ID";
     public static final String VAR_PROJECT_KEY = "TM_PROJECT_KEY";
     public static final String VAR_BASE_URL = "TM_BASE_URL";
+    public static final String VAR_ENVIRONMENT = "TM_ENVIRONMENT";
 
     private final PipelineRunRepository runRepository;
     private final ProjectBuildWorkflowRepository assignmentRepository;
@@ -53,6 +54,7 @@ public class PipelineRunService {
     private final BuildServerProviderRegistry providerRegistry;
     private final BuildServerProperties properties;
     private final ParameterJsonCodec parameterCodec;
+    private final ProjectEnvironmentService environmentService;
     private final PipelineRunRefresher refresher;
 
     public PipelineRunResponse trigger(UUID projectId, UUID workflowId, TriggerPipelineRequest request) {
@@ -70,6 +72,8 @@ public class PipelineRunService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
+        String environment = request.environmentId() != null
+                ? environmentService.resolve(projectId, request.environmentId(), null).getName() : null;
         String ref = request.ref() != null && !request.ref().isBlank()
                 ? request.ref().trim() : workflow.getDefaultRef();
 
@@ -80,11 +84,11 @@ public class PipelineRunService {
         run.setStatus(PipelineRunStatus.TRIGGERED);
         run.setTriggeredRef(ref);
 
-        Map<String, String> parameters = mergedParameters(workflow, request, run, project);
+        Map<String, String> parameters = mergedParameters(workflow, request, run, project, environment);
         run.setParameters(parameterCodec.toJson(parameters));
         run = runRepository.save(run);
         // The id only exists after the first save; re-merge so TM_PIPELINE_RUN_ID is real.
-        parameters = mergedParameters(workflow, request, run, project);
+        parameters = mergedParameters(workflow, request, run, project, environment);
         run.setParameters(parameterCodec.toJson(parameters));
         run = runRepository.save(run);
 
@@ -110,7 +114,7 @@ public class PipelineRunService {
     }
 
     private Map<String, String> mergedParameters(BuildWorkflow workflow, TriggerPipelineRequest request,
-                                                 PipelineRun run, Project project) {
+                                                 PipelineRun run, Project project, String environment) {
         Map<String, String> merged = new LinkedHashMap<>(parameterCodec.fromJson(workflow.getDefaultParameters()));
         if (request.parameters() != null) {
             merged.putAll(request.parameters());
@@ -122,6 +126,9 @@ public class PipelineRunService {
         merged.put(VAR_PROJECT_KEY, project.getKey());
         if (properties.publicBaseUrl() != null && !properties.publicBaseUrl().isBlank()) {
             merged.put(VAR_BASE_URL, properties.publicBaseUrl());
+        }
+        if (environment != null) {
+            merged.put(VAR_ENVIRONMENT, environment);
         }
         return merged;
     }

@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.buildserver.ParameterJsonCodec;
 import com.deanmanagement.testmanagement.project.internal.entity.PipelineRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.repository.PipelineRunRepository;
@@ -27,6 +28,21 @@ public class PipelineRunLinker {
     private static final Logger log = LoggerFactory.getLogger(PipelineRunLinker.class);
 
     private final PipelineRunRepository pipelineRunRepository;
+    private final ParameterJsonCodec parameterCodec;
+
+    /**
+     * The environment a reported-back run should get: the one the upload named, else the
+     * {@code TM_ENVIRONMENT} its pipeline was triggered with (PRD-032 §3.2).
+     */
+    public String environmentFor(PipelineRun pipelineRun, String requestedEnvironment) {
+        if (requestedEnvironment != null && !requestedEnvironment.isBlank()) {
+            return requestedEnvironment;
+        }
+        if (pipelineRun == null || pipelineRun.getParameters() == null) {
+            return requestedEnvironment;
+        }
+        return parameterCodec.fromJson(pipelineRun.getParameters()).get(PipelineRunService.VAR_ENVIRONMENT);
+    }
 
     /** Resolves and validates the pipeline run, or null when no id was submitted. */
     public PipelineRun resolve(UUID pipelineRunId, UUID projectId) {

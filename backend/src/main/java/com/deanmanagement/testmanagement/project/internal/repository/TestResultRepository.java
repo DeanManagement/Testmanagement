@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.repository;
 
+import com.deanmanagement.testmanagement.project.internal.dto.environment.EnvironmentResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.analytics.FlakyResultRow;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.RunStatusCount;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
@@ -62,6 +63,26 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
      * <p>Ordered by when the run happened rather than when the row was written, since results are
      * often backfilled by CI ingestion long after the run started.
      */
+    /**
+     * A case's executed results, newest first by run time rather than insert time, since CI
+     * backfills results late (same ordering as the flaky query below). PENDING results are left
+     * out so a freshly planned run doesn't hide the last real outcome.
+     */
+    @Query("""
+           SELECT new com.deanmanagement.testmanagement.project.internal.dto.environment.EnvironmentResultResponse(
+               env.id, env.name, r.status, run.id, run.key,
+               COALESCE(run.endTime, run.startTime, run.createdAt))
+           FROM TestResult r
+           JOIN r.testRun run
+           LEFT JOIN run.projectEnvironment env
+           WHERE r.testCase.id = :testCaseId
+             AND run.project.id = :projectId
+             AND run.status <> 'ABORTED'
+             AND r.status <> 'PENDING'
+           ORDER BY COALESCE(run.endTime, run.startTime, run.createdAt) DESC
+           """)
+    List<EnvironmentResultResponse> findExecutedResultsNewestFirst(@Param("projectId") UUID projectId, @Param("testCaseId") UUID testCaseId);
+
     @Query("""
            SELECT new com.deanmanagement.testmanagement.project.internal.dto.analytics.FlakyResultRow(
                tc.id, tc.key, tc.title, r.status,

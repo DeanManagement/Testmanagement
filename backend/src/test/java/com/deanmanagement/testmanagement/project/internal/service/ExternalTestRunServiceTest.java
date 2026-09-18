@@ -130,6 +130,7 @@ class ExternalTestRunServiceTest {
         staging.setName("staging");
 
         when(refResolver.resolveProject(PROJECT_KEY)).thenReturn(project);
+        when(pipelineRunLinker.environmentFor(null, "staging")).thenReturn("staging");
         when(environmentService.resolve(PROJECT_ID, null, "staging")).thenReturn(staging);
         when(testCaseRepository.findByKeyAndProjectId(TEST_CASE_KEY, PROJECT_ID)).thenReturn(Optional.of(testCase));
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));

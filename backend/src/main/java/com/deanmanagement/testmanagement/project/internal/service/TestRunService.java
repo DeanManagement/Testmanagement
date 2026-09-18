@@ -17,6 +17,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestRunReque
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestRunListFilter;
 import com.deanmanagement.testmanagement.project.internal.repository.spec.TestRunSpecifications;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectEnvironment;
 import com.deanmanagement.testmanagement.project.internal.entity.StepResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseParameterSet;
@@ -80,6 +81,8 @@ public class TestRunService {
     private final ProjectSequenceService projectSequenceService;
     private final RunEventPublisher runEventPublisher;
     private final ProjectEnvironmentService environmentService;
+
+    private static final int MAX_RUN_NAME_LENGTH = 255;
 
     private static final List<TestResultStatus> SEVERITY_ORDER = List.of(
             TestResultStatus.FAILED, TestResultStatus.BLOCKED, TestResultStatus.SKIPPED,
@@ -204,6 +207,9 @@ public class TestRunService {
 
     @Transactional
     public TestRunResponse create(UUID projectId, CreateTestRunRequest request, UUID userId) {
+        if (request.environmentIds() != null && !request.environmentIds().isEmpty()) {
+            throw new IllegalArgumentException("environmentIds creates several runs; use /test-runs/across-environments");
+        }
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
@@ -245,6 +251,39 @@ public class TestRunService {
         auditService.log(projectId, userId, AuditAction.CREATED,
                 AuditEntityType.TEST_RUN, run.getId(), run.getName(), null);
         return testRunMapper.toResponse(run);
+    }
+
+    /**
+     * One run per environment, same cases, plan and executor (PRD-032 §3.2), each named
+     * {@code "<name> · <environment>"} with its own key. All or nothing: every id is checked
+     * before the first run is written, and it is one transaction.
+     */
+    @Transactional
+    public List<TestRunResponse> createAcrossEnvironments(UUID projectId, CreateTestRunRequest request, UUID userId) {
+        List<UUID> environmentIds = request.environmentIds() == null ? List.of()
+                : request.environmentIds().stream().distinct().toList();
+        if (environmentIds.isEmpty()) {
+            throw new IllegalArgumentException("environmentIds must name at least one environment");
+        }
+        if (environmentIds.size() > CreateTestRunRequest.MAX_ENVIRONMENTS) {
+            throw new IllegalArgumentException("At most " + CreateTestRunRequest.MAX_ENVIRONMENTS + " environments");
+        }
+        if (request.environment() != null || request.environmentId() != null) {
+            throw new IllegalArgumentException("Pass environmentIds, or environment/environmentId, not both");
+        }
+        List<ProjectEnvironment> environments = environmentIds.stream()
+                .map(id -> environmentService.resolve(projectId, id, null))
+                .toList();
+        return environments.stream()
+                .map(environment -> create(projectId, new CreateTestRunRequest(
+                        runNameFor(request.name(), environment), null, request.testCaseIds(),
+                        request.testPlanId(), request.executorId(), environment.getId(), null), userId))
+                .toList();
+    }
+
+    private static String runNameFor(String name, ProjectEnvironment environment) {
+        String combined = name + " · " + environment.getName();
+        return combined.length() > MAX_RUN_NAME_LENGTH ? combined.substring(0, MAX_RUN_NAME_LENGTH) : combined;
     }
 
     /**

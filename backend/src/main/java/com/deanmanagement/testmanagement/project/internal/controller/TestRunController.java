@@ -128,6 +128,17 @@ public class TestRunController {
         return testRunService.setExecutor(projectId, id, request.executorId());
     }
 
+    /** One run per environment in a single action (PRD-032). */
+    @PostMapping("/across-environments")
+    @RequireProjectRole(ProjectRole.TESTER)
+    @ResponseStatus(HttpStatus.CREATED)
+    public List<TestRunResponse> createAcrossEnvironments(@PathVariable UUID projectId,
+                                                          @Valid @RequestBody CreateTestRunRequest request,
+                                                          Authentication authentication) {
+        UUID currentUserId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return testRunService.createAcrossEnvironments(projectId, request, currentUserId);
+    }
+
     @PostMapping("/{runId}/clone")
     @RequireProjectRole(ProjectRole.TESTER)
     @ResponseStatus(HttpStatus.CREATED)

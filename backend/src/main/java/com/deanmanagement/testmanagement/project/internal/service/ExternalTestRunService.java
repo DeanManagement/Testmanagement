@@ -51,7 +51,8 @@ public class ExternalTestRunService {
 
         TestRun run = new TestRun();
         run.setName(request.name());
-        run.assignEnvironment(environmentService.resolve(project.getId(), null, request.environment()));
+        run.assignEnvironment(environmentService.resolve(project.getId(), null,
+                pipelineRunLinker.environmentFor(pipelineRun, request.environment())));
         run.setProject(project);
         run.setStatus(TestRunStatus.COMPLETED);
         run.setStartTime(now);
