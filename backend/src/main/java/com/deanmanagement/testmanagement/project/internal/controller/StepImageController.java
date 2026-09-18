@@ -1,12 +1,9 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
 import com.deanmanagement.testmanagement.project.internal.entity.StepImage;
-import com.deanmanagement.testmanagement.project.internal.service.ImageMediaTypes;
 import com.deanmanagement.testmanagement.project.internal.service.StepImageService;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.CacheControl;
-import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -23,8 +20,6 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.Map;
 import java.util.UUID;
 
@@ -64,34 +59,8 @@ public class StepImageController {
                                            @RequestHeader(value = HttpHeaders.IF_NONE_MATCH, required = false) String ifNoneMatch) {
         // findById enforces project access (PRD-001 §4.4) before any bytes are served.
         StepImage image = stepImageService.findById(id);
-        String etag = "\"" + image.getUpdatedAt().toEpochMilli() + "\"";
-
-        if (etag.equals(ifNoneMatch)) {
-            return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
-                    .eTag(etag)
-                    .build();
-        }
-
-        byte[] data = image.getData();
-        // Legacy rows may predate the upload allowlist — never echo an unsafe stored type,
-        // or an uploaded text/html "image" would execute script in the app origin.
-        boolean safeImageType = ImageMediaTypes.isAllowed(image.getContentType());
-        MediaType contentType = safeImageType
-                ? MediaType.parseMediaType(image.getContentType())
-                : MediaType.APPLICATION_OCTET_STREAM;
-        ContentDisposition disposition = (safeImageType ? ContentDisposition.inline() : ContentDisposition.attachment())
-                .filename(image.getFileName() != null ? image.getFileName() : "image", StandardCharsets.UTF_8)
-                .build();
-        return ResponseEntity.ok()
-                // private: per-user authorized response — shared caches must never store it (PRD-017).
-                .cacheControl(CacheControl.maxAge(Duration.ofDays(365)).cachePrivate().immutable())
-                .eTag(etag)
-                .header(HttpHeaders.CONTENT_DISPOSITION, disposition.toString())
-                .header("X-Content-Type-Options", "nosniff")
-                .header("Content-Security-Policy", "sandbox")
-                .contentType(contentType)
-                .contentLength(data.length)
-                .body(data);
+        return ImageResponses.of(image.getUpdatedAt(), image.getContentType(), image.getFileName(), "image",
+                image.getData(), ifNoneMatch);
     }
 
     @DeleteMapping("/{id}")
