@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-18 — see §8; manual screenshots from real Slack/Teams/Mattermost still open |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P2 — cheapest high-visibility win |
@@ -205,11 +205,44 @@ for links.
 
 ## 7. Acceptance Criteria
 
-- [ ] Webhooks have a `format` (`GENERIC` default, `SLACK`, `TEAMS`); existing webhooks are unaffected.
-- [ ] Slack/Mattermost and Teams channels render run and bug messages natively, with deep links when `PUBLIC_BASE_URL` is set.
-- [ ] User-supplied text cannot trigger channel mentions or break markup.
-- [ ] Chat-format webhooks cannot subscribe to `TEST_FAILED`; run summaries list the first failed tests.
-- [ ] CI-ingested runs publish a run-level completed/failed event.
-- [ ] Chat webhook URLs are masked in API responses and the settings UI.
-- [ ] "Send test" posts a real message in the chosen format.
-- [ ] Backend and frontend tests pass; manual screenshots recorded for Slack, Teams and Mattermost.
+- [x] Webhooks have a `format` (`GENERIC` default, `SLACK`, `TEAMS`); existing webhooks are unaffected.
+- [x] Slack/Mattermost and Teams channels render run and bug messages natively, with deep links when `PUBLIC_BASE_URL` is set.
+- [x] User-supplied text cannot trigger channel mentions or break markup.
+- [x] Chat-format webhooks cannot subscribe to `TEST_FAILED`; run summaries list the first failed tests.
+- [x] CI-ingested runs publish a run-level completed/failed event.
+- [x] Chat webhook URLs are masked in API responses and the settings UI.
+- [x] "Send test" posts a real message in the chosen format.
+- [ ] Backend and frontend tests pass (**done**); manual screenshots recorded for Slack, Teams and Mattermost (**open**, needs real workspaces).
+
+## 8. As Built (2026-09-18)
+
+Built as specified, with these differences:
+
+- **CI ingestion sends `RUN_COMPLETED` and then `RUN_FAILED`**, the same pair `TestRunService` sends,
+  not one or the other as §3.2 described. Both paths now go through one `RunEventPublisher`. So that a
+  chat channel doesn't get two posts for one failed run, dispatch skips `RUN_FAILED` for a chat hook
+  that is also subscribed to `RUN_COMPLETED`, whose message already shows ❌ and the failed tests.
+  A chat hook subscribed only to `RUN_FAILED` still gets it, which is how you get "failures only".
+- **`app.buildserver.public-base-url` was not renamed.** A general `app.public-base-url` was added,
+  bound to the same `PUBLIC_BASE_URL`, and `WebhookPayloadBuilder` falls back to the build-server
+  property when it's blank. Nothing that already worked changes.
+- **The "links disabled" hint is static.** No endpoint exposes whether `PUBLIC_BASE_URL` is set, so
+  the chat format hints say links need it instead of detecting it.
+- **Mentions:** Slack control characters become entities (`<!channel>` can't ping), and a zero-width
+  space follows every `@` so Mattermost's plain `@channel`/`@all` can't either. Teams text is
+  backslash-escaped for its markdown subset. Plain text can't mention anyone in Teams anyway, because
+  mentions need `<at>` plus an entities block.
+- **`UpdateWebhookRequest.url` became optional** (blank keeps the stored URL). Masking needs this: the
+  UI's active toggle used to echo `url` back, which would have saved the masked value.
+- **Formatting is split into `ChatMessage`**, a vendor-neutral record with the headline, fields,
+  failed tests and link, plus `SlackMessages` and `TeamsMessages`, which render and escape it. This
+  replaces a switch with per-event branches in each formatter.
+- **Bug headlines include the project key** (`🐞 New bug in PROJ: <title>`), since a channel often
+  serves several projects.
+
+Tests: `WebhookPayloadBuilderTest` (12), `RunEventPublisherTest` (3), `WebhookServiceTest` (7), four new
+cases in `WebhookDeliveryIntegrationTest`, three in `WebhookUrlValidatorTest`, one in
+`CiIngestionApiTest`, and `webhook-form.spec.ts`. **827 backend tests, 22 frontend spec files.**
+
+**Still open:** the manual screenshots. The Teams markdown escaping in particular is written against
+the documented subset and hasn't been checked in a real client.

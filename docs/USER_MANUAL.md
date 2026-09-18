@@ -709,6 +709,41 @@ retries, one minute and then five minutes later.
 Private and loopback URLs are refused by default as an SSRF guard; an operator can allow them with
 `WEBHOOKS_ALLOW_PRIVATE_TARGETS`.
 
+Runs imported from CI (JUnit XML, Cucumber JSON, or the external runs API) send `RUN_COMPLETED`, plus
+`RUN_FAILED` when a result failed, exactly like runs completed in the UI. They never send one
+`TEST_FAILED` per imported result. Run events include `environment` and up to ten `failedTests`
+(`key`, `title`), and `TEST_FAILED` includes `testCaseKey`.
+
+#### Chat notifications
+
+Pick a **Format** to post straight into a chat channel instead of running a relay service:
+
+| Format | Works with | Setup |
+|---|---|---|
+| Generic JSON | Your own receiver | The signed JSON envelope above |
+| Slack · Mattermost · Rocket.Chat | Slack, Mattermost, Rocket.Chat, Discord | Slack: create an app with *Incoming Webhooks* and add one to the channel. Mattermost: *Integrations → Incoming Webhooks*. Rocket.Chat: *Administration → Integrations → Incoming*. Discord: channel *Integrations → Webhooks*, then append `/slack` to the URL |
+| Microsoft Teams | Teams | In the channel, *Workflows → "Post to a channel when a webhook request is received"* and copy the URL. The retired Office 365 connectors are not supported |
+
+A chat message shows the run key and name, the environment, passed/failed/blocked/skipped counts and
+the first five failed tests, coloured by outcome. New bug reports post their title, priority and
+status. With `PUBLIC_BASE_URL` set, each message links back to the run or bug report; without it,
+messages have no link. **Send test** posts a real test message.
+
+Differences from generic webhooks:
+
+- **No `TEST_FAILED`.** One message per failed test would flood the channel and hit the vendor's
+  rate limit; run messages list the failed tests instead. A chat webhook subscribed to both run
+  completed and run failed posts once per run, not twice.
+- **No secret to enter.** Chat services ignore the signature, so one is generated.
+- **The URL is masked** once saved (`https://hooks.slack.com/…WXYZ`), because the URL is the
+  credential. Use **Replace URL** to change it; to recover it, re-issue it in the chat tool.
+- **https only**, even if plain http is allowed for testing, unless private targets are allowed (a
+  Mattermost on your LAN).
+
+Names and titles are escaped, so a run called `<!channel>` or `@here` can't ping a channel. Webhook
+URLs, secrets and delivery bodies are stored unencrypted in the database, so treat a database dump
+as sensitive.
+
 ### Issue tracker
 
 **Issue Tracker** on a project (project Admin) connects it to **GitLab**, **Forgejo/Gitea**,
@@ -1000,7 +1035,7 @@ Required only for certain features:
 | Variable | Needed for |
 |---|---|
 | `APP_ENCRYPTION_KEY` | Storing issue-tracker tokens, build-server tokens and OIDC client secrets. Base64 AES key, `openssl rand -base64 32`. Without it those features refuse to save a secret rather than storing it in plain text. **Changing it makes stored secrets undecryptable** — you must re-enter them |
-| `PUBLIC_BASE_URL` | Injected into triggered pipelines as `TM_BASE_URL` so a workflow can report results back without hardcoding the address. Unset = the variable is simply omitted |
+| `PUBLIC_BASE_URL` | This instance's public URL. Used for links in chat notifications, and injected into triggered pipelines as `TM_BASE_URL` so a workflow can report results back without hardcoding the address. Unset = no links in chat messages, and the variable is omitted |
 | `MAIL_ENABLED` + `spring.mail.*` | Email notifications. Without a configured mail sender, email toggles have no effect |
 
 Optional, with defaults:
