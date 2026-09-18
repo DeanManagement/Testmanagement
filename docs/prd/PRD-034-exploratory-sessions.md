@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-18 — see §8; UI not yet click-tested in a browser |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P3 — value grows with teams that test manually more than they script |
@@ -122,10 +122,44 @@ Image routes are project-scoped paths, so `@RequireProjectRole` covers them — 
 - **Risk:** Low-medium. New, isolated entity; the one sharp edge is image serving, mitigated by sharing the PRD-017 header code with `ScreenshotController` instead of duplicating it.
 
 ## 7. Acceptance Criteria
-- [ ] Sessions with charter, time box, optional plan/environment/tester can be created, started, completed with a summary, or aborted.
-- [ ] Timestamped, typed plain-text notes can be added during a session, each with an optional screenshot.
-- [ ] Session images are served with the same authorization and headers as step screenshots.
-- [ ] A bug report can be filed from a note and links back to the session.
-- [ ] Plan detail lists sessions; plan pass rate is unaffected by them.
-- [ ] All endpoints enforce project roles; cross-project ids return 404.
-- [ ] Backend and frontend tests pass.
+- [x] Sessions with charter, time box, optional plan/environment/tester can be created, started, completed with a summary, or aborted.
+- [x] Timestamped, typed plain-text notes can be added during a session, each with an optional screenshot.
+- [x] Session images are served with the same authorization and headers as step screenshots.
+- [x] A bug report can be filed from a note and links back to the session.
+- [x] Plan detail lists sessions; plan pass rate is unaffected by them.
+- [x] All endpoints enforce project roles; cross-project ids return 404.
+- [x] Backend and frontend tests pass.
+
+## 8. As Built (2026-09-18)
+
+Built as specified, with these differences:
+
+- **The header code moved into `ImageResponses` first, in its own commit.** `StepImageController`
+  had a third identical copy of the `ScreenshotController` block, so all three controllers now
+  share one helper. The existing `MediaCacheHeadersApiTest`/`MediaContentTypeApiTest` pass
+  unchanged, and `ExploratorySessionApiTest` asserts the same headers on a session image.
+- **The environment comes from the PRD-032 catalogue, not free text.** This PRD predates it.
+  Sessions store only `environment_id`. A merge carries sessions along (`repointSessions`), and an
+  environment used by a session can't be deleted. Names are resolved like runs and bugs.
+- **Deleting a session unlinks its bug reports in the service,** not only through
+  `ON DELETE SET NULL`. A bug report already loaded in the same transaction would otherwise still
+  point at the deleted session and fail the flush.
+- **Notes don't map their image.** Images sit in their own table, and the log asks only which notes
+  have one (`findNoteIdsWithImage`), so reading a log never loads image bytes. Uploading to a note
+  that already has an image replaces it (at most one per note).
+- **No NgRx slice.** Session state is page-local behind `ExploratorySessionApiService`, like the
+  webhook and environment pages. Nothing outside the session pages reads it.
+- **"My test runs" uses a new `GET /api/exploratory-sessions/assigned-to-me`** (planned and
+  running sessions where I'm the tester), because that page spans projects.
+- **Alt+1..4 reads the physical key code**, since on macOS Alt changes `event.key`.
+- **Who may add notes:** any project tester, not only the assigned tester (pair exploration). Edits
+  are limited to the author or an admin, as specified.
+
+Tests: `ExploratorySessionServiceTest` (19: keys, transitions, note time bounds and the 24 h late
+window, author/admin rule, image allowlist, cross-project 404s, bug linking and environment
+default, plan summary kept apart from runs, environment merge/delete),
+`ExploratorySessionApiTest` (7: role guards, the time box bound, multipart upload and PRD-017
+headers, cross-project image 404, my sessions), and `session-time.spec.ts`.
+**928 backend tests, 28 frontend spec files (141 tests).**
+
+**Still open:** clicking through the session flow in a browser.

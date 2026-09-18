@@ -134,7 +134,7 @@ Gaps against comparable test-management tools, each grounded in the current code
 | [031](PRD-031-chat-notification-presets.md) | Chat Notification Presets (Slack / Teams / Mattermost) | P2 | S-M | ✅ Implemented (manual screenshots open) |
 | [032](PRD-032-environments-configurations.md) | Project Environments | P2 | M | ✅ Implemented (browser check open) |
 | [033](PRD-033-test-case-review-status.md) | Test Case Review / Approval Status | P3 | S-M | ✅ Implemented (browser check open) |
-| [034](PRD-034-exploratory-sessions.md) | Exploratory Testing Sessions | P3 | M | 📝 Draft |
+| [034](PRD-034-exploratory-sessions.md) | Exploratory Testing Sessions | P3 | M | ✅ Implemented (browser check open) |
 | [035](PRD-035-custom-fields.md) | Custom Fields | P3 | M-L | 📝 Draft |
 | [036](PRD-036-time-estimates-tracking.md) | Time Estimates & Tracking | P3 | M | 📝 Draft |
 | [037](PRD-037-release-readiness-quality-gate.md) | Release Readiness / Quality Gate | P2 | S-M | 📝 Draft |

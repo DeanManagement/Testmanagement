@@ -552,6 +552,30 @@ that means the workflow ran but is missing the report-back step described in
 
 ---
 
+
+### Exploratory sessions
+
+For testing that follows a mission rather than a script ("spend an hour attacking checkout with
+odd currencies"): **Exploratory sessions** on the project page (tester role to create).
+
+A session has a **charter** (what to explore and why), a **time box** of 5 to 480 minutes, and
+optionally a test plan, an [environment](#environments) and a tester. Its key looks like
+`SHOP-Session-3`.
+
+1. **Start session** starts the clock. The bar shows time spent against the time box. It turns
+   amber past 100% but never stops you.
+2. Log what you notice in the one-line input. **Enter** saves each note straight away, so closing
+   the tab loses nothing. **Alt+1..4** picks the type (Note, Bug, Question, Idea), and pasting an
+   image attaches it as the note's screenshot (PNG, JPEG, GIF or WebP, one per note).
+3. On a **Bug** note, **File bug** opens a bug report pre-filled from the note. It is linked to the
+   session and takes the session's environment.
+4. **Complete** (or **Abort**) ends the session with a debrief summary, which you can edit later.
+   Late notes are accepted for 24 hours after completion.
+
+Only a note's author or a project admin can edit or delete it. Sessions filed under a test plan
+appear on the plan page in their own card. They never count towards the plan's runs or pass
+rate. **My test runs** lists the sessions assigned to you that are planned or running.
+
 ## 11. Reports and dashboards
 
 **Run report** (**Report** on a run) — totals per outcome, pass rate, a status distribution chart
