@@ -77,7 +77,7 @@
             @if (testCases.length > 0) {
               <mat-form-field appearance="outline" class="full-width search-field">
                 <mat-label>{{ 'testRun.form.searchTestCases' | translate }}</mat-label>
-                <input matInput [(ngModel)]="searchTerm" name="searchTerm" data-test-id="test-run-search-input" />
+                <input matInput [(ngModel)]="searchTerm" [ngModelOptions]="{ standalone: true }" data-test-id="test-run-search-input" />
                 <mat-icon matPrefix>search</mat-icon>
               </mat-form-field>
             }
