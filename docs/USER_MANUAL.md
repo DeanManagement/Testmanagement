@@ -195,7 +195,7 @@ Open a project and choose **Test Cases**.
 | Description | What this case covers |
 | Preconditions | What must be true before you start |
 | Priority | Low, Medium, High, Critical |
-| Status | Draft, Active, Deprecated |
+| Status | Draft, In review, Active, Deprecated (see [Review and approval](#review-and-approval)) |
 | Labels | Comma-separated; used for filtering and grouping |
 
 **Script** — the ordered steps. Each step has:
@@ -214,8 +214,45 @@ Leaving the editor with unsaved changes prompts you first.
 | Status | Use it when |
 |---|---|
 | **Draft** | Still being written; not ready to execute |
-| **Active** | Ready to be included in runs |
+| **In review** | Written, waiting for someone else to check it |
+| **Active** | Ready to be included in runs. Shown as **Approved** in projects that require review |
 | **Deprecated** | Kept for history but no longer executed |
+
+### Review and approval
+
+Projects can require that test cases are reviewed before they count: **Project settings → Test
+case review** (project Admin). It is off by default, and a project without it works exactly as
+before.
+
+With review on, **Active means approved**:
+
+1. The author writes the case as **Draft** and chooses **Submit for review** on the case page.
+2. A reviewer opens it and chooses **Approve vN** or **Request changes** (optionally with a
+   comment, which lands in the case's comments and sends it back to Draft). *Awaiting my review* in
+   **My queue** lists what's waiting for you.
+3. The case page then shows *Approved v4 by X on date*.
+
+Rules:
+
+- **Who can approve:** project admins, or testers too if you choose *Testers and admins*. Never
+  the case's author or its last editor: approving your own wording is what review prevents. If
+  fewer than two members could approve, the settings page warns you.
+- **Approving is the only way to Active.** Setting Active in the editor, in bulk, through
+  import, CI or an MCP agent is refused. Import turns Active rows into *In review* and says so,
+  and cases created by CI uploads start *In review*. AI agents can submit for review but never
+  approve.
+- **Editing the wording** (title, description, preconditions or steps) of an approved case
+  sends it back to review. *Compare with approved version* shows exactly what changed. Labels,
+  priority and folder moves keep it approved.
+- **Stale approvals are refused:** if the case changed after you opened it, approving fails and
+  asks you to review the latest version.
+- **Deprecating** needs a project admin.
+- Runs may still include cases that aren't approved (exploratory re-runs, a first dry run). Their
+  **run report** and PDF mark each such result *Executed unapproved wording (vN)*, which is the
+  audit record.
+
+Cases that were Active before review was switched on stay Active and show *Approved before review
+was switched on*. Switching review off leaves cases in review where they are.
 
 ### Version history
 

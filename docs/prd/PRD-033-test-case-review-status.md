@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-18 — see §8; UI not yet click-tested in a browser |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P3 — driver-dependent (compliance or agent-authored cases at volume) |
@@ -105,11 +105,53 @@ Runs may include non-`ACTIVE` cases; `TestRunService.create` does not refuse. Ra
 - **Risk:** Medium-low. The real risk is missing one of the six status-writing paths and leaving a bypass — hence one guard method and a test per path. Behaviour is unchanged for projects that don't opt in.
 
 ## 7. Acceptance Criteria
-- [ ] `IN_REVIEW` status exists; projects have `reviewRequired` (default off) and `reviewerMinRole`.
-- [ ] With review required, `ACTIVE` is reachable only via approve, by an eligible member who is neither author nor last editor.
-- [ ] `approvedBy`, `approvedAt`, `approvedVersion` recorded and shown with a link to the version diff.
-- [ ] Content edits to an approved case return it to `IN_REVIEW`; cosmetic edits don't.
-- [ ] CI ingestion, import and MCP writes cannot produce an approved case under review.
-- [ ] Run reports flag results executed against unapproved wording.
-- [ ] My Queue lists cases awaiting my review.
-- [ ] Projects without review enabled behave exactly as before (existing tests green).
+- [x] `IN_REVIEW` status exists; projects have `reviewRequired` (default off) and `reviewerMinRole`.
+- [x] With review required, `ACTIVE` is reachable only via approve, by an eligible member who is neither author nor last editor.
+- [x] `approvedBy`, `approvedAt`, `approvedVersion` recorded and shown with a link to the version diff.
+- [x] Content edits to an approved case return it to `IN_REVIEW`; cosmetic edits don't.
+- [x] CI ingestion, import and MCP writes cannot produce an approved case under review.
+- [x] Run reports flag results executed against unapproved wording.
+- [x] My Queue lists cases awaiting my review.
+- [x] Projects without review enabled behave exactly as before (existing tests green).
+
+## 8. As Built (2026-09-18)
+
+Built as specified, with these differences:
+
+- **Cosmetic edits carry the approval forward.** Every `update()` takes a PRD-011 snapshot and
+  bumps the version, even for a label change. If `approvedVersion` stayed put, a cosmetic edit
+  would make every later result look like "executed unapproved wording". A non-content edit to a
+  case whose approval was current now moves `approvedVersion` to the new version (the wording is
+  identical). Content is title, description, preconditions and steps, compared by value, because
+  the SPA always sends the whole case.
+- **The report flag is exact about history.** A version counts as approved if it's the live
+  approval *or* its snapshot recorded itself as approved (`test_case_versions.approved_version`,
+  added by V57). So a result on v1 stays clean after v2 is approved. ACTIVE cases with no recorded
+  approval (from before review) aren't flagged, and nothing is flagged without review. The flag
+  is `unapprovedResultIds` on the run report, not a field on every result response.
+- **The review switch is `PUT /projects/{id}/settings/review`**, alongside the existing
+  bug-reports toggle on the project settings card, not a field on the project form.
+- **Capabilities come from `GET .../test-cases/{id}/review-capabilities`**
+  (`canSubmit`, `canApprove`, `reason`) instead of flags on every case response. The mapper that
+  builds case responses is shared by lists, and working out the caller's rights there would cost
+  a role lookup per row.
+- **Refusals:** a plain write to ACTIVE is a 400 (`ReviewRequiredException`, a subclass of
+  `IllegalArgumentException` so the bulk MCP tool can pass its message through, since that tool
+  maps other argument errors to "unknown id"). Not being an eligible reviewer is a 403, and a stale
+  `version` is a 409. `force` is honoured only for system admins, only past the
+  author/last-editor rule, and is audited ("forced by a system admin").
+- **Request changes needs the same eligibility as approve.** Moving IN_REVIEW → DRAFT through a
+  plain edit stays open to testers, so an author can withdraw a case.
+- **"Last editor" is `updatedBy`,** so whoever submitted a case for review also can't approve it.
+  That's usually the author anyway.
+- **Not built:** the run form's case picker defaulting its status filter to Approved (§3.4). The
+  picker has no status filter to default; runs of unapproved cases are flagged in the report
+  instead.
+
+Tests: `TestCaseReviewTest` (28: the transition rules in both modes, author/last-editor/role
+rules, stale version, force, content vs cosmetic edits, CI, import, report flag, queue),
+`TestCaseReviewApiTest` (7, HTTP status codes and guards), two MCP cases in
+`McpMaintenanceToolsApiTest`, `review-status.spec.ts`, and a My Queue spec case.
+**902 backend tests, 27 frontend spec files (132 tests).**
+
+**Still open:** clicking through the review flow in a browser.
