@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.entity;
 
+import java.util.UUID;
+import java.time.Instant;
 import com.deanmanagement.testmanagement.shared.BaseEntity;
 
 import jakarta.persistence.CascadeType;
@@ -58,6 +60,20 @@ public class TestCase extends BaseEntity {
      */
     @Column(name = "current_version", nullable = false)
     private int currentVersion = 1;
+
+    /**
+     * Who approved which version (PRD-033). Null on cases that were never approved, including
+     * ACTIVE cases from before review was switched on. {@code approvedVersion} keeps naming the
+     * last approved wording while an edit sits in review, so the two can be diffed.
+     */
+    @Column(name = "approved_by")
+    private UUID approvedBy;
+
+    @Column(name = "approved_at")
+    private Instant approvedAt;
+
+    @Column(name = "approved_version")
+    private Integer approvedVersion;
 
     @ElementCollection
     @CollectionTable(name = "test_case_labels", joinColumns = @JoinColumn(name = "test_case_id"))

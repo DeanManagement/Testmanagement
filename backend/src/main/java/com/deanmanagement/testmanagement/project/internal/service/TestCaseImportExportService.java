@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.TestStepRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.io.ImportResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.io.ImportResultResponse.ImportError;
@@ -48,6 +50,7 @@ public class TestCaseImportExportService {
     private final TestCaseMapper testCaseMapper;
     private final TestCaseService testCaseService;
     private final ObjectMapper objectMapper;
+    private final ProjectRepository projectRepository;
 
     // ---- Export ----
 
@@ -124,12 +127,21 @@ public class TestCaseImportExportService {
                     "Import exceeds the limit of " + MAX_IMPORT_ROWS + " test cases (" + rows.size() + ")");
         }
 
+        boolean reviewRequired = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId))
+                .isReviewRequired();
         int imported = 0;
         int skipped = 0;
         List<ImportError> errors = new ArrayList<>();
+        List<ImportError> warnings = new ArrayList<>();
         for (RowData row : rows) {
             try {
                 CreateTestCaseRequest request = toRequest(row);
+                if (reviewRequired && request.status() == TestCaseStatus.ACTIVE) {
+                    // Importing is not approving: the row still comes in, waiting for review (PRD-033).
+                    request = withStatus(request, TestCaseStatus.IN_REVIEW);
+                    warnings.add(new ImportError(row.rowNumber(), "status ACTIVE imported as IN_REVIEW: this project requires review"));
+                }
                 if (!dryRun) {
                     testCaseService.create(projectId, request, userId);
                 }
@@ -139,13 +151,18 @@ public class TestCaseImportExportService {
                 errors.add(new ImportError(row.rowNumber(), e.getMessage()));
             }
         }
-        return new ImportResultResponse(imported, skipped, dryRun, errors);
+        return new ImportResultResponse(imported, skipped, dryRun, errors, warnings);
     }
 
     /** Raw, unvalidated import row. */
     private record RowData(int rowNumber, String title, String description, String preconditions,
                            String priority, String status, List<String> labels,
                            List<TestStepRequest> steps) {
+    }
+
+    private static CreateTestCaseRequest withStatus(CreateTestCaseRequest r, TestCaseStatus status) {
+        return new CreateTestCaseRequest(r.title(), r.description(), r.preconditions(), r.priority(), status,
+                r.labels(), r.steps(), r.folderId());
     }
 
     private CreateTestCaseRequest toRequest(RowData row) {

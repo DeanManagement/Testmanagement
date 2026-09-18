@@ -23,6 +23,11 @@ public record TestCaseResponse(
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,
-        UUID updatedBy
+        UUID updatedBy,
+        int currentVersion,
+        /* PRD-033: null when never approved (or approved before review was switched on). */
+        UUID approvedBy,
+        Instant approvedAt,
+        Integer approvedVersion
 ) {
 }

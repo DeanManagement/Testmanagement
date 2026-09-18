@@ -10,7 +10,9 @@ public record ImportResultResponse(
         int imported,
         int skipped,
         boolean dryRun,
-        List<ImportError> errors
+        List<ImportError> errors,
+        /* Rows imported with a change, e.g. ACTIVE turned into IN_REVIEW under review (PRD-033). */
+        List<ImportError> warnings
 ) {
     public record ImportError(int row, String message) {
     }

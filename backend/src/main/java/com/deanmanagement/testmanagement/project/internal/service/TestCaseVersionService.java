@@ -54,6 +54,8 @@ public class TestCaseVersionService {
         version.setPreconditions(testCase.getPreconditions());
         version.setPriority(testCase.getPriority());
         version.setStatus(testCase.getStatus());
+        version.setApprovedBy(testCase.getApprovedBy());
+        version.setApprovedVersion(testCase.getApprovedVersion());
         version.setLabels(String.join(",", testCase.getLabels()));
         version.setStepsSnapshot(serialiseSteps(testCase.getSteps()));
         versionRepository.save(version);

@@ -14,6 +14,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseFolder;
 import com.deanmanagement.testmanagement.project.internal.entity.StepImage;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
@@ -49,6 +50,7 @@ public class TestCaseService {
     private final TestCaseVersionService versionService;
     private final TestResultRepository testResultRepository;
     private final ProjectSequenceService projectSequenceService;
+    private final TestCaseReviewService reviewService;
 
     public Page<TestCaseResponse> findByProject(UUID projectId, TestCaseListFilter filter, Pageable pageable) {
         Set<UUID> folderIds = null;
@@ -75,6 +77,7 @@ public class TestCaseService {
 
         TestCase tc = testCaseMapper.toEntity(request);
         tc.setProject(project);
+        reviewService.checkStatusWrite(project, null, tc.getStatus(), userId);
         tc.setLabels(request.labels() != null ? request.labels() : new HashSet<>());
         tc.setSteps(buildSteps(request.steps(), tc));
 
@@ -99,6 +102,11 @@ public class TestCaseService {
         TestCase tc = testCaseRepository.findById(id)
                 .filter(t -> t.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestCase", id));
+
+        TestCaseStatus statusBefore = tc.getStatus();
+        int versionBefore = tc.getCurrentVersion();
+        boolean contentChanged = TestCaseReviewService.isContentEdit(tc, request);
+        reviewService.checkStatusWrite(tc.getProject(), statusBefore, request.status(), userId);
 
         // Snapshot before mutating, in this transaction: "version N" must name the wording that
         // results stamped N actually executed (PRD-011).
@@ -142,6 +150,7 @@ public class TestCaseService {
             }
             tc.getSteps().addAll(newSteps);
         }
+        reviewService.afterEdit(tc, statusBefore, versionBefore, contentChanged);
 
         tc = testCaseRepository.save(tc);
         auditService.log(projectId, userId, AuditAction.UPDATED,
@@ -172,6 +181,10 @@ public class TestCaseService {
             throw new IllegalArgumentException("Some test case IDs do not belong to this project");
         }
 
+        // Every case is checked before any changes, so a refused one leaves the batch untouched.
+        for (TestCase tc : projectTestCases) {
+            reviewService.checkStatusWrite(tc.getProject(), tc.getStatus(), request.status(), userId);
+        }
         for (TestCase tc : projectTestCases) {
             tc.setStatus(request.status());
         }

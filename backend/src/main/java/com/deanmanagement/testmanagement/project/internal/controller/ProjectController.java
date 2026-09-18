@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
+import com.deanmanagement.testmanagement.project.internal.dto.project.ReviewSettingsRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.dashboard.DashboardResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
@@ -102,6 +103,15 @@ public class ProjectController {
         requireProjectAdmin(userId, id);
         boolean enabled = Boolean.TRUE.equals(body.get("enabled"));
         return projectService.toggleBugReports(id, enabled, userId);
+    }
+
+    @PutMapping("/{id}/settings/review")
+    @RequireProjectRole(value = ProjectRole.ADMIN, pathVariable = "id")
+    public ProjectResponse updateReviewSettings(@PathVariable UUID id,
+                                                @Valid @RequestBody ReviewSettingsRequest request,
+                                                Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return projectService.updateReviewSettings(id, request, userId);
     }
 
     private void requireAdmin(Authentication authentication) {

@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.service.TestCaseReviewService;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkStatusRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
@@ -39,8 +40,10 @@ public class TestCaseBulkTools {
             name = "change_test_case_status_bulk",
             description = """
                     Set the same status on many test cases at once, up to 100 per call — typically
-                    DRAFT to ACTIVE once a human has reviewed what you wrote, or to DEPRECATED for
-                    cases that no longer apply. status: DRAFT | ACTIVE | DEPRECATED.
+                    DRAFT to IN_REVIEW once you are done writing, or to DEPRECATED for cases that no
+                    longer apply. status: DRAFT | IN_REVIEW | ACTIVE | DEPRECATED. In projects that
+                    require review, ACTIVE means approved: only a human reviewer can set it, so use
+                    IN_REVIEW.
                     Every id must name a test case in this project; if one does not, nothing is
                     changed. For a single case use update_test_case.
                     """,
@@ -49,7 +52,7 @@ public class TestCaseBulkTools {
     @Transactional
     public McpDtos.BulkStatusResult changeTestCaseStatusBulk(
             @McpToolParam(description = "UUIDs of the test cases to change") Set<UUID> testCaseIds,
-            @McpToolParam(description = "DRAFT, ACTIVE or DEPRECATED") TestCaseStatus status) {
+            @McpToolParam(description = "DRAFT, IN_REVIEW, ACTIVE or DEPRECATED") TestCaseStatus status) {
 
         var caller = callerContext.requireWriter();
         var request = new BulkStatusRequest(testCaseIds, status);
@@ -61,6 +64,8 @@ public class TestCaseBulkTools {
             int updated = testCaseService.bulkUpdateStatus(caller.projectId(), request,
                     caller.userId()).affected();
             return new McpDtos.BulkStatusResult(updated, status);
+        } catch (TestCaseReviewService.ReviewRequiredException reviewRequired) {
+            throw new McpToolException(reviewRequired.getMessage());
         } catch (IllegalArgumentException unknownIds) {
             throw new McpToolException("At least one id does not name a test case in this "
                     + "project, so nothing was changed. Check them with search_test_cases.");

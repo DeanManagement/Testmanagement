@@ -1,6 +1,8 @@
 
 package com.deanmanagement.testmanagement.project.internal.entity;
 
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.EnumType;
 import com.deanmanagement.testmanagement.shared.BaseEntity;
 
 import jakarta.persistence.CascadeType;
@@ -53,6 +55,15 @@ public class Project extends BaseEntity {
 
     @Column(name = "bug_reports_enabled", nullable = false)
     private boolean bugReportsEnabled = false;
+
+    /** PRD-033: when on, ACTIVE means approved and needs the approve action. */
+    @Column(name = "review_required", nullable = false)
+    private boolean reviewRequired = false;
+
+    /** Least role that may approve or request changes; ADMIN or TESTER. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reviewer_min_role", nullable = false, length = 20)
+    private ProjectRole reviewerMinRole = ProjectRole.ADMIN;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BugReport> bugReports = new ArrayList<>();

@@ -55,7 +55,7 @@ public class TestCaseTools {
                     Search the project's test cases. All filters are optional; with none you get
                     the most recently updated cases first. Call this BEFORE creating anything —
                     re-creating a case that already exists is the most common mistake here.
-                    status: DRAFT | ACTIVE | DEPRECATED. priority: LOW | MEDIUM | HIGH | CRITICAL.
+                    status: DRAFT | IN_REVIEW | ACTIVE | DEPRECATED. priority: LOW | MEDIUM | HIGH | CRITICAL.
                     Results are paged; check totalElements and hasMore before concluding something
                     does not exist.
                     """,
@@ -65,7 +65,7 @@ public class TestCaseTools {
     public McpDtos.TestCasePage searchTestCases(
             @McpToolParam(description = "Free-text query over title, key and description", required = false)
             String query,
-            @McpToolParam(description = "Only these statuses: DRAFT, ACTIVE, DEPRECATED", required = false)
+            @McpToolParam(description = "Only these statuses: DRAFT, IN_REVIEW, ACTIVE, DEPRECATED", required = false)
             List<TestCaseStatus> status,
             @McpToolParam(description = "Only these priorities: LOW, MEDIUM, HIGH, CRITICAL", required = false)
             List<Priority> priority,
@@ -128,8 +128,9 @@ public class TestCaseTools {
                     Create a test case. Search first — this refuses titles that already exist and
                     tells you which case to update instead.
                     priority: LOW | MEDIUM | HIGH | CRITICAL (required).
-                    status: DRAFT | ACTIVE | DEPRECATED, default DRAFT so a human reviews before the
-                    case counts as real.
+                    status: DRAFT | IN_REVIEW | ACTIVE | DEPRECATED, default DRAFT so a human reviews
+                    before the case counts as real. In projects that require review ACTIVE means
+                    approved and is refused here: use IN_REVIEW.
                     steps: ordered; each has an action, an optional expectedResult and optional
                     testData. Order comes from the array, not from any index you supply.
                     """,
@@ -142,7 +143,7 @@ public class TestCaseTools {
             @McpToolParam(description = "What the case covers", required = false) String description,
             @McpToolParam(description = "State the system must be in before the steps", required = false)
             String preconditions,
-            @McpToolParam(description = "DRAFT (default), ACTIVE or DEPRECATED", required = false)
+            @McpToolParam(description = "DRAFT (default), IN_REVIEW, ACTIVE or DEPRECATED", required = false)
             TestCaseStatus status,
             @McpToolParam(description = "Free-form labels", required = false) Set<String> labels,
             @McpToolParam(description = "Ordered steps", required = false) List<McpDtos.Step> steps,
@@ -179,7 +180,7 @@ public class TestCaseTools {
             @McpToolParam(description = "New preconditions; \"\" clears them", required = false)
             String preconditions,
             @McpToolParam(description = "LOW, MEDIUM, HIGH or CRITICAL", required = false) Priority priority,
-            @McpToolParam(description = "DRAFT, ACTIVE or DEPRECATED", required = false) TestCaseStatus status,
+            @McpToolParam(description = "DRAFT, IN_REVIEW, ACTIVE or DEPRECATED", required = false) TestCaseStatus status,
             @McpToolParam(description = "Replaces the label set; [] clears it", required = false)
             Set<String> labels,
             @McpToolParam(description = "Replaces the whole ordered step list; [] clears it", required = false)

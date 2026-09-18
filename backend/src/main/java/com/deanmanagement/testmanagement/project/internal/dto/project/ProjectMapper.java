@@ -22,6 +22,8 @@ public interface ProjectMapper {
     @Mapping(target = "testRuns", ignore = true)
     @Mapping(target = "testPlans", ignore = true)
     @Mapping(target = "bugReportsEnabled", ignore = true)
+    @Mapping(target = "reviewRequired", ignore = true)
+    @Mapping(target = "reviewerMinRole", ignore = true)
     @Mapping(target = "bugReports", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
     @Mapping(target = "updatedAt", ignore = true)

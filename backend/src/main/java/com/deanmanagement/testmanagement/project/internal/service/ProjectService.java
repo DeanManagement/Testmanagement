@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.dto.project.ReviewSettingsRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
@@ -102,6 +103,25 @@ public class ProjectService {
         auditService.log(project.getId(), userId, AuditAction.UPDATED,
                 AuditEntityType.PROJECT, project.getId(), project.getName(),
                 "Bug reports " + (enabled ? "enabled" : "disabled"));
+        return projectMapper.toResponse(project);
+    }
+
+    /** PRD-033: switching review on leaves existing ACTIVE cases approved-by-legacy; off keeps IN_REVIEW ones. */
+    @Transactional
+    public ProjectResponse updateReviewSettings(UUID id, ReviewSettingsRequest request, UUID userId) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+        if (request.reviewerMinRole() == ProjectRole.VIEWER) {
+            throw new IllegalArgumentException("reviewerMinRole must be ADMIN or TESTER");
+        }
+        project.setReviewRequired(request.reviewRequired());
+        if (request.reviewerMinRole() != null) {
+            project.setReviewerMinRole(request.reviewerMinRole());
+        }
+        project = projectRepository.save(project);
+        auditService.log(project.getId(), userId, AuditAction.UPDATED, AuditEntityType.PROJECT, project.getId(),
+                project.getName(), "Test case review " + (project.isReviewRequired() ? "required" : "not required")
+                        + ", reviewers: " + project.getReviewerMinRole());
         return projectMapper.toResponse(project);
     }
 

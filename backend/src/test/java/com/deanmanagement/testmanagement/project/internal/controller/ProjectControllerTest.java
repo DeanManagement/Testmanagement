@@ -66,7 +66,7 @@ class ProjectControllerTest {
     private static final Instant NOW = Instant.now();
 
     private ProjectResponse sampleResponse() {
-        return new ProjectResponse(PROJECT_ID, "My Project", "A test project", "MYPRJ", false, NOW, NOW, null, null);
+        return new ProjectResponse(PROJECT_ID, "My Project", "A test project", "MYPRJ", false, false, ProjectRole.ADMIN, NOW, NOW, null, null);
     }
 
     @Test

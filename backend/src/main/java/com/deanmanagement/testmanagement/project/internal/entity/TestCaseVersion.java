@@ -53,6 +53,13 @@ public class TestCaseVersion extends BaseEntity {
     @Column(nullable = false, length = 20)
     private TestCaseStatus status;
 
+    /** The approval in force when this version was superseded (PRD-033), for history. */
+    @Column(name = "approved_by")
+    private UUID approvedBy;
+
+    @Column(name = "approved_version")
+    private Integer approvedVersion;
+
     /** Comma-separated; labels are a flat set and this keeps the snapshot one row. */
     @Column(columnDefinition = "TEXT")
     private String labels;

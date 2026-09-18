@@ -1,5 +1,9 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
+import com.deanmanagement.testmanagement.project.internal.service.TestCaseReviewService;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.ReviewCapabilitiesResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.RequestChangesRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.ApproveTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkDeleteRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkOperationResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkStatusRequest;
@@ -47,6 +51,7 @@ public class TestCaseController {
 
     private final TestCaseService testCaseService;
     private final ProjectEnvironmentService environmentService;
+    private final TestCaseReviewService reviewService;
 
     @GetMapping
     @RequireProjectRole
@@ -71,6 +76,44 @@ public class TestCaseController {
     @RequireProjectRole
     public TestCaseResponse findById(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testCaseService.findById(projectId, id);
+    }
+
+    /** What the caller may do in this case's review (PRD-033). */
+    @GetMapping("/{id}/review-capabilities")
+    @RequireProjectRole
+    public ReviewCapabilitiesResponse reviewCapabilities(@PathVariable UUID projectId, @PathVariable UUID id,
+                                                         Authentication authentication) {
+        return reviewService.capabilities(projectId, id, userIdOf(authentication));
+    }
+
+    @PostMapping("/{id}/submit-review")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestCaseResponse submitForReview(@PathVariable UUID projectId, @PathVariable UUID id,
+                                            Authentication authentication) {
+        return reviewService.submitForReview(projectId, id, userIdOf(authentication));
+    }
+
+    /** TESTER at the edge; the service applies the reviewer role and the not-the-author rule. */
+    @PostMapping("/{id}/approve")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestCaseResponse approve(@PathVariable UUID projectId, @PathVariable UUID id,
+                                    @Valid @RequestBody ApproveTestCaseRequest request,
+                                    Authentication authentication) {
+        return reviewService.approve(projectId, id, request.version(), Boolean.TRUE.equals(request.force()),
+                userIdOf(authentication));
+    }
+
+    @PostMapping("/{id}/request-changes")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestCaseResponse requestChanges(@PathVariable UUID projectId, @PathVariable UUID id,
+                                           @Valid @RequestBody(required = false) RequestChangesRequest request,
+                                           Authentication authentication) {
+        return reviewService.requestChanges(projectId, id, request != null ? request.comment() : null,
+                userIdOf(authentication));
+    }
+
+    private static UUID userIdOf(Authentication authentication) {
+        return authentication != null ? UUID.fromString(authentication.getName()) : null;
     }
 
     /** The case's latest executed result in each environment (PRD-032). */

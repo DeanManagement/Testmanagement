@@ -131,7 +131,8 @@ public class CiIngestionService {
         TestCase testCase = new TestCase();
         testCase.setProject(project);
         testCase.setTitle(title);
-        testCase.setStatus(TestCaseStatus.ACTIVE);
+        // An automated test's title isn't reviewed wording, so with review on it waits for review (PRD-033).
+        testCase.setStatus(project.isReviewRequired() ? TestCaseStatus.IN_REVIEW : TestCaseStatus.ACTIVE);
         testCase.setPriority(Priority.MEDIUM);
         testCase.setLabels(new HashSet<>(List.of(CI_LABEL)));
 

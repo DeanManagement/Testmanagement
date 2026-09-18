@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.entity.Priority;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.UpdateTestPlanRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
@@ -38,6 +40,8 @@ class McpMaintenanceToolsApiTest extends McpToolApiTestSupport {
     private ParameterSetTools parameterSetTools;
     @Autowired
     private TestPlanService testPlanService;
+    @Autowired
+    private ProjectRepository projectRepository;
 
     // --- suites ----------------------------------------------------------------------------
 
@@ -281,6 +285,39 @@ class McpMaintenanceToolsApiTest extends McpToolApiTestSupport {
 
         assertThat(result.updated()).isEqualTo(2);
         assertThat(testCaseTools.getTestCase(login.key()).status()).isEqualTo(TestCaseStatus.ACTIVE);
+    }
+
+    /** PRD-033: under review, ACTIVE means approved, and agents never approve. */
+    @Test
+    void underReviewAnAgentCannotActivateCasesInBulk() {
+        requireReview();
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.CreatedTestCase login = createCase("Login");
+
+        assertThatThrownBy(() -> testCaseBulkTools.changeTestCaseStatusBulk(Set.of(login.id()), TestCaseStatus.ACTIVE))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("IN_REVIEW");
+        assertThat(testCaseBulkTools.changeTestCaseStatusBulk(Set.of(login.id()), TestCaseStatus.IN_REVIEW).updated())
+                .isEqualTo(1);
+    }
+
+    @Test
+    void underReviewAnAgentCannotCreateOrUpdateCasesAsActive() {
+        requireReview();
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.CreatedTestCase login = createCase("Login");
+
+        assertThatThrownBy(() -> testCaseTools.createTestCase("Logout", Priority.MEDIUM, null, null,
+                TestCaseStatus.ACTIVE, null, null, null, null))
+                .hasMessageContaining("IN_REVIEW");
+        assertThatThrownBy(() -> testCaseTools.updateTestCase(login.key(), null, null, null, null,
+                TestCaseStatus.ACTIVE, null, null, null))
+                .hasMessageContaining("IN_REVIEW");
+    }
+
+    private void requireReview() {
+        project.setReviewRequired(true);
+        project = projectRepository.save(project);
     }
 
     @Test
