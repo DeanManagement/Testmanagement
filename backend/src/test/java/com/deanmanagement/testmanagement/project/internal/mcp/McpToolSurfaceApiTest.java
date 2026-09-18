@@ -146,7 +146,7 @@ class McpToolSurfaceApiTest {
 
     private McpDtos.CreatedTestCase createCase(String title) {
         return testCaseTools.createTestCase(title, Priority.MEDIUM, null, null, null, null,
-                null, null, null, null);
+                null, null, null, null, null);
     }
 
     // --- scoping ---------------------------------------------------------------------------
@@ -240,7 +240,7 @@ class McpToolSurfaceApiTest {
                 null, Set.of("auth"),
                 List.of(new McpDtos.Step("Open the login page", "The form is shown", null),
                         new McpDtos.Step("Submit valid credentials", "The dashboard opens", null)),
-                null, null, null);
+                null, null, null, null);
 
         assertThat(created.status()).isEqualTo(TestCaseStatus.DRAFT);
         assertThat(created.key()).startsWith(project.getKey() + "-");
@@ -256,10 +256,10 @@ class McpToolSurfaceApiTest {
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.CreatedTestCase created = testCaseTools.createTestCase(
                 "Original title", Priority.LOW, "Original description", "Original preconditions",
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, null);
 
         testCaseTools.updateTestCase(created.key(), null, null, null, Priority.CRITICAL, null,
-                null, null, null, null);
+                null, null, null, null, null);
 
         McpDtos.TestCaseDetail detail = testCaseTools.getTestCase(created.key());
         assertThat(detail.priority()).isEqualTo(Priority.CRITICAL);
@@ -273,9 +273,9 @@ class McpToolSurfaceApiTest {
     void updateTestCase_anEmptyStringClearsATextField() {
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.CreatedTestCase created = testCaseTools.createTestCase("Has a description",
-                Priority.LOW, "Something to remove", null, null, null, null, null, null, null);
+                Priority.LOW, "Something to remove", null, null, null, null, null, null, null, null);
 
-        testCaseTools.updateTestCase(created.key(), null, "", null, null, null, null, null, null, null);
+        testCaseTools.updateTestCase(created.key(), null, "", null, null, null, null, null, null, null, null);
 
         assertThat(testCaseTools.getTestCase(created.key()).description()).isEmpty();
     }
@@ -288,7 +288,7 @@ class McpToolSurfaceApiTest {
         McpDtos.CreatedTestCase created = createCase("A real title");
 
         assertThatThrownBy(() ->
-                testCaseTools.updateTestCase(created.key(), "  ", null, null, null, null, null, null, null, null))
+                testCaseTools.updateTestCase(created.key(), "  ", null, null, null, null, null, null, null, null, null))
                 .hasMessageContaining("title");
     }
 
@@ -310,7 +310,7 @@ class McpToolSurfaceApiTest {
                 new com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder
                         .CreateTestCaseFolderRequest("Authentication", null), null).id();
 
-        testCaseTools.updateTestCase(created.key(), null, null, null, null, null, null, null, folderId, null);
+        testCaseTools.updateTestCase(created.key(), null, null, null, null, null, null, null, folderId, null, null);
 
         assertThat(testCaseTools.getTestCase(created.key()).folderId()).isEqualTo(folderId);
     }
@@ -335,7 +335,7 @@ class McpToolSurfaceApiTest {
         createCase("Search returns results");
 
         McpDtos.CreatedTestCase second = testCaseTools.createTestCase("Search returns results",
-                Priority.MEDIUM, null, null, null, null, null, null, null, true);
+                Priority.MEDIUM, null, null, null, null, null, null, null, null, true);
 
         assertThat(second.id()).isNotNull();
     }
@@ -346,10 +346,10 @@ class McpToolSurfaceApiTest {
         createCase("Already here");
 
         McpDtos.BulkResult result = testCaseBulkTools.createTestCasesBulk(List.of(
-                new TestCaseBulkTools.BulkCase("Brand new one", Priority.LOW, null, null, null, null, null, null),
-                new TestCaseBulkTools.BulkCase("Already here", Priority.LOW, null, null, null, null, null, null),
-                new TestCaseBulkTools.BulkCase("Brand new one", Priority.LOW, null, null, null, null, null, null),
-                new TestCaseBulkTools.BulkCase(null, Priority.LOW, null, null, null, null, null, null)
+                new TestCaseBulkTools.BulkCase("Brand new one", Priority.LOW, null, null, null, null, null, null, null),
+                new TestCaseBulkTools.BulkCase("Already here", Priority.LOW, null, null, null, null, null, null, null),
+                new TestCaseBulkTools.BulkCase("Brand new one", Priority.LOW, null, null, null, null, null, null, null),
+                new TestCaseBulkTools.BulkCase(null, Priority.LOW, null, null, null, null, null, null, null)
         ), null);
 
         assertThat(result.created()).isEqualTo(1);
@@ -365,7 +365,7 @@ class McpToolSurfaceApiTest {
         authenticateAs(project, ProjectRole.TESTER, "agent");
 
         McpDtos.BulkResult result = testCaseBulkTools.createTestCasesBulk(List.of(
-                new TestCaseBulkTools.BulkCase("Would be created", Priority.LOW, null, null, null, null, null, null)
+                new TestCaseBulkTools.BulkCase("Would be created", Priority.LOW, null, null, null, null, null, null, null)
         ), true);
 
         assertThat(result.dryRun()).isTrue();
@@ -379,7 +379,7 @@ class McpToolSurfaceApiTest {
         authenticateAs(project, ProjectRole.TESTER, "agent");
         List<TestCaseBulkTools.BulkCase> tooMany = java.util.stream.IntStream.range(0, 6)
                 .mapToObj(i -> new TestCaseBulkTools.BulkCase("Case " + i, Priority.LOW, null, null,
-                        null, null, null, null))
+                        null, null, null, null, null))
                 .toList();
 
         assertThatThrownBy(() -> testCaseBulkTools.createTestCasesBulk(tooMany, null))
@@ -732,12 +732,12 @@ class McpToolSurfaceApiTest {
 
         // Recording the first result starts the run — no separate start tool to forget.
         McpDtos.RecordedResult recorded = resultRecordingTools.recordTestResult(run.id().toString(),
-                TestResultStatus.PASSED, first.id(), null, "sauber durchgelaufen", null);
+                TestResultStatus.PASSED, first.id(), null, "sauber durchgelaufen", null, null);
         assertThat(recorded.runStatus()).isEqualTo(TestRunStatus.IN_PROGRESS);
         assertThat(recorded.added()).isFalse();
 
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.FAILED, second.id(), null,
-                "Schaltfläche reagiert nicht", null);
+                "Schaltfläche reagiert nicht", null, null);
 
         McpDtos.CompletedTestRun done = testRunWriteTools.completeTestRun(run.id().toString(), null);
         assertThat(done.status()).isEqualTo(TestRunStatus.COMPLETED);
@@ -765,10 +765,10 @@ class McpToolSurfaceApiTest {
                 Set.of(testCase.id()), null, null);
 
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.FAILED, testCase.id(), null,
-                "erster Versuch", null);
+                "erster Versuch", null, null);
         // Re-recording is how an agent corrects itself; it must still not add a row.
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.PASSED, testCase.id(), null,
-                "nach dem Fix", null);
+                "nach dem Fix", null, null);
 
         McpDtos.TestRunDetail detail = testRunReadTools.getTestRun(run.id().toString(), null);
         assertThat(detail.results()).hasSize(1);
@@ -790,10 +790,10 @@ class McpToolSurfaceApiTest {
                 Set.of(testCase.id()), null, null);
 
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.FAILED, testCase.id(), null,
-                "Stacktrace: NullPointerException in PaymentService", "https://tracker/1");
+                "Stacktrace: NullPointerException in PaymentService", "https://tracker/1", null);
         // The retry an agent makes after a dropped response: status only, no comment.
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.FAILED, testCase.id(), null,
-                null, null);
+                null, null, null);
 
         McpDtos.TestResult result =
                 testRunReadTools.getTestRun(run.id().toString(), null).results().getFirst();
@@ -813,7 +813,7 @@ class McpToolSurfaceApiTest {
                 .findFirst().orElseThrow().id();
 
         assertThatThrownBy(() -> resultRecordingTools.recordTestResult(run.id().toString(),
-                TestResultStatus.PASSED, b.id(), resultForA, null, null))
+                TestResultStatus.PASSED, b.id(), resultForA, null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("belongs to test case");
     }
@@ -885,7 +885,7 @@ class McpToolSurfaceApiTest {
 
         assertThat(testRunReadTools.getTestRun(run.key(), null).id()).isEqualTo(run.id());
         assertThat(resultRecordingTools.recordTestResult(run.key(), TestResultStatus.PASSED,
-                testCase.id(), null, null, null).added()).isFalse();
+                testCase.id(), null, null, null, null).added()).isFalse();
         assertThat(testRunWriteTools.completeTestRun(run.key(), null).status())
                 .isEqualTo(TestRunStatus.COMPLETED);
     }
@@ -921,9 +921,9 @@ class McpToolSurfaceApiTest {
                 Set.of(a.id(), b.id(), c.id()), null, null);
 
         McpDtos.RecordedResults recorded = resultRecordingTools.recordTestResults(run.key(), List.of(
-                new McpDtos.ResultEntry(TestResultStatus.PASSED, a.id(), null, "gut", null),
-                new McpDtos.ResultEntry(TestResultStatus.FAILED, b.id(), null, "kaputt", null),
-                new McpDtos.ResultEntry(TestResultStatus.SKIPPED, c.id(), null, null, null)));
+                new McpDtos.ResultEntry(TestResultStatus.PASSED, a.id(), null, "gut", null, null),
+                new McpDtos.ResultEntry(TestResultStatus.FAILED, b.id(), null, "kaputt", null, null),
+                new McpDtos.ResultEntry(TestResultStatus.SKIPPED, c.id(), null, null, null, null)));
 
         assertThat(recorded.recorded()).isEqualTo(3);
         assertThat(recorded.runStatus()).isEqualTo(TestRunStatus.IN_PROGRESS);
@@ -949,8 +949,8 @@ class McpToolSurfaceApiTest {
                 Set.of(inRun.id()), null, null);
 
         assertThatThrownBy(() -> resultRecordingTools.recordTestResults(run.key(), List.of(
-                new McpDtos.ResultEntry(TestResultStatus.PASSED, inRun.id(), null, null, null),
-                new McpDtos.ResultEntry(TestResultStatus.PASSED, notInRun.id(), null, null, null))))
+                new McpDtos.ResultEntry(TestResultStatus.PASSED, inRun.id(), null, null, null, null),
+                new McpDtos.ResultEntry(TestResultStatus.PASSED, notInRun.id(), null, null, null, null))))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("results[1]")
                 .hasMessageContaining("Nothing was recorded");
@@ -967,7 +967,7 @@ class McpToolSurfaceApiTest {
         // max-bulk-size is 5 in this test's properties.
         List<McpDtos.ResultEntry> tooMany = java.util.stream.IntStream.range(0, 6)
                 .mapToObj(i -> new McpDtos.ResultEntry(TestResultStatus.PASSED, UUID.randomUUID(),
-                        null, null, null))
+                        null, null, null, null))
                 .toList();
 
         assertThatThrownBy(() -> resultRecordingTools.recordTestResults(run.key(), tooMany))
@@ -982,10 +982,10 @@ class McpToolSurfaceApiTest {
         McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Sammellauf", null,
                 Set.of(testCase.id()), null, null);
         resultRecordingTools.recordTestResult(run.key(), TestResultStatus.FAILED, testCase.id(), null,
-                "Ursprünglicher Beweis", null);
+                "Ursprünglicher Beweis", null, null);
 
         resultRecordingTools.recordTestResults(run.key(), List.of(
-                new McpDtos.ResultEntry(TestResultStatus.FAILED, testCase.id(), null, null, null)));
+                new McpDtos.ResultEntry(TestResultStatus.FAILED, testCase.id(), null, null, null, null)));
 
         assertThat(testRunReadTools.getTestRun(run.id().toString(), null).results().getFirst().comment())
                 .isEqualTo("Ursprünglicher Beweis");
@@ -1014,7 +1014,7 @@ class McpToolSurfaceApiTest {
                 Set.of(seeded.id()), null, null);
 
         McpDtos.RecordedResult recorded = resultRecordingTools.recordTestResult(run.id().toString(),
-                TestResultStatus.BLOCKED, adHoc.id(), null, "unterwegs entdeckt", null);
+                TestResultStatus.BLOCKED, adHoc.id(), null, "unterwegs entdeckt", null, null);
 
         // Flagged because this is also what a mistyped id looks like.
         assertThat(recorded.added()).isTrue();
@@ -1028,11 +1028,11 @@ class McpToolSurfaceApiTest {
         McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Lauf", null,
                 Set.of(testCase.id()), null, null);
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.PASSED, testCase.id(), null,
-                null, null);
+                null, null, null);
         testRunWriteTools.completeTestRun(run.id().toString(), null);
 
         assertThatThrownBy(() -> resultRecordingTools.recordTestResult(run.id().toString(),
-                TestResultStatus.FAILED, testCase.id(), null, "zu spät", null))
+                TestResultStatus.FAILED, testCase.id(), null, "zu spät", null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("new run");
     }
@@ -1058,7 +1058,7 @@ class McpToolSurfaceApiTest {
         McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Abgebrochen", null,
                 Set.of(done.id(), notDone.id()), null, null);
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.PASSED, done.id(), null,
-                null, null);
+                null, null, null);
 
         McpDtos.CompletedTestRun aborted =
                 testRunWriteTools.completeTestRun(run.id().toString(), TestRunStatus.ABORTED);
@@ -1088,7 +1088,7 @@ class McpToolSurfaceApiTest {
         assertThat(run.totalResults()).as("one result per parameter set").isEqualTo(2);
 
         assertThatThrownBy(() -> resultRecordingTools.recordTestResult(run.id().toString(),
-                TestResultStatus.PASSED, testCase.id(), null, null, null))
+                TestResultStatus.PASSED, testCase.id(), null, null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("parameterized")
                 .hasMessageContaining("resultId");
@@ -1100,7 +1100,7 @@ class McpToolSurfaceApiTest {
                 .findFirst().orElseThrow().id();
 
         McpDtos.RecordedResult recorded = resultRecordingTools.recordTestResult(run.id().toString(),
-                TestResultStatus.FAILED, null, guestResultId, "Gast kommt nicht rein", null);
+                TestResultStatus.FAILED, null, guestResultId, "Gast kommt nicht rein", null, null);
 
         assertThat(recorded.added()).isFalse();
         assertThat(testRunReadTools.getTestRun(run.id().toString(), null).results())
@@ -1157,7 +1157,7 @@ class McpToolSurfaceApiTest {
         McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Lauf", "staging",
                 Set.of(testCase.id()), null, null);
         McpDtos.RecordedResult failure = resultRecordingTools.recordTestResult(run.id().toString(),
-                TestResultStatus.FAILED, testCase.id(), null, "500 vom Zahlungsdienst", null);
+                TestResultStatus.FAILED, testCase.id(), null, "500 vom Zahlungsdienst", null, null);
 
         McpDtos.BugDetail bug = bugReportTools.createBugReport("Zahlung wirft 500",
                 Priority.CRITICAL, "Beim Bezahlen", "1. Warenkorb 2. Bezahlen", "Bestätigung",

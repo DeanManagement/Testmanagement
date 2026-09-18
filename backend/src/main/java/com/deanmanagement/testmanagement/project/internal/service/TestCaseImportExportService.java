@@ -49,9 +49,11 @@ public class TestCaseImportExportService {
 
     public static final int MAX_IMPORT_ROWS = 500;
     private static final String[] CSV_HEADERS =
-            {"title", "description", "preconditions", "priority", "status", "labels", "steps"};
+            {"title", "description", "preconditions", "priority", "status", "labels", "steps", "estimateMinutes"};
     private static final String STEP_PAIR_SEPARATOR = ";;";
     private static final String LABEL_SEPARATOR = ";";
+    private static final int MIN_ESTIMATE_MINUTES = 1;
+    private static final int MAX_ESTIMATE_MINUTES = 1440;
     /** Custom field columns are named {@code cf:<Field name>} (PRD-035 §3.7). */
     private static final String CUSTOM_FIELD_COLUMN_PREFIX = "cf:";
 
@@ -94,7 +96,8 @@ public class TestCaseImportExportService {
                         tc.priority(),
                         tc.status(),
                         csvSafe(tc.labels() == null ? "" : String.join(LABEL_SEPARATOR, tc.labels())),
-                        csvSafe(encodeSteps(tc))));
+                        csvSafe(encodeSteps(tc)),
+                        tc.estimateMinutes()));
                 fieldNames.forEach(name -> cells.add(customFieldCell(tc.customFields().get(name))));
                 printer.printRecord(cells);
             }
@@ -199,12 +202,13 @@ public class TestCaseImportExportService {
     /** Raw, unvalidated import row. */
     private record RowData(int rowNumber, String title, String description, String preconditions,
                            String priority, String status, List<String> labels,
-                           List<TestStepRequest> steps, Map<String, Object> customFields) {
+                           List<TestStepRequest> steps, Map<String, Object> customFields,
+                           String estimateMinutes) {
     }
 
     private static CreateTestCaseRequest withStatus(CreateTestCaseRequest r, TestCaseStatus status) {
         return new CreateTestCaseRequest(r.title(), r.description(), r.preconditions(), r.priority(), status,
-                r.labels(), r.steps(), r.folderId(), r.customFields());
+                r.labels(), r.steps(), r.folderId(), r.customFields(), r.estimateMinutes());
     }
 
     private CreateTestCaseRequest toRequest(RowData row) {
@@ -215,7 +219,24 @@ public class TestCaseImportExportService {
         TestCaseStatus status = parseEnum(TestCaseStatus.class, row.status(), TestCaseStatus.DRAFT, "status");
         Set<String> labels = row.labels() == null ? Set.of() : new LinkedHashSet<>(row.labels());
         return new CreateTestCaseRequest(row.title().trim(), emptyToNull(row.description()),
-                emptyToNull(row.preconditions()), priority, status, labels, row.steps(), null, row.customFields());
+                emptyToNull(row.preconditions()), priority, status, labels, row.steps(), null, row.customFields(),
+                parseEstimate(row.estimateMinutes()));
+    }
+
+    /** Blank means "not estimated"; anything else must be whole minutes from 1 to a day (PRD-036). */
+    private static Integer parseEstimate(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        // Up to four digits, so parseInt below cannot overflow or throw.
+        if (raw.trim().matches("\\d{1,4}")) {
+            int minutes = Integer.parseInt(raw.trim());
+            if (minutes >= MIN_ESTIMATE_MINUTES && minutes <= MAX_ESTIMATE_MINUTES) {
+                return minutes;
+            }
+        }
+        throw new IllegalArgumentException("invalid estimateMinutes: '" + raw + "' (whole minutes, "
+                + MIN_ESTIMATE_MINUTES + "-" + MAX_ESTIMATE_MINUTES + ")");
     }
 
     private <E extends Enum<E>> E parseEnum(Class<E> type, String value, E fallback, String field) {
@@ -252,7 +273,8 @@ public class TestCaseImportExportService {
                         get(record, "status"),
                         parseLabels(get(record, "labels")),
                         parseSteps(get(record, "steps")),
-                        customFieldCells(record, parser.getHeaderNames())
+                        customFieldCells(record, parser.getHeaderNames()),
+                        get(record, "estimateMinutes")
                 ));
             }
         } catch (IOException e) {
@@ -330,7 +352,8 @@ public class TestCaseImportExportService {
                 }
             }
             rows.add(new RowData(i + 1, item.title(), item.description(), item.preconditions(),
-                    item.priority(), item.status(), item.labels(), steps, item.customFields()));
+                    item.priority(), item.status(), item.labels(), steps, item.customFields(),
+                    item.estimateMinutes() == null ? null : item.estimateMinutes().toString()));
         }
         return rows;
     }
@@ -338,7 +361,7 @@ public class TestCaseImportExportService {
     /** JSON import shape; server-managed fields (id, key, timestamps) are ignored on read. */
     private record JsonItem(String title, String description, String preconditions, String priority,
                             String status, List<String> labels, List<Step> steps,
-                            Map<String, Object> customFields) {
+                            Map<String, Object> customFields, Object estimateMinutes) {
         private record Step(String action, String expectedResult, String testData) {
         }
     }

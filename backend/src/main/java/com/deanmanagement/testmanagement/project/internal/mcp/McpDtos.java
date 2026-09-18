@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldType;
@@ -80,7 +81,8 @@ final class McpDtos {
     record TestCaseDetail(UUID id, String key, String title, @Nullable String description,
                           @Nullable String preconditions, TestCaseStatus status, Priority priority,
                           @Nullable Set<String> labels, @Nullable UUID folderId,
-                          List<Step> steps, @Nullable Map<String, Object> customFields) {}
+                          List<Step> steps, @Nullable Map<String, Object> customFields,
+                          @Nullable Integer estimateMinutes, @Nullable Long medianActualMs) {}
 
     /** A custom field definition (PRD-035); agents write values keyed by {@code name}. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -116,7 +118,7 @@ final class McpDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record PlanDetail(UUID id, String name, TestPlanStatus status, @Nullable LocalDate targetDate,
                       int totalRuns, int completedRuns, int passed, int failed, int blocked,
-                      int skipped, int pending, double passRate) {}
+                      int skipped, int pending, double passRate, @Nullable EffortSummary effort) {}
 
     /** @param changed how many cases were actually added or removed; ids already in that state count 0 */
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -186,12 +188,12 @@ final class McpDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record TestResult(UUID id, UUID testCaseId, String testCaseTitle, TestResultStatus status,
                       @Nullable String comment, @Nullable String defectLink,
-                      @Nullable String parameterSetName) {}
+                      @Nullable String parameterSetName, @Nullable Long durationMs) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record TestRunDetail(UUID id, String key, String name, @Nullable String environment,
                          TestRunStatus status, @Nullable Instant startTime, @Nullable Instant endTime,
-                         List<TestResult> results) {}
+                         List<TestResult> results, @Nullable EffortSummary effort) {}
 
     // --- execution (write, PRD-027) ----------------------------------------------------------
 
@@ -228,7 +230,8 @@ final class McpDtos {
                        @Nullable UUID testCaseId,
                        @Nullable UUID resultId,
                        @Nullable String comment,
-                       @Nullable String defectLink) {}
+                       @Nullable String defectLink,
+                       @Nullable Long durationMs) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record RecordedResults(int recorded, TestRunStatus runStatus, int total, int passed, int failed,

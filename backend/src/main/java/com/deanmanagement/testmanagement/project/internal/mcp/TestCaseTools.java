@@ -113,7 +113,8 @@ public class TestCaseTools {
     @McpTool(
             name = "get_test_case",
             description = """
-                    One test case in full, including its ordered steps. Accepts either the case key
+                    One test case in full, including its ordered steps, its estimateMinutes and
+                    medianActualMs (median measured duration of its last 5 executions). Accepts either the case key
                     (for example PROJ-12, which is what humans quote) or its UUID.
                     """,
             generateOutputSchema = true,
@@ -131,7 +132,7 @@ public class TestCaseTools {
                 response.steps() == null ? List.of() : response.steps().stream()
                         .map(s -> new McpDtos.Step(s.action(), s.expectedResult(), s.testData()))
                         .toList(),
-                response.customFields());
+                response.customFields(), response.estimateMinutes(), response.medianActualMs());
     }
 
     // --- write -----------------------------------------------------------------------------
@@ -167,6 +168,8 @@ public class TestCaseTools {
             UUID folderId,
             @McpToolParam(description = "Custom field values keyed by field name", required = false)
             Map<String, Object> customFields,
+            @McpToolParam(description = "Expected minutes for one execution, 1-1440", required = false)
+            Integer estimateMinutes,
             @McpToolParam(description = "Set true only to override a refused duplicate", required = false)
             Boolean allowDuplicateTitle) {
 
@@ -175,7 +178,7 @@ public class TestCaseTools {
         var index = Boolean.TRUE.equals(allowDuplicateTitle)
                 ? null : duplicateDetector.index(caller.projectId());
         return creator.create(caller, title, priority, description, preconditions, status, labels,
-                steps, folderId, customFields, index);
+                steps, folderId, customFields, estimateMinutes, index);
     }
 
     @McpTool(
@@ -207,7 +210,9 @@ public class TestCaseTools {
             List<McpDtos.Step> steps,
             @McpToolParam(description = "Move the case to this folder", required = false) UUID folderId,
             @McpToolParam(description = "Custom field values keyed by field name; null clears one",
-                    required = false) Map<String, Object> customFields) {
+                    required = false) Map<String, Object> customFields,
+            @McpToolParam(description = "Expected minutes for one execution, 1-1440; 0 clears it", required = false)
+            Integer estimateMinutes) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
@@ -219,7 +224,8 @@ public class TestCaseTools {
         // unconditionally, which forced a read-then-merge here — and that made the agent the
         // author of fields it never touched, quietly reverting a human's concurrent edit.
         var request = new UpdateTestCaseRequest(title, description, preconditions, priority, status,
-                labels, steps == null ? null : McpTestCaseWriter.toStepRequests(steps), customFields);
+                labels, steps == null ? null : McpTestCaseWriter.toStepRequests(steps), customFields,
+                estimateMinutes);
         validator.validate(request);
 
         TestCaseResponse updated = testCaseService.update(caller.projectId(), existing.getId(), request,

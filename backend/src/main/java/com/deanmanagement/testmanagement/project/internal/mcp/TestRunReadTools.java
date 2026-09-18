@@ -128,10 +128,10 @@ public class TestRunReadTools {
                 : run.results()).stream()
                 .filter(r -> onlyStatus == null || onlyStatus.isEmpty() || onlyStatus.contains(r.status()))
                 .map(r -> new McpDtos.TestResult(r.id(), r.testCaseId(), r.testCaseTitle(),
-                        r.status(), r.comment(), r.defectLink(), r.parameterSetName()))
+                        r.status(), r.comment(), r.defectLink(), r.parameterSetName(), r.durationMs()))
                 .toList();
 
         return new McpDtos.TestRunDetail(run.id(), run.key(), run.name(), run.environment(),
-                run.status(), run.startTime(), run.endTime(), results);
+                run.status(), run.startTime(), run.endTime(), results, run.effort());
     }
 }

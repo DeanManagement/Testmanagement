@@ -15,6 +15,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseFolder;
 import com.deanmanagement.testmanagement.project.internal.entity.StepImage;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
@@ -68,7 +69,25 @@ public class TestCaseService {
         TestCase tc = testCaseRepository.findByIdWithSteps(id)
                 .filter(t -> t.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestCase", id));
-        return testCaseMapper.toResponse(tc);
+        return testCaseMapper.toDetailResponse(tc, medianActualMs(id));
+    }
+
+    /**
+     * Median measured duration of the case's last five executions (PRD-036), so an estimate can be
+     * corrected from evidence. Null until one has been measured.
+     */
+    private Long medianActualMs(UUID testCaseId) {
+        List<Long> durations = testResultRepository
+                .findTop5ByTestCaseIdAndDurationMsNotNullAndExecutedAtNotNullOrderByExecutedAtDesc(testCaseId).stream()
+                .map(TestResult::getDurationMs)
+                .sorted()
+                .toList();
+        if (durations.isEmpty()) {
+            return null;
+        }
+        int middle = durations.size() / 2;
+        return durations.size() % 2 == 1 ? durations.get(middle)
+                : Math.round((durations.get(middle - 1) + durations.get(middle)) / 2.0);
     }
 
     @Transactional

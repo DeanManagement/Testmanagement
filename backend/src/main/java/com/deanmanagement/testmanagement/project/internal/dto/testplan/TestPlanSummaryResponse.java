@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.dto.testplan;
 
 import java.time.Instant;
+import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
 
@@ -24,7 +25,9 @@ public record TestPlanSummaryResponse(
         double passRate,
         List<TestPlanRunSummary> runs,
         /* PRD-034: exploration done for this plan; kept apart from run counts and passRate. */
-        SessionsSummary sessions
+        SessionsSummary sessions,
+        /* PRD-036: over every run of the plan except ABORTED ones. */
+        EffortSummary effort
 ) {
 
     public record SessionsSummary(int total, int completed, long totalMinutes, List<SessionItem> items) {

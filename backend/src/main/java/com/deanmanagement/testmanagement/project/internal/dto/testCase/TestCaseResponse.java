@@ -33,6 +33,8 @@ public record TestCaseResponse(
         /* PRD-035: values keyed by field name, in display order (CustomFieldValueMaps). */
         Map<String, Object> customFields,
         /* PRD-036 */
-        Integer estimateMinutes
+        Integer estimateMinutes,
+        /* PRD-036: median measured duration of the last 5 executions; on the detail response only. */
+        Long medianActualMs
 ) {
 }

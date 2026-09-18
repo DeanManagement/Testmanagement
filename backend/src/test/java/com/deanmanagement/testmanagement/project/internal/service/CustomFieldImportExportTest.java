@@ -112,7 +112,7 @@ class CustomFieldImportExportTest {
             String csv = new String(importExportService.exportCsv(source, false), StandardCharsets.UTF_8);
 
             assertThat(csv.lines().findFirst().orElseThrow())
-                    .endsWith("steps,cf:Effort,cf:Component,cf:Browsers,cf:Customer,cf:Sprint");
+                    .endsWith("steps,estimateMinutes,cf:Effort,cf:Component,cf:Browsers,cf:Customer,cf:Sprint");
             assertThat(csv).contains("-2.5,Search,Chrome;Firefox,'=ACME,");
         }
 

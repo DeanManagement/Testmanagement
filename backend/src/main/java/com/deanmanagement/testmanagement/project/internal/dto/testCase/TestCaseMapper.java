@@ -12,7 +12,12 @@ public abstract class TestCaseMapper {
 
     @Mapping(target = "folderId", expression = "java(testCase.getFolder() != null ? testCase.getFolder().getId() : null)")
     @Mapping(target = "customFields", expression = "java(CustomFieldValueMaps.toMap(testCase.getCustomFieldValues()))")
-    public abstract TestCaseResponse toResponse(TestCase testCase);
+    public abstract TestCaseResponse toDetailResponse(TestCase testCase, Long medianActualMs);
+
+    /** Without the median, which costs a query per case and is only shown on the detail page. */
+    public TestCaseResponse toResponse(TestCase testCase) {
+        return toDetailResponse(testCase, null);
+    }
 
     @Mapping(target = "imageId", expression = "java(step.getImage() != null ? step.getImage().getId() : null)")
     public abstract TestStepResponse toStepResponse(TestStep step);

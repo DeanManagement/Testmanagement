@@ -7,10 +7,11 @@ import com.deanmanagement.testmanagement.project.internal.entity.StepResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
+import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring", imports = CustomFieldValueMaps.class)
+@Mapper(componentModel = "spring", imports = {CustomFieldValueMaps.class, EffortSummary.class})
 public abstract class TestRunMapper {
 
     @Mapping(target = "executorName", source = "executor.displayName")
@@ -21,6 +22,7 @@ public abstract class TestRunMapper {
     @Mapping(target = "projectId", source = "project.id")
     @Mapping(target = "projectKey", source = "project.key")
     @Mapping(target = "customFields", expression = "java(CustomFieldValueMaps.toMap(testRun.getCustomFieldValues()))")
+    @Mapping(target = "effort", expression = "java(EffortSummary.of(testRun.getResults()))")
     public abstract TestRunResponse toResponse(TestRun testRun);
 
     @Mapping(target = "testCaseId", source = "testCase.id")

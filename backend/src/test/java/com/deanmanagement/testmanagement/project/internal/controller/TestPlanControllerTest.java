@@ -96,7 +96,7 @@ class TestPlanControllerTest {
         var summary = new TestPlanSummaryResponse(
                 PLAN_ID, "Release 2.3", TestPlanStatus.OPEN, LocalDate.of(2026, 3, 15),
                 2, 1, 10, 8, 1, 0, 0, 1, 80.0, List.of(),
-                new TestPlanSummaryResponse.SessionsSummary(0, 0, 0, List.of())
+                new TestPlanSummaryResponse.SessionsSummary(0, 0, 0, List.of()), null
         );
         when(testPlanService.getSummary(PROJECT_ID, PLAN_ID)).thenReturn(summary);
 

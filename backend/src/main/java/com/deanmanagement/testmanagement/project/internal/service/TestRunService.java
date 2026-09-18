@@ -2,6 +2,7 @@ package com.deanmanagement.testmanagement.project.internal.service;
 
 import com.deanmanagement.testmanagement.project.internal.dto.CompletionInfoResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
+import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CloneTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestResultRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestRunRequest;
@@ -186,7 +187,8 @@ public class TestRunService {
                 run.getId(), run.getName(), run.getEnvironment(), run.getStatus(),
                 run.getStartTime(), run.getEndTime(),
                 total, passed, failed, blocked, skipped, pending, passRate,
-                resultResponses, reviewService.resultsOnUnapprovedWording(run.getProject(), results)
+                resultResponses, reviewService.resultsOnUnapprovedWording(run.getProject(), results),
+                EffortSummary.of(results)
         );
     }
 

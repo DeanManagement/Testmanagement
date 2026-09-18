@@ -39,11 +39,12 @@ public class McpTestCaseWriter {
                                           Priority priority, String description,
                                           String preconditions, TestCaseStatus status,
                                           Set<String> labels, List<McpDtos.Step> steps,
-                                          UUID folderId, Map<String, Object> customFields) {
+                                          UUID folderId, Map<String, Object> customFields,
+                                          Integer estimateMinutes) {
         var request = new CreateTestCaseRequest(
                 title, description, preconditions, priority,
                 status == null ? TestCaseStatus.DRAFT : status,
-                labels, toStepRequests(steps), folderId, customFields);
+                labels, toStepRequests(steps), folderId, customFields, estimateMinutes);
         validator.validate(request);
 
         TestCaseResponse response = testCaseService.create(projectId, request, userId, CustomFieldWriteMode.MACHINE);

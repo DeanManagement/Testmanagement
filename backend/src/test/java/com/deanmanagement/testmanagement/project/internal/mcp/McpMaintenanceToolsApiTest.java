@@ -308,10 +308,10 @@ class McpMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase login = createCase("Login");
 
         assertThatThrownBy(() -> testCaseTools.createTestCase("Logout", Priority.MEDIUM, null, null,
-                TestCaseStatus.ACTIVE, null, null, null, null, null))
+                TestCaseStatus.ACTIVE, null, null, null, null, null, null))
                 .hasMessageContaining("IN_REVIEW");
         assertThatThrownBy(() -> testCaseTools.updateTestCase(login.key(), null, null, null, null,
-                TestCaseStatus.ACTIVE, null, null, null, null))
+                TestCaseStatus.ACTIVE, null, null, null, null, null))
                 .hasMessageContaining("IN_REVIEW");
     }
 

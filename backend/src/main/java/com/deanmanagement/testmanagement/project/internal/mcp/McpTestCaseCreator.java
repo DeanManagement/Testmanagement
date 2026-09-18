@@ -31,6 +31,7 @@ class McpTestCaseCreator {
                                            String preconditions, TestCaseStatus status,
                                            Set<String> labels, List<McpDtos.Step> steps,
                                            UUID folderId, Map<String, Object> customFields,
+                                           Integer estimateMinutes,
                                            TestCaseDuplicateDetector.Index duplicateIndex) {
         if (priority == null) {
             throw new McpToolException("priority is required: LOW, MEDIUM, HIGH or CRITICAL.");
@@ -49,6 +50,6 @@ class McpTestCaseCreator {
         }
         // Its own transaction, so one bad item in a bulk call cannot take the others with it.
         return writer.create(caller.projectId(), caller.userId(), title, priority, description,
-                preconditions, status, labels, steps, folderId, customFields);
+                preconditions, status, labels, steps, folderId, customFields, estimateMinutes);
     }
 }

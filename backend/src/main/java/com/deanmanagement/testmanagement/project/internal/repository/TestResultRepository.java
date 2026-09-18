@@ -2,6 +2,7 @@ package com.deanmanagement.testmanagement.project.internal.repository;
 
 import com.deanmanagement.testmanagement.project.internal.dto.environment.EnvironmentResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.analytics.FlakyResultRow;
+import com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownRow;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.RunStatusCount;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -96,6 +97,21 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
            ORDER BY tc.id ASC, COALESCE(run.endTime, run.startTime, run.createdAt) DESC
            """)
     List<FlakyResultRow> findTerminalResultsForFlakiness(@Param("projectId") UUID projectId);
+
+    /** Burn-down input (PRD-036): aborted runs are excluded, as in the plan's effort summary. */
+    @Query("""
+           SELECT new com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownRow(
+               r.createdAt, r.executedAt, r.status, tc.estimateMinutes)
+           FROM TestResult r
+           JOIN r.testCase tc
+           JOIN r.testRun run
+           WHERE run.testPlan.id = :planId
+             AND run.status <> 'ABORTED'
+           """)
+    List<BurnDownRow> findBurnDownRows(@Param("planId") UUID planId);
+
+    /** The newest executions of a case that measured a duration, for its median actual (PRD-036). */
+    List<TestResult> findTop5ByTestCaseIdAndDurationMsNotNullAndExecutedAtNotNullOrderByExecutedAtDesc(UUID testCaseId);
 
     @Query("SELECT new com.deanmanagement.testmanagement.project.internal.dto.testrun.RunStatusCount(" +
            "r.testRun.id, r.status, COUNT(r)) " +

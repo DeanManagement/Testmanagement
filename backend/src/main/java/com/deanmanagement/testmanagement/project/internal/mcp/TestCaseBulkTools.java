@@ -132,7 +132,7 @@ public class TestCaseBulkTools {
                 }
                 McpDtos.CreatedTestCase result = creator.create(caller, item.title(), item.priority(),
                         item.description(), item.preconditions(), item.status(), item.labels(),
-                        item.steps(), item.folderId(), null, null);
+                        item.steps(), item.folderId(), null, item.estimateMinutes(), null);
                 index.remember(result.title(), new TestCaseDuplicateDetector.Existing(
                         result.id(), result.key(), result.title()));
                 results.add(new McpDtos.BulkItemResult(i, "CREATED", result.id(), result.key(), null));
@@ -159,5 +159,6 @@ public class TestCaseBulkTools {
                            @Nullable TestCaseStatus status,
                            @Nullable Set<String> labels,
                            @Nullable List<McpDtos.Step> steps,
-                           @Nullable UUID folderId) {}
+                           @Nullable UUID folderId,
+                           @Nullable Integer estimateMinutes) {}
 }

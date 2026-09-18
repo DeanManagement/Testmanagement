@@ -110,7 +110,7 @@ class ExternalTestRunServiceTest {
                 null, null, null,
                 null, null, null,
                 null, null,
-                List.of(), NOW, NOW, null, null, Map.of()
+                List.of(), NOW, NOW, null, null, Map.of(), null
         );
     }
 

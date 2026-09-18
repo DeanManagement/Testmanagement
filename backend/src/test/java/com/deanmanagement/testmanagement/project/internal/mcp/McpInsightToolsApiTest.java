@@ -31,7 +31,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login", "Open page");
         testCaseTools.updateTestCase(login.key(), "Sign in", null, null, null, null, null, null,
-                null, null);
+                null, null, null);
 
         McpDtos.VersionList history = historyTools.listTestCaseVersions(login.key());
 
@@ -75,7 +75,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase login = createCase("Login");
         McpDtos.CreatedTestRun run = runOf(login);
         resultRecordingTools.recordTestResult(run.key(), TestResultStatus.PASSED, login.id(), null,
-                null, null);
+                null, null, null);
         testRunWriteTools.completeTestRun(run.key(), null);
 
         McpDtos.Dashboard dashboard = reportingTools.getProjectDashboard();
@@ -144,7 +144,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase a = createCase("A");
         resultRecordingTools.recordTestResult(runOf(a).key(), TestResultStatus.FAILED, a.id(), null,
-                null, null);
+                null, null, null);
 
         assertThat(reportingTools.getProjectDashboard().overallPassRate()).isZero();
     }
@@ -152,7 +152,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
     private void completeRun(McpDtos.CreatedTestRun run,
                              Map<McpDtos.CreatedTestCase, TestResultStatus> outcomes) {
         outcomes.forEach((testCase, status) -> resultRecordingTools.recordTestResult(run.key(),
-                status, testCase.id(), null, null, null));
+                status, testCase.id(), null, null, null, null));
         testRunWriteTools.completeTestRun(run.key(), null);
     }
 
@@ -176,7 +176,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
                 Set.of(login.id(), logout.id())).id();
         McpDtos.CreatedTestRun run = runOf(login);
         resultRecordingTools.recordTestResult(run.key(), TestResultStatus.FAILED, login.id(), null,
-                "broken", null);
+                "broken", null, null);
         testRunWriteTools.completeTestRun(run.key(), null);
 
         McpDtos.SuiteReport report = reportingTools.getTestSuiteReport(suiteId);

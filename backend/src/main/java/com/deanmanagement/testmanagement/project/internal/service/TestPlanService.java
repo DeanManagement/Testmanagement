@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.time.Duration;
 import java.time.Clock;
 import com.deanmanagement.testmanagement.project.internal.repository.ExploratorySessionRepository;
+import com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.CreateTestPlanRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanResponse;
@@ -22,12 +24,15 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -44,6 +49,7 @@ public class TestPlanService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ExploratorySessionRepository sessionRepository;
     private final Clock clock;
+    private final TestResultRepository testResultRepository;
 
     /**
      * Resolves an assignee who must already be a member of this project (PRD-027 §3.5).
@@ -123,8 +129,26 @@ public class TestPlanService {
                 plan.getId(), plan.getName(), plan.getStatus(), plan.getTargetDate(),
                 totalRuns, completedRuns, totalResults,
                 passed, failed, blocked, skipped, pending, passRate,
-                runSummaries, sessionsSummary(planId)
+                runSummaries, sessionsSummary(planId), EffortSummary.of(countedResults(runs))
         );
+    }
+
+    /** Remaining estimated effort per day, computed on demand (PRD-036 §3.2). */
+    public BurnDownResponse getBurnDown(UUID projectId, UUID planId) {
+        TestPlan plan = testPlanRepository.findById(planId)
+                .filter(p -> p.getProject().getId().equals(projectId))
+                .orElseThrow(() -> new ResourceNotFoundException("TestPlan", planId));
+        return BurnDownCalculator.calculate(testResultRepository.findBurnDownRows(planId),
+                plan.getCreatedAt().atZone(ZoneOffset.UTC).toLocalDate(), plan.getTargetDate(),
+                LocalDate.now(clock.withZone(ZoneOffset.UTC)));
+    }
+
+    /** An aborted run's pending results are not work anyone still intends to do. */
+    private static List<TestResult> countedResults(List<TestRun> runs) {
+        return runs.stream()
+                .filter(run -> run.getStatus() != TestRunStatus.ABORTED)
+                .flatMap(run -> run.getResults().stream())
+                .toList();
     }
 
     private TestPlanSummaryResponse.SessionsSummary sessionsSummary(UUID planId) {

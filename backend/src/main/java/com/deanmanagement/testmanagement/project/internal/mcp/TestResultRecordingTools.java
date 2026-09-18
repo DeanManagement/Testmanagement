@@ -63,7 +63,9 @@ public class TestResultRecordingTools {
             @McpToolParam(description = "Result UUID from get_test_run; use when testCaseId is "
                     + "ambiguous", required = false) UUID resultId,
             @McpToolParam(description = "What you observed", required = false) String comment,
-            @McpToolParam(description = "URL of a related defect", required = false) String defectLink) {
+            @McpToolParam(description = "URL of a related defect", required = false) String defectLink,
+            @McpToolParam(description = "How long the execution took, in milliseconds", required = false)
+            Long durationMs) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
@@ -102,7 +104,7 @@ public class TestResultRecordingTools {
             // idempotentHint and tells the agent to retry, that is the likeliest path through it.
             var update = new UpdateTestResultRequest(status,
                     comment == null ? target.comment() : comment,
-                    defectLink == null ? target.defectLink() : defectLink);
+                    defectLink == null ? target.defectLink() : defectLink, durationMs);
             validator.validate(update);
             recordedId = testRunService.updateResult(caller.projectId(), runId, target.id(), update)
                     .id();
@@ -110,7 +112,7 @@ public class TestResultRecordingTools {
             // Only reached when the case genuinely is not in the run. Appending is right for
             // exploratory testing, but it is also what a mistyped id looks like, so the response
             // says which happened.
-            var create = new CreateTestResultRequest(testCaseId, status, comment, defectLink);
+            var create = new CreateTestResultRequest(testCaseId, status, comment, defectLink, durationMs);
             validator.validate(create);
             target = testRunService.addResult(caller.projectId(), runId, create);
             recordedId = target.id();
@@ -187,7 +189,7 @@ public class TestResultRecordingTools {
             TestResultResponse target = targets.get(index);
             var update = new UpdateTestResultRequest(entry.status(),
                     entry.comment() == null ? target.comment() : entry.comment(),
-                    entry.defectLink() == null ? target.defectLink() : entry.defectLink());
+                    entry.defectLink() == null ? target.defectLink() : entry.defectLink(), entry.durationMs());
             validator.validate(update);
             testRunService.updateResult(caller.projectId(), runId, target.id(), update);
         }

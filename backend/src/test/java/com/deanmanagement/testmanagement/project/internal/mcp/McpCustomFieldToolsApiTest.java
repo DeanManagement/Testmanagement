@@ -39,7 +39,7 @@ class McpCustomFieldToolsApiTest extends McpToolApiTestSupport {
 
     private McpDtos.CreatedTestCase createWith(String title, Map<String, Object> customFields) {
         return testCaseTools.createTestCase(title, Priority.MEDIUM, null, null, null, null, null, null,
-                customFields, null);
+                customFields, null, null);
     }
 
     @Test
@@ -65,7 +65,7 @@ class McpCustomFieldToolsApiTest extends McpToolApiTestSupport {
 
         McpDtos.CreatedTestCase created = createWith("Pay", null);
         testCaseTools.updateTestCase(created.key(), null, null, null, null, null, null, null, null,
-                Map.of("Component", "Checkout"));
+                Map.of("Component", "Checkout"), null);
 
         assertThat(testCaseTools.getTestCase(created.key()).customFields()).containsOnlyKeys("Component");
     }

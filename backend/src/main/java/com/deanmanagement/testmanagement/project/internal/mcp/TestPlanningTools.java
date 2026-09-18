@@ -146,7 +146,7 @@ public class TestPlanningTools {
         TestPlanSummaryResponse s = testPlanService.getSummary(caller.projectId(), id);
         return new McpDtos.PlanDetail(s.id(), s.name(), s.status(), s.targetDate(), s.totalRuns(),
                 s.completedRuns(), s.passed(), s.failed(), s.blocked(), s.skipped(), s.pending(),
-                s.passRate());
+                s.passRate(), s.effort());
     }
 
     @McpTool(

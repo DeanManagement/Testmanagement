@@ -43,7 +43,7 @@ class McpBugRunLinkApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase checkout = createCase("Checkout");
         run = runOf(checkout);
         resultId = resultRecordingTools.recordTestResult(run.key(), TestResultStatus.FAILED,
-                checkout.id(), null, "HTTP 500", null).resultId();
+                checkout.id(), null, "HTTP 500", null, null).resultId();
     }
 
     private McpDtos.BugDetail fileBug(String title, UUID testResultId, UUID testRunId) {

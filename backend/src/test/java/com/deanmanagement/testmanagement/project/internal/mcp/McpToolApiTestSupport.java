@@ -106,7 +106,7 @@ abstract class McpToolApiTestSupport {
                 .map(action -> new McpDtos.Step(action, null, null))
                 .toList();
         return testCaseTools.createTestCase(title, Priority.MEDIUM, null, null, null, null,
-                steps, null, null, null);
+                steps, null, null, null, null);
     }
 
     protected McpDtos.CreatedTestRun runOf(McpDtos.CreatedTestCase... cases) {

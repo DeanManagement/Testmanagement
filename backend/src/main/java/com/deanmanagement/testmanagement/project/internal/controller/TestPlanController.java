@@ -1,4 +1,5 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
+import com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownResponse;
 import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 
@@ -43,6 +44,13 @@ public class TestPlanController {
     @RequireProjectRole
     public TestPlanResponse findById(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testPlanService.findById(projectId, id);
+    }
+
+    /** Remaining estimated effort per day (PRD-036). */
+    @GetMapping("/{id}/burn-down")
+    @RequireProjectRole
+    public BurnDownResponse getBurnDown(@PathVariable UUID projectId, @PathVariable UUID id) {
+        return testPlanService.getBurnDown(projectId, id);
     }
 
     @GetMapping("/{id}/summary")

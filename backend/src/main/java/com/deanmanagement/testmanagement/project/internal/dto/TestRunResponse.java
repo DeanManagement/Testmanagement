@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.dto;
 
+import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 
 import java.time.Instant;
@@ -29,6 +30,8 @@ public record TestRunResponse(
         UUID createdBy,
         UUID updatedBy,
         /* PRD-035: values keyed by field name, in display order (CustomFieldValueMaps). */
-        Map<String, Object> customFields
+        Map<String, Object> customFields,
+        /* PRD-036 */
+        EffortSummary effort
 ) {
 }

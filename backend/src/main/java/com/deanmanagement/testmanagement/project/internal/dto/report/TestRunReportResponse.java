@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.dto.report;
 
 import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 
 import java.time.Instant;
@@ -24,6 +25,8 @@ public record TestRunReportResponse(
         double passRate,
         List<TestResultResponse> results,
         /* PRD-033: results executed against wording that was never approved; empty without review. */
-        Set<UUID> unapprovedResultIds
+        Set<UUID> unapprovedResultIds,
+        /* PRD-036 */
+        EffortSummary effort
 ) {
 }
