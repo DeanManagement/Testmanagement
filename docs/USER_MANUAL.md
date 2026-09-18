@@ -386,12 +386,16 @@ intentions rather than evidence is worse than no number at all.
 | Field | Notes |
 |---|---|
 | Name | e.g. "Release 4.2 smoke" |
-| Environment | Free text: `staging`, `prod`, `iOS 18` |
+| Environment | Pick one from the project's list, or type a new name to add it (see [Environments](#environments)) |
 | Test Plan | Optional; attaches this run to a milestone |
 | Executor | Who is expected to run it; can be left unassigned |
 | Test cases | Pick them individually, filter by folder, or search |
 
 Cases with parameter sets expand to one result per set.
+
+**Run on multiple environments** swaps the environment field for a multi-select and creates one
+run per environment (up to 20) in one go: same cases, plan and executor, each named
+`<name> · <environment>`, and each with its own key. You land on the run list filtered to them.
 
 | Run status | Meaning |
 |---|---|
@@ -447,7 +451,39 @@ what the resulting run status will be before you confirm. A run with everything 
 is intentional friction: reopening changes history, so the record says why.
 
 **Clone** copies a run's case selection into a fresh run with a new name and environment, without
-copying results. This is how you re-test the same set next release.
+copying results. This is how you re-test the same set next release. The dialog starts with the
+source run's environment; clear it for a run with none.
+
+### Environments
+
+Each project keeps a list of environments, such as `Staging`, `Production` or `Chrome · Staging`.
+Runs and bug reports point at an entry in that list instead of storing free text, which is what
+makes "has checkout passed on staging?" answerable:
+
+- The **run list** filters by environment. **My test runs** filters by environment name across
+  projects.
+- A **test case** shows its latest executed result in each environment (by run time, so late CI
+  uploads land in the right place). Runs without an environment are listed as *Unspecified*.
+- A **test plan** can group its runs by environment, with a pass rate for each.
+
+Names are matched ignoring case and surrounding spaces, so `Staging`, `staging` and ` staging `
+are one environment. A name nobody has used yet is **added automatically**, whether it comes from
+the UI, a CI upload, the external runs API or an MCP agent. Spelling variants (`stage`, `stg`) are
+not guessed and become separate entries until someone merges them.
+
+**Project settings → Environments** (project Admin) lets you:
+
+- drag environments into the order pickers show them;
+- **rename** one, which relabels every run and bug report using it;
+- **archive** one, which hides it from pickers but keeps it on past runs and in filters (using an
+  archived name again, e.g. from CI, reactivates it);
+- **merge** one into another, which moves its runs and bug reports over and deletes it (this is how
+  to clean up duplicates);
+- **delete** one that nothing uses. An environment in use can only be archived or merged.
+
+Existing projects were migrated automatically: each distinct name became an environment, with case
+and whitespace variants folded together. Where variants differed only in case, the migration kept
+one spelling (often the uppercase one), so you may want to rename a few.
 
 ### Allure reports
 
@@ -887,6 +923,9 @@ curl -X POST "http://localhost:8089/api/external/projects/TES/test-runs/cucumber
 ```
 
 Optional query parameters: `runName`, `environment`, `testPlanId`. Reports are capped at 10 MB.
+`environment` is matched against the project's [environments](#environments) and added if new;
+the run's `environment` in the response is the canonical name, which may differ in case from
+what you sent.
 
 ### Attaching an Allure report
 
@@ -905,7 +944,7 @@ The run must belong to the project named in the URL.
 ### Reporting back from a triggered pipeline
 
 When a tester triggers a workflow from the Automation panel (see
-[Build servers](#build-servers)), the trigger injects three non-secret variables into the
+[Build servers](#build-servers)), the trigger injects these non-secret variables into the
 pipeline — as CI variables on GitLab/Woodpecker/Jenkins, as `workflow_dispatch` inputs on
 GitHub/Forgejo:
 
@@ -914,6 +953,7 @@ GitHub/Forgejo:
 | `TM_PIPELINE_RUN_ID` | Correlation id for this specific trigger |
 | `TM_PROJECT_KEY` | The project key, e.g. `TES` |
 | `TM_BASE_URL` | This instance's public URL — only when `PUBLIC_BASE_URL` is configured |
+| `TM_ENVIRONMENT` | The environment the trigger named, if any. A run reported back with `pipelineRunId` and no `environment` parameter gets this environment. Currently set only through the API (`environmentId` in the trigger request body); the Automation panel doesn't offer it yet |
 
 The API key is **not** sent to the build server. Configure it as a CI-side secret once (e.g.
 `TM_API_KEY`), like any other credential your pipeline uses.
@@ -946,6 +986,7 @@ on:
       TM_PIPELINE_RUN_ID: { required: false }
       TM_PROJECT_KEY: { required: false }
       TM_BASE_URL: { required: false }
+      TM_ENVIRONMENT: { required: false }
 ```
 
 Without this the trigger still works (a dispatch rejected for undeclared inputs is retried

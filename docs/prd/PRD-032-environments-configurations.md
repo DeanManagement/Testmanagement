@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-18 — see §8; UI not yet click-tested in a browser, Automation-panel environment picker open |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P2 — makes "did it pass on X?" answerable |
@@ -220,11 +220,57 @@ Curating the list is ADMIN.
 
 ## 7. Acceptance Criteria
 
-- [ ] Projects have an environment catalogue that admins can create, rename, reorder, archive, merge and delete (when unused).
-- [ ] Existing environment strings are backfilled into the catalogue, one entry per case- and whitespace-insensitive name.
-- [ ] Runs and bug reports reference an environment; every existing write path still accepts a name and auto-registers unknown ones.
-- [ ] Testers can create one run per selected environment in a single action.
-- [ ] Runs can be filtered by environment; a test case shows its latest result per environment.
-- [ ] Build-server triggers pass `TM_ENVIRONMENT`, and reported-back runs inherit it.
-- [ ] MCP `list_environments` exists and existing tools resolve names against the catalogue.
-- [ ] Backend, migration (H2 + Postgres) and frontend tests pass; en/de translations present.
+- [x] Projects have an environment catalogue that admins can create, rename, reorder, archive, merge and delete (when unused).
+- [x] Existing environment strings are backfilled into the catalogue, one entry per case- and whitespace-insensitive name.
+- [x] Runs and bug reports reference an environment; every existing write path still accepts a name and auto-registers unknown ones.
+- [x] Testers can create one run per selected environment in a single action.
+- [x] Runs can be filtered by environment; a test case shows its latest result per environment.
+- [x] Build-server triggers pass `TM_ENVIRONMENT`, and reported-back runs inherit it (trigger via API only, see §8).
+- [x] MCP `list_environments` exists and existing tools resolve names against the catalogue.
+- [x] Backend, migration (H2 + Postgres) and frontend tests pass; en/de translations present.
+
+## 8. As Built (2026-09-18)
+
+Built as specified, with these differences:
+
+- **One vendor-neutral backfill migration (V56), not two vendor files.** `MigrationVersionsTest`
+  forbids the same V-number in `db/specific/postgresql` and `db/specific/h2`, and
+  `gen_random_uuid()` exists in both PostgreSQL 13+ and H2 2.x (PostgreSQL mode), so the split
+  wasn't needed. `EnvironmentBackfillMigrationTest` migrates a fresh database to V55, inserts
+  case/whitespace variants, blanks and nulls, then applies V56. It runs on H2 in the suite and
+  passed against a throwaway PostgreSQL 16 via `-Dmigration-test.url=…`.
+- **`MIN(TRIM(name))` usually keeps the uppercase spelling** (`STAGING` over `Staging`), as
+  specified. Admins can rename. The manual says so.
+- **The UI pickers still send names, not ids.** The autocomplete offers catalogue names plus
+  "Add 'foo'", and the server resolves them, so the run/bug request models didn't change.
+  `environmentId` is accepted by REST (it wins over a name) and used by the multi-environment
+  create and the build-server trigger. Responses carry the canonical name, not the id.
+- **Clone:** omitting the environment keeps the source's (§4). `""` clears it. The dialog is
+  prefilled with the source's name and now always sends the field, so clearing it really clears it.
+- **Delete-while-in-use is a new `ConflictException` (409 `CONFLICT`).** A rename or create that
+  clashes is the existing `DuplicateKeyException` (409 `DUPLICATE`).
+- **Latest result per environment** ignores PENDING results and ABORTED runs, so a freshly
+  planned run doesn't hide the last real outcome. It loads the case's executed results and keeps
+  the first per environment in Java (a `ponytail:` note names the window-function upgrade).
+- **My test runs filters by environment *name*,** client-side, because that page spans projects and
+  ids are per project. The project run list filters by id, and its filter includes archived
+  environments.
+- **Across-environments** refuses `environment`/`environmentId` alongside `environmentIds`, and
+  the plain create refuses `environmentIds` rather than ignoring them. Afterwards the form opens
+  the run list filtered by the shared name.
+- **The Automation panel doesn't offer an environment yet.** `TriggerPipelineRequest.environmentId`
+  works through the API. §3.4 didn't list the panel, and it is the obvious next step.
+- **Descriptions are API-only.** The settings page covers name, order, archive, merge and delete.
+- **Concurrent first use of a new name** races on the unique key, and one write gets a 409. A retry
+  resolves to the winner. This is noted in code and acceptable at CI-upload rates.
+
+Tests: `ProjectEnvironmentServiceTest` (13), `EnvironmentWritePathsTest` (8), `EnvironmentRunsTest`
+(10), `EnvironmentBackfillMigrationTest` (1), plus new cases in `CiIngestionApiTest`,
+`ProjectScopedChildIdApiTest` (foreign id → 404, and JSON binding of `environmentId`) and
+`BuildServerApiTest` (`TM_ENVIRONMENT` sent, inherited, and overridden by an explicit name).
+Frontend: `environment-options`, `environment-order`, `environment-filter` and
+`runs-by-environment` specs. **865 backend tests, 26 frontend spec files (124 tests).** REST was
+smoke-tested against a throwaway PostgreSQL: ` staging ` resolved to an existing `Staging`.
+
+**Still open:** clicking through the new UI in a browser, and an environment picker on the
+Automation panel.
