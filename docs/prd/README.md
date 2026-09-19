@@ -141,13 +141,14 @@ Gaps against comparable test-management tools, each grounded in the current code
 | [038](PRD-038-run-comparison.md) | Run Comparison | P2 | S-M | ✅ Implemented |
 | [039](PRD-039-backup-restore.md) | Backup / Restore | P2 (A) · P3 (B) | S (A) · L (B) | ✅ Phase A implemented · Phase B deferred |
 | [040](PRD-040-bdd-gherkin.md) | BDD / Gherkin Authoring | P3 | M | ✅ Implemented |
-| [041](PRD-041-totp-two-factor.md) | TOTP Two-Factor Authentication | P3 | M | 📝 Draft |
-| [042](PRD-042-ai-case-generation.md) | AI-Assisted Case Generation | P3 | S (A) | 📝 Draft |
-| [043](PRD-043-scheduled-reports.md) | Scheduled Report Emails | P3 | M | 📝 Draft |
+| [041](PRD-041-totp-two-factor.md) | TOTP Two-Factor Authentication | P3 | M | ⏸ Backlog |
+| [042](PRD-042-ai-case-generation.md) | AI-Assisted Case Generation | P3 | S (A) | ⏸ Backlog |
+| [043](PRD-043-scheduled-reports.md) | Scheduled Report Emails | P3 | M | ⏸ Backlog |
 | [044](PRD-044-test-case-attachments.md) | Test Case Attachments | P2 | M | 📝 Draft |
 
 **Suggested order:** 029 → 031 → 039 Phase A → 038 → 037 → 044 → 030 → 032. Everything P3 waits for
-its driver. 042 Option A is cheap enough to slot in anywhere.
+its driver. 041, 042 and 043 were postponed to the backlog on 2026-09-19: kept as drafts, not planned
+for now.
 
 **Found while writing these (existing bugs, not new features):** CI-ingested runs fire no run webhook
 events (031); `PLAN_COMPLETED` is declared but never published (031); `forcePasswordChange` is
@@ -183,5 +184,6 @@ matches *any* label while MCP `search_test_cases` documents *all* (052); the das
 report `7a792e91`); `step_images` and `screenshots` allow duplicate rows per owner (bug report `bd5b0f76`).
 
 ## Status legend
-Every PRD up to 028 except 026 is **Implemented**; 029–040 are implemented except where noted, 041–044 and 045–052 are drafts. New work should get a new PRD rather than
+Every PRD up to 028 except 026 is **Implemented**; 029–040 are implemented except where noted; 044 and 045–052 are drafts; 041–043 are drafts
+postponed to the backlog (⏸). New work should get a new PRD rather than
 extending a shipped one.

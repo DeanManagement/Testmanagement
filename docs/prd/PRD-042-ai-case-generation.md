@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ⏸ Backlog — postponed 2026-09-19; kept as a draft, not planned for now |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P3 — Option A is cheap and ready. Option B is driver-dependent |
