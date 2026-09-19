@@ -1,3 +1,4 @@
+import { DefectDashboardComponent } from './defect-dashboard/defect-dashboard.component';
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -42,6 +43,7 @@ Chart.register(
   selector: 'app-project-dashboard',
   standalone: true,
   imports: [
+    DefectDashboardComponent,
     DecimalPipe,
     KeyValuePipe,
     LowerCasePipe,

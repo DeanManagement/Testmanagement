@@ -376,7 +376,9 @@
       "search": "Search test cases",
       "prev": "Previous",
       "next": "Next",
-      "noSelection": "Select a test case from the sidebar to begin."
+      "noSelection": "Select a test case from the sidebar to begin.",
+      "defectLink": "Defect link",
+      "onlyStatus": "Only {{status}}"
     },
     "allureReport": {
       "view": "Allure Report",
@@ -440,6 +442,10 @@
       "resultDistribution": "Result Distribution",
       "runsByStatus": "Runs by Status",
       "passRatePerRun": "Pass Rate per Run"
+    },
+    "defects": {
+      "title": "Defects",
+      "foundIn": "found in {{run}}"
     }
   },
   "priority": {
@@ -657,7 +663,14 @@
     "trendInsufficient": "Not enough completed runs yet to draw a trend.",
     "recentTestRuns": "Recent Test Runs",
     "resultsTooltip": "{{passed}} passed, {{failed}} failed, {{total}} total",
-    "noData": "No data available yet."
+    "noData": "No data available yet.",
+    "defects": {
+      "open": "Open defects",
+      "byPriority": "Open defects by priority",
+      "trend": "Reported and resolved per week",
+      "created": "Reported",
+      "resolved": "Resolved"
+    }
   },
   "bulk": {
     "selected": "{{count}} selected",
@@ -789,6 +802,15 @@
       "title": "Bug report template",
       "description": "New bug reports start with this text in empty fields. Editing a bug never applies it again.",
       "environment": "Default environment"
+    },
+    "fromStep": "Step {{number}}: {{action}}",
+    "link": {
+      "action": "Link existing bug",
+      "title": "Link an existing bug",
+      "none": "No matching bug reports.",
+      "seenAgain": "seen again",
+      "occurrences": "Also seen in",
+      "unlink": "Remove this occurrence"
     }
   },
   "myBugs": {

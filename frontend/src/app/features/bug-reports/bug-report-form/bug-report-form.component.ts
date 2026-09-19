@@ -60,6 +60,8 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
   projectId = '';
   /** Set when filing from an exploratory session; links the new bug to it. */
   exploratorySessionId: string | null = null;
+  /** Set when reporting from a failed step (PRD-047); the bug records it as where it was found. */
+  stepResultId: string | null = null;
   bugId = '';
   isEdit = false;
   saving = false;
@@ -115,6 +117,14 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     if (params['description']) {
       this.form.patchValue({ description: params['description'] });
     }
+    // PRD-047: reported from a failed step, whose number and actual result come along.
+    if (params['stepsToReproduce']) {
+      this.form.patchValue({ stepsToReproduce: params['stepsToReproduce'] });
+    }
+    if (params['actualBehavior']) {
+      this.form.patchValue({ actualBehavior: params['actualBehavior'] });
+    }
+    this.stepResultId = params['stepResultId'] ?? null;
     this.exploratorySessionId = params['exploratorySessionId'] ?? null;
 
     if (!this.isEdit && this.projectId) {
@@ -190,6 +200,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             testRunId: value.testRunId || undefined,
             assigneeId: value.assigneeId || undefined,
             exploratorySessionId: this.exploratorySessionId ?? undefined,
+            stepResultId: this.stepResultId ?? undefined,
             customFields: value.customFields ?? undefined,
           },
         })

@@ -135,3 +135,21 @@
   font-size: 13px;
   color: var(--tm-text-secondary);
 }
+
+.found-step {
+  font-size: 13px;
+  color: var(--tm-text-secondary);
+}
+
+.occurrences {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+}

@@ -439,6 +439,9 @@ app-step-spec-card {
 
 .bug-report-section {
   margin: 16px 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .report-bug-btn {
@@ -601,3 +604,7 @@ app-step-spec-card {
   border-left: 3px solid var(--tm-primary-lighter);
   padding-left: 8px;
 }
+
+.step-defect-actions { margin-left: auto; }
+.defect-link-field { width: 100%; margin-top: 12px; }
+.linked-bug-step { font-size: 12px; }

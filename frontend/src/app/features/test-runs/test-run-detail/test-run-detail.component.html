@@ -152,6 +152,12 @@
               <mat-icon matPrefix>search</mat-icon>
               <input matInput [(ngModel)]="executionSearchTerm" [placeholder]="'testRun.execution.search' | translate" />
             </mat-form-field>
+            @if (resultStatusFilter) {
+              <button mat-stroked-button class="status-filter-chip" (click)="clearStatusFilter()" data-test-id="result-status-filter">
+                {{ 'testRun.execution.onlyStatus' | translate: { status: ('resultStatus.' + resultStatusFilter | translate) } }}
+                <mat-icon iconPositionEnd>close</mat-icon>
+              </button>
+            }
             <div class="bulk-toolbar">
               <button mat-button (click)="toggleBulkMode()" data-test-id="bulk-select-toggle">
                 <mat-icon>{{ bulkMode ? 'close' : 'checklist' }}</mat-icon>
@@ -239,6 +245,18 @@
                       <div class="step-header">
                         <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
                         <span class="badge badge--{{ step.status | lowercase }} badge--small">{{ 'resultStatus.' + step.status | translate }}</span>
+                        @if (bugReportsEnabled && isStepFailure(step.status)) {
+                          <span class="step-defect-actions">
+                            <button mat-icon-button (click)="reportBug(result, run, step)" [matTooltip]="'bugReport.reportBug' | translate"
+                                    [attr.aria-label]="'bugReport.reportBug' | translate" [attr.data-test-id]="'step-report-bug-' + step.id">
+                              <mat-icon>pest_control</mat-icon>
+                            </button>
+                            <button mat-icon-button (click)="linkBug(result, step)" [matTooltip]="'bugReport.link.action' | translate"
+                                    [attr.aria-label]="'bugReport.link.action' | translate" [attr.data-test-id]="'step-link-bug-' + step.id">
+                              <mat-icon>link</mat-icon>
+                            </button>
+                          </span>
+                        }
                       </div>
                       <app-step-spec-card
                         [action]="step.action"
@@ -290,14 +308,26 @@
                 <p class="no-steps">{{ 'stepResult.noSteps' | translate }}</p>
               }
 
-              @if (bugReportsEnabled && (result.status === 'FAILED' || result.status === 'BLOCKED')) {
+              @if (bugReportsEnabled && hasFailure(result)) {
                 <div class="bug-report-section" data-test-id="bug-report-section">
                   <button mat-stroked-button (click)="reportBug(result, run)" class="report-bug-btn" data-test-id="report-bug-btn">
                     <mat-icon>pest_control</mat-icon>
                     {{ 'bugReport.reportBug' | translate }}
                   </button>
+                  <button mat-stroked-button (click)="linkBug(result)" data-test-id="link-bug-btn">
+                    <mat-icon>link</mat-icon>
+                    {{ 'bugReport.link.action' | translate }}
+                  </button>
                 </div>
               }
+
+              <mat-form-field appearance="outline" class="defect-link-field" subscriptSizing="dynamic">
+                <mat-label>{{ 'testRun.execution.defectLink' | translate }}</mat-label>
+                <mat-icon matPrefix>bug_report</mat-icon>
+                <input matInput type="url" [value]="result.defectLink ?? ''" #defectLinkInput
+                       (blur)="saveDefectLink(result, defectLinkInput.value)" (keydown.enter)="defectLinkInput.blur()"
+                       data-test-id="execution-defect-link" />
+              </mat-form-field>
 
               @if (bugReportsEnabled && (linkedBugReports$ | async); as linkedBugs) {
                 @if (linkedBugs.length > 0) {
@@ -307,6 +337,12 @@
                       <a [routerLink]="['/projects', projectId, 'bug-reports', bug.id]" class="linked-bug-item" [attr.data-test-id]="'linked-bug-' + bug.id">
                         <span class="badge badge--{{ bug.status | lowercase }} badge--small">{{ 'bugReport.status.' + bug.status | translate }}</span>
                         <span class="linked-bug-title">{{ bug.key }} {{ bug.title }}</span>
+                        @if (stepSeenAt(bug, result.id); as stepNumber) {
+                          <span class="linked-bug-step">{{ 'stepResult.step' | translate }} {{ stepNumber }}</span>
+                        }
+                        @if (bug.testResultId !== result.id) {
+                          <span class="linked-bug-step">{{ 'bugReport.link.seenAgain' | translate }}</span>
+                        }
                         <span class="badge badge--{{ bug.priority | lowercase }} badge--small">{{ 'priority.' + bug.priority | translate }}</span>
                       </a>
                     }
@@ -389,6 +425,12 @@
       } @else {
         <div class="results-section" data-test-id="test-run-results-section">
           <h3 class="results-title">{{ 'stepResult.results' | translate }} ({{ run.results?.length ?? 0 }})</h3>
+          @if (resultStatusFilter) {
+            <button mat-stroked-button class="status-filter-chip" (click)="clearStatusFilter()" data-test-id="result-status-filter">
+              {{ 'testRun.execution.onlyStatus' | translate: { status: ('resultStatus.' + resultStatusFilter | translate) } }}
+              <mat-icon iconPositionEnd>close</mat-icon>
+            </button>
+          }
           <mat-accordion multi data-test-id="test-run-results-accordion">
             @for (result of resultsWorstFirst(run); track result.id) {
               <!-- Failures open on arrival; passes stay shut. Nobody opens a finished run to read

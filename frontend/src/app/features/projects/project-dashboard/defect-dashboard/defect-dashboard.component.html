@@ -1,0 +1,18 @@
+@if (defects(); as defects) {
+  <div class="defects" data-test-id="defect-dashboard">
+    <a class="defect-tile tm-card" [routerLink]="['/projects', projectId, 'bug-reports']"
+       [queryParams]="{ status: openStatuses }" data-test-id="defect-open-tile">
+      <mat-icon>pest_control</mat-icon>
+      <span class="defect-value">{{ defects.open }}</span>
+      <span class="defect-label">{{ 'projectDashboard.defects.open' | translate }}</span>
+    </a>
+    <div class="chart-card tm-card">
+      <h3>{{ 'projectDashboard.defects.byPriority' | translate }}</h3>
+      <div class="chart-wrapper"><canvas #priorityChart></canvas></div>
+    </div>
+    <div class="chart-card tm-card chart-card--wide">
+      <h3>{{ 'projectDashboard.defects.trend' | translate }}</h3>
+      <div class="chart-wrapper"><canvas #trendChart></canvas></div>
+    </div>
+  </div>
+}

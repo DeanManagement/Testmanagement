@@ -118,20 +118,24 @@
       @if (bug.testCaseTitle || bug.testRunName || bug.exploratorySessionId) {
         <div class="detail-section tm-card" data-test-id="bug-report-detail-links">
           <h3>{{ 'bugReport.detail.linkedItems' | translate }}</h3>
-          @if (bug.testCaseTitle && bug.testResultId) {
+          @if (bug.testCaseTitle && bug.testCaseId) {
             <p>
               <mat-icon class="link-icon">science</mat-icon>
               {{ 'bugReport.detail.testCase' | translate }}:
-              <span class="linked-item">{{ bug.testCaseTitle }}</span>
+              <a [routerLink]="['/projects', projectId, 'test-cases', bug.testCaseId]" class="item-link"
+                 data-test-id="bug-report-detail-case-link">{{ bug.testCaseKey }} {{ bug.testCaseTitle }}</a>
             </p>
           }
           @if (bug.testRunName && bug.testRunId) {
             <p>
               <mat-icon class="link-icon">play_circle</mat-icon>
               {{ 'bugReport.detail.testRun' | translate }}:
-              <a [routerLink]="['/projects', projectId, 'test-runs', bug.testRunId]" class="item-link" data-test-id="bug-report-detail-run-link">
-                {{ bug.testRunName }}
-              </a>
+              <a [routerLink]="['/projects', projectId, 'test-runs', bug.testRunId]"
+                 [queryParams]="bug.testResultId ? { result: bug.testResultId } : {}"
+                 class="item-link" data-test-id="bug-report-detail-run-link">{{ bug.testRunName }}</a>
+              @if (bug.stepNumber) {
+                <span class="found-step" data-test-id="bug-report-detail-step">· {{ 'stepResult.step' | translate }} {{ bug.stepNumber }}</span>
+              }
             </p>
           }
           @if (bug.exploratorySessionId) {
@@ -142,6 +146,28 @@
                  data-test-id="bug-report-detail-session-link">{{ bug.exploratorySessionKey }}</a>
             </p>
           }
+        </div>
+      }
+
+      @if (bug.links.length) {
+        <div class="detail-section tm-card" data-test-id="bug-report-occurrences">
+          <h3>{{ 'bugReport.link.occurrences' | translate }}</h3>
+          <ul class="occurrences">
+            @for (link of bug.links; track link.id) {
+              <li [attr.data-test-id]="'bug-occurrence-' + link.id">
+                <a [routerLink]="['/projects', projectId, 'test-runs', link.testRunId]" [queryParams]="{ result: link.testResultId }"
+                   class="item-link">{{ link.testRunKey }} · {{ link.testCaseKey }}</a>
+                @if (link.stepNumber) {
+                  <span class="found-step">· {{ 'stepResult.step' | translate }} {{ link.stepNumber }}</span>
+                }
+                <span class="found-step">· {{ link.createdAt | localizedDate:'mediumDate' }}</span>
+                <button mat-icon-button (click)="unlink(bug, link)" [attr.aria-label]="'bugReport.link.unlink' | translate"
+                        [attr.data-test-id]="'bug-unlink-' + link.id">
+                  <mat-icon>link_off</mat-icon>
+                </button>
+              </li>
+            }
+          </ul>
         </div>
       }
 

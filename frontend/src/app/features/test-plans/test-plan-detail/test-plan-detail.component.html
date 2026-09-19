@@ -214,7 +214,14 @@
 
               <ng-container matColumnDef="failed">
                 <th mat-header-cell *matHeaderCellDef>{{ 'report.failed' | translate }}</th>
-                <td mat-cell *matCellDef="let run" class="failed-cell">{{ run.failed }}</td>
+                <td mat-cell *matCellDef="let run" class="failed-cell">
+                  @if (run.failed > 0) {
+                    <a [routerLink]="['/projects', projectId, 'test-runs', run.id]" [queryParams]="{ status: 'FAILED' }"
+                       class="failed-link" [attr.data-test-id]="'plan-run-failed-' + run.id">{{ run.failed }}</a>
+                  } @else {
+                    {{ run.failed }}
+                  }
+                </td>
               </ng-container>
 
               <tr mat-header-row *matHeaderRowDef="runColumns"></tr>
@@ -224,6 +231,8 @@
         }
       </div>
     }
+
+    <app-plan-defects [projectId]="projectId" [planId]="planId" />
 
     @if (summary && summary.sessions.total > 0) {
       <div class="runs-section tm-card" data-test-id="test-plan-sessions-section">

@@ -15,7 +15,8 @@ import { Observable, of } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { selectBugReportById } from '../../../store/bug-report/bug-report.selectors';
-import { ALL_BUG_STATUSES, BugReport, BugReportStatus, ChangeBugStatusRequest } from '../../../shared/models/bug-report.model';
+import { ALL_BUG_STATUSES, BugReport, BugReportLink, BugReportStatus, ChangeBugStatusRequest } from '../../../shared/models/bug-report.model';
+import { BugReportApiService } from '../../../core/services/bug-report-api.service';
 import { ChangeBugStatusDialogComponent, ChangeBugStatusDialogData } from '../change-bug-status-dialog/change-bug-status-dialog.component';
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
@@ -46,6 +47,7 @@ export class BugReportDetailComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly bugReportApi = inject(BugReportApiService);
   private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
@@ -78,6 +80,12 @@ export class BugReportDetailComponent implements OnInit {
           this.store.dispatch(BugReportActions.changeBugReportStatus({ projectId: this.projectId, id: bug.id, request }));
         }
       });
+  }
+
+  /** Removes a later occurrence; where the bug was found stays. */
+  unlink(bug: BugReport, link: BugReportLink): void {
+    this.bugReportApi.unlink(this.projectId, bug.id, link.id).pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((updated) => this.store.dispatch(BugReportActions.loadBugReportSuccess({ bugReport: updated })));
   }
 
   deleteBugReport(id: string): void {

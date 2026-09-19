@@ -18,9 +18,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Observable, combineLatest, interval, of, Subject } from 'rxjs';
-import { debounceTime, take } from 'rxjs/operators';
+import { debounceTime, filter, switchMap, take } from 'rxjs/operators';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
 import { TestRun, TestResult, StepResult, TestResultStatus } from '../../../shared/models/test-run.model';
@@ -34,6 +34,10 @@ import { CommentActions } from '../../../store/comment/comment.actions';
 import { selectCommentsForEntity, selectCommentsLoading } from '../../../store/comment/comment.selectors';
 import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
+import { BugReportApiService } from '../../../core/services/bug-report-api.service';
+import { BugReport } from '../../../shared/models/bug-report.model';
+import { LinkBugDialogComponent, LinkBugDialogData } from '../../bug-reports/link-bug-dialog/link-bug-dialog.component';
+import { hasFailure, inStatus, isFailureStatus, stepSeenAt } from './result-defects';
 import { selectLinkedBugReportsFor } from '../../../store/bug-report/bug-report.selectors';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { Comment } from '../../../shared/models/comment.model';
@@ -101,6 +105,8 @@ export class TestRunDetailComponent implements OnInit {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
+  private readonly bugReportApi = inject(BugReportApiService);
+  private readonly translate = inject(TranslateService);
   private readonly testRunApi = inject(TestRunApiService);
   private readonly testCaseApi = inject(TestCaseApiService);
   private readonly authService = inject(AuthService);
@@ -146,6 +152,8 @@ export class TestRunDetailComponent implements OnInit {
   /** Ticks while executing so the running time on screen advances; minutes, so 15 s is plenty. */
   readonly now = signal(Date.now());
   executionSearchTerm = '';
+  /** PRD-047: from ?status=, e.g. the plan's Failed count; only results in this status are listed. */
+  resultStatusFilter: TestResultStatus | null = null;
 
   // Bulk result-status selection (PRD-008 §2.1)
   bulkMode = false;
@@ -176,6 +184,7 @@ export class TestRunDetailComponent implements OnInit {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.runId = this.route.snapshot.paramMap.get('runId') ?? '';
     this.linkedResultId = this.route.snapshot.queryParamMap.get('result');
+    this.resultStatusFilter = this.route.snapshot.queryParamMap.get('status') as TestResultStatus | null;
     interval(TIMER_TICK_MS).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.currentRun?.status === 'IN_PROGRESS') {
         this.now.set(Date.now());
@@ -513,10 +522,19 @@ export class TestRunDetailComponent implements OnInit {
   }
 
   filteredResults(run: TestRun): TestResult[] {
-    const results = run.results ?? [];
+    const results = this.byStatusFilter(run.results ?? []);
     if (!this.executionSearchTerm) return results;
     const term = this.executionSearchTerm.toLowerCase();
     return results.filter(r => r.testCaseTitle.toLowerCase().includes(term));
+  }
+
+  private byStatusFilter(results: TestResult[]): TestResult[] {
+    return inStatus(results, this.resultStatusFilter);
+  }
+
+  clearStatusFilter(): void {
+    this.resultStatusFilter = null;
+    this.router.navigate([], { relativeTo: this.route, queryParams: { status: null }, queryParamsHandling: 'merge', replaceUrl: true });
   }
 
   /** Once per visit: a finished run's linked panel is expanded by the template; bring it into view. */
@@ -589,7 +607,7 @@ export class TestRunDetailComponent implements OnInit {
   }
 
   resultsWorstFirst(run: TestRun): TestResult[] {
-    return worstFirst(run.results);
+    return worstFirst(this.byStatusFilter(run.results ?? []));
   }
 
 
@@ -730,15 +748,53 @@ export class TestRunDetailComponent implements OnInit {
     );
   }
 
-  reportBug(result: TestResult, run: TestRun): void {
+  readonly hasFailure = hasFailure;
+  readonly isStepFailure = isFailureStatus;
+  readonly stepSeenAt = stepSeenAt;
+
+  /** With a step, it is named and its actual result becomes the bug's actual behaviour. */
+  reportBug(result: TestResult, run: TestRun, step?: StepResult): void {
+    const number = step ? this.sortedSteps(result).indexOf(step) + 1 : null;
     this.router.navigate(['/projects', this.projectId, 'bug-reports', 'new'], {
       queryParams: {
         testResultId: result.id,
         testRunId: run.id,
         testCaseTitle: result.testCaseTitle,
         environment: run.environment || '',
+        stepResultId: step?.id,
+        stepsToReproduce: step ? this.translate.instant('bugReport.fromStep', { number, action: step.action }) : undefined,
+        actualBehavior: step?.actualResult || undefined,
       },
     });
+  }
+
+  /** PRD-047: the bug showed up again here. Bugs already on the result are not offered. */
+  linkBug(result: TestResult, step?: StepResult): void {
+    this.store.select(selectLinkedBugReportsFor(result.id)).pipe(
+      take(1),
+      switchMap((linked) => this.dialog.open(LinkBugDialogComponent, {
+        data: { projectId: this.projectId, excludeIds: linked.map(bug => bug.id) } as LinkBugDialogData,
+      }).afterClosed()),
+      filter((bug): bug is BugReport => !!bug),
+      switchMap((bug) => this.bugReportApi.link(this.projectId, bug.id, result.id, step?.id)),
+      take(1),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe(() => this.store.dispatch(BugReportActions.loadBugReportsByTestResult({
+      projectId: this.projectId,
+      testResultId: result.id,
+    })));
+  }
+
+  /** Saved on leaving the field; an empty field clears the link. */
+  saveDefectLink(result: TestResult, value: string): void {
+    const defectLink = value.trim();
+    if (defectLink === (result.defectLink ?? '')) return;
+    this.store.dispatch(TestRunActions.updateTestResult({
+      projectId: this.projectId,
+      runId: this.runId,
+      resultId: result.id,
+      request: { status: result.status, defectLink },
+    }));
   }
 
   private loadCommentsForResult(resultId: string): void {

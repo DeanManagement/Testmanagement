@@ -1,3 +1,4 @@
+import { PlanDefectsComponent } from '../plan-defects/plan-defects.component';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -53,6 +54,7 @@ import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
   selector: 'app-test-plan-detail',
   standalone: true,
   imports: [
+    PlanDefectsComponent,
     ReleaseReadinessCardComponent,
     DurationPipe,
     LocalizedDatePipe,

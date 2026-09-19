@@ -8,6 +8,7 @@ import {
   BulkUpdateBugReportsRequest,
   ChangeBugStatusRequest,
   CreateBugReportRequest,
+  DefectDashboard,
   UpdateBugReportRequest,
 } from '../../shared/models/bug-report.model';
 import { Page } from '../../shared/models/page.model';
@@ -62,6 +63,24 @@ export class BugReportApiService {
 
   bulkDelete(projectId: string, ids: string[]): Observable<BulkOperationResponse> {
     return this.http.post<BulkOperationResponse>(`${this.baseUrl(projectId)}/bulk-delete`, { ids });
+  }
+
+  /** PRD-047: the bug showed up again in this result (and step). Idempotent. */
+  link(projectId: string, idOrKey: string, testResultId: string, stepResultId?: string | null): Observable<BugReport> {
+    return this.http.post<BugReport>(`${this.baseUrl(projectId)}/${idOrKey}/links`, { testResultId, stepResultId });
+  }
+
+  unlink(projectId: string, idOrKey: string, linkId: string): Observable<BugReport> {
+    return this.http.delete<BugReport>(`${this.baseUrl(projectId)}/${idOrKey}/links/${linkId}`);
+  }
+
+  /** Bugs found in, or linked to, the plan's runs. */
+  getByTestPlan(projectId: string, planId: string): Observable<BugReport[]> {
+    return this.http.get<BugReport[]>(`/api/projects/${projectId}/test-plans/${planId}/bug-reports`);
+  }
+
+  getDefectDashboard(projectId: string): Observable<DefectDashboard> {
+    return this.http.get<DefectDashboard>(`/api/projects/${projectId}/dashboard/defects`);
   }
 
   delete(projectId: string, id: string): Observable<void> {

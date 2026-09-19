@@ -70,6 +70,8 @@
         }
       </div>
 
+      <app-defect-dashboard [projectId]="projectId" />
+
       @if (dashboard.passRateTrend.length > 0) {
         <div class="trend-card tm-card">
           <h3>{{ 'projectDashboard.passRateTrend' | translate }}</h3>

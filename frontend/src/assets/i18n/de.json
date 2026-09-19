@@ -376,7 +376,9 @@
       "search": "Testfälle suchen",
       "prev": "Zurück",
       "next": "Weiter",
-      "noSelection": "Wählen Sie einen Testfall aus der Seitenleiste aus."
+      "noSelection": "Wählen Sie einen Testfall aus der Seitenleiste aus.",
+      "defectLink": "Fehler-Link",
+      "onlyStatus": "Nur {{status}}"
     },
     "allureReport": {
       "view": "Allure-Bericht",
@@ -440,6 +442,10 @@
       "resultDistribution": "Ergebnisverteilung",
       "runsByStatus": "Läufe nach Status",
       "passRatePerRun": "Erfolgsrate pro Lauf"
+    },
+    "defects": {
+      "title": "Fehler",
+      "foundIn": "gefunden in {{run}}"
     }
   },
   "priority": {
@@ -657,7 +663,14 @@
     "trendInsufficient": "Noch nicht genügend abgeschlossene Läufe für einen Trend.",
     "recentTestRuns": "Letzte Testläufe",
     "resultsTooltip": "{{passed}} bestanden, {{failed}} fehlgeschlagen, {{total}} gesamt",
-    "noData": "Noch keine Daten verfügbar."
+    "noData": "Noch keine Daten verfügbar.",
+    "defects": {
+      "open": "Offene Fehler",
+      "byPriority": "Offene Fehler nach Priorität",
+      "trend": "Gemeldet und gelöst pro Woche",
+      "created": "Gemeldet",
+      "resolved": "Gelöst"
+    }
   },
   "bulk": {
     "selected": "{{count}} ausgewählt",
@@ -789,6 +802,15 @@
       "title": "Vorlage für Fehlermeldungen",
       "description": "Neue Fehlermeldungen beginnen mit diesem Text in leeren Feldern. Beim Bearbeiten wird die Vorlage nie erneut angewendet.",
       "environment": "Standard-Umgebung"
+    },
+    "fromStep": "Schritt {{number}}: {{action}}",
+    "link": {
+      "action": "Bestehenden Fehler verknüpfen",
+      "title": "Bestehenden Fehler verknüpfen",
+      "none": "Keine passenden Fehlermeldungen.",
+      "seenAgain": "erneut aufgetreten",
+      "occurrences": "Auch aufgetreten in",
+      "unlink": "Dieses Auftreten entfernen"
     }
   },
   "myBugs": {

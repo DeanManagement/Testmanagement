@@ -25,7 +25,7 @@ export interface TestResult {
   testCaseTitle: string;
   status: TestResultStatus;
   comment: string;
-  defectLink: string;
+  defectLink: string | null;
   /** Version of the test case executed (PRD-011); null for results predating versioning. */
   executedVersion: number | null;
   /** Parameter set executed (PRD-015); null for an ordinary case. */
