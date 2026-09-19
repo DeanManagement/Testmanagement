@@ -436,6 +436,33 @@ each case's current estimate, so correcting an estimate also moves past days. Re
 before execution times were recorded (older than this version) are left out, and the chart says
 from when its history is complete.
 
+### Release gate
+
+A plan can say what "ready to ship" means. Under **Release gate** on the plan form, set any of:
+
+| Threshold | Met when |
+|---|---|
+| **Minimum effective pass rate** | at least this percentage of the plan's latest results passed |
+| **Maximum open critical bugs** | the project has at most this many Open or In Progress bugs of priority Critical |
+| **Minimum requirement coverage** | at least this percentage of the project's requirements is [covered](#9-requirements-and-traceability) |
+| **Maximum flaky tests** | at most this many [flaky](#flaky-test-detection) cases were executed in this plan |
+
+Leave a field empty to not use it. A value exactly at the threshold meets it.
+
+The plan page then shows **Release readiness**: **GO** when every threshold you set is met, **NO GO**
+when any is not (with the failing ones marked), or **No criteria** without a gate. It is worked out
+each time you look; nothing is stored.
+
+The *effective* pass rate counts each test case once, by its latest result across the plan's runs,
+so a failure that was retested and passed counts as a pass. Pending results count as not passed,
+and aborted runs are ignored. The plan's own pass rate above it counts every result, so the two can
+differ. A parameterized case counts once per parameter set. If a case ran in several environments,
+the latest run wins. Coverage shows *Not applicable* when the project has no requirements, and does
+not block a GO.
+
+A pipeline can check the gate before deploying; see
+[Checking the release gate](#checking-the-release-gate).
+
 ---
 
 ## 9. Requirements and traceability
@@ -1122,11 +1149,30 @@ without them), but run matching falls back to timing, and the workflow has no wa
 `TM_PIPELINE_RUN_ID` — so results arrive unlinked. GitLab, Woodpecker and Jenkins need nothing:
 they accept arbitrary variables and expose them as environment variables.
 
+### Checking the release gate
+
+A deploy job can ask whether a test plan is ready and stop if it is not. An API key with the
+**Viewer** role is enough.
+
+```bash
+curl --fail-with-body -H "X-API-Key: $TM_API_KEY" \
+  "http://localhost:8089/api/external/projects/TES/test-plans/$PLAN_ID/readiness?enforce=true"
+```
+
+With `enforce=true` the answer is `200` only for **GO**. **NO GO** and **No criteria** are
+`412 Precondition Failed`, so `curl --fail-with-body` exits non-zero and prints the reason: each
+criterion with its actual value, threshold and outcome. *No criteria* fails too, because a
+pipeline that asks for a gate and finds none has been misconfigured. Without `enforce` the verdict
+is always returned as `200`, for dashboards and scripts that decide for themselves.
+
+Plans have no key, so `$PLAN_ID` is the plan's UUID (in its page URL).
+
 ### Status codes
 
 | Code | Meaning |
 |---|---|
 | `201` | Created |
+| `412` | Release gate not met (`enforce=true`): NO GO or no criteria |
 | `400` | Validation error — blank name, empty results, malformed report |
 | `401` | Missing, invalid or revoked API key |
 | `403` | The key is scoped to a different project than the URL names |

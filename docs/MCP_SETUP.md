@@ -139,7 +139,8 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`, `list_test_runs`,
 `get_test_run`, `list_requirements`, `get_traceability_matrix`, `list_bug_reports`,
 `get_bug_report`, `list_comments`, `list_parameter_sets`, `list_test_case_versions`,
-`get_test_case_version`, `get_project_dashboard`, `list_flaky_tests`, `get_test_suite_report`,
+`get_test_case_version`, `get_project_dashboard`, `list_flaky_tests`, `get_release_readiness`,
+`get_test_suite_report`,
 `list_pipeline_workflows`, `list_pipeline_runs`, `get_pipeline_run`, `list_issue_links`.
 
 **Write** (Tester only) — `create_test_case`, `update_test_case`, `create_test_cases_bulk`,
@@ -167,6 +168,10 @@ required never blocks an agent.
 update), and `get_test_case` returns it with `medianActualMs`. An agent that executes tests should
 pass `durationMs` to `record_test_result(s)`. `get_test_run` and `get_test_plan` include an
 `effort` object: estimated, remaining and actual minutes, and pending results without an estimate.
+
+**Release readiness** — `get_release_readiness(planId)` answers "is release X ready?": GO, NO_GO or
+NO_CRITERIA, with each configured criterion's actual value, threshold and outcome. Thresholds are
+set by people on the plan form; there is no tool to change them.
 
 ### Executing a run
 

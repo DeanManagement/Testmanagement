@@ -137,7 +137,7 @@ Gaps against comparable test-management tools, each grounded in the current code
 | [034](PRD-034-exploratory-sessions.md) | Exploratory Testing Sessions | P3 | M | ✅ Implemented (browser check open) |
 | [035](PRD-035-custom-fields.md) | Custom Fields | P3 | M-L | ✅ Implemented (bug list filter left out) |
 | [036](PRD-036-time-estimates-tracking.md) | Time Estimates & Tracking | P3 | M | ✅ Implemented |
-| [037](PRD-037-release-readiness-quality-gate.md) | Release Readiness / Quality Gate | P2 | S-M | 📝 Draft |
+| [037](PRD-037-release-readiness-quality-gate.md) | Release Readiness / Quality Gate | P2 | S-M | ✅ Implemented |
 | [038](PRD-038-run-comparison.md) | Run Comparison | P2 | S-M | 📝 Draft |
 | [039](PRD-039-backup-restore.md) | Backup / Restore | P2 (A) · P3 (B) | S (A) · L (B) | 📝 Draft |
 | [040](PRD-040-bdd-gherkin.md) | BDD / Gherkin Authoring | P3 | M | 📝 Draft |

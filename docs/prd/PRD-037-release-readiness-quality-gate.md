@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P2 — turns data the tool already has into the question people actually ask |
@@ -196,12 +196,49 @@ API section.
 
 ## 7. Acceptance Criteria
 
-- [ ] Test plans accept four optional gate thresholds; empty means off; changes are audited.
-- [ ] `GET .../test-plans/{id}/readiness` returns verdict and per-criterion actual/threshold/outcome.
-- [ ] Pass rate uses the latest result per case and parameter set across the plan's non-aborted runs.
-- [ ] Blocker bugs = open/in-progress critical bugs in the project; coverage reuses PRD-014; flaky count is limited to cases executed in the plan.
-- [ ] External endpoint works with a project-scoped API key; `enforce=true` returns 412 on NO_GO and on NO_CRITERIA.
-- [ ] Plan detail shows a Readiness card; plan form edits thresholds; en/de translations present.
-- [ ] `get_release_readiness` MCP tool is available and read-only.
-- [ ] USER_MANUAL documents the gate and the CI recipe.
-- [ ] Unit, integration, controller and frontend tests pass.
+- [x] Test plans accept four optional gate thresholds; empty means off; changes are audited.
+- [x] `GET .../test-plans/{id}/readiness` returns verdict and per-criterion actual/threshold/outcome.
+- [x] Pass rate uses the latest result per case and parameter set across the plan's non-aborted runs.
+- [x] Blocker bugs = open/in-progress critical bugs in the project; coverage reuses PRD-014; flaky count is limited to cases executed in the plan.
+- [x] External endpoint works with a project-scoped API key; `enforce=true` returns 412 on NO_GO and on NO_CRITERIA.
+- [x] Plan detail shows a Readiness card; plan form edits thresholds; en/de translations present.
+- [x] `get_release_readiness` MCP tool is available and read-only.
+- [x] USER_MANUAL documents the gate and the CI recipe.
+- [x] Unit, integration, controller and frontend tests pass.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **An update without `gate` leaves the thresholds as they are.** `UpdateTestPlanRequest` is otherwise
+  whole-object, but MCP's `update_test_plan` merges only the fields it is given; if a missing gate
+  meant "clear", an agent renaming a plan would silently remove its release gate. The web app always
+  sends the whole gate object, and a null threshold inside it switches that criterion off.
+- **Only configured criteria are loaded.** The project-wide flaky scan runs only for plans that gate
+  on flakiness, which is the performance concern §6 raised.
+- **Pass rate is compared exactly** (`passed × 100 ≥ threshold × considered`) and rounded only for
+  display, so 97.995 % shows as 98.00 % and still fails a 98 % gate.
+- **Within one run, a case recorded twice** (an ad-hoc result added next to a seeded one) is decided
+  by the result's own last update, after ordering runs as specified.
+- **Card links:** the pass-rate row has no link (the runs are on the same page); blocker bugs → bug
+  list, coverage → requirements, flaky → dashboard. The bug list has no URL-bound filters, so the
+  blocker link opens it unfiltered rather than pre-filtered to open critical bugs.
+- **The plan page refetches readiness when the stored plan changes.** The plan form saves and
+  navigates without waiting for the response, so a readiness fetched on arrival could show the
+  verdict from before the edit.
+- **Plan response is `gate` with all four fields always present** (null when off), rather than
+  omitting an unconfigured gate.
+
+Tests: `ReleaseReadinessEvaluationTest` (16, pure: latest-result selection, boundaries, exact
+comparison, verdicts), `ReleaseReadinessApiTest` (17: retest, aborted runs, pending, which bugs block,
+coverage with and without requirements, role and cross-project access, gate edits and validation,
+the external endpoint with and without `enforce`), `McpReleaseReadinessToolsApiTest` (2: same
+verdict as REST, foreign plan); frontend `release-gate-form` and `release-readiness-card` specs.
+**1101 backend tests, 37 frontend spec files (199 tests).** V61 applied on PostgreSQL 16 with
+`ddl-auto=validate` and its four CHECK constraints present.
+
+Checked in a browser against PostgreSQL: NO GO with two failing criteria and coverage not
+applicable, the gate section opening with the saved values, an edit (threshold lowered, one field
+emptied) turning the verdict to GO, and a plan without a gate. The CI recipe was run against the
+same server with a real VIEWER key: GO → 200, NO_CRITERIA with `enforce=true` → 412 and
+`curl --fail-with-body` exiting non-zero. **Not clicked through:** the German strings and dark mode.
