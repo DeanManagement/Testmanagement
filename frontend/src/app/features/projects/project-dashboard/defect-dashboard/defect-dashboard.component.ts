@@ -1,4 +1,4 @@
-import { AfterViewChecked, Component, DestroyRef, ElementRef, inject, Input, OnDestroy, OnInit, signal, ViewChild } from '@angular/core';
+import { afterRenderEffect, Component, DestroyRef, ElementRef, inject, Input, OnDestroy, OnInit, signal, viewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -32,7 +32,7 @@ const RESOLVED_COLOR = '#4caf50';
   templateUrl: './defect-dashboard.component.html',
   styleUrl: './defect-dashboard.component.scss',
 })
-export class DefectDashboardComponent implements OnInit, AfterViewChecked, OnDestroy {
+export class DefectDashboardComponent implements OnInit, OnDestroy {
   private readonly api = inject(BugReportApiService);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
@@ -40,36 +40,47 @@ export class DefectDashboardComponent implements OnInit, AfterViewChecked, OnDes
   private readonly datePipe = new LocalizedDatePipe();
 
   @Input({ required: true }) projectId!: string;
-  @ViewChild('priorityChart') priorityCanvas?: ElementRef<HTMLCanvasElement>;
-  @ViewChild('trendChart') trendCanvas?: ElementRef<HTMLCanvasElement>;
+  readonly priorityCanvas = viewChild<ElementRef<HTMLCanvasElement>>('priorityChart');
+  readonly trendCanvas = viewChild<ElementRef<HTMLCanvasElement>>('trendChart');
 
   readonly defects = signal<DefectDashboard | null>(null);
   readonly openStatuses = OPEN_BUG_STATUSES;
+  /** Bumped on a theme switch: chart colors come from the theme when drawn. */
+  private readonly themeVersion = signal(0);
   private charts: Chart[] = [];
-  private rendered = false;
+
+  constructor() {
+    // TES-BUG-20: the charts were drawn from ngAfterViewChecked, which a zoneless, signal-driven
+    // refresh of this component alone never runs, so they stayed empty. An effect that runs after
+    // rendering follows the data, the canvases and the theme instead.
+    afterRenderEffect(() => {
+      const defects = this.defects();
+      const priority = this.priorityCanvas();
+      const trend = this.trendCanvas();
+      this.themeVersion();
+      this.destroyCharts();
+      if (!defects || !priority || !trend) {
+        return;
+      }
+      applyChartDefaults(Chart);
+      this.charts = [this.priorityChart(defects, priority), this.trendChart(defects, trend)];
+    });
+  }
 
   ngOnInit(): void {
     this.api.getDefectDashboard(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe({ next: (defects) => this.defects.set(defects), error: () => this.defects.set(null) });
-    // Chart colors come from the theme when drawn, so a theme switch redraws them.
-    this.themeService.resolvedChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
-      this.charts.forEach((chart) => chart.destroy());
-      this.rendered = false;
-      this.ngAfterViewChecked();
-    });
-  }
-
-  /** The canvases exist only once the data has rendered them; draw once, then leave them. */
-  ngAfterViewChecked(): void {
-    const defects = this.defects();
-    if (this.rendered || !defects || !this.priorityCanvas || !this.trendCanvas) return;
-    this.rendered = true;
-    applyChartDefaults(Chart);
-    this.charts = [this.priorityChart(defects, this.priorityCanvas), this.trendChart(defects, this.trendCanvas)];
+    this.themeService.resolvedChanges.pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.themeVersion.update((version) => version + 1));
   }
 
   ngOnDestroy(): void {
+    this.destroyCharts();
+  }
+
+  private destroyCharts(): void {
     this.charts.forEach((chart) => chart.destroy());
+    this.charts = [];
   }
 
   private priorityChart(defects: DefectDashboard, canvas: ElementRef<HTMLCanvasElement>): Chart {
