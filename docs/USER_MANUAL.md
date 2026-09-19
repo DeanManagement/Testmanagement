@@ -229,6 +229,8 @@ can list and download. Bug reports have the same card ([Attachments on bug repor
   older name `APP_ATTACHMENTS_MAX_PER_CASE` still works.
 - Images show as thumbnails ([click to enlarge](#enlarging-images)); everything else downloads when
   you click its name.
+- A file keeps the name it was uploaded with, quotes and spaces included. Folders in the name and
+  line breaks are removed.
 - Uploading a file identical to one already attached works, but the card points it out.
 
 While executing a run, the case's attachments appear, collapsed, above the steps.
@@ -387,7 +389,10 @@ to pick out a themed set of cases when starting a run.
 **Filtering** — the list has a search box plus Status, Priority and **Labels** filters. Choosing
 several labels shows the cases that carry **all** of them: `req-aca-027` and `negativ` shows the
 negative tests of that requirement. Clicking a label in the table adds it to the filter. Labels
-match exactly as written, so `Smoke` and `smoke` are two labels. Every filter is kept in the URL.
+match exactly as written, so `Smoke` and `smoke` are two labels. The search box finds its text
+anywhere in a title or key, ignoring case; `%` and `_` are ordinary characters there, so `100%`
+finds a case about a 100 % discount and `%` alone finds only cases containing one. Every filter is
+kept in the URL.
 The row-density toggle switches between comfortable and compact rows.
 
 An empty list says why: **no test cases match the filters** (with **Reset filters**, which clears

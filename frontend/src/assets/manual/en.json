@@ -235,7 +235,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Files a tester needs to carry out the case, such as a sample file to upload or a spec PDF, go in the Attachments card on the test case page. Choose Attach file or drop a file onto the card. Images, PDF, ZIP, Office documents and text files up to 10 MB are accepted, and the content has to match the file type."
+              "text": "Files a tester needs to carry out the case, such as a sample file to upload or a spec PDF, go in the Attachments card on the test case page. Choose Attach file or drop a file onto the card. Images, PDF, ZIP, Office documents and text files up to 10 MB are accepted, and the content has to match the file type. A file keeps the name it was uploaded with."
             },
             {
               "type": "p",
@@ -300,7 +300,7 @@
             },
             {
               "type": "p",
-              "text": "In the test case list, the Labels filter shows the cases that carry all of the chosen labels, and clicking a label in the table adds it. An empty list says whether nothing matches the filters, the folder is empty or the project has no cases yet."
+              "text": "In the test case list, the Labels filter shows the cases that carry all of the chosen labels, and clicking a label in the table adds it. The search box finds its text anywhere in a title or key, exactly as typed: % and _ are ordinary characters. An empty list says whether nothing matches the filters, the folder is empty or the project has no cases yet."
             }
           ]
         },

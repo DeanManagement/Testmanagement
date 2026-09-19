@@ -235,7 +235,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Dateien, die man zum Durchführen des Falls braucht, etwa eine Beispieldatei zum Hochladen oder eine Spezifikation als PDF, gehören in die Karte Anhänge auf der Testfallseite. Wähl Datei anhängen oder zieh eine Datei auf die Karte. Erlaubt sind Bilder, PDF, ZIP, Office-Dokumente und Textdateien bis 10 MB, und der Inhalt muss zum Dateityp passen."
+              "text": "Dateien, die man zum Durchführen des Falls braucht, etwa eine Beispieldatei zum Hochladen oder eine Spezifikation als PDF, gehören in die Karte Anhänge auf der Testfallseite. Wähl Datei anhängen oder zieh eine Datei auf die Karte. Erlaubt sind Bilder, PDF, ZIP, Office-Dokumente und Textdateien bis 10 MB, und der Inhalt muss zum Dateityp passen. Eine Datei behält den Namen, mit dem sie hochgeladen wurde."
             },
             {
               "type": "p",
@@ -300,7 +300,7 @@
             },
             {
               "type": "p",
-              "text": "In der Testfallliste zeigt der Filter Labels die Fälle, die alle gewählten Labels tragen, und ein Klick auf ein Label in der Tabelle fügt es hinzu. Eine leere Liste sagt, ob nichts zu den Filtern passt, der Ordner leer ist oder das Projekt noch keine Fälle hat."
+              "text": "In der Testfallliste zeigt der Filter Labels die Fälle, die alle gewählten Labels tragen, und ein Klick auf ein Label in der Tabelle fügt es hinzu. Das Suchfeld findet seinen Text überall in Titel oder Schlüssel, genau wie eingegeben: % und _ sind gewöhnliche Zeichen. Eine leere Liste sagt, ob nichts zu den Filtern passt, der Ordner leer ist oder das Projekt noch keine Fälle hat."
             }
           ]
         },

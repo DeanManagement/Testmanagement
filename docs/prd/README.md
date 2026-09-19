@@ -183,6 +183,29 @@ matches *any* label while MCP `search_test_cases` documents *all* (052); the das
 0 % pass rate (049); `list_custom_fields` returns an array like the two reported MCP tools (bug
 report `7a792e91`); `step_images` and `screenshots` allow duplicate rows per owner (bug report `bd5b0f76`).
 
+## Production self-test (2026-09-19)
+
+The production instance tested itself: its MCP server triaged the backlog, a scripted smoke run
+(*Self-test 2026-09-19*) and an exploratory session (**TES-Session-1**) exercised the newest features,
+and every bug found was filed in the app. All are fixed on `main` and need a deploy to reach
+production; each fix has a regression test that fails without it.
+
+| Bug | Found by | Fix |
+|---|---|---|
+| Error responses to malformed MCP messages carried a Java stack trace | MCP triage | `8cee95b` |
+| BUG-2: `list_flaky_tests` did not say how much history it needs | MCP triage | `92c4594` |
+| TES-BUG-17: marking every step Passed at once could leave the result Pending | smoke run | `3dc62a8` |
+| TES-BUG-18: setting a step's status discarded the actual result typed just before | smoke run | `7c451c5` |
+| TES-BUG-19: a bug opened by its key in the URL (`/bug-reports/TES-BUG-19`) stayed empty | smoke run | `85de124` |
+| TES-BUG-20: the dashboard's two defect charts stayed empty | smoke run | `13b9fb8` |
+| TES-BUG-21: searching for `%` or `_` listed everything (every LIKE search, shared steps too) | TES-Session-1 | `764dd5a` |
+| TES-BUG-22: uploaded file names kept the browser's escaping (`%22`, `%0A`) | TES-Session-1 | `be15471` |
+
+The search fix was also checked against PostgreSQL 16, where a shared-step test that only passed
+on H2 turned up and was fixed (`b9ea88c`). Still open: BUG-4 (MCP parameter naming). Two ideas from the session, not planned yet:
+a bug's History lists new uploads only after a reload, and a session's bug note keeps offering
+**File bug** after its bug is filed.
+
 ## Status legend
 Every PRD up to 028 is **Implemented** (026 still awaits a check against a live Azure DevOps); 029–040 and 044–052 are implemented except where noted; 041–043 are drafts
 postponed to the backlog (⏸). New work should get a new PRD rather than
