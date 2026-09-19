@@ -147,6 +147,31 @@ class MetricsConsistencyApiTest {
                 .andExpect(jsonPath("$.progress").value(50.0));
     }
 
+    /** PRD-052: a plan lists its runs in the order they were created, not in database order. */
+    @Test
+    void aPlanListsItsRunsInCreationOrder() throws Exception {
+        UUID first = startRun();
+        UUID second = startRun();
+        UUID third = startRun();
+        createdAt(third, "2026-01-01T00:00:00Z");
+        createdAt(first, "2026-01-02T00:00:00Z");
+        createdAt(second, "2026-01-03T00:00:00Z");
+        entityManager.flush();
+        entityManager.clear();
+
+        mockMvc.perform(get(url("/test-plans/" + planId + "/summary")).with(user(tester)))
+                .andExpect(jsonPath("$.runs[*].id").value(org.hamcrest.Matchers.contains(
+                        third.toString(), first.toString(), second.toString())));
+    }
+
+    private void createdAt(UUID run, String instant) {
+        entityManager.flush();
+        entityManager.createNativeQuery("UPDATE test_runs SET created_at = :at WHERE id = :id")
+                .setParameter("at", java.sql.Timestamp.from(java.time.Instant.parse(instant)))
+                .setParameter("id", run)
+                .executeUpdate();
+    }
+
     // ---- helpers --------------------------------------------------------------------------------
 
     private UUID startRun() throws Exception {

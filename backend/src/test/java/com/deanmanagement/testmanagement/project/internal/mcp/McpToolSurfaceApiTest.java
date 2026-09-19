@@ -178,6 +178,21 @@ class McpToolSurfaceApiTest {
      * name another project — and an id belonging to one reports as not-found rather than
      * forbidden, which would confirm it exists (PRD-021 discipline).
      */
+    /** PRD-052: the label filter does what its description says, all of the labels. */
+    @Test
+    void searchingByTwoLabelsReturnsOnlyCasesCarryingBoth() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase both = testCaseTools.createTestCase("Login negativ", Priority.LOW, null, null, null,
+                Set.of("req-aca-027", "negativ"), null, null, null, null, null);
+        testCaseTools.createTestCase("Login positiv", Priority.LOW, null, null, null,
+                Set.of("req-aca-027"), null, null, null, null, null);
+
+        assertThat(testCaseTools.searchTestCases(null, null, null, List.of("req-aca-027", "negativ"),
+                null, null, null, null, null).testCases())
+                .extracting(McpDtos.TestCaseSummary::id)
+                .containsExactly(both.id());
+    }
+
     @Test
     void aCaseInAnotherProjectIsNotFound() {
         authenticateAs(otherProject, ProjectRole.TESTER, "other-agent");

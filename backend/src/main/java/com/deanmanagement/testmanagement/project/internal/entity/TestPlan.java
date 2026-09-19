@@ -11,6 +11,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -48,7 +49,9 @@ public class TestPlan extends BaseEntity {
     @JoinColumn(name = "assignee_id")
     private User assignee;
 
+    /** Creation order, which is key order: run numbers are handed out sequentially (PRD-052). */
     @OneToMany(mappedBy = "testPlan")
+    @OrderBy("createdAt ASC")
     private List<TestRun> testRuns = new ArrayList<>();
 
     // PRD-037 release gate. Null means that criterion is not used; see ReleaseGate.

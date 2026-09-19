@@ -237,6 +237,44 @@ class TestCaseListApiTest {
                 .andExpect(jsonPath("$.page.totalElements").value(1));
     }
 
+    /** PRD-052: several labels narrow the list, they do not widen it. */
+    @Test
+    void severalLabelsMatchOnlyCasesCarryingAllOfThem() throws Exception {
+        seed("both", TestCaseStatus.ACTIVE, Priority.LOW, "smoke", "ui");
+        seed("smoke only", TestCaseStatus.ACTIVE, Priority.LOW, "smoke");
+        seed("ui only", TestCaseStatus.ACTIVE, Priority.LOW, "ui");
+
+        mockMvc.perform(get("/api/projects/{p}/test-cases", projectId)
+                        .param("label", "smoke", "ui").with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.page.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("both"));
+    }
+
+    @Test
+    void labelsAreListedOnceEachSortedAndOnlyFromThisProject() throws Exception {
+        seed("a", TestCaseStatus.ACTIVE, Priority.LOW, "ui", "smoke");
+        seed("b", TestCaseStatus.ACTIVE, Priority.LOW, "smoke");
+        Project other = new Project();
+        other.setName("Other");
+        other.setKey("OTHL");
+        other = projectRepository.save(other);
+        TestCase foreign = new TestCase();
+        foreign.setProject(other);
+        foreign.setTitle("foreign");
+        foreign.setKey("OTHL-1");
+        foreign.setStatus(TestCaseStatus.ACTIVE);
+        foreign.setPriority(Priority.LOW);
+        foreign.setLabels(new java.util.HashSet<>(Set.of("secret")));
+        testCaseRepository.save(foreign);
+
+        mockMvc.perform(get("/api/projects/{p}/test-cases/labels", projectId).with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(2))
+                .andExpect(jsonPath("$[0]").value("smoke"))
+                .andExpect(jsonPath("$[1]").value("ui"));
+    }
+
     @Test
     void size_isCappedAt200() throws Exception {
         seed("a", TestCaseStatus.ACTIVE, Priority.LOW);

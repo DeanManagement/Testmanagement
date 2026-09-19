@@ -41,6 +41,10 @@ public interface TestCaseRepository extends JpaRepository<TestCase, UUID>, JpaSp
     @Query("SELECT tc.id, tc.key, tc.title FROM TestCase tc WHERE tc.project.id = :projectId")
     List<Object[]> findTitlesByProjectId(@Param("projectId") UUID projectId);
 
+    /** Every label used in the project, once each, for the label filter (PRD-052). */
+    @Query("SELECT DISTINCT l FROM TestCase tc JOIN tc.labels l WHERE tc.project.id = :projectId ORDER BY l")
+    List<String> findDistinctLabelsByProjectId(@Param("projectId") UUID projectId);
+
     @Query("SELECT CAST(tc.status AS string), COUNT(tc) FROM TestCase tc WHERE tc.project.id = :projectId GROUP BY tc.status")
     List<Object[]> countByProjectIdGroupByStatus(@Param("projectId") UUID projectId);
 

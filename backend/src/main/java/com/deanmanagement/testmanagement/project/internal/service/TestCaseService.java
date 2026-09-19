@@ -72,6 +72,10 @@ public class TestCaseService {
         return page.map(tc -> testCaseMapper.toDetailResponse(tc, null, attachments.getOrDefault(tc.getId(), List.of())));
     }
 
+    public List<String> labels(UUID projectId) {
+        return testCaseRepository.findDistinctLabelsByProjectId(projectId);
+    }
+
     public TestCaseResponse findById(UUID projectId, UUID id) {
         TestCase tc = testCaseRepository.findByIdWithSteps(id)
                 .filter(t -> t.getProject().getId().equals(projectId))

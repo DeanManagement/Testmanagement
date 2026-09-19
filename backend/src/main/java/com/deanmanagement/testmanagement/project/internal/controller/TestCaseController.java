@@ -24,6 +24,7 @@ import com.deanmanagement.testmanagement.project.internal.service.ProjectEnviron
 import com.deanmanagement.testmanagement.project.internal.service.CustomFieldFilterParser;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -67,6 +68,7 @@ public class TestCaseController {
                                           @RequestParam(required = false) String q,
                                           @RequestParam(required = false) List<TestCaseStatus> status,
                                           @RequestParam(required = false) List<Priority> priority,
+                                          @Parameter(description = "Only cases carrying all of these labels")
                                           @RequestParam(required = false) List<String> label,
                                           @RequestParam(required = false) UUID folderId,
                                           @RequestParam(required = false, defaultValue = "false") boolean includeSubfolders,
@@ -79,6 +81,13 @@ public class TestCaseController {
                 new TestCaseListFilter(q, status, priority, label, folderId, includeSubfolders, rootOnly,
                         updatedAfter, customFieldFilterParser.parse(projectId, CustomFieldEntityType.TEST_CASE, params));
         return testCaseService.findByProject(projectId, filter, PageableUtils.normalize(pageable));
+    }
+
+    /** The project's labels, distinct and sorted: the label filter's options (PRD-052). */
+    @GetMapping("/labels")
+    @RequireProjectRole
+    public List<String> labels(@PathVariable UUID projectId) {
+        return testCaseService.labels(projectId);
     }
 
     @GetMapping("/{id}")

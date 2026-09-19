@@ -53,15 +53,18 @@ public final class TestCaseSpecifications {
                 predicates.add(root.get("priority").in(filter.priority()));
             }
 
-            if (filter.label() != null && !filter.label().isEmpty()) {
-                // Correlated EXISTS subquery over the @ElementCollection to avoid join-induced
-                // row duplication breaking pagination/count.
-                Subquery<Integer> sub = query.subquery(Integer.class);
-                Root<TestCase> subRoot = sub.from(TestCase.class);
-                Join<TestCase, String> labels = subRoot.join("labels");
-                sub.select(cb.literal(1));
-                sub.where(cb.equal(subRoot, root), labels.in(filter.label()));
-                predicates.add(cb.exists(sub));
+            if (filter.label() != null) {
+                // All of the labels (PRD-052): one correlated EXISTS per label over the
+                // @ElementCollection. EXISTS rather than a join, so rows are not duplicated and
+                // pagination and count stay right.
+                for (String label : filter.label()) {
+                    Subquery<Integer> sub = query.subquery(Integer.class);
+                    Root<TestCase> subRoot = sub.from(TestCase.class);
+                    Join<TestCase, String> labels = subRoot.join("labels");
+                    sub.select(cb.literal(1));
+                    sub.where(cb.equal(subRoot, root), cb.equal(labels, label));
+                    predicates.add(cb.exists(sub));
+                }
             }
 
             if (filter.updatedAfter() != null) {
