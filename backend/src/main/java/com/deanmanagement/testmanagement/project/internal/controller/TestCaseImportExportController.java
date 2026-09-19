@@ -23,7 +23,7 @@ import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/projects/{projectId}/test-cases")
-@Tag(name = "Test Case Import/Export", description = "Import and export test cases as JSON or CSV")
+@Tag(name = "Test Case Import/Export", description = "Import and export test cases as JSON, CSV or Gherkin")
 @RequiredArgsConstructor
 public class TestCaseImportExportController {
 
@@ -51,8 +51,10 @@ public class TestCaseImportExportController {
     public ImportResultResponse importTestCases(@PathVariable UUID projectId,
                                                 @RequestParam("file") MultipartFile file,
                                                 @RequestParam(defaultValue = "false") boolean dryRun,
+                                                @RequestParam(required = false) UUID folderId,
                                                 Authentication authentication) throws IOException {
         UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
-        return importExportService.importData(projectId, file.getOriginalFilename(), file.getBytes(), dryRun, userId);
+        return importExportService.importData(projectId, file.getOriginalFilename(), file.getBytes(), folderId,
+                dryRun, userId);
     }
 }

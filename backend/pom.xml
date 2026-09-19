@@ -150,6 +150,19 @@
             <version>1.14.1</version>
         </dependency>
 
+        <!-- Gherkin .feature import/export (PRD-040). messages is pinned because gherkin asks for a
+             version range, which would make the build depend on what the repository serves that day. -->
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>gherkin</artifactId>
+            <version>31.0.0</version>
+        </dependency>
+        <dependency>
+            <groupId>io.cucumber</groupId>
+            <artifactId>messages</artifactId>
+            <version>27.2.0</version>
+        </dependency>
+
         <!-- Mail (optional watcher email notifications; off by default) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

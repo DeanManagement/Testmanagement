@@ -204,4 +204,27 @@ class TestCaseImportExportApiTest {
         assertThat(exported).contains("'+1234");
         assertThat(exported).doesNotContainPattern("(?m)^\"?=HYPERLINK");
     }
+
+    @Test
+    void importFeature_createsCasesAndReportsKeyedCounts() throws Exception {
+        MockMultipartFile feature = new MockMultipartFile("file", "login.feature", "text/plain",
+                "Feature: Login\n  Scenario: Works\n    Given a user\n".getBytes(StandardCharsets.UTF_8));
+
+        mockMvc.perform(multipart("/api/projects/{p}/test-cases/import", projectId)
+                        .file(feature).with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.imported").value(1))
+                .andExpect(jsonPath("$.updated").value(0))
+                .andExpect(jsonPath("$.unchanged").value(0));
+
+        assertThat(testCaseRepository.findByProjectIdWithSteps(projectId))
+                .extracting(TestCase::getTitle).containsExactly("Works");
+    }
+
+    @Test
+    void import_intoAFolderOfAnotherProject_returns404() throws Exception {
+        mockMvc.perform(multipart("/api/projects/{p}/test-cases/import", projectId)
+                        .file(csv(VALID_CSV)).param("folderId", UUID.randomUUID().toString()).with(user(admin)))
+                .andExpect(status().isNotFound());
+    }
 }

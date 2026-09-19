@@ -12,7 +12,9 @@ import com.deanmanagement.testmanagement.project.internal.dto.customField.Custom
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
+import com.deanmanagement.testmanagement.project.internal.repository.TestCaseFolderRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.service.gherkin.GherkinImporter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -39,7 +41,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Import/export of a project's test cases as JSON or CSV (PRD-004). Import validates per row and
+ * Import/export of a project's test cases as JSON or CSV (PRD-004), and Gherkin import (PRD-040). Import validates per row and
  * supports a dry-run that persists nothing. Limited to {@value #MAX_IMPORT_ROWS} rows per file.
  */
 @Service
@@ -64,6 +66,8 @@ public class TestCaseImportExportService {
     private final ProjectRepository projectRepository;
     private final CustomFieldService customFieldService;
     private final CustomFieldValueWriter customFieldWriter;
+    private final TestCaseFolderRepository folderRepository;
+    private final GherkinImporter gherkinImporter;
 
     // ---- Export ----
 
@@ -159,6 +163,28 @@ public class TestCaseImportExportService {
     @Transactional
     public ImportResultResponse importData(UUID projectId, String fileName, byte[] content,
                                            boolean dryRun, UUID userId) {
+        return importData(projectId, fileName, content, null, dryRun, userId);
+    }
+
+    /**
+     * {@code folderId}, when set, is where the cases go: Gherkin features become folders under it
+     * (PRD-040), CSV/JSON rows land in it directly. A folder of another project is a 404.
+     */
+    @Transactional
+    public ImportResultResponse importData(UUID projectId, String fileName, byte[] content, UUID folderId,
+                                           boolean dryRun, UUID userId) {
+        boolean reviewRequired = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId))
+                .isReviewRequired();
+        if (folderId != null) {
+            folderRepository.findById(folderId)
+                    .filter(f -> f.getProject().getId().equals(projectId))
+                    .orElseThrow(() -> new ResourceNotFoundException("TestCaseFolder", folderId));
+        }
+        if (GherkinImporter.isGherkinUpload(fileName)) {
+            return gherkinImporter.importUpload(
+                    new GherkinImporter.Target(projectId, folderId, reviewRequired, dryRun, userId), fileName, content);
+        }
         String text = stripBom(new String(content, StandardCharsets.UTF_8));
         boolean json = (fileName != null && fileName.toLowerCase().endsWith(".json"))
                 || text.stripLeading().startsWith("[");
@@ -169,16 +195,13 @@ public class TestCaseImportExportService {
                     "Import exceeds the limit of " + MAX_IMPORT_ROWS + " test cases (" + rows.size() + ")");
         }
 
-        boolean reviewRequired = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId))
-                .isReviewRequired();
         int imported = 0;
         int skipped = 0;
         List<ImportError> errors = new ArrayList<>();
         List<ImportError> warnings = new ArrayList<>();
         for (RowData row : rows) {
             try {
-                CreateTestCaseRequest request = toRequest(row);
+                CreateTestCaseRequest request = toRequest(row, folderId);
                 if (reviewRequired && request.status() == TestCaseStatus.ACTIVE) {
                     // Importing is not approving: the row still comes in, waiting for review (PRD-033).
                     request = withStatus(request, TestCaseStatus.IN_REVIEW);
@@ -211,7 +234,7 @@ public class TestCaseImportExportService {
                 r.labels(), r.steps(), r.folderId(), r.customFields(), r.estimateMinutes());
     }
 
-    private CreateTestCaseRequest toRequest(RowData row) {
+    private CreateTestCaseRequest toRequest(RowData row, UUID folderId) {
         if (row.title() == null || row.title().isBlank()) {
             throw new IllegalArgumentException("title is required");
         }
@@ -219,7 +242,7 @@ public class TestCaseImportExportService {
         TestCaseStatus status = parseEnum(TestCaseStatus.class, row.status(), TestCaseStatus.DRAFT, "status");
         Set<String> labels = row.labels() == null ? Set.of() : new LinkedHashSet<>(row.labels());
         return new CreateTestCaseRequest(row.title().trim(), emptyToNull(row.description()),
-                emptyToNull(row.preconditions()), priority, status, labels, row.steps(), null, row.customFields(),
+                emptyToNull(row.preconditions()), priority, status, labels, row.steps(), folderId, row.customFields(),
                 parseEstimate(row.estimateMinutes()));
     }
 
