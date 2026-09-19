@@ -19,8 +19,8 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/compo
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
-import { Observable, combineLatest, interval, of, Subject } from 'rxjs';
-import { debounceTime, filter, switchMap, take } from 'rxjs/operators';
+import { Observable, combineLatest, interval, of } from 'rxjs';
+import { filter, switchMap, take } from 'rxjs/operators';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
 import { TestRun, TestResult, StepResult, TestResultStatus } from '../../../shared/models/test-run.model';
@@ -57,6 +57,7 @@ import { AttachmentsComponent } from '../../../shared/components/attachments/att
 import { IssueTrackerApiService } from '../../../core/services/issue-tracker-api.service';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
+import { StepActualAutosave } from './step-actual-autosave';
 import { ExecutionTimer, LONG_DURATION_MS } from './execution-timer';
 import { effortOf, millisToMinutes, minutesToMillis } from '../../../shared/pipes/duration';
 import { DurationPipe } from '../../../shared/pipes/duration.pipe';
@@ -119,7 +120,9 @@ export class TestRunDetailComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly issueTrackerApi = inject(IssueTrackerApiService);
   private readonly memberApi = inject(ProjectMemberApiService);
-  private actualResultSubject = new Subject<{ resultId: string; step: StepResult; actualResult: string }>();
+  /** Per-step autosave of typed actual results (TES-BUG-18); pending text is saved on leaving. */
+  private readonly actualAutosave = new StepActualAutosave((resultId, stepId, actualResult) =>
+    this.saveStepActual(resultId, stepId, actualResult));
 
   /**
    * Latest snapshot of the test run from the store. Kept on the component
@@ -221,17 +224,7 @@ export class TestRunDetailComponent implements OnInit {
       });
     }
 
-    this.actualResultSubject.pipe(debounceTime(500), takeUntilDestroyed(this.destroyRef)).subscribe(({ resultId, step, actualResult }) => {
-      this.store.dispatch(
-        TestRunActions.updateStepResult({
-          projectId: this.projectId,
-          runId: this.runId,
-          resultId,
-          stepResultId: step.id,
-          request: { status: step.status, actualResult },
-        })
-      );
-    });
+    this.destroyRef.onDestroy(() => this.actualAutosave.flushAll());
   }
 
   /**
@@ -494,19 +487,38 @@ export class TestRunDetailComponent implements OnInit {
   }
 
   onStepStatusChange(resultId: string, step: StepResult, status: TestResultStatus): void {
+    // Text typed but not saved yet travels with the status; the stored value would overwrite it.
+    const actualResult = this.actualAutosave.take(step.id) ?? step.actualResult;
     this.store.dispatch(
       TestRunActions.updateStepResult({
         projectId: this.projectId,
         runId: this.runId,
         resultId,
         stepResultId: step.id,
-        request: { status, actualResult: step.actualResult || undefined },
+        request: { status, actualResult: actualResult || undefined },
       })
     );
   }
 
   onStepActualChange(resultId: string, step: StepResult, actualResult: string): void {
-    this.actualResultSubject.next({ resultId, step, actualResult });
+    this.actualAutosave.edit(resultId, step.id, actualResult);
+  }
+
+  /** Saves typed text with the step's status as it is now, not as it was when typing began. */
+  private saveStepActual(resultId: string, stepId: string, actualResult: string): void {
+    const step = this.currentRun?.results?.find((r) => r.id === resultId)?.stepResults.find((s) => s.id === stepId);
+    if (!step) {
+      return;
+    }
+    this.store.dispatch(
+      TestRunActions.updateStepResult({
+        projectId: this.projectId,
+        runId: this.runId,
+        resultId,
+        stepResultId: stepId,
+        request: { status: step.status, actualResult },
+      })
+    );
   }
 
   onScreenshotUpload(resultId: string, stepResultId: string, event: Event): void {
