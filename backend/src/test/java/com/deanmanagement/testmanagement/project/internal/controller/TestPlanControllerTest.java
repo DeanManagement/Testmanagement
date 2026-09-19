@@ -51,6 +51,9 @@ class TestPlanControllerTest {
     @MockitoBean
     private ReleaseReadinessService readinessService;
 
+    @MockitoBean
+    private com.deanmanagement.testmanagement.project.internal.service.BugReportLinkService bugReportLinkService;
+
     private static final UUID PROJECT_ID = UUID.randomUUID();
     private static final UUID PLAN_ID = UUID.randomUUID();
     private static final String MOCK_USER_ID = "00000000-0000-0000-0000-000000000001";

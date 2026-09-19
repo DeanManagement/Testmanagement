@@ -48,7 +48,7 @@ class McpBugRunLinkApiTest extends McpToolApiTestSupport {
 
     private McpDtos.BugDetail fileBug(String title, UUID testResultId, UUID testRunId) {
         return bugReportTools.createBugReport(title, Priority.HIGH, null, null, null, null, null,
-                testResultId, testRunId, null);
+                testResultId, testRunId, null, null);
     }
 
     @Test

@@ -13,6 +13,8 @@ import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkOpera
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportBulkService;
+import com.deanmanagement.testmanagement.project.internal.service.BugReportLinkService;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.LinkBugReportRequest;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
 import org.springframework.data.domain.Page;
@@ -49,6 +51,7 @@ public class BugReportController {
 
     private final BugReportService bugReportService;
     private final BugReportBulkService bulkService;
+    private final BugReportLinkService linkService;
 
     /**
      * The bug list (PRD-045 §3.2). {@code assignee} takes user ids, {@code none} for unassigned and
@@ -88,6 +91,21 @@ public class BugReportController {
                                             @Valid @RequestBody BulkUpdateBugReportsRequest request,
                                             Authentication authentication) {
         return affected(bulkService.update(projectId, request, actor(authentication)), "updated");
+    }
+
+    /** PRD-047: the bug showed up again in this result (and step); idempotent. */
+    @PostMapping("/{idOrKey}/links")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BugReportResponse link(@PathVariable UUID projectId, @PathVariable String idOrKey,
+                                  @Valid @RequestBody LinkBugReportRequest request, Authentication authentication) {
+        return linkService.link(projectId, idOrKey, request, actor(authentication));
+    }
+
+    @DeleteMapping("/{idOrKey}/links/{linkId}")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BugReportResponse unlink(@PathVariable UUID projectId, @PathVariable String idOrKey,
+                                    @PathVariable UUID linkId, Authentication authentication) {
+        return linkService.unlink(projectId, idOrKey, linkId, actor(authentication));
     }
 
     @PostMapping("/bulk-delete")

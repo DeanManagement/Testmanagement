@@ -702,7 +702,7 @@ class McpToolSurfaceApiTest {
         McpDtos.CreatedTestRun run =
                 testRunWriteTools.createTestRun("Geprüfter Lauf", null, null, null, null);
         McpDtos.BugDetail bug = bugReportTools.createBugReport("Geprüfter Fehler", Priority.LOW,
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
 
         List<McpToolInvocation> records = invocationRepository.findAll().stream()
                 .filter(r -> key.id().equals(r.getApiKeyId()))
@@ -1165,7 +1165,7 @@ class McpToolSurfaceApiTest {
         authenticateAs(project, ProjectRole.TESTER, "agent");
 
         assertThatThrownBy(() -> bugReportTools.createBugReport("Kaputt", Priority.HIGH, null,
-                null, null, null, null, null, null, null))
+                null, null, null, null, null, null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("not enabled")
                 .hasMessageContaining("ADMIN");
@@ -1183,7 +1183,7 @@ class McpToolSurfaceApiTest {
 
         McpDtos.BugDetail bug = bugReportTools.createBugReport("Zahlung wirft 500",
                 Priority.CRITICAL, "Beim Bezahlen", "1. Warenkorb 2. Bezahlen", "Bestätigung",
-                "HTTP 500", "staging", failure.resultId(), run.id(), null);
+                "HTTP 500", "staging", failure.resultId(), run.id(), null, null);
 
         assertThat(bug.status()).isEqualTo(BugReportStatus.NEW);
         assertThat(bug.key()).isEqualTo(project.getKey() + "-BUG-1");
@@ -1201,10 +1201,10 @@ class McpToolSurfaceApiTest {
         enableBugReports(project);
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.BugDetail first = bugReportTools.createBugReport("Zahlung wirft 500",
-                Priority.HIGH, null, null, null, null, null, null, null, null);
+                Priority.HIGH, null, null, null, null, null, null, null, null, null);
 
         assertThatThrownBy(() -> bugReportTools.createBugReport("zahlung wirft 500!",
-                Priority.HIGH, null, null, null, null, null, null, null, null))
+                Priority.HIGH, null, null, null, null, null, null, null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining(first.key())
                 .hasMessageContaining("allowDuplicateTitle");
@@ -1219,12 +1219,12 @@ class McpToolSurfaceApiTest {
         enableBugReports(project);
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.BugDetail first = bugReportTools.createBugReport("Zahlung wirft 500",
-                Priority.HIGH, null, null, null, null, null, null, null, null);
+                Priority.HIGH, null, null, null, null, null, null, null, null, null);
         bugReportTools.changeBugReportStatus(first.key(), BugReportStatus.CLOSED,
                 "In 2.3 behoben und nachgeprüft", BugResolution.FIXED, null);
 
         McpDtos.BugDetail regression = bugReportTools.createBugReport("Zahlung wirft 500",
-                Priority.HIGH, null, null, null, null, null, null, null, null);
+                Priority.HIGH, null, null, null, null, null, null, null, null, null);
 
         assertThat(regression.id()).isNotEqualTo(first.id());
         assertThat(regression.status()).isEqualTo(BugReportStatus.NEW);
@@ -1235,9 +1235,9 @@ class McpToolSurfaceApiTest {
         enableBugReports(project);
         authenticateAs(project, ProjectRole.TESTER, "agent");
         bugReportTools.createBugReport("Offener Fehler", Priority.HIGH, null, null, null, null,
-                null, null, null, null);
+                null, null, null, null, null);
         McpDtos.BugDetail closed = bugReportTools.createBugReport("Behobener Fehler", Priority.LOW,
-                null, null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null, null);
         bugReportTools.changeBugReportStatus(closed.key(), BugReportStatus.CLOSED, "nachgeprüft",
                 BugResolution.FIXED, null);
 
@@ -1254,7 +1254,7 @@ class McpToolSurfaceApiTest {
         enableBugReports(project);
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.BugDetail bug = bugReportTools.createBugReport("Irgendwas", Priority.LOW, null,
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null, null, null);
 
         assertThatThrownBy(() ->
                 bugReportTools.changeBugReportStatus(bug.key(), BugReportStatus.RESOLVED, "  ", null, null))
@@ -1268,7 +1268,7 @@ class McpToolSurfaceApiTest {
         authenticateAs(project, ProjectRole.VIEWER, "read-only-agent");
 
         assertThatThrownBy(() -> bugReportTools.createBugReport("Nicht erlaubt", Priority.LOW,
-                null, null, null, null, null, null, null, null))
+                null, null, null, null, null, null, null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("TESTER");
     }
@@ -1289,9 +1289,9 @@ class McpToolSurfaceApiTest {
         projectMemberRepository.save(membership);
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.BugDetail a = bugReportTools.createBugReport("Eins", Priority.LOW, null, null, null, null,
-                null, null, null, null);
+                null, null, null, null, null);
         McpDtos.BugDetail b = bugReportTools.createBugReport("Zwei", Priority.LOW, null, null, null, null,
-                null, null, null, null);
+                null, null, null, null, null);
 
         McpDtos.BugAssignment assigned = bugReportTools.assignBugReports(List.of(a.key(), b.key()),
                 human.getEmail().toUpperCase());
@@ -1314,10 +1314,34 @@ class McpToolSurfaceApiTest {
         authenticateAs(project, ProjectRole.TESTER, "agent");
 
         McpDtos.BugDetail bug = bugReportTools.createBugReport("Absturz", Priority.HIGH, null,
-                "1. Öffnen 2. Speichern", null, null, null, null, null, null);
+                "1. Öffnen 2. Speichern", null, null, null, null, null, null, null);
 
         assertThat(bug.description()).isEqualTo("Seen by the nightly suite");
         assertThat(bug.stepsToReproduce()).as("the agent's own text wins").isEqualTo("1. Öffnen 2. Speichern");
+    }
+
+    /** PRD-047: a known bug that fails again is linked, not filed twice; steps are numbered from 1. */
+    @Test
+    void aKnownBugIsLinkedToTheResultAndStepWhereItShowedUpAgain() {
+        enableBugReports(project);
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestCase testCase = testCaseTools.createTestCase("Bezahlen", Priority.MEDIUM, null, null,
+                null, null, List.of(new McpDtos.Step("Warenkorb", null, null), new McpDtos.Step("Bezahlen", null, null)),
+                null, null, null, null);
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Lauf", null, Set.of(testCase.id()), null, null);
+        McpDtos.RecordedResult failure = resultRecordingTools.recordTestResult(run.id().toString(),
+                TestResultStatus.FAILED, testCase.id(), null, "500", null, null);
+        McpDtos.BugDetail bug = bugReportTools.createBugReport("Zahlung wirft 500", Priority.HIGH, null, null, null,
+                null, null, null, null, null, null);
+
+        McpDtos.BugDetail linked = bugReportTools.linkBugReport(bug.key(), failure.resultId(), 2);
+
+        assertThat(linked.occurrences()).singleElement().satisfies(o -> {
+            assertThat(o.testResultId()).isEqualTo(failure.resultId());
+            assertThat(o.stepNumber()).isEqualTo(2);
+        });
+        assertThatThrownBy(() -> bugReportTools.linkBugReport(bug.key(), failure.resultId(), 3))
+                .hasMessageContaining("no step 3");
     }
 
     @Test
@@ -1325,9 +1349,9 @@ class McpToolSurfaceApiTest {
         enableBugReports(project);
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.BugDetail original = bugReportTools.createBugReport("Original", Priority.LOW, null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
         McpDtos.BugDetail copy = bugReportTools.createBugReport("Kopie", Priority.LOW, null, null, null,
-                null, null, null, null, null);
+                null, null, null, null, null, null);
 
         McpDtos.BugDetail closed = bugReportTools.changeBugReportStatus(copy.key(), BugReportStatus.CLOSED,
                 "derselbe Absturz", BugResolution.DUPLICATE, original.key());

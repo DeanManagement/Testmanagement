@@ -96,15 +96,9 @@ public class TestResultRecordingTools {
         boolean added = false;
         UUID recordedId;
         if (target != null) {
-            // Absent comment/defectLink mean "leave alone", not "clear". UpdateTestResultRequest
-            // has no absent-versus-null distinction and updateResult assigns all three fields
-            // unconditionally, so passing the arguments straight through would erase the evidence
-            // on any re-record — including the comment this same tool wrote a moment earlier, and
-            // anything a human had already put on the pending result. Since the tool advertises
-            // idempotentHint and tells the agent to retry, that is the likeliest path through it.
-            var update = new UpdateTestResultRequest(status,
-                    comment == null ? target.comment() : comment,
-                    defectLink == null ? target.defectLink() : defectLink, durationMs);
+            // Absent comment/defectLink leave the result's own alone (updateResult treats null as
+            // unchanged), so a retried record never erases evidence already on the result.
+            var update = new UpdateTestResultRequest(status, comment, defectLink, durationMs);
             validator.validate(update);
             recordedId = testRunService.updateResult(caller.projectId(), runId, target.id(), update)
                     .id();
@@ -187,9 +181,8 @@ public class TestResultRecordingTools {
         for (int index = 0; index < results.size(); index++) {
             McpDtos.ResultEntry entry = results.get(index);
             TestResultResponse target = targets.get(index);
-            var update = new UpdateTestResultRequest(entry.status(),
-                    entry.comment() == null ? target.comment() : entry.comment(),
-                    entry.defectLink() == null ? target.defectLink() : entry.defectLink(), entry.durationMs());
+            var update = new UpdateTestResultRequest(entry.status(), entry.comment(), entry.defectLink(),
+                    entry.durationMs());
             validator.validate(update);
             testRunService.updateResult(caller.projectId(), runId, target.id(), update);
         }

@@ -304,7 +304,7 @@ class CustomFieldValuesTest {
 
             BugReportResponse bug = bugReportService.create(projectId, new CreateBugReportRequest("Broken", null,
                     null, null, null, Priority.HIGH, null, null, null, null, null, null,
-                    Map.of("Customer", "ACME")), null);
+                    Map.of("Customer", "ACME"), null), null);
 
             assertThat(bug.customFields()).containsEntry("Customer", "ACME");
         }

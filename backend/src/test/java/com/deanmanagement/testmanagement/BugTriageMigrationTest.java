@@ -67,6 +67,9 @@ class BugTriageMigrationTest {
                     .as("closed without a recorded reason").containsExactly("CLOSED/FIXED");
             assertThat(strings(sql, "SELECT status FROM bug_reports WHERE title = 'second' AND resolution IS NULL"))
                     .as("open bugs stay open, without a resolution").containsExactly("OPEN");
+            // V69 (PRD-047): closed bugs count as resolved when last updated; open ones not at all.
+            assertThat(strings(sql, "SELECT title FROM bug_reports WHERE resolved_at IS NOT NULL ORDER BY title"))
+                    .containsExactly("first", "third");
         }
     }
 

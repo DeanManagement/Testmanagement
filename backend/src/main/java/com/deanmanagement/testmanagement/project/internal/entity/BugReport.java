@@ -12,11 +12,13 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -84,6 +86,20 @@ public class BugReport extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_run_id")
     private TestRun testRun;
+
+    /** PRD-047: the step of {@code testResult} it was found in, if the tester named one. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "step_result_id")
+    private StepResult stepResult;
+
+    /** PRD-047: when it last became RESOLVED or CLOSED; cleared when reopened. */
+    @Column(name = "resolved_at")
+    private Instant resolvedAt;
+
+    /** PRD-047: where else it showed up; the found-in result stays {@code testResult}. */
+    @OneToMany(mappedBy = "bugReport", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("createdAt")
+    private List<BugReportLink> links = new ArrayList<>();
 
     /** The exploratory session this bug was found in (PRD-034), if any. */
     @ManyToOne(fetch = FetchType.LAZY)

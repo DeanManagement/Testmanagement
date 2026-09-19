@@ -314,7 +314,12 @@ final class McpDtos {
                      @Nullable String environment, @Nullable UUID testResultId,
                      @Nullable String testCaseTitle, @Nullable UUID testRunId,
                      @Nullable String testRunName, @Nullable String assigneeName,
-                     @Nullable String reporterName) {}
+                     @Nullable String reporterName, @Nullable Integer stepNumber,
+                     List<BugOccurrence> occurrences) {}
+
+    /** Where else the bug showed up (PRD-047); the found-in result is on the bug itself. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record BugOccurrence(UUID testResultId, String testRunKey, String testCaseKey, @Nullable Integer stepNumber) {}
 
     /** A near-match that blocked a bug create, so the agent can update it instead of re-filing. */
     @JsonInclude(JsonInclude.Include.NON_NULL)

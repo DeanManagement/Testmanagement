@@ -1,4 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportResponse;
+import com.deanmanagement.testmanagement.project.internal.service.BugReportLinkService;
 import com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.readiness.ReadinessResponse;
 import com.deanmanagement.testmanagement.project.internal.service.ReleaseReadinessService;
@@ -36,6 +38,7 @@ public class TestPlanController {
 
     private final TestPlanService testPlanService;
     private final ReleaseReadinessService readinessService;
+    private final BugReportLinkService bugReportLinkService;
 
     @GetMapping
     @RequireProjectRole
@@ -47,6 +50,13 @@ public class TestPlanController {
     @RequireProjectRole
     public TestPlanResponse findById(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testPlanService.findById(projectId, id);
+    }
+
+    /** PRD-047: bugs found in, or linked to, the plan's runs. */
+    @GetMapping("/{id}/bug-reports")
+    @RequireProjectRole
+    public List<BugReportResponse> getDefects(@PathVariable UUID projectId, @PathVariable UUID id) {
+        return bugReportLinkService.findByTestPlan(projectId, id);
     }
 
     /** GO / NO_GO against the plan's release gate, with each criterion's value (PRD-037). */

@@ -5,6 +5,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -26,6 +27,9 @@ public record BugReportResponse(
         String environment,
         UUID projectId,
         UUID testResultId,
+        /* PRD-047: the case of the found-in result, so the bug can link to it. */
+        UUID testCaseId,
+        String testCaseKey,
         String testCaseTitle,
         UUID testRunId,
         String testRunName,
@@ -42,6 +46,10 @@ public record BugReportResponse(
         /* PRD-034: the exploratory session this bug was found in, if any. */
         UUID exploratorySessionId,
         String exploratorySessionKey,
+        /* PRD-047: the found-in step (1-based number), and where else the bug showed up. */
+        UUID stepResultId,
+        Integer stepNumber,
+        List<BugReportLinkResponse> links,
         /* PRD-035: values keyed by field name, in display order (CustomFieldValueMaps). */
         Map<String, Object> customFields
 ) {

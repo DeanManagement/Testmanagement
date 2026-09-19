@@ -23,13 +23,15 @@ public record CreateBugReportRequest(
         /* PRD-034: filed from an exploratory session note; also defaults the environment. */
         UUID exploratorySessionId,
         /* PRD-035: keyed by field name; see CustomFieldValueWriter for null and clearing rules. */
-        Map<String, Object> customFields
+        Map<String, Object> customFields,
+        /* PRD-047: the failing step of testResultId; must belong to that result. */
+        UUID stepResultId
 ) {
     public CreateBugReportRequest(String title, String description, String stepsToReproduce,
                                   String expectedBehavior, String actualBehavior, Priority priority,
                                   String environment, UUID testResultId, UUID testRunId, UUID assigneeId,
                                   UUID environmentId) {
         this(title, description, stepsToReproduce, expectedBehavior, actualBehavior, priority, environment,
-                testResultId, testRunId, assigneeId, environmentId, null, null);
+                testResultId, testRunId, assigneeId, environmentId, null, null, null);
     }
 }

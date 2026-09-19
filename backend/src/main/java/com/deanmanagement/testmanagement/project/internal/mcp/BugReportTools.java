@@ -11,6 +11,8 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportBulkService;
+import com.deanmanagement.testmanagement.project.internal.service.BugReportLinkService;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.LinkBugReportRequest;
 import com.deanmanagement.testmanagement.user.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -56,6 +58,7 @@ public class BugReportTools {
     private final McpWriteThrottle writeThrottle;
     private final McpValidator validator;
     private final BugReportBulkService bulkService;
+    private final BugReportLinkService linkService;
     private final ProjectMemberRepository projectMemberRepository;
 
     private static final String UNASSIGNED = "none";
@@ -97,7 +100,9 @@ public class BugReportTools {
                     + "when that is given", required = false)
             UUID testRunId,
             @McpToolParam(description = "File it even though an open bug has the same title",
-                    required = false) Boolean allowDuplicateTitle) {
+                    required = false) Boolean allowDuplicateTitle,
+            @McpToolParam(description = "With testResultId: the failing step, numbered from 1 as in get_test_run",
+                    required = false) Integer stepNumber) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
@@ -121,14 +126,16 @@ public class BugReportTools {
         }
 
         // No assigneeId: deciding who fixes a bug is a human's call (PRD-025 §3.4).
-        var request = new CreateBugReportRequest(title, description, stepsToReproduce,
-                expectedBehavior, actualBehavior, priority, environment, testResultId, testRunId,
-                null, null);
-        validator.validate(request);
-
-        return detail(enabled(() ->
-                bugReportService.create(caller.projectId(), bugReportService.withTemplate(caller.projectId(), request),
-                        caller.userId(), CustomFieldWriteMode.MACHINE)));
+        return detail(enabled(() -> {
+            UUID stepResultId = stepNumber == null ? null
+                    : linkService.stepResultId(caller.projectId(), testResultId, stepNumber);
+            var request = new CreateBugReportRequest(title, description, stepsToReproduce, expectedBehavior,
+                    actualBehavior, priority, environment, testResultId, testRunId, null, null, null, null,
+                    stepResultId);
+            validator.validate(request);
+            return bugReportService.create(caller.projectId(), bugReportService.withTemplate(caller.projectId(), request),
+                    caller.userId(), CustomFieldWriteMode.MACHINE);
+        }));
     }
 
 
@@ -235,6 +242,35 @@ public class BugReportTools {
     }
 
     @McpTool(
+            name = "link_bug_report",
+            description = """
+                    Record that a known bug showed up again: in this test result and, optionally, this
+                    step of it (stepNumber, from 1, as get_test_run numbers them). Use it instead of
+                    filing a duplicate when a case fails again for a bug already reported. The bug
+                    keeps the result it was found in; linking is idempotent.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.BugDetail linkBugReport(
+            @McpToolParam(description = "Bug key (PROJ-BUG-12) or UUID") String idOrKey,
+            @McpToolParam(description = "Test result where it showed up") UUID testResultId,
+            @McpToolParam(description = "The failing step, numbered from 1", required = false) Integer stepNumber) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        if (testResultId == null) {
+            throw new McpToolException("testResultId is required: take it from get_test_run.");
+        }
+        return detail(enabled(() -> {
+            UUID stepResultId = stepNumber == null ? null
+                    : linkService.stepResultId(caller.projectId(), testResultId, stepNumber);
+            return linkService.link(caller.projectId(), idOrKey, new LinkBugReportRequest(testResultId, stepResultId),
+                    caller.userId());
+        }));
+    }
+
+    @McpTool(
             name = "assign_bug_reports",
             description = """
                     Assign one or more bug reports to a project member, or unassign them.
@@ -336,6 +372,8 @@ public class BugReportTools {
                 b.expectedBehavior(), b.actualBehavior(), b.status(), b.resolution(), b.duplicateOfKey(),
                 b.priority(), b.environment(),
                 b.testResultId(), b.testCaseTitle(), b.testRunId(), b.testRunName(),
-                b.assigneeName(), b.reporterName());
+                b.assigneeName(), b.reporterName(), b.stepNumber(),
+                b.links().stream().map(l -> new McpDtos.BugOccurrence(l.testResultId(), l.testRunKey(),
+                        l.testCaseKey(), l.stepNumber())).toList());
     }
 }

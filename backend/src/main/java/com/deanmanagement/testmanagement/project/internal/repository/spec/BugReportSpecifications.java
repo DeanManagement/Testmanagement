@@ -2,11 +2,14 @@ package com.deanmanagement.testmanagement.project.internal.repository.spec;
 
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportFilter;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
+import com.deanmanagement.testmanagement.project.internal.entity.BugReportLink;
 import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
+import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
@@ -52,13 +55,23 @@ public final class BugReportSpecifications {
                 predicates.add(matchesAssignee(root, cb, filter));
             }
             if (filter.testResultId() != null) {
-                predicates.add(cb.equal(root.get("testResult").get("id"), filter.testResultId()));
+                predicates.add(foundInOrLinkedTo(root, query, cb, filter.testResultId()));
             }
             if (filter.environmentId() != null) {
                 predicates.add(cb.equal(root.get("projectEnvironment").get("id"), filter.environmentId()));
             }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
+    }
+
+    /** PRD-047: the result it was found in, or one it was linked to later. */
+    private static Predicate foundInOrLinkedTo(Root<BugReport> root, CriteriaQuery<?> query, CriteriaBuilder cb,
+                                               UUID testResultId) {
+        Subquery<UUID> linked = query.subquery(UUID.class);
+        Root<BugReportLink> link = linked.from(BugReportLink.class);
+        linked.select(link.get("id")).where(cb.equal(link.get("bugReport"), root),
+                cb.equal(link.get("testResult").get("id"), testResultId));
+        return cb.or(cb.equal(root.get("testResult").get("id"), testResultId), cb.exists(linked));
     }
 
     private static Predicate matchesText(Root<BugReport> root, CriteriaBuilder cb, String q) {

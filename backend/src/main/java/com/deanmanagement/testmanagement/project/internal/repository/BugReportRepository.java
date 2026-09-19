@@ -76,6 +76,33 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID>, Jpa
 
     Optional<BugReport> findByKeyAndProjectId(String key, UUID projectId);
 
+    /** PRD-047 dashboard: [status, count] rows. */
+    @Query("SELECT b.status, COUNT(b) FROM BugReport b WHERE b.project.id = :projectId GROUP BY b.status")
+    List<Object[]> countByStatus(@Param("projectId") UUID projectId);
+
+    /** PRD-047 dashboard: [priority, count] rows for bugs in the given statuses. */
+    @Query("SELECT b.priority, COUNT(b) FROM BugReport b WHERE b.project.id = :projectId AND b.status IN :statuses "
+            + "GROUP BY b.priority")
+    List<Object[]> countByPriorityAndStatusIn(@Param("projectId") UUID projectId,
+                                              @Param("statuses") Collection<BugReportStatus> statuses);
+
+    @Query("SELECT b.createdAt FROM BugReport b WHERE b.project.id = :projectId AND b.createdAt >= :since")
+    List<Instant> findCreatedAtSince(@Param("projectId") UUID projectId, @Param("since") Instant since);
+
+    @Query("SELECT b.resolvedAt FROM BugReport b WHERE b.project.id = :projectId AND b.resolvedAt >= :since")
+    List<Instant> findResolvedAtSince(@Param("projectId") UUID projectId, @Param("since") Instant since);
+
+    /**
+     * PRD-047: bugs found in a run of the plan, or linked to a result of one; each once, newest first.
+     * Explicit left joins, since a bug without a run must not drop out of the OR.
+     */
+    @Query("SELECT DISTINCT b FROM BugReport b LEFT JOIN b.testRun r LEFT JOIN FETCH b.assignee "
+            + "WHERE b.project.id = :projectId AND (r.testPlan.id = :planId OR EXISTS ("
+            + "SELECT l.id FROM BugReportLink l JOIN l.testResult lr JOIN lr.testRun lrun "
+            + "WHERE l.bugReport = b AND lrun.testPlan.id = :planId)) "
+            + "ORDER BY b.createdAt DESC")
+    List<BugReport> findByTestPlan(@Param("projectId") UUID projectId, @Param("planId") UUID planId);
+
     /** Bulk operations (PRD-045): resolves ids within the project only, so a foreign id is simply absent. */
     List<BugReport> findByIdInAndProjectId(Collection<UUID> ids, UUID projectId);
 }

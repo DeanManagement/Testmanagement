@@ -35,6 +35,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -132,6 +133,12 @@ public class BugReportService {
         if (request.testResultId() != null) {
             bugReport.setTestResult(requireTestResult(projectId, request.testResultId()));
         }
+        if (request.stepResultId() != null) {
+            if (bugReport.getTestResult() == null) {
+                throw new IllegalArgumentException("stepResultId needs the testResultId it belongs to");
+            }
+            bugReport.setStepResult(BugReportLinkService.stepOf(bugReport.getTestResult(), request.stepResultId()));
+        }
         bugReport.setTestRun(resolveTestRun(projectId, bugReport.getTestResult(), request.testRunId()));
         if (request.assigneeId() != null) {
             bugReport.setAssignee(requireProjectMember(projectId, request.assigneeId()));
@@ -209,6 +216,7 @@ public class BugReportService {
         BugReport duplicateOf = resolveDuplicateTarget(projectId, bugReport, resolution, request.duplicateOfId());
 
         FieldChanges.Snapshot before = snapshot(bugReport);
+        trackResolution(bugReport, request.status());
         bugReport.setStatus(request.status());
         bugReport.setResolution(resolution);
         bugReport.setDuplicateOf(duplicateOf);
@@ -217,6 +225,18 @@ public class BugReportService {
         auditService.log(projectId, userId, AuditAction.STATUS_CHANGED, AuditEntityType.BUG_REPORT,
                 bugReport.getId(), label(bugReport), request.reason(),
                 FieldChanges.between(before, snapshot(bugReport)));
+    }
+
+    /**
+     * When the bug left the open statuses, for the dashboard trend (PRD-047). RESOLVED to CLOSED
+     * keeps the first time; reopening clears it, so the trend counts resolutions that still stand.
+     */
+    private static void trackResolution(BugReport bugReport, BugReportStatus newStatus) {
+        if (newStatus.isOpen()) {
+            bugReport.setResolvedAt(null);
+        } else if (bugReport.getStatus().isOpen()) {
+            bugReport.setResolvedAt(Instant.now());
+        }
     }
 
     private BugReport resolveDuplicateTarget(UUID projectId, BugReport bugReport, BugResolution resolution,
@@ -266,7 +286,7 @@ public class BugReportService {
                 request.expectedBehavior(), request.actualBehavior(), request.priority(),
                 namesEnvironment ? request.environment() : project.getBugTemplateEnvironment(),
                 request.testResultId(), request.testRunId(), request.assigneeId(), request.environmentId(),
-                request.exploratorySessionId(), request.customFields());
+                request.exploratorySessionId(), request.customFields(), request.stepResultId());
     }
 
     private static String orTemplate(String value, String template) {
@@ -328,7 +348,7 @@ public class BugReportService {
      * caller asked for a link to a specific failure and got a detached report, silently.
      */
 
-    private TestResult requireTestResult(UUID projectId, UUID testResultId) {
+    TestResult requireTestResult(UUID projectId, UUID testResultId) {
         return testResultRepository.findByIdAndProjectId(testResultId, projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("TestResult", testResultId));
     }
@@ -382,7 +402,7 @@ public class BugReportService {
         return toResponse(bugReport, reporterNames(List.of(bugReport)));
     }
 
-    private List<BugReportResponse> toResponsesWithReporters(List<BugReport> bugReports) {
+    List<BugReportResponse> toResponsesWithReporters(List<BugReport> bugReports) {
         Map<UUID, String> names = reporterNames(bugReports);
         return bugReports.stream()
                 .map(bug -> toResponse(bug, names))

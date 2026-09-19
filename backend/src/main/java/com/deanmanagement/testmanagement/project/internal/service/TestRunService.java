@@ -525,8 +525,14 @@ public class TestRunService {
         result.setTestCase(testCase);
         result.setExecutedVersion(testCase.getCurrentVersion());
         result.setStatus(request.status());
-        result.setComment(request.comment());
-        result.setDefectLink(request.defectLink());
+        // Null leaves them alone and "" clears (PRD-047). The SPA sends only the status when a tester
+        // clicks it, which used to wipe a comment or defect link written by CI or an agent.
+        if (request.comment() != null) {
+            result.setComment(request.comment().isEmpty() ? null : request.comment());
+        }
+        if (request.defectLink() != null) {
+            result.setDefectLink(request.defectLink().isBlank() ? null : request.defectLink().strip());
+        }
         result.setDurationMs(request.durationMs());
 
         result = testResultRepository.save(result);
@@ -548,8 +554,14 @@ public class TestRunService {
                 .orElseThrow(() -> new ResourceNotFoundException("TestResult", resultId));
 
         result.setStatus(request.status());
-        result.setComment(request.comment());
-        result.setDefectLink(request.defectLink());
+        // Null leaves them alone and "" clears (PRD-047). The SPA sends only the status when a tester
+        // clicks it, which used to wipe a comment or defect link written by CI or an agent.
+        if (request.comment() != null) {
+            result.setComment(request.comment().isEmpty() ? null : request.comment());
+        }
+        if (request.defectLink() != null) {
+            result.setDefectLink(request.defectLink().isBlank() ? null : request.defectLink().strip());
+        }
         // Null leaves it alone; it also survives a return to PENDING, because the effort was real.
         if (request.durationMs() != null) {
             result.setDurationMs(request.durationMs());

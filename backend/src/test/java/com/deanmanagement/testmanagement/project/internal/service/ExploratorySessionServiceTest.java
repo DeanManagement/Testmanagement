@@ -305,7 +305,7 @@ class ExploratorySessionServiceTest {
                     new CreateExploratorySessionRequest("x", 30, null, "Staging", null, null), tester).id(), tester).id();
 
             BugReportResponse bug = bugReportService.create(project.getId(), new CreateBugReportRequest("JPY rounds wrong",
-                    null, null, null, null, Priority.HIGH, null, null, null, null, null, id, null), tester);
+                    null, null, null, null, Priority.HIGH, null, null, null, null, null, id, null, null), tester);
 
             assertThat(bug.exploratorySessionId()).isEqualTo(id);
             assertThat(bug.environment()).isEqualTo("Staging");
@@ -320,7 +320,7 @@ class ExploratorySessionServiceTest {
                     new CreateExploratorySessionRequest("x", 30, null, null, null, null), null).id();
 
             assertThatThrownBy(() -> bugReportService.create(project.getId(), new CreateBugReportRequest("x", null,
-                    null, null, null, Priority.LOW, null, null, null, null, null, foreignSession, null), tester))
+                    null, null, null, Priority.LOW, null, null, null, null, null, foreignSession, null, null), tester))
                     .isInstanceOf(ResourceNotFoundException.class);
         }
 
@@ -328,7 +328,7 @@ class ExploratorySessionServiceTest {
         void deletingASessionKeepsItsBugs() {
             UUID id = running().id();
             UUID bugId = bugReportService.create(project.getId(), new CreateBugReportRequest("stays", null, null, null,
-                    null, Priority.LOW, null, null, null, null, null, id, null), tester).id();
+                    null, Priority.LOW, null, null, null, null, null, id, null, null), tester).id();
 
             sessionService.delete(project.getId(), id, tester);
             entityManager.flush();
