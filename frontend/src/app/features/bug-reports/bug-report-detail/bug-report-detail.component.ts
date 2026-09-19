@@ -14,7 +14,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { combineLatest, Observable, of } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
-import { selectBugReportById } from '../../../store/bug-report/bug-report.selectors';
+import { selectBugReportByIdOrKey } from '../../../store/bug-report/bug-report.selectors';
 import { ALL_BUG_STATUSES, BugReport, BugReportLink, BugReportStatus, ChangeBugStatusRequest } from '../../../shared/models/bug-report.model';
 import { BugReportApiService } from '../../../core/services/bug-report-api.service';
 import { ChangeBugStatusDialogComponent, ChangeBugStatusDialogData } from '../change-bug-status-dialog/change-bug-status-dialog.component';
@@ -69,7 +69,7 @@ export class BugReportDetailComponent implements OnInit {
       this.bugId = params.get('bugId') ?? '';
       if (this.projectId && this.bugId) {
         this.store.dispatch(BugReportActions.loadBugReport({ projectId: this.projectId, id: this.bugId }));
-        this.bugReport$ = this.store.select(selectBugReportById(this.bugId));
+        this.bugReport$ = this.store.select(selectBugReportByIdOrKey(this.bugId));
       }
     });
     if (this.projectId) {

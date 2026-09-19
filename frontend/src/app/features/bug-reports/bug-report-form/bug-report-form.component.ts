@@ -13,7 +13,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
-import { selectBugReportById } from '../../../store/bug-report/bug-report.selectors';
+import { selectBugReportByIdOrKey } from '../../../store/bug-report/bug-report.selectors';
 import { Priority } from '../../../shared/models/bug-report.model';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { Project } from '../../../shared/models/project.model';
@@ -143,8 +143,10 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
 
     if (this.isEdit && this.projectId) {
       this.store.dispatch(BugReportActions.loadBugReport({ projectId: this.projectId, id: this.bugId }));
-      this.store.select(selectBugReportById(this.bugId)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((bug) => {
+      this.store.select(selectBugReportByIdOrKey(this.bugId)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((bug) => {
         if (bug) {
+          // The URL may name the bug by key; the update endpoint takes its UUID (TES-BUG-19).
+          this.bugId = bug.id;
           this.form.patchValue({
             title: bug.title,
             description: bug.description || '',
