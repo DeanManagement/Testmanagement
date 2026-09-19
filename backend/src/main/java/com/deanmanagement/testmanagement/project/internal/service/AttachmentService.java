@@ -224,12 +224,16 @@ public class AttachmentService {
     /**
      * The base name only, without control characters. The name is shown and used for downloads, so
      * a path or a line break in it must not survive; the extension is not trusted for anything.
+     * Browsers send {@code "}, CR and LF in a multipart file name as {@code %22}, {@code %0D} and
+     * {@code %0A} (HTML's form encoding) and nothing else escaped, so only those are decoded
+     * (TES-BUG-22). A name that really contains {@code %22} arrives as that same text and is decoded too.
      */
     static String sanitizeFileName(String original) {
         if (original == null) {
             return FALLBACK_FILE_NAME;
         }
-        String base = original.substring(Math.max(original.lastIndexOf('/'), original.lastIndexOf('\\')) + 1);
+        String decoded = original.replace("%22", "\"").replace("%0D", "\r").replace("%0A", "\n");
+        String base = decoded.substring(Math.max(decoded.lastIndexOf('/'), decoded.lastIndexOf('\\')) + 1);
         String clean = base.replaceAll("\\p{Cntrl}", "").strip();
         if (clean.isEmpty() || clean.equals(".") || clean.equals("..")) {
             return FALLBACK_FILE_NAME;

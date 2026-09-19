@@ -213,6 +213,14 @@ class AttachmentApiTest {
                 .andExpect(jsonPath("$.fileName").value("passwd.txt"));
     }
 
+    /** TES-BUG-22: browsers send " and line breaks in a file name as %22, %0D and %0A. */
+    @Test
+    void theBrowsersEscapesInAFileNameAreDecoded() throws Exception {
+        upload(tester, caseId, "report %22final%22%0D%0A v2.txt", "text/plain", "hi".getBytes())
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.fileName").value("report \"final\" v2.txt"));
+    }
+
     @Test
     void uploadBeyondThePerCaseLimitIsAConflict() throws Exception {
         uploadOk(caseId, "a.txt", "text/plain", "a".getBytes());
