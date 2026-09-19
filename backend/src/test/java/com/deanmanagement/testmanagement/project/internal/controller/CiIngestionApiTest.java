@@ -11,6 +11,13 @@ import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
 import com.deanmanagement.testmanagement.project.internal.service.ProjectEnvironmentService;
 import com.deanmanagement.testmanagement.project.internal.entity.WebhookEventType;
 import com.deanmanagement.testmanagement.project.internal.webhook.WebhookEvent;
+import com.deanmanagement.testmanagement.project.internal.dto.parameter.SaveParameterSetRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.CreateTestCaseRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
+import com.deanmanagement.testmanagement.project.internal.entity.Priority;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
+import com.deanmanagement.testmanagement.project.internal.service.ParameterSetService;
+import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -23,6 +30,9 @@ import org.springframework.test.context.event.RecordApplicationEvents;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -55,6 +65,10 @@ class CiIngestionApiTest {
     private ApplicationEvents applicationEvents;
     @Autowired
     private ProjectEnvironmentService environmentService;
+    @Autowired
+    private TestCaseService testCaseService;
+    @Autowired
+    private ParameterSetService parameterSetService;
 
     private UUID projectId;
     private String apiKey;
@@ -282,5 +296,61 @@ class CiIngestionApiTest {
                         .contentType(MediaType.APPLICATION_XML)
                         .content(SUREFIRE_XML))
                 .andExpect(status().isForbidden());
+    }
+
+    // ---- PRD-040 §3.5: matching by @tm: key -------------------------------------------------------
+
+    private static String cucumberScenario(String name, String tag, String status) {
+        return "{\"name\":\"" + name + "\",\"type\":\"scenario\",\"tags\":[{\"name\":\"" + tag + "\"}],"
+                + "\"steps\":[{\"keyword\":\"Given \",\"name\":\"a\",\"result\":{\"status\":\"" + status + "\"}}]}";
+    }
+
+    private org.springframework.test.web.servlet.ResultActions postCucumber(String... scenarios) throws Exception {
+        String json = "[{\"name\":\"Login\",\"elements\":[" + String.join(",", scenarios) + "]}]";
+        return mockMvc.perform(post("/api/external/projects/{k}/test-runs/cucumber", KEY)
+                .header("X-API-Key", apiKey).contentType(MediaType.APPLICATION_JSON).content(json));
+    }
+
+    private TestCaseResponse caseWithSets(String title, String... setNames) {
+        TestCaseResponse tc = testCaseService.create(projectId, new CreateTestCaseRequest(title, null, null,
+                Priority.MEDIUM, TestCaseStatus.ACTIVE, Set.of(), List.of(), null), null);
+        for (String name : setNames) {
+            parameterSetService.create(projectId, tc.id(), new SaveParameterSetRequest(name, Map.of("x", name), null));
+        }
+        return tc;
+    }
+
+    @Test
+    void cucumber_aKeyedScenarioLandsOnItsCaseEvenAfterARename() throws Exception {
+        TestCaseResponse tc = caseWithSets("Renamed in the tool");
+
+        postCucumber(cucumberScenario("Old scenario name", "@tm:" + tc.key(), "passed"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.results[0].testCaseId").value(tc.id().toString()));
+
+        assertThat(testCaseRepository.countByProjectId(projectId)).isEqualTo(1);
+    }
+
+    @Test
+    void cucumber_anUnknownKeyFallsBackToTheTitleAndSaysSo() throws Exception {
+        postCucumber(cucumberScenario("Typo", "@tm:CI-999", "passed"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.results[0].testCaseTitle").value("Login - Typo"))
+                .andExpect(jsonPath("$.results[0].comment").value(containsString("Unknown test case key tm:CI-999")));
+    }
+
+    @Test
+    void cucumber_outlineRowsMapToParameterSetsInOrder() throws Exception {
+        TestCaseResponse tc = caseWithSets("Convert", "Example #1", "Example #2");
+        String tag = "@tm:" + tc.key();
+
+        postCucumber(cucumberScenario("Convert", tag, "passed"), cucumberScenario("Convert", tag, "failed"),
+                cucumberScenario("Convert", tag, "passed"))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.results[0].parameterSetName").value("Example #1"))
+                .andExpect(jsonPath("$.results[1].parameterSetName").value("Example #2"))
+                .andExpect(jsonPath("$.results[1].status").value("FAILED"))
+                .andExpect(jsonPath("$.results[2].parameterSetName").doesNotExist())
+                .andExpect(jsonPath("$.results[2].comment").value(containsString("Example row 3 has no parameter set")));
     }
 }

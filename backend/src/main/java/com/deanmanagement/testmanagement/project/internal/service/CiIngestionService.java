@@ -7,6 +7,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.StepResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCaseParameterSet;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlan;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
@@ -31,7 +32,8 @@ import java.util.UUID;
 
 /**
  * Turns normalized {@link CiResult}s (parsed from JUnit XML / Cucumber JSON) into a completed test
- * run, auto-creating any missing test cases. Auto-created cases are labelled {@code ci-imported} and
+ * run, auto-creating any missing test cases. A result carrying a case key ({@code @tm:} tag, PRD-040)
+ * goes to that case; otherwise cases are matched by title. Auto-created cases are labelled {@code ci-imported} and
  * de-duplicated within a single submission.
  */
 @Service
@@ -50,6 +52,7 @@ public class CiIngestionService {
     private final PipelineRunLinker pipelineRunLinker;
     private final RunEventPublisher runEventPublisher;
     private final ProjectEnvironmentService environmentService;
+    private final ParameterSetService parameterSetService;
 
     /**
      * @param projectRef the project key or UUID from the URL.
@@ -85,8 +88,13 @@ public class CiIngestionService {
         run.setKey(project.getKey() + "-Run-" + projectSequenceService.nextTestRunNumber(project.getId()));
 
         Map<String, TestCase> casesByTitle = new HashMap<>();
+        Map<String, TestCase> casesByKey = new HashMap<>();
+        Map<UUID, Integer> rowsPerKeyedCase = new HashMap<>();
         for (CiResult ciResult : results) {
-            TestCase testCase = resolveOrCreate(project, ciResult, casesByTitle);
+            TestCase keyed = ciResult.testCaseKey() == null ? null
+                    : casesByKey.computeIfAbsent(ciResult.testCaseKey(), key ->
+                            testCaseRepository.findByKeyAndProjectId(key, project.getId()).orElse(null));
+            TestCase testCase = keyed != null ? keyed : resolveOrCreate(project, ciResult, casesByTitle);
 
             TestResult result = new TestResult();
             result.setTestRun(run);
@@ -95,6 +103,13 @@ public class CiIngestionService {
             result.setStatus(ciResult.status());
             result.setComment(ciResult.message());
             result.setDurationMs(ciResult.durationMs());
+            if (ciResult.testCaseKey() != null && keyed == null) {
+                // Visible rather than silently filed under a lookalike: a typo, or another project's file.
+                prependComment(result, "Unknown test case key tm:" + ciResult.testCaseKey());
+            }
+            if (keyed != null) {
+                assignParameterSet(result, keyed, rowsPerKeyedCase.merge(keyed.getId(), 1, Integer::sum) - 1);
+            }
             run.getResults().add(result);
 
             List<TestStep> steps = testCase.getSteps();
@@ -115,6 +130,28 @@ public class CiIngestionService {
         // Run-level only: one TEST_FAILED per ingested result would flood chat channels (PRD-031).
         runEventPublisher.publishFinished(run);
         return testRunMapper.toResponse(run);
+    }
+
+    /**
+     * A Scenario Outline reports one result per example row, in order, so the n-th result for a
+     * keyed case is its n-th parameter set (PRD-040 §3.5). A row beyond the sets gets none, and says so.
+     */
+    private void assignParameterSet(TestResult result, TestCase testCase, int row) {
+        List<TestCaseParameterSet> sets = parameterSetService.setsFor(testCase.getId());
+        if (sets.isEmpty()) {
+            return;
+        }
+        if (row < sets.size()) {
+            result.setParameterSetName(sets.get(row).getName());
+            result.setParameterValuesJson(sets.get(row).getValuesJson());
+        } else {
+            prependComment(result, "Example row " + (row + 1) + " has no parameter set: "
+                    + testCase.getKey() + " has " + sets.size());
+        }
+    }
+
+    private static void prependComment(TestResult result, String note) {
+        result.setComment(result.getComment() == null ? note : note + "\n" + result.getComment());
     }
 
     private TestCase resolveOrCreate(Project project, CiResult ciResult, Map<String, TestCase> cache) {

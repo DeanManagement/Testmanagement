@@ -18,6 +18,7 @@ import java.util.List;
 public class CucumberJsonParser {
 
     private static final long NANOS_PER_MILLI = 1_000_000L;
+    private static final String KEY_TAG = "@tm:";
 
     private final ObjectMapper objectMapper;
 
@@ -95,7 +96,23 @@ public class CucumberJsonParser {
         String message = failureMessage.isEmpty() ? null : failureMessage.toString().trim();
         // A scenario's duration is the sum of its steps' (nanoseconds); null when no step reports one.
         Long durationMs = anyDuration ? durationNanos / NANOS_PER_MILLI : null;
-        return new CiResult(featureName, title, status, message, steps, durationMs);
+        return new CiResult(featureName, title, status, message, steps, durationMs, testCaseKey(element));
+    }
+
+    /**
+     * The first {@code @tm:<KEY>} tag (PRD-040 §3.5). Cucumber copies feature tags onto each
+     * scenario, but the export only ever puts the key on the scenario itself.
+     */
+    private static String testCaseKey(Element element) {
+        if (element.tags() == null) {
+            return null;
+        }
+        return element.tags().stream()
+                .map(Tag::name)
+                .filter(name -> name != null && name.startsWith(KEY_TAG) && name.length() > KEY_TAG.length())
+                .map(name -> name.substring(KEY_TAG.length()))
+                .findFirst()
+                .orElse(null);
     }
 
     private TestResultStatus mapStatus(String status) {
@@ -113,7 +130,10 @@ public class CucumberJsonParser {
     private record Feature(String name, List<Element> elements) {
     }
 
-    private record Element(String name, String type, List<Step> steps) {
+    private record Element(String name, String type, List<Step> steps, List<Tag> tags) {
+    }
+
+    private record Tag(String name) {
     }
 
     private record Step(String keyword, String name, Result result) {
