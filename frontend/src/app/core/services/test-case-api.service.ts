@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpEvent, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Attachment, BulkOperationResponse, CreateTestCaseRequest, GherkinPreview, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
+import { Attachment, BulkOperationResponse, TestCaseContext, TestCaseExecution, CreateTestCaseRequest, GherkinPreview, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 import { Page } from '../../shared/models/page.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
 
@@ -91,6 +91,17 @@ export class TestCaseApiService {
 
   deleteAttachment(projectId: string, testCaseId: string, id: string): Observable<void> {
     return this.http.delete<void>(`${this.attachmentsUrl(projectId, testCaseId)}/${id}`);
+  }
+
+  /** PRD-050: who made the case, its folder path and the suites that include it. */
+  getContext(projectId: string, id: string): Observable<TestCaseContext> {
+    return this.http.get<TestCaseContext>(`${this.baseUrl(projectId)}/${id}/context`);
+  }
+
+  /** PRD-050: where the case ran or is scheduled to run, newest run first. */
+  getExecutions(projectId: string, id: string, page: number, size: number): Observable<Page<TestCaseExecution>> {
+    return this.http.get<Page<TestCaseExecution>>(`${this.baseUrl(projectId)}/${id}/executions`,
+      { params: { page: String(page), size: String(size) } });
   }
 
   /** Replaces a shared step reference with copies of its steps, images included (PRD-030). */

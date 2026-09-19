@@ -52,6 +52,7 @@
         </p>
       }
       <app-custom-fields-display [values]="tc.customFields" />
+      <app-case-context [projectId]="projectId" [testCase]="tc" />
     </div>
 
     @if (executedSteps(tc).length) {
@@ -100,6 +101,11 @@
     <div class="environment-results-section tm-card" data-test-id="test-case-environment-results-section">
       <h3>{{ 'environment.results.title' | translate }}</h3>
       <app-environment-results [projectId]="projectId" [testCaseId]="testCaseId" />
+    </div>
+
+    <div class="tm-card executions-section" data-test-id="test-case-executions-section">
+      <h3>{{ 'testCase.executions.title' | translate }}</h3>
+      <app-execution-history [projectId]="projectId" [testCaseId]="testCaseId" [currentVersion]="tc.currentVersion" />
     </div>
 
     <div class="comments-section tm-card" data-test-id="test-case-comments-section">

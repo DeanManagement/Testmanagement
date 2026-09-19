@@ -1,3 +1,5 @@
+import { CaseContextComponent } from '../case-context/case-context.component';
+import { ExecutionHistoryComponent } from '../execution-history/execution-history.component';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -43,6 +45,8 @@ import { millisToMinutes } from '../../../shared/pipes/duration';
   selector: 'app-test-case-detail',
   standalone: true,
   imports: [
+    CaseContextComponent,
+    ExecutionHistoryComponent,
     AttachmentsComponent,
     DurationPipe,
     CustomFieldsDisplayComponent,

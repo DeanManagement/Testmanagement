@@ -299,6 +299,22 @@
     "detail": {
       "estimate": "Schätzung",
       "medianActual": "Median tatsächlich {{duration}} (letzte 5)"
+    },
+    "context": {
+      "noFolder": "Kein Ordner",
+      "created": "Erstellt von {{name}}, {{date}}",
+      "updated": "Geändert von {{name}}, {{date}}",
+      "suites": "Verwendet in Suiten",
+      "noSuites": "In keiner Suite",
+      "unavailable": "Wo dieser Fall verwendet wird, konnte nicht geladen werden."
+    },
+    "executions": {
+      "title": "Ausführungsverlauf",
+      "run": "Lauf",
+      "empty": "Noch nicht ausgeführt.",
+      "olderWording": "ältere Fassung",
+      "olderWordingHint": "Dieses Ergebnis lief gegen eine frühere Version des Falls; der Versionsverlauf zeigt, was sich geändert hat.",
+      "unavailable": "Der Ausführungsverlauf konnte nicht geladen werden."
     }
   },
   "testSuite": {

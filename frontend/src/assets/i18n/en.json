@@ -299,6 +299,22 @@
     "detail": {
       "estimate": "Estimate",
       "medianActual": "median actual {{duration}} (last 5)"
+    },
+    "context": {
+      "noFolder": "No folder",
+      "created": "Created by {{name}}, {{date}}",
+      "updated": "Updated by {{name}}, {{date}}",
+      "suites": "Used in suites",
+      "noSuites": "Not in any suite",
+      "unavailable": "Could not load where this case is used."
+    },
+    "executions": {
+      "title": "Execution history",
+      "run": "Run",
+      "empty": "Not executed yet.",
+      "olderWording": "older wording",
+      "olderWordingHint": "This result ran an earlier version of the case; the version history shows what changed.",
+      "unavailable": "Could not load the execution history."
     }
   },
   "testSuite": {

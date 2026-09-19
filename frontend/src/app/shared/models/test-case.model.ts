@@ -157,3 +157,28 @@ export interface TestCaseQuery {
   size?: number;
   sort?: string;
 }
+
+/** PRD-050: who made a case, where it sits, and which suites include it. */
+export interface TestCaseContext {
+  createdByName: string | null;
+  updatedByName: string | null;
+  /** Root first; empty when the case is in no folder. */
+  folderPath: { id: string; name: string }[];
+  suites: { id: string; name: string }[];
+}
+
+/** PRD-050: one place a case ran or is scheduled to run. */
+export interface TestCaseExecution {
+  resultId: string;
+  runId: string;
+  runKey: string;
+  runName: string;
+  runStatus: string;
+  environment: string | null;
+  parameterSetName: string | null;
+  status: string;
+  executedAt: string | null;
+  executorName: string | null;
+  executedVersion: number | null;
+  durationMs: number | null;
+}
