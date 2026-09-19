@@ -46,16 +46,6 @@
         </mat-select>
       </mat-form-field>
 
-      @if (isEdit) {
-        <mat-form-field appearance="outline" class="third-width">
-          <mat-label>{{ 'bugReport.form.status' | translate }}</mat-label>
-          <mat-select formControlName="status" data-test-id="bug-report-form-status">
-            @for (s of statuses; track s) {
-              <mat-option [value]="s">{{ 'bugReport.status.' + s | translate }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      }
 
       <app-environment-input class="third-width" [projectId]="projectId" labelKey="bugReport.form.environment"
                              testId="bug-report-form-environment" formControlName="environment" />

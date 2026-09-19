@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { CreateProjectRequest, Project, UpdateProjectRequest } from '../../shared/models/project.model';
+import { CreateProjectRequest, Project, UpdateProjectRequest, BugTemplateRequest } from '../../shared/models/project.model';
 import { FlakyTest, ProjectDashboard } from '../../shared/models/dashboard.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
 
@@ -48,6 +48,11 @@ export class ProjectApiService {
   /** PRD-033: whether test cases need approval, and who may give it. */
   updateReviewSettings(projectId: string, reviewRequired: boolean, reviewerMinRole: 'ADMIN' | 'TESTER'): Observable<Project> {
     return this.http.put<Project>(`${this.baseUrl}/${projectId}/settings/review`, { reviewRequired, reviewerMinRole });
+  }
+
+  /** PRD-045: project admins only. */
+  updateBugTemplate(projectId: string, template: BugTemplateRequest): Observable<Project> {
+    return this.http.put<Project>(`${this.baseUrl}/${projectId}/settings/bug-template`, template);
   }
 
   toggleBugReports(projectId: string, enabled: boolean): Observable<Project> {

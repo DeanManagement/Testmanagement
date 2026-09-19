@@ -666,9 +666,17 @@
       "title": "Bug Reports",
       "create": "Report Bug",
       "empty": "No bug reports yet.",
-      "filterStatus": "Filter by Status",
-      "allStatuses": "All Statuses",
-      "created": "Created"
+      "created": "Created",
+      "search": "Search key, title or text",
+      "assignedToMe": "Me",
+      "clearFilters": "Clear filters",
+      "noMatches": "No bug reports match these filters.",
+      "key": "Key",
+      "viewList": "List",
+      "viewKanban": "Board",
+      "ageDays": "{{days}} d",
+      "ageTooltip": "Days since it was reported",
+      "kanbanTruncated": "The board shows the newest {{shown}} of {{total}} bugs. Filter to see the rest."
     },
     "form": {
       "createTitle": "Report Bug",
@@ -685,11 +693,11 @@
       "noAssignee": "Unassigned"
     },
     "status": {
+      "NEW": "New",
       "OPEN": "Open",
       "IN_PROGRESS": "In Progress",
       "RESOLVED": "Resolved",
-      "CLOSED": "Closed",
-      "WONTFIX": "Won't Fix"
+      "CLOSED": "Closed"
     },
     "detail": {
       "reportedBy": "Reported by",
@@ -705,7 +713,34 @@
       "cancel": "Cancel"
     },
     "reportBug": "Report Bug",
-    "linkedBugs": "Linked Bugs"
+    "linkedBugs": "Linked Bugs",
+    "resolution": {
+      "label": "Resolution",
+      "none": "No resolution yet",
+      "of": "of",
+      "duplicateOf": "Duplicate of (search by key or title)",
+      "FIXED": "Fixed",
+      "WONT_FIX": "Won't fix",
+      "DUPLICATE": "Duplicate",
+      "CANNOT_REPRODUCE": "Cannot reproduce",
+      "NOT_A_BUG": "Not a bug",
+      "DEFERRED": "Deferred"
+    },
+    "bulk": {
+      "toolbar": "Change selected bug reports",
+      "selected": "{{count}} selected",
+      "selectPage": "Select all on this page",
+      "assign": "Assign",
+      "clear": "Clear selection",
+      "deleteConfirm": "Delete {{count}} bug report(s)?",
+      "done": "Bug reports updated",
+      "failed": "The bug reports could not be changed"
+    },
+    "template": {
+      "title": "Bug report template",
+      "description": "New bug reports start with this text in empty fields. Editing a bug never applies it again.",
+      "environment": "Default environment"
+    }
   },
   "myBugs": {
     "title": "My Bug Reports",

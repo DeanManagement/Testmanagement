@@ -306,7 +306,7 @@
                     @for (bug of linkedBugs; track bug.id) {
                       <a [routerLink]="['/projects', projectId, 'bug-reports', bug.id]" class="linked-bug-item" [attr.data-test-id]="'linked-bug-' + bug.id">
                         <span class="badge badge--{{ bug.status | lowercase }} badge--small">{{ 'bugReport.status.' + bug.status | translate }}</span>
-                        <span class="linked-bug-title">{{ bug.title }}</span>
+                        <span class="linked-bug-title">{{ bug.key }} {{ bug.title }}</span>
                         <span class="badge badge--{{ bug.priority | lowercase }} badge--small">{{ 'priority.' + bug.priority | translate }}</span>
                       </a>
                     }

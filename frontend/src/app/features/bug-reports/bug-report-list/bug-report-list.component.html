@@ -8,31 +8,96 @@
       <h1 data-test-id="bug-report-list-title">{{ 'bugReport.list.title' | translate }}</h1>
     </div>
     <div class="header-actions">
-      <mat-button-toggle-group [(value)]="viewMode" hideSingleSelectionIndicator data-test-id="bug-report-view-toggle">
-        <mat-button-toggle value="list">
+      <mat-button-toggle-group [value]="viewMode" (change)="onViewChange($event.value)" hideSingleSelectionIndicator
+                               data-test-id="bug-report-view-toggle">
+        <mat-button-toggle value="list" [attr.aria-label]="'bugReport.list.viewList' | translate">
           <mat-icon>view_list</mat-icon>
         </mat-button-toggle>
-        <mat-button-toggle value="kanban">
+        <mat-button-toggle value="kanban" [attr.aria-label]="'bugReport.list.viewKanban' | translate">
           <mat-icon>view_kanban</mat-icon>
         </mat-button-toggle>
       </mat-button-toggle-group>
-      @if (viewMode === 'list') {
-        <mat-form-field appearance="outline" class="status-filter">
-          <mat-label>{{ 'bugReport.list.filterStatus' | translate }}</mat-label>
-          <mat-select [(value)]="statusFilter" data-test-id="bug-report-status-filter">
-            <mat-option value="">{{ 'bugReport.list.allStatuses' | translate }}</mat-option>
-            @for (s of allStatuses; track s) {
-              <mat-option [value]="s">{{ 'bugReport.status.' + s | translate }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      }
       <a mat-flat-button [routerLink]="['/projects', projectId, 'bug-reports', 'new']" class="create-btn" data-test-id="bug-report-create-btn">
         <mat-icon>add</mat-icon>
         {{ 'bugReport.list.create' | translate }}
       </a>
     </div>
   </div>
+
+  <div class="filters" data-test-id="bug-report-filters">
+    <mat-form-field appearance="outline" class="search-field" subscriptSizing="dynamic">
+      <mat-label>{{ 'bugReport.list.search' | translate }}</mat-label>
+      <mat-icon matPrefix>search</mat-icon>
+      <input matInput [(ngModel)]="searchTerm" (ngModelChange)="onSearchInput()" data-test-id="bug-report-search" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'bugReport.form.status' | translate }}</mat-label>
+      <mat-select multiple [(ngModel)]="statusFilter" (selectionChange)="applyFilters()" data-test-id="bug-report-status-filter">
+        @for (s of allStatuses; track s) {
+          <mat-option [value]="s">{{ 'bugReport.status.' + s | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'bugReport.form.priority' | translate }}</mat-label>
+      <mat-select multiple [(ngModel)]="priorityFilter" (selectionChange)="applyFilters()" data-test-id="bug-report-priority-filter">
+        @for (p of priorities; track p) {
+          <mat-option [value]="p">{{ 'priority.' + p | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'bugReport.form.assignee' | translate }}</mat-label>
+      <mat-select multiple [(ngModel)]="assigneeFilter" (selectionChange)="applyFilters()" data-test-id="bug-report-assignee-filter">
+        <mat-option value="me">{{ 'bugReport.list.assignedToMe' | translate }}</mat-option>
+        <mat-option value="none">{{ 'bugReport.form.noAssignee' | translate }}</mat-option>
+        @for (member of members; track member.userId) {
+          <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (hasFilters) {
+      <button mat-button type="button" (click)="clearFilters()" data-test-id="bug-report-clear-filters">
+        {{ 'bugReport.list.clearFilters' | translate }}
+      </button>
+    }
+  </div>
+
+  @if (canWrite && selected().size > 0) {
+    <div class="bulk-bar tm-card" role="toolbar" [attr.aria-label]="'bugReport.bulk.toolbar' | translate" data-test-id="bug-bulk-bar">
+      <span class="bulk-count">{{ 'bugReport.bulk.selected' | translate: { count: selected().size } }}</span>
+      <button mat-stroked-button [matMenuTriggerFor]="assignMenu" data-test-id="bug-bulk-assign">
+        <mat-icon>assignment_ind</mat-icon>{{ 'bugReport.bulk.assign' | translate }}
+      </button>
+      <mat-menu #assignMenu="matMenu">
+        <button mat-menu-item (click)="bulkAssignToMe()">{{ 'bugReport.list.assignedToMe' | translate }}</button>
+        <button mat-menu-item (click)="bulkAssign(null)">{{ 'bugReport.form.noAssignee' | translate }}</button>
+        @for (member of members; track member.userId) {
+          <button mat-menu-item (click)="bulkAssign(member.userId)">{{ member.displayName }}</button>
+        }
+      </mat-menu>
+      <button mat-stroked-button [matMenuTriggerFor]="priorityMenu" data-test-id="bug-bulk-priority">
+        <mat-icon>flag</mat-icon>{{ 'bugReport.form.priority' | translate }}
+      </button>
+      <mat-menu #priorityMenu="matMenu">
+        @for (p of priorities; track p) {
+          <button mat-menu-item (click)="bulkPriority(p)">{{ 'priority.' + p | translate }}</button>
+        }
+      </mat-menu>
+      <button mat-stroked-button [matMenuTriggerFor]="statusMenu" data-test-id="bug-bulk-status">
+        <mat-icon>swap_horiz</mat-icon>{{ 'bugReport.form.status' | translate }}
+      </button>
+      <mat-menu #statusMenu="matMenu">
+        @for (s of allStatuses; track s) {
+          <button mat-menu-item (click)="bulkStatus(s)">{{ 'bugReport.status.' + s | translate }}</button>
+        }
+      </mat-menu>
+      <button mat-stroked-button class="delete-btn" (click)="bulkDelete()" data-test-id="bug-bulk-delete">
+        <mat-icon>delete</mat-icon>{{ 'common.delete' | translate }}
+      </button>
+      <button mat-button (click)="clearSelection()" data-test-id="bug-bulk-clear">{{ 'bugReport.bulk.clear' | translate }}</button>
+    </div>
+  }
 
   @if (loading$ | async) {
     <div class="loading-container">
@@ -42,108 +107,106 @@
     <div class="error-state" data-test-id="bug-report-list-error" role="alert">
       <mat-icon>error_outline</mat-icon>
       <p>{{ 'common.loadError' | translate }}</p>
-      <button mat-stroked-button (click)="retry()">
+      <button mat-stroked-button (click)="reload()">
         <mat-icon>refresh</mat-icon>
         {{ 'common.retry' | translate }}
       </button>
     </div>
   } @else {
-    @if (bugReports$ | async; as reports) {
-      @if (viewMode === 'list') {
-        @if (filteredReports(reports).length === 0) {
-          <div class="empty-state tm-card" data-test-id="bug-report-empty" role="status">
-            <mat-icon class="empty-icon">pest_control</mat-icon>
-            <p>{{ 'bugReport.list.empty' | translate }}</p>
-            <a mat-flat-button [routerLink]="['/projects', projectId, 'bug-reports', 'new']" data-test-id="bug-report-empty-create-btn">
-              {{ 'bugReport.list.create' | translate }}
-            </a>
-          </div>
+    @let reports = (bugReports$ | async) ?? [];
+    @let page = page$ | async;
+    @if (reports.length === 0) {
+      <div class="empty-state tm-card" data-test-id="bug-report-empty" role="status">
+        <mat-icon class="empty-icon">pest_control</mat-icon>
+        @if (hasFilters) {
+          <p>{{ 'bugReport.list.noMatches' | translate }}</p>
+          <button mat-stroked-button (click)="clearFilters()">{{ 'bugReport.list.clearFilters' | translate }}</button>
         } @else {
-          <div class="table-scroll">
-            <table mat-table [dataSource]="filteredReports(reports)" class="bug-reports-table tm-card" data-test-id="bug-report-table" aria-label="Bug reports">
-              <ng-container matColumnDef="title">
-                <th mat-header-cell *matHeaderCellDef>{{ 'bugReport.form.title' | translate }}</th>
-                <td mat-cell *matCellDef="let bug">
-                  <a [routerLink]="['/projects', projectId, 'bug-reports', bug.id]" class="item-link" data-test-id="bug-report-title-link">
-                    {{ bug.title }}
-                  </a>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="priority">
-                <th mat-header-cell *matHeaderCellDef>{{ 'bugReport.form.priority' | translate }}</th>
-                <td mat-cell *matCellDef="let bug">
-                  <span class="badge badge--{{ bug.priority | lowercase }}" data-test-id="bug-report-priority-badge">
-                    {{ 'priority.' + bug.priority | translate }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="status">
-                <th mat-header-cell *matHeaderCellDef>{{ 'bugReport.form.status' | translate }}</th>
-                <td mat-cell *matCellDef="let bug">
-                  <span class="badge badge--{{ bug.status | lowercase }}" data-test-id="bug-report-status-badge">
-                    {{ 'bugReport.status.' + bug.status | translate }}
-                  </span>
-                </td>
-              </ng-container>
-
-              <ng-container matColumnDef="assignee">
-                <th mat-header-cell *matHeaderCellDef>{{ 'bugReport.form.assignee' | translate }}</th>
-                <td mat-cell *matCellDef="let bug">{{ bug.assigneeName || '-' }}</td>
-              </ng-container>
-
-              <ng-container matColumnDef="createdAt">
-                <th mat-header-cell *matHeaderCellDef>{{ 'bugReport.list.created' | translate }}</th>
-                <td mat-cell *matCellDef="let bug">{{ bug.createdAt | localizedDate:'mediumDate' }}</td>
-              </ng-container>
-
-              <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-              <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
-            </table>
-          </div>
+          <p>{{ 'bugReport.list.empty' | translate }}</p>
+          <a mat-flat-button [routerLink]="['/projects', projectId, 'bug-reports', 'new']" data-test-id="bug-report-empty-create-btn">
+            {{ 'bugReport.list.create' | translate }}
+          </a>
         }
+      </div>
+    } @else if (viewMode === 'kanban') {
+      @if (page && page.totalElements > reports.length) {
+        <p class="kanban-truncated" role="status">{{ 'bugReport.list.kanbanTruncated' | translate: { shown: reports.length, total: page.totalElements } }}</p>
       }
-
-      @if (viewMode === 'kanban') {
-        <div class="kanban-board">
-          @for (status of kanbanStatuses; track status) {
-            <div
-              class="kanban-lane"
-              cdkDropList
-              [id]="'lane-' + status"
-              [cdkDropListData]="getBugsForStatus(reports, status)"
-              [cdkDropListConnectedTo]="kanbanLaneIds"
-              (cdkDropListDropped)="onCardDrop($event, status)"
-              role="region"
-              [attr.aria-label]="'Bugs with status ' + ('bugReport.status.' + status | translate)"
-            >
-              <div class="kanban-lane-header">
-                <span class="badge badge--{{ status | lowercase }}">
-                  {{ 'bugReport.status.' + status | translate }}
-                </span>
-                <span class="kanban-lane-count">{{ getBugsForStatus(reports, status).length }}</span>
-              </div>
-              @for (bug of getBugsForStatus(reports, status); track bug.id) {
-                <div class="kanban-card" cdkDrag [cdkDragData]="bug" aria-roledescription="Draggable card" role="button" [attr.aria-label]="'Bug: ' + bug.title">
-                  <div class="kanban-card-title">
-                    <a [routerLink]="['/projects', projectId, 'bug-reports', bug.id]" class="item-link">
-                      {{ bug.title }}
-                    </a>
-                  </div>
-                  <div class="kanban-card-meta">
-                    <span class="badge badge--{{ bug.priority | lowercase }} badge--small">
-                      {{ 'priority.' + bug.priority | translate }}
-                    </span>
-                    @if (bug.assigneeName) {
-                      <span class="kanban-card-assignee">{{ bug.assigneeName }}</span>
-                    }
-                  </div>
-                </div>
+      <app-bug-report-kanban [projectId]="projectId" [reports]="reports" [selectedIds]="selected()" [canWrite]="canWrite"
+                             (statusDrop)="onStatusDrop($event)" (selectionToggle)="toggle($event)" />
+    } @else {
+      <div class="table-scroll">
+        <table mat-table [dataSource]="reports" matSort [matSortActive]="sortActive" [matSortDirection]="sortDirection"
+               matSortDisableClear (matSortChange)="onSortChange($event)"
+               class="bug-reports-table tm-card" data-test-id="bug-report-table" [attr.aria-label]="'bugReport.list.title' | translate">
+          <ng-container matColumnDef="select">
+            <th mat-header-cell *matHeaderCellDef class="select-cell">
+              @if (canWrite) {
+                <mat-checkbox [checked]="isAllSelected(reports)" [indeterminate]="selected().size > 0 && !isAllSelected(reports)"
+                              (change)="toggleAll(reports)" [attr.aria-label]="'bugReport.bulk.selectPage' | translate"
+                              data-test-id="bug-select-all" />
               }
-            </div>
-          }
-        </div>
+            </th>
+            <td mat-cell *matCellDef="let bug" class="select-cell">
+              @if (canWrite) {
+                <mat-checkbox [checked]="selected().has(bug.id)" (change)="toggle(bug.id)" [attr.aria-label]="bug.key"
+                              [attr.data-test-id]="'bug-select-' + bug.key" />
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="key">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'bugReport.list.key' | translate }}</th>
+            <td mat-cell *matCellDef="let bug" class="key-cell" data-test-id="bug-report-key">{{ bug.key }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="title">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'bugReport.form.title' | translate }}</th>
+            <td mat-cell *matCellDef="let bug">
+              <a [routerLink]="['/projects', projectId, 'bug-reports', bug.id]" class="item-link" data-test-id="bug-report-title-link">
+                {{ bug.title }}
+              </a>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="priority">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'bugReport.form.priority' | translate }}</th>
+            <td mat-cell *matCellDef="let bug">
+              <span class="badge badge--{{ bug.priority | lowercase }}" data-test-id="bug-report-priority-badge">
+                {{ 'priority.' + bug.priority | translate }}
+              </span>
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="status">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'bugReport.form.status' | translate }}</th>
+            <td mat-cell *matCellDef="let bug">
+              <span class="badge badge--{{ bug.status | lowercase }}" data-test-id="bug-report-status-badge">
+                {{ 'bugReport.status.' + bug.status | translate }}
+              </span>
+              @if (bug.resolution) {
+                <span class="resolution">{{ 'bugReport.resolution.' + bug.resolution | translate }}</span>
+              }
+            </td>
+          </ng-container>
+
+          <ng-container matColumnDef="assignee">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'bugReport.form.assignee' | translate }}</th>
+            <td mat-cell *matCellDef="let bug">{{ bug.assigneeName || '-' }}</td>
+          </ng-container>
+
+          <ng-container matColumnDef="createdAt">
+            <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'bugReport.list.created' | translate }}</th>
+            <td mat-cell *matCellDef="let bug">{{ bug.createdAt | localizedDate:'mediumDate' }}</td>
+          </ng-container>
+
+          <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+          <tr mat-row *matRowDef="let row; columns: displayedColumns" [class.row--selected]="selected().has(row.id)"></tr>
+        </table>
+      </div>
+      @if (page) {
+        <mat-paginator [length]="page.totalElements" [pageIndex]="page.number" [pageSize]="page.size"
+                       [pageSizeOptions]="[25, 50, 100]" (page)="onPage($event)" data-test-id="bug-report-paginator" />
       }
     }
   }

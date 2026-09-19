@@ -15,7 +15,7 @@ import { Observable, of } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { selectBugReportById } from '../../../store/bug-report/bug-report.selectors';
-import { BugReport, BugReportStatus } from '../../../shared/models/bug-report.model';
+import { ALL_BUG_STATUSES, BugReport, BugReportStatus, ChangeBugStatusRequest } from '../../../shared/models/bug-report.model';
 import { ChangeBugStatusDialogComponent, ChangeBugStatusDialogData } from '../change-bug-status-dialog/change-bug-status-dialog.component';
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
@@ -49,36 +49,33 @@ export class BugReportDetailComponent implements OnInit {
   projectId = '';
   bugId = '';
   bugReport$: Observable<BugReport | undefined> = of(undefined);
-  statuses: BugReportStatus[] = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'WONTFIX'];
+  readonly statuses = ALL_BUG_STATUSES;
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
-    this.bugId = this.route.snapshot.paramMap.get('bugId') ?? '';
-    if (this.projectId && this.bugId) {
-      this.store.dispatch(BugReportActions.loadBugReport({ projectId: this.projectId, id: this.bugId }));
-      this.bugReport$ = this.store.select(selectBugReportById(this.bugId));
-    }
+    // A duplicate-of link leads to this same route, which reuses the component: follow the param.
+    this.route.paramMap.pipe(takeUntilDestroyed(this.destroyRef)).subscribe((params) => {
+      this.bugId = params.get('bugId') ?? '';
+      if (this.projectId && this.bugId) {
+        this.store.dispatch(BugReportActions.loadBugReport({ projectId: this.projectId, id: this.bugId }));
+        this.bugReport$ = this.store.select(selectBugReportById(this.bugId));
+      }
+    });
   }
 
   onStatusChange(bug: BugReport, newStatus: BugReportStatus): void {
     if (newStatus === bug.status) return;
 
     const dialogRef = this.dialog.open(ChangeBugStatusDialogComponent, {
-      data: { currentStatus: bug.status, newStatus } as ChangeBugStatusDialogData,
+      data: { projectId: this.projectId, currentStatus: bug.status, newStatus, bugIds: [bug.id] } as ChangeBugStatusDialogData,
     });
 
-    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((reason: string | undefined) => {
-      if (reason) {
-        this.store.dispatch(
-          BugReportActions.changeBugReportStatus({
-            projectId: this.projectId,
-            id: bug.id,
-            status: newStatus,
-            reason,
-          })
-        );
-      }
-    });
+    dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((request: ChangeBugStatusRequest | undefined) => {
+        if (request) {
+          this.store.dispatch(BugReportActions.changeBugReportStatus({ projectId: this.projectId, id: bug.id, request }));
+        }
+      });
   }
 
   deleteBugReport(id: string): void {

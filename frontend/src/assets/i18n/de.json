@@ -666,9 +666,17 @@
       "title": "Fehlermeldungen",
       "create": "Fehler melden",
       "empty": "Noch keine Fehlermeldungen.",
-      "filterStatus": "Nach Status filtern",
-      "allStatuses": "Alle Status",
-      "created": "Erstellt"
+      "created": "Erstellt",
+      "search": "Schlüssel, Titel oder Text suchen",
+      "assignedToMe": "Ich",
+      "clearFilters": "Filter zurücksetzen",
+      "noMatches": "Keine Fehlermeldung passt zu diesen Filtern.",
+      "key": "Schlüssel",
+      "viewList": "Liste",
+      "viewKanban": "Board",
+      "ageDays": "{{days}} T",
+      "ageTooltip": "Tage seit der Meldung",
+      "kanbanTruncated": "Das Board zeigt die neuesten {{shown}} von {{total}} Fehlern. Filtere, um die übrigen zu sehen."
     },
     "form": {
       "createTitle": "Fehler melden",
@@ -685,11 +693,11 @@
       "noAssignee": "Nicht zugewiesen"
     },
     "status": {
+      "NEW": "Neu",
       "OPEN": "Offen",
       "IN_PROGRESS": "In Bearbeitung",
       "RESOLVED": "Gelöst",
-      "CLOSED": "Geschlossen",
-      "WONTFIX": "Wird nicht behoben"
+      "CLOSED": "Geschlossen"
     },
     "detail": {
       "reportedBy": "Gemeldet von",
@@ -705,7 +713,34 @@
       "cancel": "Abbrechen"
     },
     "reportBug": "Fehler melden",
-    "linkedBugs": "Verknüpfte Fehler"
+    "linkedBugs": "Verknüpfte Fehler",
+    "resolution": {
+      "label": "Lösung",
+      "none": "Noch keine Lösung",
+      "of": "von",
+      "duplicateOf": "Duplikat von (nach Schlüssel oder Titel suchen)",
+      "FIXED": "Behoben",
+      "WONT_FIX": "Wird nicht behoben",
+      "DUPLICATE": "Duplikat",
+      "CANNOT_REPRODUCE": "Nicht reproduzierbar",
+      "NOT_A_BUG": "Kein Fehler",
+      "DEFERRED": "Zurückgestellt"
+    },
+    "bulk": {
+      "toolbar": "Ausgewählte Fehlermeldungen ändern",
+      "selected": "{{count}} ausgewählt",
+      "selectPage": "Alle auf dieser Seite auswählen",
+      "assign": "Zuweisen",
+      "clear": "Auswahl aufheben",
+      "deleteConfirm": "{{count}} Fehlermeldung(en) löschen?",
+      "done": "Fehlermeldungen geändert",
+      "failed": "Die Fehlermeldungen konnten nicht geändert werden"
+    },
+    "template": {
+      "title": "Vorlage für Fehlermeldungen",
+      "description": "Neue Fehlermeldungen beginnen mit diesem Text in leeren Feldern. Beim Bearbeiten wird die Vorlage nie erneut angewendet.",
+      "environment": "Standard-Umgebung"
+    }
   },
   "myBugs": {
     "title": "Meine Fehlermeldungen",

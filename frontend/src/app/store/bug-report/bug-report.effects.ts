@@ -4,7 +4,7 @@ import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { BugReportActions } from './bug-report.actions';
 import { BugReportApiService } from '../../core/services/bug-report-api.service';
 
@@ -19,9 +19,9 @@ export class BugReportEffects {
   loadBugReports$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BugReportActions.loadBugReports),
-      mergeMap(({ projectId }) =>
-        this.bugReportApi.getAll(projectId).pipe(
-          map((bugReports) => BugReportActions.loadBugReportsSuccess({ bugReports })),
+      switchMap(({ projectId, query }) =>
+        this.bugReportApi.getAll(projectId, query).pipe(
+          map(({ content, page }) => BugReportActions.loadBugReportsSuccess({ bugReports: content, page })),
           catchError((error) => of(BugReportActions.loadBugReportsFailure({ error: error.message })))
         )
       )
@@ -100,8 +100,8 @@ export class BugReportEffects {
   changeBugReportStatus$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BugReportActions.changeBugReportStatus),
-      mergeMap(({ projectId, id, status, reason }) =>
-        this.bugReportApi.changeStatus(projectId, id, status, reason).pipe(
+      mergeMap(({ projectId, id, request }) =>
+        this.bugReportApi.changeStatus(projectId, id, request).pipe(
           map((bugReport) => BugReportActions.changeBugReportStatusSuccess({ bugReport })),
           catchError((error) => of(BugReportActions.changeBugReportStatusFailure({ error: error.message })))
         )

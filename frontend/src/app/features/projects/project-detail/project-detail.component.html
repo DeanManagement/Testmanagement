@@ -116,6 +116,9 @@
           data-test-id="project-settings-bug-reports-toggle">
         </mat-slide-toggle>
       </div>
+      @if (project.bugReportsEnabled) {
+        <app-bug-template-settings [project]="project" (changed)="onProjectSettingsChanged()" />
+      }
       <div class="setting-item setting-item--stacked">
         <div class="setting-row">
           <div class="setting-info">

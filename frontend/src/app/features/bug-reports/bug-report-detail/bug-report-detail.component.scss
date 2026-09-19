@@ -124,3 +124,14 @@
 .delete-btn {
   color: var(--mdc-theme-error, #f44336);
 }
+
+.bug-key {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tm-text-secondary);
+}
+
+.resolution {
+  font-size: 13px;
+  color: var(--tm-text-secondary);
+}

@@ -1,11 +1,14 @@
 import { createEntityAdapter, EntityState } from '@ngrx/entity';
 import { BugReport } from '../../shared/models/bug-report.model';
+import { EMPTY_PAGE_METADATA, PageMetadata } from '../../shared/models/page.model';
 
 export const bugReportAdapter = createEntityAdapter<BugReport>();
 
 export interface BugReportState extends EntityState<BugReport> {
   loading: boolean;
   error: string | null;
+  /** The list's current page (PRD-045); the entities hold that page's bugs. */
+  page: PageMetadata;
   /**
    * Bug reports linked to a given test result, indexed by `testResultId`.
    * Populated by `loadBugReportsByTestResultSuccess`. Keeping this as a
@@ -20,6 +23,7 @@ export interface BugReportState extends EntityState<BugReport> {
 export const initialBugReportState: BugReportState = bugReportAdapter.getInitialState({
   loading: false,
   error: null,
+  page: EMPTY_PAGE_METADATA,
   linkedBugReportsByResult: {},
   myBugReports: [],
   myBugReportsLoading: false,

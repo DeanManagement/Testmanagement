@@ -1,7 +1,17 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BugReport, BugReportStatus, CreateBugReportRequest, UpdateBugReportRequest } from '../../shared/models/bug-report.model';
+import { map } from 'rxjs/operators';
+import {
+  BugReport,
+  BugReportQuery,
+  BulkUpdateBugReportsRequest,
+  ChangeBugStatusRequest,
+  CreateBugReportRequest,
+  UpdateBugReportRequest,
+} from '../../shared/models/bug-report.model';
+import { Page } from '../../shared/models/page.model';
+import { BulkOperationResponse } from '../../shared/models/test-case.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
 
 @Injectable({ providedIn: 'root' })
@@ -12,16 +22,26 @@ export class BugReportApiService {
     return `/api/projects/${projectId}/bug-reports`;
   }
 
-  getAll(projectId: string): Observable<BugReport[]> {
-    return this.http.get<BugReport[]>(this.baseUrl(projectId)).pipe(retryWithBackoff());
+  getAll(projectId: string, query: BugReportQuery = {}): Observable<Page<BugReport>> {
+    let params = new HttpParams();
+    if (query.q) params = params.set('q', query.q);
+    (query.status ?? []).forEach((s) => (params = params.append('status', s)));
+    (query.priority ?? []).forEach((p) => (params = params.append('priority', p)));
+    (query.assignee ?? []).forEach((a) => (params = params.append('assignee', a)));
+    if (query.testResultId) params = params.set('testResultId', query.testResultId);
+    if (query.page != null) params = params.set('page', String(query.page));
+    if (query.size != null) params = params.set('size', String(query.size));
+    if (query.sort) params = params.set('sort', query.sort);
+    return this.http.get<Page<BugReport>>(this.baseUrl(projectId), { params }).pipe(retryWithBackoff());
   }
 
-  getById(projectId: string, id: string): Observable<BugReport> {
-    return this.http.get<BugReport>(`${this.baseUrl(projectId)}/${id}`).pipe(retryWithBackoff());
+  /** By UUID or by key (PROJ-BUG-12). */
+  getById(projectId: string, idOrKey: string): Observable<BugReport> {
+    return this.http.get<BugReport>(`${this.baseUrl(projectId)}/${idOrKey}`).pipe(retryWithBackoff());
   }
 
   getByTestResult(projectId: string, testResultId: string): Observable<BugReport[]> {
-    return this.http.get<BugReport[]>(this.baseUrl(projectId), { params: { testResultId } }).pipe(retryWithBackoff());
+    return this.getAll(projectId, { testResultId, size: 200 }).pipe(map((page) => page.content));
   }
 
   create(projectId: string, request: CreateBugReportRequest): Observable<BugReport> {
@@ -32,8 +52,16 @@ export class BugReportApiService {
     return this.http.put<BugReport>(`${this.baseUrl(projectId)}/${id}`, request);
   }
 
-  changeStatus(projectId: string, id: string, status: BugReportStatus, reason: string): Observable<BugReport> {
-    return this.http.patch<BugReport>(`${this.baseUrl(projectId)}/${id}/status`, { status, reason });
+  changeStatus(projectId: string, id: string, request: ChangeBugStatusRequest): Observable<BugReport> {
+    return this.http.patch<BugReport>(`${this.baseUrl(projectId)}/${id}/status`, request);
+  }
+
+  bulkUpdate(projectId: string, request: BulkUpdateBugReportsRequest): Observable<BulkOperationResponse> {
+    return this.http.patch<BulkOperationResponse>(`${this.baseUrl(projectId)}/bulk`, request);
+  }
+
+  bulkDelete(projectId: string, ids: string[]): Observable<BulkOperationResponse> {
+    return this.http.post<BulkOperationResponse>(`${this.baseUrl(projectId)}/bulk-delete`, { ids });
   }
 
   delete(projectId: string, id: string): Observable<void> {

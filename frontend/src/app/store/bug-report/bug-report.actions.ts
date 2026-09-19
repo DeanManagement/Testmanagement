@@ -1,11 +1,12 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { BugReport, BugReportStatus, CreateBugReportRequest, UpdateBugReportRequest } from '../../shared/models/bug-report.model';
+import { BugReport, BugReportQuery, ChangeBugStatusRequest, CreateBugReportRequest, UpdateBugReportRequest } from '../../shared/models/bug-report.model';
+import { PageMetadata } from '../../shared/models/page.model';
 
 export const BugReportActions = createActionGroup({
   source: 'BugReports',
   events: {
-    'Load Bug Reports': props<{ projectId: string }>(),
-    'Load Bug Reports Success': props<{ bugReports: BugReport[] }>(),
+    'Load Bug Reports': props<{ projectId: string; query: BugReportQuery }>(),
+    'Load Bug Reports Success': props<{ bugReports: BugReport[]; page: PageMetadata }>(),
     'Load Bug Reports Failure': props<{ error: string }>(),
 
     'Load Bug Report': props<{ projectId: string; id: string }>(),
@@ -24,7 +25,7 @@ export const BugReportActions = createActionGroup({
     'Update Bug Report Success': props<{ bugReport: BugReport }>(),
     'Update Bug Report Failure': props<{ error: string }>(),
 
-    'Change Bug Report Status': props<{ projectId: string; id: string; status: BugReportStatus; reason: string }>(),
+    'Change Bug Report Status': props<{ projectId: string; id: string; request: ChangeBugStatusRequest }>(),
     'Change Bug Report Status Success': props<{ bugReport: BugReport }>(),
     'Change Bug Report Status Failure': props<{ error: string }>(),
 

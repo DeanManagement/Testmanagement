@@ -9,6 +9,7 @@ export const selectAllBugReports = createSelector(selectBugReportState, selectAl
 export const selectBugReportEntities = createSelector(selectBugReportState, selectEntities);
 export const selectBugReportsLoading = createSelector(selectBugReportState, (state) => state.loading);
 export const selectBugReportsError = createSelector(selectBugReportState, (state) => state.error);
+export const selectBugReportPage = createSelector(selectBugReportState, (state) => state.page);
 export const selectLinkedBugReportsByResult = createSelector(
   selectBugReportState,
   (state) => state.linkedBugReportsByResult,

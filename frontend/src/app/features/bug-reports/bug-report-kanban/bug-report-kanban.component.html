@@ -1,0 +1,36 @@
+<div class="kanban-board" data-test-id="bug-kanban">
+  @for (lane of lanes; track lane.status) {
+    <div class="kanban-lane" cdkDropList [id]="'lane-' + lane.status" [cdkDropListData]="lane.bugs"
+         [cdkDropListConnectedTo]="laneIds" [cdkDropListDisabled]="!canWrite"
+         (cdkDropListDropped)="onDrop($event, lane.status)"
+         role="region" [attr.aria-label]="'bugReport.status.' + lane.status | translate"
+         [attr.data-test-id]="'kanban-lane-' + lane.status">
+      <div class="kanban-lane-header">
+        <span class="badge badge--{{ lane.status | lowercase }}">{{ 'bugReport.status.' + lane.status | translate }}</span>
+        <span class="kanban-lane-count">{{ lane.bugs.length }}</span>
+      </div>
+      @for (bug of lane.bugs; track bug.id) {
+        <div class="kanban-card" cdkDrag [cdkDragData]="bug" [class.kanban-card--selected]="selectedIds.has(bug.id)"
+             [attr.data-test-id]="'kanban-card-' + bug.key">
+          <div class="kanban-card-top">
+            @if (canWrite) {
+              <mat-checkbox [checked]="selectedIds.has(bug.id)" (change)="selectionToggle.emit(bug.id)"
+                            (mousedown)="$event.stopPropagation()" [attr.aria-label]="bug.key" />
+            }
+            <span class="kanban-card-key">{{ bug.key }}</span>
+            <span class="kanban-card-age" [matTooltip]="'bugReport.list.ageTooltip' | translate">
+              {{ 'bugReport.list.ageDays' | translate: { days: ageInDays(bug) } }}
+            </span>
+          </div>
+          <a [routerLink]="['/projects', projectId, 'bug-reports', bug.id]" class="item-link kanban-card-title">{{ bug.title }}</a>
+          <div class="kanban-card-meta">
+            <span class="badge badge--{{ bug.priority | lowercase }} badge--small">{{ 'priority.' + bug.priority | translate }}</span>
+            @if (bug.assigneeName) {
+              <span class="kanban-card-assignee" [matTooltip]="bug.assigneeName">{{ initials(bug.assigneeName) }}</span>
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

@@ -24,6 +24,7 @@ import { ProjectMember, ProjectRole } from '../../../shared/models/project-membe
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { AddMemberDialogComponent } from './add-member-dialog/add-member-dialog.component';
+import { BugTemplateSettingsComponent } from './bug-template-settings/bug-template-settings.component';
 
 import { eligibleReviewerCount } from '../../test-cases/review/review-status';
 
@@ -31,6 +32,7 @@ import { eligibleReviewerCount } from '../../test-cases/review/review-status';
   selector: 'app-project-detail',
   standalone: true,
   imports: [
+    BugTemplateSettingsComponent,
     AsyncPipe,
     RouterLink,
     FormsModule,
@@ -116,6 +118,10 @@ export class ProjectDetailComponent implements OnInit {
         this.store.dispatch(ProjectActions.loadProjects());
         this.cdr.detectChanges();
       });
+  }
+
+  onProjectSettingsChanged(): void {
+    this.store.dispatch(ProjectActions.loadProjects());
   }
 
   eligibleReviewers(minRole: 'ADMIN' | 'TESTER'): number {

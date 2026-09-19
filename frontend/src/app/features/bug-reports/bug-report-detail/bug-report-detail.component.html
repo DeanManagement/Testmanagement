@@ -20,6 +20,7 @@
 
     <div class="bug-hero tm-card" data-test-id="bug-report-hero">
       <div class="hero-top">
+        <span class="bug-key" data-test-id="bug-report-detail-key">{{ bug.key }}</span>
         <h1 data-test-id="bug-report-detail-title">{{ bug.title }}</h1>
         <div class="hero-badges">
           <span class="badge badge--{{ bug.priority | lowercase }}" data-test-id="bug-report-detail-priority">
@@ -28,6 +29,16 @@
           <span class="badge badge--{{ bug.status | lowercase }}" data-test-id="bug-report-detail-status">
             {{ 'bugReport.status.' + bug.status | translate }}
           </span>
+          @if (bug.resolution) {
+            <span class="resolution" data-test-id="bug-report-detail-resolution">
+              {{ 'bugReport.resolution.' + bug.resolution | translate }}
+              @if (bug.duplicateOfId) {
+                {{ 'bugReport.resolution.of' | translate }}
+                <a [routerLink]="['/projects', projectId, 'bug-reports', bug.duplicateOfId]" class="item-link"
+                   data-test-id="bug-report-detail-duplicate-of">{{ bug.duplicateOfKey }}</a>
+              }
+            </span>
+          }
         </div>
       </div>
       <div class="hero-meta">

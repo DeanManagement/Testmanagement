@@ -10,8 +10,8 @@ export const bugReportReducer = createReducer(
     loading: true,
     error: null,
   })),
-  on(BugReportActions.loadBugReportsSuccess, (state, { bugReports }) =>
-    bugReportAdapter.setAll(bugReports, { ...state, loading: false })
+  on(BugReportActions.loadBugReportsSuccess, (state, { bugReports, page }) =>
+    bugReportAdapter.setAll(bugReports, { ...state, loading: false, page })
   ),
   on(BugReportActions.loadBugReportsFailure, (state, { error }) => ({
     ...state,

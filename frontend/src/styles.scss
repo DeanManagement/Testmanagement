@@ -230,6 +230,11 @@ a {
   &--medium    { background: #dbeafe; color: #1e40af; }
   &--high      { background: #fef3c7; color: #92400e; }
   &--critical  { background: #fee2e2; color: #991b1b; }
+  // Bug statuses (PRD-045): untriaged stands out, closed recedes.
+  &--new       { background: #ede9fe; color: #5b21b6; }
+  &--open      { background: #fef3c7; color: #92400e; }
+  &--resolved  { background: #dcfce7; color: #166534; }
+  &--closed    { background: #e2e8f0; color: #475569; }
 }
 
 // Badges are the one place with hardcoded pairs, because the tint carries meaning.
@@ -252,6 +257,10 @@ a {
   &--medium    { background: #16273f; color: #7cb3f5; }
   &--high      { background: #3b2c10; color: #f5c26b; }
   &--critical  { background: #3d1f24; color: #ff9d95; }
+  &--new       { background: #2a2140; color: #c4b5fd; }
+  &--open      { background: #3b2c10; color: #f5c26b; }
+  &--resolved  { background: #14351f; color: #7ee2a0; }
+  &--closed    { background: #2b3441; color: #b6c2d1; }
 }
 
 // -- Card styling --

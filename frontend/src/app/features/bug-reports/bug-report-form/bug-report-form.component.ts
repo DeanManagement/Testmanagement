@@ -14,7 +14,9 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { selectBugReportById } from '../../../store/bug-report/bug-report.selectors';
-import { BugReportStatus, Priority } from '../../../shared/models/bug-report.model';
+import { Priority } from '../../../shared/models/bug-report.model';
+import { ProjectApiService } from '../../../core/services/project-api.service';
+import { Project } from '../../../shared/models/project.model';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { ProjectMember } from '../../../shared/models/project-member.model';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
@@ -51,6 +53,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly memberApi = inject(ProjectMemberApiService);
+  private readonly projectApi = inject(ProjectApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -64,7 +67,6 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
   members: ProjectMember[] = [];
 
   priorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
-  statuses: BugReportStatus[] = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'CLOSED', 'WONTFIX'];
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(255)]],
@@ -73,7 +75,6 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     expectedBehavior: [''],
     actualBehavior: [''],
     priority: ['HIGH' as Priority, [Validators.required]],
-    status: ['OPEN' as BugReportStatus, [Validators.required]],
     environment: [''],
     testResultId: [''],
     testRunId: [''],
@@ -116,6 +117,11 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     }
     this.exploratorySessionId = params['exploratorySessionId'] ?? null;
 
+    if (!this.isEdit && this.projectId) {
+      this.projectApi.getById(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe((project) => this.applyTemplate(project));
+    }
+
     if (this.isEdit && this.projectId) {
       this.store.dispatch(BugReportActions.loadBugReport({ projectId: this.projectId, id: this.bugId }));
       this.store.select(selectBugReportById(this.bugId)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((bug) => {
@@ -127,7 +133,6 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             expectedBehavior: bug.expectedBehavior || '',
             actualBehavior: bug.actualBehavior || '',
             priority: bug.priority,
-            status: bug.status,
             environment: bug.environment || '',
             testResultId: bug.testResultId || '',
             testRunId: bug.testRunId || '',
@@ -161,7 +166,6 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             expectedBehavior: value.expectedBehavior || undefined,
             actualBehavior: value.actualBehavior || undefined,
             priority: value.priority! as Priority,
-            status: value.status! as BugReportStatus,
             environment: value.environment || undefined,
             testResultId: value.testResultId || undefined,
             testRunId: value.testRunId || undefined,
@@ -193,6 +197,24 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     }
   }
 
+
+  /**
+   * PRD-045: the project's template fills what is still empty, never what came from a test run or
+   * a session note. Editing a bug never re-applies it. Marked pristine: nobody typed it.
+   */
+  private applyTemplate(project: Project): void {
+    const controls = this.form.controls;
+    const fill = (control: typeof controls.description, template: string | null) => {
+      if (template && !control.value) {
+        control.setValue(template);
+      }
+    };
+    fill(controls.description, project.bugTemplateDescription);
+    fill(controls.stepsToReproduce, project.bugTemplateSteps);
+    fill(controls.environment, project.bugTemplateEnvironment);
+    this.form.markAsPristine();
+    this.cdr.detectChanges();
+  }
 
   hasUnsavedChanges(): boolean {
     // form.dirty covers every field; dirty covers what lives outside the form controls and
