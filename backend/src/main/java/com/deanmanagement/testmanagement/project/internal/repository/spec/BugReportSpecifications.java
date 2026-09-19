@@ -14,7 +14,6 @@ import org.springframework.data.jpa.domain.Specification;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 
 /**
@@ -75,11 +74,11 @@ public final class BugReportSpecifications {
     }
 
     private static Predicate matchesText(Root<BugReport> root, CriteriaBuilder cb, String q) {
-        String like = "%" + q.trim().toLowerCase(Locale.ROOT) + "%";
+        String like = LikePatterns.containing(q.trim());
         List<Predicate> any = new ArrayList<>();
         for (String field : SEARCHED_FIELDS) {
             Expression<String> value = root.get(field);
-            any.add(cb.like(cb.lower(value), like));
+            any.add(cb.like(cb.lower(value), like, LikePatterns.ESCAPE));
         }
         return cb.or(any.toArray(new Predicate[0]));
     }

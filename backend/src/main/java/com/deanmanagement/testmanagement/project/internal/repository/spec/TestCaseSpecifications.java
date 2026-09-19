@@ -38,10 +38,10 @@ public final class TestCaseSpecifications {
             }
 
             if (filter.q() != null && !filter.q().isBlank()) {
-                String like = "%" + filter.q().trim().toLowerCase() + "%";
+                String like = LikePatterns.containing(filter.q().trim());
                 predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("title")), like),
-                        cb.like(cb.lower(root.get("key")), like)
+                        cb.like(cb.lower(root.get("title")), like, LikePatterns.ESCAPE),
+                        cb.like(cb.lower(root.get("key")), like, LikePatterns.ESCAPE)
                 ));
             }
 

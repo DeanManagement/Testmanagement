@@ -21,12 +21,12 @@ public interface SharedStepRepository extends JpaRepository<SharedStep, UUID> {
     List<SharedStep> findByProjectId(UUID projectId);
 
     /**
-     * {@code query} is matched case-insensitively anywhere in the title; "" lists all. Never null:
+     * {@code pattern} comes from {@code LikePatterns.containing}; "%%" lists all. Never null:
      * PostgreSQL cannot type a null parameter in LIKE.
      */
     @Query("SELECT s FROM SharedStep s WHERE s.project.id = :projectId "
-            + "AND LOWER(s.title) LIKE LOWER(CONCAT('%', :query, '%'))")
-    Page<SharedStep> search(@Param("projectId") UUID projectId, @Param("query") String query, Pageable pageable);
+            + "AND LOWER(s.title) LIKE :pattern ESCAPE '!'")
+    Page<SharedStep> search(@Param("projectId") UUID projectId, @Param("pattern") String pattern, Pageable pageable);
 
     /** Test cases referencing each block, as [sharedStepId, count] rows. */
     @Query("SELECT ts.usesSharedStep.id, COUNT(DISTINCT ts.testCase.id) FROM TestStep ts "

@@ -33,10 +33,10 @@ public final class TestRunSpecifications {
             predicates.add(cb.equal(root.get("project").get("id"), projectId));
 
             if (filter.q() != null && !filter.q().isBlank()) {
-                String like = "%" + filter.q().trim().toLowerCase() + "%";
+                String like = LikePatterns.containing(filter.q().trim());
                 predicates.add(cb.or(
-                        cb.like(cb.lower(root.get("name")), like),
-                        cb.like(cb.lower(root.get("key")), like)
+                        cb.like(cb.lower(root.get("name")), like, LikePatterns.ESCAPE),
+                        cb.like(cb.lower(root.get("key")), like, LikePatterns.ESCAPE)
                 ));
             }
 

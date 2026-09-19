@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
+import com.deanmanagement.testmanagement.project.internal.repository.spec.LikePatterns;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
@@ -72,7 +73,7 @@ public class SearchService {
         } else {
             String jpql = "SELECT tc FROM TestCase tc WHERE "
                     + memberJpql("tc.project", admin, projectId)
-                    + " AND (LOWER(tc.title) LIKE :q OR LOWER(tc.key) LIKE :q OR LOWER(tc.description) LIKE :q)"
+                    + " AND (LOWER(tc.title) LIKE :q ESCAPE '!' OR LOWER(tc.key) LIKE :q ESCAPE '!' OR LOWER(tc.description) LIKE :q ESCAPE '!')"
                     + " ORDER BY tc.updatedAt DESC";
             rows = bindLike(em.createQuery(jpql, TestCase.class), q, userId, admin, projectId, limit).getResultList();
         }
@@ -95,7 +96,7 @@ public class SearchService {
         } else {
             String jpql = "SELECT tr FROM TestRun tr WHERE "
                     + memberJpql("tr.project", admin, projectId)
-                    + " AND (LOWER(tr.name) LIKE :q OR LOWER(tr.key) LIKE :q OR LOWER(tr.environment) LIKE :q)"
+                    + " AND (LOWER(tr.name) LIKE :q ESCAPE '!' OR LOWER(tr.key) LIKE :q ESCAPE '!' OR LOWER(tr.environment) LIKE :q ESCAPE '!')"
                     + " ORDER BY tr.updatedAt DESC";
             rows = bindLike(em.createQuery(jpql, TestRun.class), q, userId, admin, projectId, limit).getResultList();
         }
@@ -118,7 +119,7 @@ public class SearchService {
         } else {
             String jpql = "SELECT br FROM BugReport br WHERE "
                     + memberJpql("br.project", admin, projectId)
-                    + " AND (LOWER(br.title) LIKE :q OR LOWER(br.key) LIKE :q OR LOWER(br.description) LIKE :q)"
+                    + " AND (LOWER(br.title) LIKE :q ESCAPE '!' OR LOWER(br.key) LIKE :q ESCAPE '!' OR LOWER(br.description) LIKE :q ESCAPE '!')"
                     + " ORDER BY br.updatedAt DESC";
             rows = bindLike(em.createQuery(jpql, BugReport.class), q, userId, admin, projectId, limit).getResultList();
         }
@@ -142,7 +143,7 @@ public class SearchService {
             String jpql = "SELECT p FROM Project p WHERE "
                     + (admin ? "1=1" : "EXISTS (SELECT 1 FROM ProjectMember m WHERE m.project = p AND m.user.id = :userId)")
                     + (projectId != null ? " AND p.id = :projectId" : "")
-                    + " AND (LOWER(p.name) LIKE :q OR LOWER(p.key) LIKE :q OR LOWER(p.description) LIKE :q)"
+                    + " AND (LOWER(p.name) LIKE :q ESCAPE '!' OR LOWER(p.key) LIKE :q ESCAPE '!' OR LOWER(p.description) LIKE :q ESCAPE '!')"
                     + " ORDER BY p.updatedAt DESC";
             var query = em.createQuery(jpql, Project.class).setMaxResults(limit);
             query.setParameter("q", like(q));
@@ -192,7 +193,7 @@ public class SearchService {
     }
 
     private String like(String q) {
-        return "%" + q.toLowerCase() + "%";
+        return LikePatterns.containing(q);
     }
 
     private String snippet(String text) {

@@ -16,6 +16,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.SharedStepRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.spec.LikePatterns;
 import com.deanmanagement.testmanagement.shared.exception.ConflictException;
 import com.deanmanagement.testmanagement.shared.exception.DuplicateKeyException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
@@ -53,7 +54,8 @@ public class SharedStepService {
     private final TestCaseReviewService reviewService;
 
     public Page<SharedStepSummary> list(UUID projectId, String query, Pageable pageable) {
-        Page<SharedStep> page = sharedStepRepository.search(projectId, query == null ? "" : query.trim(), pageable);
+        Page<SharedStep> page = sharedStepRepository.search(projectId,
+                LikePatterns.containing(query == null ? "" : query.trim()), pageable);
         Map<UUID, Long> usage = usageCounts(page.getContent().stream().map(SharedStep::getId).toList());
         return page.map(s -> new SharedStepSummary(s.getId(), s.getTitle(), s.getDescription(), s.getSteps().size(),
                 usage.getOrDefault(s.getId(), 0L), s.getUpdatedAt()));

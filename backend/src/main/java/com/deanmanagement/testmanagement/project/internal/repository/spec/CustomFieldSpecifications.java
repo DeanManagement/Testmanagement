@@ -13,7 +13,6 @@ import jakarta.persistence.criteria.Subquery;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Custom field predicates shared by the test case and test run list queries (PRD-035 §3.5). Each
@@ -68,7 +67,7 @@ final class CustomFieldSpecifications {
     private static Predicate containsAny(CriteriaBuilder cb, Expression<String> text, List<?> needles) {
         Expression<String> lowered = cb.lower(text);
         return cb.or(needles.stream()
-                .map(needle -> cb.like(lowered, "%" + needle.toString().toLowerCase(Locale.ROOT) + "%"))
+                .map(needle -> cb.like(lowered, LikePatterns.containing(needle.toString()), LikePatterns.ESCAPE))
                 .toArray(Predicate[]::new));
     }
 }

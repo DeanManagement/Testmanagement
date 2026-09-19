@@ -169,4 +169,18 @@ class SearchApiTest {
                 .andExpect(jsonPath("$.testCases.length()").value(0))
                 .andExpect(jsonPath("$.projects.length()").value(0));
     }
+
+    /** TES-BUG-21: % and _ are searched for literally, not as LIKE wildcards. */
+    @Test
+    void wildcardCharactersMatchOnlyThemselves() throws Exception {
+        seedTestCase(projectA, "Discount of 100% applies", "APHA-2");
+
+        mockMvc.perform(get("/api/search").param("q", "__").with(user(member)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.testCases.length()").value(0))
+                .andExpect(jsonPath("$.projects.length()").value(0));
+        mockMvc.perform(get("/api/search").param("q", "0%").with(user(member)))
+                .andExpect(jsonPath("$.testCases.length()").value(1))
+                .andExpect(jsonPath("$.testCases[0].title").value("Discount of 100% applies"));
+    }
 }

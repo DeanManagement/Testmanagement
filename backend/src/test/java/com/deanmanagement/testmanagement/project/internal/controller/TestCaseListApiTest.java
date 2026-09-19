@@ -317,4 +317,19 @@ class TestCaseListApiTest {
                 .andExpect(jsonPath("$.content.length()").value(1))
                 .andExpect(jsonPath("$.page.totalPages").value(2));
     }
+
+    /** TES-BUG-21: a search for % or _ listed every case. */
+    @Test
+    void q_matchesWildcardCharactersLiterally() throws Exception {
+        seed("Discount of 100% applies", TestCaseStatus.ACTIVE, Priority.LOW);
+        seed("snake_case field names", TestCaseStatus.ACTIVE, Priority.LOW);
+        seed("Payment flow", TestCaseStatus.ACTIVE, Priority.LOW);
+
+        mockMvc.perform(get("/api/projects/{p}/test-cases", projectId).param("q", "%").with(user(admin)))
+                .andExpect(jsonPath("$.page.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("Discount of 100% applies"));
+        mockMvc.perform(get("/api/projects/{p}/test-cases", projectId).param("q", "_").with(user(admin)))
+                .andExpect(jsonPath("$.page.totalElements").value(1))
+                .andExpect(jsonPath("$.content[0].title").value("snake_case field names"));
+    }
 }

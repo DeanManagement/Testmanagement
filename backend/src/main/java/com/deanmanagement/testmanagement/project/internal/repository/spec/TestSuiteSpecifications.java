@@ -23,8 +23,8 @@ public final class TestSuiteSpecifications {
             predicates.add(cb.equal(root.get("project").get("id"), projectId));
 
             if (filter.q() != null && !filter.q().isBlank()) {
-                String like = "%" + filter.q().trim().toLowerCase() + "%";
-                predicates.add(cb.like(cb.lower(root.get("name")), like));
+                String like = LikePatterns.containing(filter.q().trim());
+                predicates.add(cb.like(cb.lower(root.get("name")), like, LikePatterns.ESCAPE));
             }
 
             return cb.and(predicates.toArray(new Predicate[0]));
