@@ -386,7 +386,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "A screenshot can be attached to any step. When a case's result is Failed or Blocked, you can report a bug from it, provided bug reports are switched on for the project. With an issue tracker configured, you can also create and link an issue there directly. A single failed step is not enough: set the case's result."
+              "text": "A screenshot can be attached to any step. As soon as a result or one of its steps is Failed or Blocked, you can report a bug from it, provided bug reports are switched on for the project; from a step, the bug names that step and takes its actual result. Link existing bug records that a known bug failed again here. With an issue tracker configured, you can also create and link an issue there directly, and the Defect link field holds a link to any other ticket."
             }
           ]
         }

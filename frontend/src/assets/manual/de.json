@@ -386,7 +386,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Zu jedem Schritt lässt sich ein Screenshot hinzufügen. Steht das Ergebnis eines Falls auf Fehlgeschlagen oder Blockiert, kannst du daraus einen Fehlerbericht erfassen, sofern das Projekt Fehlerberichte eingeschaltet hat. Ist ein Issue-Tracker eingerichtet, kannst du auch direkt ein Ticket anlegen und verknüpfen. Ein einzelner fehlgeschlagener Schritt reicht dafür nicht: Setze das Ergebnis des Falls."
+              "text": "Zu jedem Schritt lässt sich ein Screenshot hinzufügen. Sobald ein Ergebnis oder einer seiner Schritte auf Fehlgeschlagen oder Blockiert steht, kannst du daraus einen Fehlerbericht erfassen, sofern das Projekt Fehlerberichte eingeschaltet hat; aus einem Schritt heraus nennt der Fehler diesen Schritt und übernimmt sein tatsächliches Ergebnis. Mit Bestehenden Fehler verknüpfen hältst du fest, dass ein bekannter Fehler hier erneut aufgetreten ist. Ist ein Issue-Tracker eingerichtet, kannst du auch direkt ein Ticket anlegen und verknüpfen, und das Feld Fehler-Link nimmt einen Link auf jedes andere Ticket auf."
             }
           ]
         }

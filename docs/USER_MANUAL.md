@@ -910,8 +910,7 @@ Entries recorded before this version show what happened but not which fields cha
 Built-in defect tracking, for teams without a separate tracker. A project Admin can switch it off
 per project under Project Settings.
 
-**Report Bug** from a failed result pre-fills the test case, run, result and environment. You can
-also raise one directly from **Bug Reports**.
+You can raise a bug directly from **Bug Reports**, or while testing, as described below.
 
 | Field | Notes |
 |---|---|
@@ -940,6 +939,32 @@ for a **resolution**: *Fixed*, *Won't fix*, *Duplicate*, *Cannot reproduce*, *No
 *Deferred*. A duplicate names the bug it repeats, and links to it. Resolved may carry a resolution
 too. Reopening a bug clears it. Editing a bug never changes its status; use the status field on
 the bug's page, or drag the card on the board, which asks for the same reason and resolution.
+
+### Reporting defects while testing
+
+In a run, as soon as a result **or any of its steps** is Failed or Blocked, the result offers:
+
+- **Report Bug**: files a bug with the test case, run, result and environment filled in. Each
+  failed or blocked step has its own bug icon too; reporting from there also names the step and
+  copies its actual result into *Actual Behavior*.
+- **Link existing bug**: for a known bug that fails again. Search by key or title (open bugs are
+  listed first) and pick one. The bug keeps the run it was found in and lists this one under *Also
+  seen in*. Each step has a link icon for the same.
+
+The result's bugs, found here or linked, are listed under it with their step. The **Defect link**
+field holds a link to an external ticket; it is saved when you leave the field, and emptying it
+removes the link. Changing a result's status no longer clears its comment or defect link.
+
+On the bug's page, the test case and the run link back, and the run link opens that result. *Also
+seen in* lists every later occurrence, each with a button to remove it.
+
+A **test plan** shows its **Defects**: every bug found in or linked to one of its runs. A run's
+**Failed** count on the plan opens the run showing only its failed results.
+
+The project **Dashboard** shows the open bugs with a link to the list, the open bugs by priority,
+and bugs reported and resolved per week over the last 12 weeks. A bug counts as resolved from the
+moment it moves to Resolved or Closed; reopening it takes it back out. For bugs resolved before this
+version, the time of their last change stands in.
 
 ### Triage
 

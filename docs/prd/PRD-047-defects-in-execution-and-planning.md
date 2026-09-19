@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-19 |
 | **Priority** | P2 — testers find defects while executing; today linking them is API-only and the plan says nothing about them |
@@ -207,3 +207,30 @@ plan Defects section, dashboard widget, and what "resolved" counts as.
 - [ ] The dashboard shows open defects by priority and a created-vs-resolved trend backed by `resolved_at`.
 - [ ] MCP `link_bug_report` exists; `get_bug_report` shows links.
 - [ ] Migration applies on H2 and PostgreSQL; backend and frontend tests pass; en/de translations and USER_MANUAL updated.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **Migration V69.** The `resolved_at` backfill covers RESOLVED and CLOSED: PRD-045's V66 had
+  already turned WONTFIX into CLOSED.
+- **No `linkKind` field.** A bug in a result's list was found there when its `testResultId` is that
+  result, and seen there again otherwise; the SPA compares the two. `findByTestResult` is the
+  list endpoint's `testResultId` filter, which now matches the found-in result or a link.
+- **Bug reports switched off** is still a 403 from these endpoints, the existing rule, not a 404.
+  The plan's Defects section and the dashboard widget render nothing then.
+- **The dashboard trend** has 12 weeks starting on Monday (UTC), the current one included, and
+  counts `resolved_at` from the first move out of the open statuses. RESOLVED to CLOSED keeps the
+  first time, and reopening clears it. The open-defects tile opens the bug list filtered to the
+  open statuses.
+- **Unlinking asks no confirmation**: it removes a record of an occurrence, and linking again
+  restores it.
+- **MCP:** `create_bug_report` and `link_bug_report` take a `stepNumber` (from 1), not a step
+  result id, since that is how `get_test_run` numbers steps. `get_bug_report` returns `stepNumber`
+  and `occurrences`.
+- **A bug found on the way and fixed:** updating a result with only a status (what the SPA does
+  when a tester clicks one) set its comment and defect link to null, wiping what CI or an agent had
+  written. Null now leaves them alone and an empty string clears them. The MCP result tools had
+  worked around it by reading the result and merging; that code is gone.
+
+Not tested: PostgreSQL, and the dashboard charts themselves (jsdom has no canvas).
