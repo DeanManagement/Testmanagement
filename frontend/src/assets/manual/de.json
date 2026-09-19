@@ -116,7 +116,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Jeder Lauf hat einen Bericht mit Kennzahlen, einem Diagramm und der vollständigen Ergebnisliste. Über die Schaltfläche PDF erzeugst du eine Fassung zum Weitergeben."
+              "text": "Jeder Lauf hat einen Bericht mit Kennzahlen, einem Diagramm und der vollständigen Ergebnisliste: Schlüssel, Ergebnis, wer den Fall wann ausgeführt hat und welche Version lief. Mit Schritte kommen die Schritte jedes Falls mit ihren tatsächlichen Ergebnissen dazu, mit Screenshots deren Screenshots. Über die Schaltfläche PDF erzeugst du eine Fassung zum Weitergeben, mit denselben Einstellungen."
             }
           ]
         },

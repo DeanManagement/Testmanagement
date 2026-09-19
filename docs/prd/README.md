@@ -167,7 +167,7 @@ on 2026-09-19 (`01d7da0` to `a71a07b`) and need a deploy to reach the test insta
 | [045](PRD-045-bug-report-triage.md) | Bug Report Triage (key, search, bulk, New/resolution, template) | P2 | M-L | ✅ Implemented |
 | [046](PRD-046-audit-trail-with-values.md) | Audit Trail with Old/New Values | P2 | M | ✅ Implemented |
 | [047](PRD-047-defects-in-execution-and-planning.md) | Defects in Execution and Planning | P2 | M-L | ✅ Implemented |
-| [048](PRD-048-execution-and-report-evidence.md) | Execution and Report Evidence | P2 | M | 📝 Draft |
+| [048](PRD-048-execution-and-report-evidence.md) | Execution and Report Evidence | P2 | M | ✅ Implemented |
 | [049](PRD-049-metrics-consistency-and-dashboard.md) | Metrics Consistency and Dashboard | P2 | S-M | 📝 Draft |
 | [050](PRD-050-test-case-context.md) | Test Case Context | P2 | S-M | 📝 Draft |
 | [051](PRD-051-bug-report-attachments-and-image-viewer.md) | Bug Report Attachments and Image Viewer (with PRD-044) | P2 | M | 📝 Draft |
@@ -184,6 +184,6 @@ matches *any* label while MCP `search_test_cases` documents *all* (052); the das
 report `7a792e91`); `step_images` and `screenshots` allow duplicate rows per owner (bug report `bd5b0f76`).
 
 ## Status legend
-Every PRD up to 028 except 026 is **Implemented**; 029–040 and 044–047 are implemented except where noted; 048–052 are drafts; 041–043 are drafts
+Every PRD up to 028 except 026 is **Implemented**; 029–040 and 044–048 are implemented except where noted; 049–052 are drafts; 041–043 are drafts
 postponed to the backlog (⏸). New work should get a new PRD rather than
 extending a shipped one.

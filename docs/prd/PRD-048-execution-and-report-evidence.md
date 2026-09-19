@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-19 |
 | **Priority** | P2 — the run report is what auditors and stakeholders receive; today it cannot answer "who ran what, when, against which wording" |
@@ -168,3 +168,34 @@ older results backfilled from the last editor), the cascade prompt.
 - [ ] A single result set to PASSED/SKIPPED can cascade to its PENDING steps only.
 - [ ] MCP `get_test_run` shows key and executor; `record_test_result` accepts `cascadeSteps`.
 - [ ] Migration applies on H2 and PostgreSQL; tests pass; en/de translations and USER_MANUAL updated.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **Migration V70.** `executed_by` has no FK; the backfill copies `updated_by` where `executed_at`
+  is set.
+- **`setStatus(status, executor)` replaces the one-argument method** instead of sitting next to
+  it, so no path can record a status without saying who executed it. The paths are single and bulk
+  updates, adding a result, a step change that recomputes the result, the external API and CI
+  uploads (the key's service user), and the MCP tools (the key).
+- **Executor names** are looked up once per run in `TestRunMapper`, which now has `UserService`
+  (setter-injected; MapStruct generates the subclass). A deleted user reads "Unknown user".
+- **The report JSON always carries the steps**, as it already did; there is no `?steps=` on it. The
+  Steps and Screenshots toggles on the report page switch the display, and are passed to the PDF as
+  `?steps=&screenshots=`. Screenshots imply steps.
+- **The PDF** is built by a new `RunReportHtml`, split out of `PdfReportService`. It embeds PNG,
+  JPEG and GIF screenshots (the renderer draws no WebP) up to 200, then counts the rest.
+- **`TestResultResponse` also carries `testCaseVersion`**, the case's current version, for the "the
+  case changed since this was recorded" note, which links to the case page and its version history.
+- **The suite detail's key** needed a `key` on the suite's case summary; the PRD assumed it was
+  there.
+- **The cascade prompt** appears after the status is saved: Yes sends the same status again with
+  `cascadeSteps`.
+
+Found on the way: the bug-report form spec from PRD-045 stubbed `EnvironmentApiService` without
+`getActive`, which made the frontend test run exit 1 through Vitest's "unhandled errors" although
+every test passed. Fixed.
+
+Not tested: the V70 backfill on H2 or PostgreSQL, and the PDF's look (the tests check its HTML and
+that the PDF renders).

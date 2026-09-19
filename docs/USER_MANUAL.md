@@ -688,8 +688,12 @@ run per environment (up to 20) in one go: same cases, plan and executor, each na
 
 ### Executing
 
-The execution screen has the case list on the left and the current case on the right. For each
-case, set an outcome per step and an overall outcome:
+The execution screen has the case list on the left and the current case on the right, each case
+shown with its key (the search box finds keys too). Above the steps, **Preconditions and
+description** shows the case's texts; it opens by itself when the case has preconditions. If the
+case was edited after this result was recorded, a note says so and links to the case's version
+history, since the texts and steps shown are always the case's current ones. For each case, set an
+outcome per step and an overall outcome:
 
 | Result | Meaning |
 |---|---|
@@ -701,6 +705,16 @@ case, set an outcome per step and an overall outcome:
 
 Record what actually happened in **Actual Result**, and attach a screenshot per step with **Add
 Screenshot**. Reference images from the test case are shown inline for comparison.
+
+Setting a case to **Passed** or **Skipped** while some of its steps are still pending asks whether
+to give those steps the same outcome. **Yes** sets only the pending ones; steps you already
+recorded keep their outcome. Failed and Blocked never carry down: a failure belongs to the step
+that failed.
+
+The first time a case leaves Pending, the result records **who executed it and when**. Correcting
+the outcome later, or someone else fixing the comment, keeps both. Setting it back to Pending
+clears them. Results from CI or the API are recorded as executed by the API key. For results
+recorded before this version, the last person to change them stands in.
 
 **Time is recorded for you.** Opening a case starts a timer (shown under **Duration**); setting the
 case's outcome saves the time with it, keyboard shortcuts included. If you went for lunch, type
@@ -857,7 +871,11 @@ rate. **My test runs** lists the sessions assigned to you that are planned or ru
 ## 11. Reports and dashboards
 
 **Run report** (**Report** on a run) — totals per outcome, pass rate, a status distribution chart
-and the per-case results. **Download PDF** produces a shareable copy.
+and the per-case results: key, test case, outcome, who executed it and when, the version of the
+case it executed, the comment and the defect link. The header names the run's test plan.
+**Steps** adds each case's steps with their outcome and actual result; **Screenshots** adds the
+step screenshots. **Download PDF** produces a shareable copy with the same choices; it embeds at
+most 200 screenshots and says how many it left out.
 
 **Suite report** — the latest known result for every case in a suite, also as PDF.
 

@@ -116,7 +116,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Every run has a report with figures, a chart and the full result list. The PDF button produces a version you can pass on."
+              "text": "Every run has a report with figures, a chart and the full result list: each case's key, outcome, who executed it and when, and the version it ran. Tick Steps to add each case's steps and actual results, and Screenshots to add their screenshots. The PDF button produces a version you can pass on, with the same choices."
             }
           ]
         },

@@ -310,6 +310,10 @@ action in the UI, and re-testing means a new run rather than editing a signed-of
   and optionally the step (`stepNumber`, from 1 as `get_test_run` numbers them), where it showed up;
   the bug keeps the result it was found in. `create_bug_report` takes a `stepNumber` too, and
   `get_bug_report` lists the bug's `occurrences`.
+- **Results name their case and executor.** `get_test_run` returns each result's `testCaseKey`,
+  who executed it and when. `record_test_result` records the key as the executor, and with
+  `cascadeSteps: true` a PASSED or SKIPPED also sets the steps still pending; recorded steps keep
+  their outcome, and a failure never cascades.
 - **Bugs are named by key** (`PROJ-BUG-12`) in every bug tool; UUIDs still work.
   `list_bug_reports` takes a `query`, `status`, `priority` and `assignee` (an email, `none` or `me`).
   New bugs start as `NEW` with the project's bug template in empty fields. Closing with
