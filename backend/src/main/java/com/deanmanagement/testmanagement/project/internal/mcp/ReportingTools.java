@@ -100,6 +100,11 @@ public class ReportingTools {
                     flakiest first. flakyScore is the share of consecutive results that changed
                     outcome; failRate is the share that failed. A high failRate with a low
                     flakyScore is a consistently broken test, not a flaky one.
+                    A case is listed only with enough evidence: at least 5 PASSED or FAILED results
+                    (its last 20 are considered) and a flakyScore of at least 0.3, by default; an
+                    administrator can change these. A case that flipped across two or three runs is
+                    therefore not listed yet, and an empty list can mean too little history rather
+                    than no flaky tests.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
