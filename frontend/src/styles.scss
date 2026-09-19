@@ -464,3 +464,11 @@ a {
     --tm-row-hover: #f8fafc;
   }
 }
+
+// Room for an outlined field's floating label at the top of a dialog. Material sets the content's
+// top padding to 0 after a title and clips overflow, which cut the label of the first field in
+// every form dialog ("Create Folder", "Update Status", "Add to Suite", ...).
+// Scoped under the overlay pane: Material's own rule has the same specificity and loads later.
+.cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-title + .mat-mdc-dialog-content {
+  padding-top: 8px;
+}

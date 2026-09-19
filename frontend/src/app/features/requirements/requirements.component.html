@@ -51,7 +51,7 @@
       <div class="tm-card form-card" data-test-id="requirement-form">
         <h2>{{ (editingId ? 'requirement.editTitle' : 'requirement.createTitle') | translate }}</h2>
         <div class="field-row">
-          <mat-form-field appearance="outline" class="external-id-field">
+          <mat-form-field appearance="outline" class="external-id-field" subscriptSizing="dynamic">
             <mat-label>{{ 'requirement.externalId' | translate }}</mat-label>
             <input matInput [(ngModel)]="formExternalId" placeholder="REQ-014" data-test-id="requirement-external-id-input">
             <mat-hint>{{ 'requirement.externalIdHint' | translate }}</mat-hint>

@@ -6,6 +6,8 @@
 
 .detail-header {
   display: flex;
+  flex-wrap: wrap; // narrow screens: the action bar goes below the title instead of past the edge
+  gap: 12px;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
@@ -13,6 +15,7 @@
 
 .detail-actions {
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
 }
 

@@ -73,6 +73,8 @@
 
 .folder-node {
   display: flex;
+  flex: 1;
+  min-width: 0;
   align-items: center;
   gap: 4px;
   padding: 4px 12px;
@@ -109,6 +111,9 @@
 
 .folder-name {
   flex: 1;
+  // Without it a flex item is at least as wide as its text, so the ellipsis never applied and a
+  // long name pushed the count badge out of the sidebar.
+  min-width: 0;
   font-size: 13px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -116,6 +121,7 @@
 }
 
 .folder-count {
+  flex-shrink: 0;
   font-size: 11px;
   color: var(--tm-text-secondary);
   background: var(--tm-hover, rgba(0, 0, 0, 0.06));

@@ -315,9 +315,24 @@ export class TestPlanDetailComponent implements OnInit {
         maintainAspectRatio: false,
         plugins: { legend: { display: false } },
         scales: {
+          // Full run names rotated into the axis took the whole canvas and collapsed the plot;
+          // the tooltip still shows the full name.
+          x: {
+            ticks: {
+              maxRotation: 45,
+              autoSkip: true,
+              callback: (_value, index) => shortLabel(runs[index]?.name ?? ''),
+            },
+          },
           y: { beginAtZero: true, max: 100, ticks: { callback: (v) => v + '%' } },
         },
       },
     });
   }
+}
+
+const MAX_AXIS_LABEL_LENGTH = 16;
+
+function shortLabel(name: string): string {
+  return name.length > MAX_AXIS_LABEL_LENGTH ? name.slice(0, MAX_AXIS_LABEL_LENGTH - 1) + '…' : name;
 }

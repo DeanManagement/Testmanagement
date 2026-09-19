@@ -28,8 +28,10 @@
 
 .hero-top {
   display: flex;
+  flex-wrap: wrap; // narrow screens: badges drop below the title instead of being cut off
   justify-content: space-between;
   align-items: flex-start;
+  gap: 8px 12px;
   margin-bottom: 12px;
 
   h1 {
@@ -172,4 +174,10 @@
 .step-row--shared {
   border-left: 3px solid var(--tm-primary-lighter);
   padding-left: 8px;
+}
+
+/* A key is one token: "SPI-42" must not break after the hyphen. */
+.test-case-key {
+  white-space: nowrap;
+  flex-shrink: 0;
 }

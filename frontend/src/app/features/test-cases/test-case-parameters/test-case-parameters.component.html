@@ -43,7 +43,7 @@
 
     @if (formOpen) {
       <div class="set-form" data-test-id="parameter-form">
-        <mat-form-field appearance="outline" class="set-name-field">
+        <mat-form-field appearance="outline" class="set-name-field" subscriptSizing="dynamic">
           <mat-label>{{ 'parameter.setName' | translate }}</mat-label>
           <input matInput [(ngModel)]="formName" placeholder="minimum" data-test-id="parameter-name-input">
           <mat-hint>{{ 'parameter.setNameHint' | translate }}</mat-hint>

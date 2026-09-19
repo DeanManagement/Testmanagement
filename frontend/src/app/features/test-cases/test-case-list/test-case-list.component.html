@@ -99,7 +99,7 @@
                  data-test-id="folder-node">
               <span class="toggle-btn toggle-btn--spacer" aria-hidden="true"></span>
               <mat-icon class="folder-icon">folder</mat-icon>
-              <span class="folder-name">{{ node.name }}</span>
+              <span class="folder-name" [title]="node.name">{{ node.name }}</span>
               @if (folderBadge(node) > 0) {
                 <span class="folder-count">{{ folderBadge(node) }}</span>
               }
@@ -138,7 +138,7 @@
                 <mat-icon>{{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}</mat-icon>
               </button>
               <mat-icon class="folder-icon">{{ treeControl.isExpanded(node) ? 'folder_open' : 'folder' }}</mat-icon>
-              <span class="folder-name">{{ node.name }}</span>
+              <span class="folder-name" [title]="node.name">{{ node.name }}</span>
               @if (folderBadge(node) > 0) {
                 <span class="folder-count">{{ folderBadge(node) }}</span>
               }

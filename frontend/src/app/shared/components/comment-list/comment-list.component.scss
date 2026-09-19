@@ -78,4 +78,6 @@
   line-height: 1.6;
   color: var(--tm-text);
   white-space: pre-wrap;
+  overflow-wrap: anywhere; // a long URL or token wraps instead of running out of the card
+  min-width: 0;
 }

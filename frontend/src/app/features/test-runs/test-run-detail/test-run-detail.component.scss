@@ -131,6 +131,15 @@
 
 .result-panel {
   margin-bottom: 8px;
+
+  // Material's panel header has a fixed height, so a title that wraps was cut off and overlapped
+  // the next row. Let it grow with its content.
+  .mat-expansion-panel-header {
+    height: auto;
+    min-height: 48px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
 }
 
 .panel-title {
@@ -361,6 +370,8 @@ app-step-spec-card {
 
 .case-header {
   display: flex;
+  flex-wrap: wrap; // title above the status controls when they do not fit side by side
+  gap: 12px;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;

@@ -1,6 +1,8 @@
 .step-spec-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  // Two columns while there is room, one on a phone; minmax(0, ...) lets long text wrap instead of
+  // widening the tile past the viewport.
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr));
   gap: 1px;
   background: var(--tm-border, #e0e0e0);
   border: 1px solid var(--tm-border, #e0e0e0);
@@ -33,6 +35,8 @@
   font-size: 14px;
   color: var(--tm-text);
   white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  min-width: 0;
 }
 
 .ref-image-thumb {
