@@ -120,6 +120,37 @@ class TestCaseVersionServiceTest {
         assertThat(current.steps().getFirst().action()).isEqualTo("step two");
     }
 
+    /**
+     * Bug report e6a7bb83: v1 showed the time of the edit that replaced it, identical to v2's.
+     * Each version runs from the previous one's end (the first from creation) to its own snapshot.
+     */
+    @Test
+    void eachVersionSpansFromThePreviousOnesEndToItsOwnReplacement() {
+        UUID id = createCase("One", "a");
+        update(id, "Two", "b");
+        update(id, "Three", "c");
+
+        List<TestCaseVersionSummary> versions = versionService.list(project.getId(), id);
+        TestCaseVersionSummary live = versions.get(0);
+        TestCaseVersionSummary v2 = versions.get(1);
+        TestCaseVersionSummary v1 = versions.get(2);
+
+        assertThat(v1.validFrom()).isEqualTo(testCaseRepository.findById(id).orElseThrow().getCreatedAt());
+        assertThat(v1.validUntil()).isEqualTo(v1.versionAt());
+        assertThat(v2.validFrom()).isEqualTo(v1.validUntil());
+        assertThat(live.validFrom()).isEqualTo(v2.validUntil());
+        assertThat(live.validUntil()).isNull();
+    }
+
+    @Test
+    void anUneditedCaseIsLiveSinceItsCreation() {
+        UUID id = createCase("One", "a");
+
+        TestCaseVersionSummary live = versionService.list(project.getId(), id).getFirst();
+
+        assertThat(live.validFrom()).isEqualTo(testCaseRepository.findById(id).orElseThrow().getCreatedAt());
+    }
+
     @Test
     void repeatedEditsAccumulateInOrder() {
         UUID id = createCase("One", "a");

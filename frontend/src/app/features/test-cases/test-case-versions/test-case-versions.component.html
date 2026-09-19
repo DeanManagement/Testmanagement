@@ -12,7 +12,7 @@
             <mat-option [value]="version.versionNumber">
               {{ 'version.label' | translate: { number: version.versionNumber } }}
               @if (version.current) { · {{ 'version.current' | translate }} }
-              · {{ version.versionAt | localizedDate: 'short' }}
+              · {{ 'version.since' | translate: { date: (version.validFrom | localizedDate: 'medium') } }}
             </mat-option>
           }
         </mat-select>
@@ -27,7 +27,7 @@
             <mat-option [value]="version.versionNumber">
               {{ 'version.label' | translate: { number: version.versionNumber } }}
               @if (version.current) { · {{ 'version.current' | translate }} }
-              · {{ version.versionAt | localizedDate: 'short' }}
+              · {{ 'version.since' | translate: { date: (version.validFrom | localizedDate: 'medium') } }}
             </mat-option>
           }
         </mat-select>

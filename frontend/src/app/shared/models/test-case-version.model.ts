@@ -32,4 +32,8 @@ export interface TestCaseVersionSummary {
   createdBy: string | null;
   /** The live state, which has no snapshot row of its own. */
   current: boolean;
+  /** When this version became the wording (the previous one's end, or creation). */
+  validFrom: string;
+  /** When it was replaced; null for the live version. */
+  validUntil: string | null;
 }

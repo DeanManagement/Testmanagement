@@ -67,25 +67,33 @@ public class TestCaseVersionService {
         testCase.setCurrentVersion(testCase.getCurrentVersion() + 1);
     }
 
-    /** Newest first, with the live state at the top. */
+    /**
+     * Newest first, with the live state at the top. A snapshot is written when its version is
+     * replaced, so its versionAt is that version's end; each version starts where the one before it
+     * ended, and the oldest one when the case was created.
+     */
     public List<TestCaseVersionSummary> list(UUID projectId, UUID testCaseId) {
         TestCase testCase = require(projectId, testCaseId);
+        List<TestCaseVersion> snapshots = versionRepository.findByTestCaseIdOrderByVersionNumberDesc(testCaseId);
 
         List<TestCaseVersionSummary> summaries = new ArrayList<>();
+        Instant liveSince = snapshots.isEmpty() ? testCase.getCreatedAt() : snapshots.getFirst().getVersionAt();
         summaries.add(new TestCaseVersionSummary(
                 null,
                 testCase.getCurrentVersion(),
                 testCase.getUpdatedAt(),
                 testCase.getTitle(),
                 testCase.getUpdatedBy(),
-                true));
+                true,
+                liveSince,
+                null));
 
-        versionRepository.findByTestCaseIdOrderByVersionNumberDesc(testCaseId).stream()
-                .map(v -> new TestCaseVersionSummary(
-                        v.getId(), v.getVersionNumber(), v.getVersionAt(),
-                        v.getTitle(), v.getCreatedBy(), false))
-                .forEach(summaries::add);
-
+        for (int i = 0; i < snapshots.size(); i++) {
+            TestCaseVersion v = snapshots.get(i);
+            Instant from = i + 1 < snapshots.size() ? snapshots.get(i + 1).getVersionAt() : testCase.getCreatedAt();
+            summaries.add(new TestCaseVersionSummary(v.getId(), v.getVersionNumber(), v.getVersionAt(),
+                    v.getTitle(), v.getCreatedBy(), false, from, v.getVersionAt()));
+        }
         return summaries;
     }
 

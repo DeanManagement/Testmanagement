@@ -1005,7 +1005,8 @@
     "changeCount": "{{count}} Feld(er) geändert",
     "step": "Schritt",
     "executedVersion": "Ausgeführt: v{{number}}",
-    "executedVersionUnknown": "Version nicht erfasst"
+    "executedVersionUnknown": "Version nicht erfasst",
+    "since": "seit {{date}}"
   },
   "requirement": {
     "title": "Anforderungen",

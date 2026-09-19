@@ -1005,7 +1005,8 @@
     "changeCount": "{{count}} field(s) changed",
     "step": "Step",
     "executedVersion": "Executed v{{number}}",
-    "executedVersionUnknown": "Version not recorded"
+    "executedVersionUnknown": "Version not recorded",
+    "since": "since {{date}}"
   },
   "requirement": {
     "title": "Requirements",
