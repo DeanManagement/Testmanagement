@@ -278,6 +278,17 @@ Rules:
 Cases that were Active before review was switched on stay Active and show *Approved before review
 was switched on*. Switching review off leaves cases in review where they are.
 
+### Where a case is used and where it ran
+
+Under its title, a case's page shows its folder path (each folder opens the list filtered to it),
+who created it and when, who changed it last and when, and the suites that include it.
+
+**Execution history** further down lists every run the case is in, newest first, with the run's
+key and name, the environment, the parameter set, the outcome, when and by whom it was executed,
+and the version of the case it ran. Pending results are listed too: the case is scheduled in that
+run. A version older than the case's current one is marked *older wording*. Each row opens that
+result in its run.
+
 ### Version history
 
 Every edit snapshots the previous wording. Open a case and choose **Version history** to see

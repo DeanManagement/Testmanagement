@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-19 |
 | **Priority** | P2 — "where is this case used and when did it last run?" today means opening every suite and run |
@@ -156,3 +156,24 @@ history, and the executor fallback note until PRD-048 ships.
 - [ ] Both endpoints are project-scoped (foreign id → 404) and readable by VIEWER.
 - [ ] The executor uses `executed_by` (PRD-048), falling back to `updatedBy` with an honest label.
 - [ ] en/de translations and the USER_MANUAL paragraph are present; backend and frontend tests pass.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **No executor fallback.** PRD-048 landed first, so the executor is `executed_by` and the column
+  reads "Executed by". V70 already backfilled `executed_by` from `updated_by` for results executed
+  before it, so older results have a name too; a pending result, or one uploaded anonymously, has
+  none.
+- **The two endpoints live in `TestCaseContextService`** and `TestCaseController`, as proposed. The
+  history is one query with a fetch join on the run and a separate count query, sorted by run
+  creation, then parameter set; page size defaults to 20 and is capped at 100.
+- **The case page** gets two self-contained components: `app-case-context` in the title card and
+  `app-execution-history` after the per-environment results. Each loads on its own, and a failure
+  shows a one-line note instead of the section.
+- **The context reloads when the case changes**, so moving the case to another folder in the editor
+  shows the new path on return.
+- **"Older wording"** is shown next to the version and explained in a tooltip; the case's own
+  version history section on the same page is where the comparison lives.
+
+Not tested in a browser.

@@ -85,6 +85,10 @@
             {
               "type": "p",
               "text": "The status says how much weight it carries: Draft (still being written), In review (waiting for another member's approval, in projects that require review), Active (in use), Deprecated (no longer valid, kept for history)."
+            },
+            {
+              "type": "p",
+              "text": "Under the title, the page shows the case's folder, who created and last changed it, and the suites that include it. Its Execution history lists every run it is in, newest first, with the outcome, who executed it and which version of the case ran; a row opens that result."
             }
           ]
         },

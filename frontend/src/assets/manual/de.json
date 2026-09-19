@@ -85,6 +85,10 @@
             {
               "type": "p",
               "text": "Der Status zeigt, welches Gewicht der Fall hat: Entwurf (noch in Arbeit), In Prüfung (wartet auf die Freigabe durch ein anderes Mitglied, in Projekten mit Review), Aktiv (in Gebrauch), Veraltet (nicht mehr gültig, bleibt zur Nachvollziehbarkeit erhalten)."
+            },
+            {
+              "type": "p",
+              "text": "Unter dem Titel zeigt die Seite den Ordner des Falls, wer ihn erstellt und zuletzt geändert hat, und die Suiten, die ihn enthalten. Sein Ausführungsverlauf listet jeden Lauf, in dem er vorkommt, die neuesten zuerst, mit Ergebnis, ausführender Person und der Version des Falls, die lief; eine Zeile öffnet dieses Ergebnis."
             }
           ]
         },
