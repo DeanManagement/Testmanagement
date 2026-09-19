@@ -10,10 +10,12 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTabsModule } from '@angular/material/tabs';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { HttpErrorResponse } from '@angular/common/http';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectTestCaseById } from '../../../store/test-case/test-case.selectors';
-import { Priority, TestCase, TestCaseStatus, TestStepRequest } from '../../../shared/models/test-case.model';
+import { GherkinPreview, Priority, TestCase, TestCaseStatus, TestStepRequest } from '../../../shared/models/test-case.model';
+import { toGherkin } from './gherkin-text';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { forkJoin, Observable, of } from 'rxjs';
 import { take } from 'rxjs/operators';
@@ -64,6 +66,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly projectApi = inject(ProjectApiService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly translate = inject(TranslateService);
 
   editMode = false;
   projectId = '';
@@ -78,6 +81,13 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
   private loadedStatus: TestCaseStatus | null = null;
 
   stepImages = new Map<number, StepImageState>();
+
+  /** PRD-040 §3.7: the steps as Gherkin text, while the editor is open; null when closed. */
+  gherkinText: string | null = null;
+  gherkinApplying = false;
+  gherkinError: string | null = null;
+  /** What the server said it changed or dropped the last time the text was applied. */
+  gherkinNotes: string[] = [];
 
   form = this.fb.group({
     title: ['', [Validators.required, Validators.maxLength(255)]],
@@ -155,6 +165,82 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
     );
   }
 
+  openGherkin(): void {
+    this.gherkinText = toGherkin({
+      title: this.form.value.title ?? '',
+      description: this.form.value.description ?? null,
+      labels: splitLabels(this.form.value.labels ?? ''),
+      steps: this.steps.value as TestStepRequest[],
+    });
+    this.gherkinError = null;
+    this.gherkinNotes = [];
+  }
+
+  closeGherkin(): void {
+    this.gherkinText = null;
+    this.gherkinError = null;
+  }
+
+  /** True when applying would drop something the steps hold and Gherkin cannot. */
+  get gherkinDropsExpectedResults(): boolean {
+    return (this.steps.value as TestStepRequest[]).some((s) => !!s.expectedResult?.trim());
+  }
+
+  /** The server reads the text (nothing is saved), then the form takes its title, description, tags and steps. */
+  applyGherkin(): void {
+    if (this.gherkinText === null || this.gherkinApplying) return;
+    this.gherkinApplying = true;
+    this.gherkinError = null;
+    this.testCaseApi.previewGherkin(this.projectId, this.gherkinText)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (preview) => {
+          this.gherkinApplying = false;
+          if (preview.problems.length > 0) {
+            this.gherkinError = preview.problems.join('; ');
+            this.cdr.detectChanges();
+            return;
+          }
+          if (preview.steps.length === 0 && this.steps.length > 0) {
+            // Usually keywords of another language read as description; never wipe steps silently.
+            this.gherkinError = this.translate.instant('testCase.form.gherkin.noSteps');
+            this.cdr.detectChanges();
+            return;
+          }
+          this.takeGherkin(preview);
+          this.cdr.detectChanges();
+        },
+        error: (err: HttpErrorResponse) => {
+          this.gherkinApplying = false;
+          this.gherkinError = err.error?.message ?? err.message;
+          this.cdr.detectChanges();
+        },
+      });
+  }
+
+  private takeGherkin(preview: GherkinPreview): void {
+    this.form.patchValue({
+      title: preview.title,
+      description: preview.description ?? '',
+      labels: preview.labels.join(', '),
+    });
+    this.steps.clear();
+    for (const step of preview.steps) {
+      this.steps.push(this.fb.group({
+        action: [step.action, Validators.required],
+        expectedResult: [''],
+        testData: [step.testData ?? ''],
+      }));
+    }
+    const notes = [...preview.warnings];
+    if (preview.parameterSets.length > 0) {
+      notes.push(this.translate.instant('testCase.form.gherkin.examplesNotSaved'));
+    }
+    this.gherkinNotes = notes;
+    this.gherkinText = null;
+    this.markDirty();
+  }
+
   removeStep(index: number): void {
     this.steps.removeAt(index);
     this.stepImages.delete(index);
@@ -219,10 +305,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
     this.dirty = false;
     this.saving = true;
 
-    const labelsStr = this.form.value.labels as string;
-    const labels = labelsStr
-      ? labelsStr.split(',').map((l) => l.trim()).filter((l) => l)
-      : [];
+    const labels = splitLabels(this.form.value.labels ?? '');
     const steps = this.steps.value.map((s: TestStepRequest) => ({
       action: s.action,
       expectedResult: s.expectedResult,
@@ -293,4 +376,8 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
 
     return ops.length ? forkJoin(ops) : of(null);
   }
+}
+
+function splitLabels(labels: string): string[] {
+  return labels.split(',').map((l) => l.trim()).filter((l) => l);
 }

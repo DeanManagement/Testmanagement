@@ -9,6 +9,20 @@ import { MatTableModule } from '@angular/material/table';
 import { TranslateModule } from '@ngx-translate/core';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { ImportResult } from '../../../shared/models/test-case.model';
+import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+
+export interface FolderOption {
+  id: string;
+  name: string;
+  depth: number;
+}
+
+/** Depth-first, so the select lists each folder under its parent. */
+export function flattenFolders(folders: TestCaseFolder[], depth = 0): FolderOption[] {
+  return folders.flatMap((f) => [{ id: f.id, name: f.name, depth }, ...flattenFolders(f.children ?? [], depth + 1)]);
+}
 
 @Component({
   selector: 'app-import-test-cases-dialog',
@@ -19,6 +33,8 @@ import { ImportResult } from '../../../shared/models/test-case.model';
     MatIconModule,
     MatProgressSpinnerModule,
     MatTableModule,
+    MatFormFieldModule,
+    MatSelectModule,
     TranslateModule,
   ],
   templateUrl: './import-test-cases-dialog.component.html',
@@ -31,10 +47,28 @@ export class ImportTestCasesDialogComponent {
   private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
+  /** The folder tree to offer as the target (PRD-040); set by the opener. */
+  folders: TestCaseFolder[] = [];
+  /** Null means the project root. The opener passes the folder selected in the list. */
+  folderId: string | null = null;
   file: File | null = null;
   loading = false;
   preview: ImportResult | null = null;
   errorColumns = ['row', 'message'];
+
+  get folderOptions(): FolderOption[] {
+    return flattenFolders(this.folders);
+  }
+
+  /** Created / updated / unchanged only mean something for a Gherkin upload. */
+  get isGherkin(): boolean {
+    return !!this.file && /\.(feature|zip)$/i.test(this.file.name);
+  }
+
+  onFolderChange(folderId: string | null): void {
+    this.folderId = folderId;
+    this.preview = null;
+  }
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -47,7 +81,7 @@ export class ImportTestCasesDialogComponent {
       return;
     }
     this.loading = true;
-    this.api.import(this.projectId, this.file, true).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.import(this.projectId, this.file, true, this.folderId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (result) => {
         this.preview = result;
         this.loading = false;
@@ -65,7 +99,7 @@ export class ImportTestCasesDialogComponent {
       return;
     }
     this.loading = true;
-    this.api.import(this.projectId, this.file, false).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.api.import(this.projectId, this.file, false, this.folderId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (result) => {
         this.loading = false;
         this.dialogRef.close(result);

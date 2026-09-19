@@ -70,13 +70,62 @@
               <div class="steps-section">
                 <div class="steps-header">
                   <h3>{{ 'testCase.form.steps' | translate }}</h3>
-                  <button mat-stroked-button type="button" (click)="addStep()" data-test-id="test-case-add-step-btn" aria-label="Add new test step">
-                    <mat-icon>add</mat-icon>
-                    {{ 'testCase.form.addStep' | translate }}
-                  </button>
+                  <div class="steps-header-actions">
+                    @if (gherkinText === null) {
+                      <button mat-stroked-button type="button" (click)="openGherkin()" data-test-id="test-case-gherkin-open-btn">
+                        <mat-icon>code</mat-icon>
+                        {{ 'testCase.form.gherkin.open' | translate }}
+                      </button>
+                    }
+                    <button mat-stroked-button type="button" (click)="addStep()" [disabled]="gherkinText !== null"
+                            data-test-id="test-case-add-step-btn" aria-label="Add new test step">
+                      <mat-icon>add</mat-icon>
+                      {{ 'testCase.form.addStep' | translate }}
+                    </button>
+                  </div>
                 </div>
 
-                @if (steps.length === 0) {
+                @if (gherkinText !== null) {
+                  <div class="gherkin-editor" data-test-id="test-case-gherkin-editor">
+                    <mat-form-field appearance="outline" class="full-width">
+                      <mat-label>{{ 'testCase.form.gherkin.label' | translate }}</mat-label>
+                      <textarea matInput class="gherkin-text" rows="14" spellcheck="false"
+                                [value]="gherkinText" (input)="gherkinText = $any($event.target).value"
+                                [attr.aria-invalid]="gherkinError !== null"
+                                data-test-id="test-case-gherkin-text"></textarea>
+                      <mat-hint>{{ 'testCase.form.gherkin.hint' | translate }}</mat-hint>
+                    </mat-form-field>
+                    @if (gherkinDropsExpectedResults) {
+                      <p class="gherkin-note" data-test-id="test-case-gherkin-drops-expected">
+                        <mat-icon>info</mat-icon>{{ 'testCase.form.gherkin.dropsExpected' | translate }}
+                      </p>
+                    }
+                    @if (gherkinError) {
+                      <p class="gherkin-error" role="alert" data-test-id="test-case-gherkin-error">
+                        <mat-icon>error</mat-icon>{{ gherkinError }}
+                      </p>
+                    }
+                    <div class="gherkin-actions">
+                      <button mat-button type="button" (click)="closeGherkin()" data-test-id="test-case-gherkin-cancel-btn">
+                        {{ 'common.cancel' | translate }}
+                      </button>
+                      <button mat-flat-button type="button" (click)="applyGherkin()" [disabled]="gherkinApplying"
+                              data-test-id="test-case-gherkin-apply-btn">
+                        {{ 'testCase.form.gherkin.apply' | translate }}
+                      </button>
+                    </div>
+                  </div>
+                }
+
+                @if (gherkinNotes.length > 0) {
+                  <ul class="gherkin-notes" data-test-id="test-case-gherkin-notes">
+                    @for (note of gherkinNotes; track $index) {
+                      <li>{{ note }}</li>
+                    }
+                  </ul>
+                }
+
+                @if (steps.length === 0 && gherkinText === null) {
                   <div class="steps-empty" data-test-id="test-case-steps-empty">
                     <mat-icon>list_alt</mat-icon>
                     <p>{{ 'testCase.form.stepsEmpty' | translate }}</p>
@@ -88,7 +137,7 @@
                 }
 
                 @for (step of steps.controls; track $index; let i = $index) {
-                  <div class="step-row" [formGroupName]="'steps'">
+                  <div class="step-row" [formGroupName]="'steps'" [hidden]="gherkinText !== null">
                     <div [formGroupName]="i" class="step-content">
                       <div class="step-fields">
                         <span class="step-number">{{ i + 1 }}</span>

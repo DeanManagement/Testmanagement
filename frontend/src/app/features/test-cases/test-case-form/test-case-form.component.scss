@@ -180,3 +180,60 @@
   width: 14rem;
   margin-top: 1rem;
 }
+
+.steps-header-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* PRD-040 §3.7: a plain monospace textarea, no editor. */
+.gherkin-editor {
+  margin-bottom: 16px;
+}
+
+.gherkin-text {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.5;
+  white-space: pre;
+}
+
+.gherkin-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.gherkin-note,
+.gherkin-error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  margin: 8px 0 0;
+  font-size: 13px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+}
+
+.gherkin-note {
+  color: var(--tm-text-secondary);
+}
+
+.gherkin-error {
+  color: var(--tm-danger);
+  white-space: pre-wrap;
+}
+
+.gherkin-notes {
+  margin: 0 0 16px;
+  padding-left: 20px;
+  font-size: 13px;
+  color: var(--tm-text-secondary);
+}

@@ -40,7 +40,7 @@
     "export": "Export",
     "csvExcel": "CSV (Excel)",
     "title": "Import test cases",
-    "hint": "Upload a CSV or JSON file. Required column: title. Optional: description, preconditions, priority, status, labels (semicolon-separated), steps (action|expected pairs joined by ;;).",
+    "hint": "Upload a CSV or JSON file, a Gherkin .feature file, or a ZIP of .feature files. CSV needs a title column; optional: description, preconditions, priority, status, labels (semicolon-separated), steps (action|expected pairs joined by ;;). Scenarios tagged @tm:<key> update that test case.",
     "preview": "Preview (dry run)",
     "confirm": "Import",
     "imported": "Imported",
@@ -48,7 +48,16 @@
     "dryRunBadge": "Dry run — nothing saved",
     "row": "Row",
     "error": "Error",
-    "done": "Import complete: {{imported}} imported, {{skipped}} skipped."
+    "done": "Import complete: {{imported}} imported, {{skipped}} skipped.",
+    "targetFolder": "Import into folder",
+    "projectRoot": "Project root",
+    "gherkinFolderHint": "Each Feature becomes a folder here, each Rule a folder inside it.",
+    "created": "Created",
+    "updated": "Updated",
+    "unchanged": "Unchanged",
+    "doneKeyed": "Import complete: {{imported}} created, {{updated}} updated, {{unchanged}} unchanged, {{skipped}} skipped.",
+    "gherkin": "Gherkin (.feature)",
+    "gherkinFolder": "Gherkin (.feature) – this folder"
   },
   "webhook": {
     "title": "Webhooks",
@@ -280,7 +289,16 @@
       "removeImage": "Remove Image",
       "estimate": "Estimate",
       "estimateHint": "How long one execution takes",
-      "estimateRange": "Between 1 and 1440 minutes"
+      "estimateRange": "Between 1 and 1440 minutes",
+      "gherkin": {
+        "open": "Edit as Gherkin",
+        "label": "Scenario (Gherkin)",
+        "hint": "One scenario. Tags become labels; Given/When/Then lines become the steps.",
+        "dropsExpected": "Expected results have no Gherkin form: applying removes them from the steps.",
+        "apply": "Apply to steps",
+        "examplesNotSaved": "The Examples table is not saved here: manage parameter sets on the test case page. Placeholders were written as {name}.",
+        "noSteps": "No steps found. If the steps are not in English, start the text with a language line such as \"# language: de\"."
+      }
     },
     "detail": {
       "estimate": "Estimate",

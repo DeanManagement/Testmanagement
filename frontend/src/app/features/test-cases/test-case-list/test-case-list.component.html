@@ -20,6 +20,9 @@
         <button mat-menu-item (click)="exportTestCases('json')" data-test-id="export-json">JSON</button>
         <button mat-menu-item (click)="exportTestCases('csv')" data-test-id="export-csv">CSV</button>
         <button mat-menu-item (click)="exportTestCases('csv', true)" data-test-id="export-csv-excel">{{ 'import.csvExcel' | translate }}</button>
+        <button mat-menu-item (click)="exportFeatures()" data-test-id="export-feature">
+          {{ (selectedFolderId ? 'import.gherkinFolder' : 'import.gherkin') | translate }}
+        </button>
       </mat-menu>
       <a mat-flat-button [routerLink]="['new']" [queryParams]="getCreateLink()" class="create-btn" data-test-id="test-case-create-btn">
         <mat-icon>add</mat-icon>

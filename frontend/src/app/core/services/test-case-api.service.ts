@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BulkOperationResponse, CreateTestCaseRequest, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
+import { BulkOperationResponse, CreateTestCaseRequest, GherkinPreview, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 import { Page } from '../../shared/models/page.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
 
@@ -46,11 +46,34 @@ export class TestCaseApiService {
     return this.http.get(`${this.baseUrl(projectId)}/export`, { params, responseType: 'blob' });
   }
 
-  import(projectId: string, file: File, dryRun: boolean): Observable<ImportResult> {
+  /**
+   * PRD-040: one .feature file, or a ZIP of several. The response is read whole so the caller can
+   * take the file name from Content-Disposition. {@code folderId} limits the export to that folder.
+   */
+  exportFeature(projectId: string, folderId: string | null): Observable<HttpResponse<Blob>> {
+    let params = new HttpParams().set('format', 'feature');
+    if (folderId) {
+      params = params.set('folderId', folderId);
+    }
+    return this.http.get(`${this.baseUrl(projectId)}/export`, { params, responseType: 'blob', observe: 'response' });
+  }
+
+  /** {@code folderId}: where the cases go; Gherkin features become folders under it (PRD-040). */
+  import(projectId: string, file: File, dryRun: boolean, folderId: string | null = null): Observable<ImportResult> {
     const formData = new FormData();
     formData.append('file', file);
-    const params = new HttpParams().set('dryRun', String(dryRun));
+    let params = new HttpParams().set('dryRun', String(dryRun));
+    if (folderId) {
+      params = params.set('folderId', folderId);
+    }
     return this.http.post<ImportResult>(`${this.baseUrl(projectId)}/import`, formData, { params });
+  }
+
+  /** Reads one scenario; the server writes nothing (PRD-040 §3.6). */
+  previewGherkin(projectId: string, text: string): Observable<GherkinPreview> {
+    return this.http.post<GherkinPreview>(`${this.baseUrl(projectId)}/gherkin/preview`, text, {
+      headers: { 'Content-Type': 'text/plain' },
+    });
   }
 
   create(projectId: string, request: CreateTestCaseRequest): Observable<TestCase> {

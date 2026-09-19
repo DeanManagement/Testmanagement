@@ -40,7 +40,7 @@
     "export": "Exportieren",
     "csvExcel": "CSV (Excel)",
     "title": "Testfälle importieren",
-    "hint": "Lade eine CSV- oder JSON-Datei hoch. Pflichtspalte: title. Optional: description, preconditions, priority, status, labels (durch Semikolon getrennt), steps (action|expected-Paare, verbunden mit ;;).",
+    "hint": "Lade eine CSV- oder JSON-Datei hoch, eine Gherkin-.feature-Datei oder ein ZIP mit .feature-Dateien. CSV braucht die Spalte title; optional: description, preconditions, priority, status, labels (durch Semikolon getrennt), steps (action|expected-Paare, verbunden mit ;;). Szenarien mit dem Tag @tm:<Schlüssel> aktualisieren diesen Testfall.",
     "preview": "Vorschau (Probelauf)",
     "confirm": "Importieren",
     "imported": "Importiert",
@@ -48,7 +48,16 @@
     "dryRunBadge": "Probelauf – nichts gespeichert",
     "row": "Zeile",
     "error": "Fehler",
-    "done": "Import abgeschlossen: {{imported}} importiert, {{skipped}} übersprungen."
+    "done": "Import abgeschlossen: {{imported}} importiert, {{skipped}} übersprungen.",
+    "targetFolder": "In Ordner importieren",
+    "projectRoot": "Projektebene",
+    "gherkinFolderHint": "Jedes Feature wird hier zu einem Ordner, jede Rule zu einem Unterordner.",
+    "created": "Erstellt",
+    "updated": "Aktualisiert",
+    "unchanged": "Unverändert",
+    "doneKeyed": "Import abgeschlossen: {{imported}} erstellt, {{updated}} aktualisiert, {{unchanged}} unverändert, {{skipped}} übersprungen.",
+    "gherkin": "Gherkin (.feature)",
+    "gherkinFolder": "Gherkin (.feature) – dieser Ordner"
   },
   "webhook": {
     "title": "Webhooks",
@@ -280,7 +289,16 @@
       "removeImage": "Bild entfernen",
       "estimate": "Schätzung",
       "estimateHint": "Wie lange eine Ausführung dauert",
-      "estimateRange": "Zwischen 1 und 1440 Minuten"
+      "estimateRange": "Zwischen 1 und 1440 Minuten",
+      "gherkin": {
+        "open": "Als Gherkin bearbeiten",
+        "label": "Szenario (Gherkin)",
+        "hint": "Ein Szenario. Tags werden zu Labels, Given/When/Then-Zeilen zu den Schritten.",
+        "dropsExpected": "Erwartete Ergebnisse gibt es in Gherkin nicht: beim Übernehmen werden sie aus den Schritten entfernt.",
+        "apply": "In Schritte übernehmen",
+        "examplesNotSaved": "Die Examples-Tabelle wird hier nicht gespeichert: Parametersätze verwaltest du auf der Testfallseite. Platzhalter wurden als {name} geschrieben.",
+        "noSteps": "Keine Schritte gefunden. Sind die Schritte nicht auf Englisch, beginne den Text mit einer Sprachzeile wie \"# language: de\"."
+      }
     },
     "detail": {
       "estimate": "Schätzung",

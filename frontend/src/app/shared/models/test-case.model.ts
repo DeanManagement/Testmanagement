@@ -100,6 +100,25 @@ export interface ImportResult {
   errors: ImportError[];
   /** Rows imported with a change, e.g. ACTIVE as IN_REVIEW under review (PRD-033). */
   warnings: ImportError[];
+  /** Gherkin only (PRD-040): @tm:-keyed scenarios that changed their case, and those that did not. */
+  updated: number;
+  unchanged: number;
+}
+
+/** One scenario read by the server, for the form's "Edit as Gherkin" (PRD-040 §3.7). */
+export interface GherkinPreview {
+  key: string | null;
+  title: string;
+  description: string | null;
+  preconditions: string | null;
+  priority: Priority | null;
+  labels: string[];
+  steps: TestStepRequest[];
+  parameterSets: { name: string; values: Record<string, string> }[];
+  /** What an import would refuse. */
+  problems: string[];
+  /** What an import would change or drop. */
+  warnings: string[];
 }
 
 export interface TestCaseQuery {

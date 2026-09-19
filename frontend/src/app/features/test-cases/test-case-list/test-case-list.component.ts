@@ -28,6 +28,7 @@ import { debounceTime, take } from 'rxjs/operators';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { ImportTestCasesDialogComponent } from '../import-test-cases-dialog/import-test-cases-dialog.component';
+import { fileNameFromContentDisposition } from '../../../core/utils/content-disposition';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectAllTestCases, selectTestCasesLoading, selectSelectedTestCaseIds, selectHasSelection, selectTestCasePage } from '../../../store/test-case/test-case.selectors';
 import { TestCaseFolderActions } from '../../../store/test-case-folder/test-case-folder.actions';
@@ -476,16 +477,35 @@ export class TestCaseListComponent implements OnInit {
       });
   }
 
+  /** PRD-040: the selected folder as a feature, or the whole project as one file per top-level folder. */
+  exportFeatures(): void {
+    this.testCaseApi.exportFeature(this.projectId, this.selectedFolderId)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((response) => {
+        const url = URL.createObjectURL(response.body!);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileNameFromContentDisposition(response.headers.get('Content-Disposition')) ?? 'features.zip';
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(url));
+      });
+  }
+
   openImport(): void {
     const dialogRef = this.dialog.open(ImportTestCasesDialogComponent, { width: '560px' });
     dialogRef.componentInstance.projectId = this.projectId;
+    dialogRef.componentInstance.folders = this.dataSource.data;
+    dialogRef.componentInstance.folderId = this.selectedFolderId;
     dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((result) => {
       if (result) {
+        const keyed = result.updated + result.unchanged > 0;
         this.snackBar.open(
-          this.translate.instant('import.done', { imported: result.imported, skipped: result.skipped }),
+          this.translate.instant(keyed ? 'import.doneKeyed' : 'import.done', result),
           'OK',
           { duration: 5000 },
         );
+        // New features are new folders.
+        this.store.dispatch(TestCaseFolderActions.loadFolders({ projectId: this.projectId }));
         this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId }));
       }
     });

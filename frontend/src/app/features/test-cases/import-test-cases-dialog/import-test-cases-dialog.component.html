@@ -2,7 +2,21 @@
 <mat-dialog-content>
   <p class="import-hint">{{ 'import.hint' | translate }}</p>
 
-  <input type="file" accept=".csv,.json" (change)="onFileSelected($event)" data-test-id="import-file-input">
+  <input type="file" accept=".csv,.json,.feature,.zip" (change)="onFileSelected($event)" data-test-id="import-file-input">
+
+  <mat-form-field appearance="outline" class="import-folder" subscriptSizing="dynamic">
+    <mat-label>{{ 'import.targetFolder' | translate }}</mat-label>
+    <!-- '' for the root: mat-select shows nothing for a null value, as if no option were chosen. -->
+    <mat-select [value]="folderId ?? ''" (valueChange)="onFolderChange($event || null)" data-test-id="import-folder-select">
+      <mat-option value="">{{ 'import.projectRoot' | translate }}</mat-option>
+      @for (f of folderOptions; track f.id) {
+        <mat-option [value]="f.id"><span [style.padding-left.px]="f.depth * 16">{{ f.name }}</span></mat-option>
+      }
+    </mat-select>
+    @if (isGherkin) {
+      <mat-hint>{{ 'import.gherkinFolderHint' | translate }}</mat-hint>
+    }
+  </mat-form-field>
 
   @if (loading) {
     <div class="import-spinner"><mat-spinner diameter="32"></mat-spinner></div>
@@ -10,7 +24,11 @@
 
   @if (preview) {
     <div class="import-summary" data-test-id="import-preview">
-      <span class="summary-chip summary-ok">{{ 'import.imported' | translate }}: {{ preview.imported }}</span>
+      <span class="summary-chip summary-ok">{{ (isGherkin ? 'import.created' : 'import.imported') | translate }}: {{ preview.imported }}</span>
+      @if (isGherkin) {
+        <span class="summary-chip summary-ok" data-test-id="import-updated">{{ 'import.updated' | translate }}: {{ preview.updated }}</span>
+        <span class="summary-chip" data-test-id="import-unchanged">{{ 'import.unchanged' | translate }}: {{ preview.unchanged }}</span>
+      }
       <span class="summary-chip summary-skip">{{ 'import.skipped' | translate }}: {{ preview.skipped }}</span>
       @if (preview.dryRun) { <span class="summary-chip">{{ 'import.dryRunBadge' | translate }}</span> }
     </div>
@@ -34,8 +52,12 @@
 
     @if (preview.warnings.length > 0) {
       <ul class="import-warnings" data-test-id="import-warnings">
-        @for (w of preview.warnings; track w.row) {
-          <li>{{ 'import.row' | translate }} {{ w.row }}: {{ w.message }}</li>
+        @for (w of preview.warnings; track $index) {
+          @if (w.row > 0) {
+            <li>{{ 'import.row' | translate }} {{ w.row }}: {{ w.message }}</li>
+          } @else {
+            <li>{{ w.message }}</li>
+          }
         }
       </ul>
     }
