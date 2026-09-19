@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -56,6 +57,33 @@ public interface TestRunRepository extends JpaRepository<TestRun, UUID>, JpaSpec
      * the filter is easy to forget.
      */
     Optional<TestRun> findByIdAndProjectId(UUID id, UUID projectId);
+
+    /** The latest earlier non-aborted run with this name (PRD-038 automatic base). */
+    @Query("""
+           SELECT r FROM TestRun r
+           WHERE r.project.id = :projectId AND r.id <> :headId AND r.status <> 'ABORTED'
+             AND r.name = :name
+             AND COALESCE(r.endTime, r.startTime, r.createdAt) < :before
+           ORDER BY COALESCE(r.endTime, r.startTime, r.createdAt) DESC
+           """)
+    List<TestRun> findPreviousWithName(@Param("projectId") UUID projectId, @Param("headId") UUID headId,
+                                       @Param("name") String name, @Param("before") Instant before, Pageable page);
+
+    /**
+     * The latest earlier non-aborted run in this plan and environment. Pass "" for "no environment":
+     * names are never blank (PRD-032), and binding a null would leave PostgreSQL unable to type it.
+     */
+    @Query("""
+           SELECT r FROM TestRun r
+           WHERE r.project.id = :projectId AND r.id <> :headId AND r.status <> 'ABORTED'
+             AND r.testPlan.id = :planId
+             AND COALESCE(r.environment, '') = :environment
+             AND COALESCE(r.endTime, r.startTime, r.createdAt) < :before
+           ORDER BY COALESCE(r.endTime, r.startTime, r.createdAt) DESC
+           """)
+    List<TestRun> findPreviousInPlanAndEnvironment(@Param("projectId") UUID projectId, @Param("headId") UUID headId,
+                                                   @Param("planId") UUID planId, @Param("environment") String environment,
+                                                   @Param("before") Instant before, Pageable page);
 
     @Query("SELECT DISTINCT r FROM TestRun r " +
             "LEFT JOIN FETCH r.executor " +

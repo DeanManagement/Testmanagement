@@ -3,6 +3,7 @@ import com.deanmanagement.testmanagement.project.internal.access.RequireProjectR
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 
 import com.deanmanagement.testmanagement.project.internal.dto.CompletionInfoResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.comparison.RunComparisonResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CloneTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestResultRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestRunRequest;
@@ -19,6 +20,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.filter.TestRunList
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.service.CustomFieldFilterParser;
+import com.deanmanagement.testmanagement.project.internal.service.RunComparisonService;
 import com.deanmanagement.testmanagement.project.internal.service.PdfReportService;
 import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
@@ -59,6 +61,7 @@ public class TestRunController {
     private final TestRunService testRunService;
     private final PdfReportService pdfReportService;
     private final CustomFieldFilterParser customFieldFilterParser;
+    private final RunComparisonService runComparisonService;
 
     @GetMapping
     @RequireProjectRole
@@ -75,6 +78,19 @@ public class TestRunController {
         TestRunListFilter filter = new TestRunListFilter(q, status, testPlanId, executorId, startedAfter,
                 environmentId, customFieldFilterParser.parse(projectId, CustomFieldEntityType.TEST_RUN, params));
         return testRunService.findByProject(projectId, filter, PageableUtils.normalize(pageable));
+    }
+
+    /**
+     * How results moved from one run to another (PRD-038). Without {@code base} the previous run
+     * with the same name, else the same plan and environment, is chosen.
+     */
+    @GetMapping("/compare")
+    @RequireProjectRole
+    public RunComparisonResponse compare(@PathVariable UUID projectId, @RequestParam UUID head,
+                                         @RequestParam(required = false) UUID base,
+                                         @RequestParam(defaultValue = "false") boolean includeUnchanged) {
+        return runComparisonService.compare(projectId, head, base, includeUnchanged
+                ? RunComparisonService.ComparisonRows.ALL : RunComparisonService.ComparisonRows.CHANGES_ONLY);
     }
 
     @GetMapping("/{id}")

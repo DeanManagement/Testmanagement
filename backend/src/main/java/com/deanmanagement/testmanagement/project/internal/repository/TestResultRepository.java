@@ -2,6 +2,7 @@ package com.deanmanagement.testmanagement.project.internal.repository;
 
 import com.deanmanagement.testmanagement.project.internal.dto.environment.EnvironmentResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.analytics.FlakyResultRow;
+import com.deanmanagement.testmanagement.project.internal.dto.comparison.ComparableResult;
 import com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownRow;
 import com.deanmanagement.testmanagement.project.internal.dto.readiness.ReadinessResultRow;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.RunStatusCount;
@@ -98,6 +99,16 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
            ORDER BY tc.id ASC, COALESCE(run.endTime, run.startTime, run.createdAt) DESC
            """)
     List<FlakyResultRow> findTerminalResultsForFlakiness(@Param("projectId") UUID projectId);
+
+    /** Run comparison input (PRD-038): one run's results, without steps or screenshots. */
+    @Query("""
+           SELECT new com.deanmanagement.testmanagement.project.internal.dto.comparison.ComparableResult(
+               r.id, tc.id, tc.key, tc.title, r.parameterSetName, r.status, r.executedVersion)
+           FROM TestResult r
+           JOIN r.testCase tc
+           WHERE r.testRun.id = :runId
+           """)
+    List<ComparableResult> findComparableResults(@Param("runId") UUID runId);
 
     /** Release-gate input (PRD-037): every result of the plan's non-aborted runs, with when its run happened. */
     @Query("""

@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.dto.comparison.RunComparisonResponse;
+import com.deanmanagement.testmanagement.project.internal.service.RunComparisonService;
 import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunSummaryResponse;
@@ -45,6 +47,7 @@ public class TestRunReadTools {
     private final McpCallerContext callerContext;
     private final TestRunService testRunService;
     private final ProjectEnvironmentService environmentService;
+    private final RunComparisonService runComparisonService;
     private final com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository
             testRunRepository;
 
@@ -98,6 +101,33 @@ public class TestRunReadTools {
                 .toList();
         return new McpDtos.TestRunPage(runs, result.getNumber(), result.getSize(),
                 result.getTotalElements(), result.hasNext());
+    }
+
+    @McpTool(
+            name = "compare_test_runs",
+            description = """
+                    What changed between two runs of this project: every test case (and parameter
+                    set) classified as NEWLY_FAILING, FIXED, STILL_FAILING, ADDED, REMOVED or
+                    OTHER_CHANGE; unchanged ones are only counted. Use it to say "the build broke
+                    these tests". Runs are named by UUID or key (PROJ-Run-42). Omit base to compare
+                    with the previous run of the same name, else of the same test plan and
+                    environment; baseAutoSelected says which happened. FAILED and BLOCKED count as
+                    failing, but BLOCKED to FAILED is OTHER_CHANGE: a real failure replaced an
+                    environment problem. versionChanged means the case's wording was edited between
+                    the two executions.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
+    public RunComparisonResponse compareTestRuns(
+            @McpToolParam(description = "The newer run: UUID or key, e.g. PROJ-Run-42") String head,
+            @McpToolParam(description = "The run to compare against; omit to use the previous one", required = false)
+            String base) {
+        var caller = callerContext.require();
+        UUID headId = McpRunReferences.resolve(testRunRepository, caller.projectId(), head);
+        UUID baseId = base == null || base.isBlank() ? null
+                : McpRunReferences.resolve(testRunRepository, caller.projectId(), base);
+        return runComparisonService.compare(caller.projectId(), headId, baseId,
+                RunComparisonService.ComparisonRows.CHANGES_ONLY);
     }
 
     @McpTool(
