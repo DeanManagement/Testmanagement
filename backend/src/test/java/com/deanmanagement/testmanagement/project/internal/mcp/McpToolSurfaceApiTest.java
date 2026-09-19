@@ -1,9 +1,15 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugTemplateRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
+import com.deanmanagement.testmanagement.user.User;
+import com.deanmanagement.testmanagement.user.internal.repository.UserRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.ApiKeyCreatedResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.parameter.SaveParameterSetRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
@@ -101,6 +107,11 @@ class McpToolSurfaceApiTest {
     private TestRunService testRunService;
     @Autowired
     private ProjectService projectService;
+
+    @Autowired
+    private UserRepository userRepository;
+    @Autowired
+    private ProjectMemberRepository projectMemberRepository;
 
     private Project project;
     private Project otherProject;
@@ -1174,7 +1185,8 @@ class McpToolSurfaceApiTest {
                 Priority.CRITICAL, "Beim Bezahlen", "1. Warenkorb 2. Bezahlen", "Bestätigung",
                 "HTTP 500", "staging", failure.resultId(), run.id(), null);
 
-        assertThat(bug.status()).isEqualTo(BugReportStatus.OPEN);
+        assertThat(bug.status()).isEqualTo(BugReportStatus.NEW);
+        assertThat(bug.key()).isEqualTo(project.getKey() + "-BUG-1");
         assertThat(bug.testResultId()).isEqualTo(failure.resultId());
         assertThat(bug.testCaseTitle()).isEqualTo("Zahlung schlägt fehl");
         assertThat(bug.stepsToReproduce()).isEqualTo("1. Warenkorb 2. Bezahlen");
@@ -1194,7 +1206,7 @@ class McpToolSurfaceApiTest {
         assertThatThrownBy(() -> bugReportTools.createBugReport("zahlung wirft 500!",
                 Priority.HIGH, null, null, null, null, null, null, null, null))
                 .isInstanceOf(McpToolException.class)
-                .hasMessageContaining(first.id().toString())
+                .hasMessageContaining(first.key())
                 .hasMessageContaining("allowDuplicateTitle");
     }
 
@@ -1208,14 +1220,14 @@ class McpToolSurfaceApiTest {
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.BugDetail first = bugReportTools.createBugReport("Zahlung wirft 500",
                 Priority.HIGH, null, null, null, null, null, null, null, null);
-        bugReportTools.changeBugReportStatus(first.id(), BugReportStatus.CLOSED,
-                "In 2.3 behoben und nachgeprüft");
+        bugReportTools.changeBugReportStatus(first.key(), BugReportStatus.CLOSED,
+                "In 2.3 behoben und nachgeprüft", BugResolution.FIXED, null);
 
         McpDtos.BugDetail regression = bugReportTools.createBugReport("Zahlung wirft 500",
                 Priority.HIGH, null, null, null, null, null, null, null, null);
 
         assertThat(regression.id()).isNotEqualTo(first.id());
-        assertThat(regression.status()).isEqualTo(BugReportStatus.OPEN);
+        assertThat(regression.status()).isEqualTo(BugReportStatus.NEW);
     }
 
     @Test
@@ -1226,10 +1238,11 @@ class McpToolSurfaceApiTest {
                 null, null, null, null);
         McpDtos.BugDetail closed = bugReportTools.createBugReport("Behobener Fehler", Priority.LOW,
                 null, null, null, null, null, null, null, null);
-        bugReportTools.changeBugReportStatus(closed.id(), BugReportStatus.CLOSED, "nachgeprüft");
+        bugReportTools.changeBugReportStatus(closed.key(), BugReportStatus.CLOSED, "nachgeprüft",
+                BugResolution.FIXED, null);
 
-        McpDtos.BugPage open = bugReportTools.listBugReports(List.of(BugReportStatus.OPEN), null,
-                null, null);
+        McpDtos.BugPage open = bugReportTools.listBugReports(null, List.of(BugReportStatus.NEW), null,
+                null, null, null);
 
         assertThat(open.totalElements()).isEqualTo(1);
         assertThat(open.bugReports()).singleElement()
@@ -1244,7 +1257,7 @@ class McpToolSurfaceApiTest {
                 null, null, null, null, null, null, null);
 
         assertThatThrownBy(() ->
-                bugReportTools.changeBugReportStatus(bug.id(), BugReportStatus.RESOLVED, "  "))
+                bugReportTools.changeBugReportStatus(bug.key(), BugReportStatus.RESOLVED, "  ", null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("reason");
     }
@@ -1258,6 +1271,69 @@ class McpToolSurfaceApiTest {
                 null, null, null, null, null, null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("TESTER");
+    }
+
+    /** PRD-045: agents assign by email, since they have no member list to find ids in. */
+    @Test
+    void bugsAreAssignedByKeyAndMemberEmailAndUnassignedWithNone() {
+        enableBugReports(project);
+        User human = new User();
+        human.setEmail("tess-" + UUID.randomUUID() + "@test.local");
+        human.setDisplayName("Tess");
+        human.setPasswordHash("x");
+        human = userRepository.save(human);
+        ProjectMember membership = new ProjectMember();
+        membership.setUser(human);
+        membership.setProject(project);
+        membership.setRole(ProjectRole.TESTER);
+        projectMemberRepository.save(membership);
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.BugDetail a = bugReportTools.createBugReport("Eins", Priority.LOW, null, null, null, null,
+                null, null, null, null);
+        McpDtos.BugDetail b = bugReportTools.createBugReport("Zwei", Priority.LOW, null, null, null, null,
+                null, null, null, null);
+
+        McpDtos.BugAssignment assigned = bugReportTools.assignBugReports(List.of(a.key(), b.key()),
+                human.getEmail().toUpperCase());
+
+        assertThat(assigned.assigned()).isEqualTo(2);
+        assertThat(bugReportTools.listBugReports(null, null, null, human.getEmail(), null, null).totalElements())
+                .isEqualTo(2);
+        bugReportTools.assignBugReports(List.of(a.key()), "none");
+        assertThat(bugReportTools.getBugReport(a.key()).assigneeName()).isNull();
+        assertThatThrownBy(() -> bugReportTools.assignBugReports(List.of(b.key()), "nobody@test.local"))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("No member");
+    }
+
+    @Test
+    void aBugFiledByAnAgentStartsFromTheProjectTemplate() {
+        enableBugReports(project);
+        projectService.updateBugTemplate(project.getId(),
+                new BugTemplateRequest("Seen by the nightly suite", "1. Log in", null), null);
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+
+        McpDtos.BugDetail bug = bugReportTools.createBugReport("Absturz", Priority.HIGH, null,
+                "1. Öffnen 2. Speichern", null, null, null, null, null, null);
+
+        assertThat(bug.description()).isEqualTo("Seen by the nightly suite");
+        assertThat(bug.stepsToReproduce()).as("the agent's own text wins").isEqualTo("1. Öffnen 2. Speichern");
+    }
+
+    @Test
+    void closingAsDuplicateTakesTheOriginalsKey() {
+        enableBugReports(project);
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.BugDetail original = bugReportTools.createBugReport("Original", Priority.LOW, null, null, null,
+                null, null, null, null, null);
+        McpDtos.BugDetail copy = bugReportTools.createBugReport("Kopie", Priority.LOW, null, null, null,
+                null, null, null, null, null);
+
+        McpDtos.BugDetail closed = bugReportTools.changeBugReportStatus(copy.key(), BugReportStatus.CLOSED,
+                "derselbe Absturz", BugResolution.DUPLICATE, original.key());
+
+        assertThat(closed.resolution()).isEqualTo(BugResolution.DUPLICATE);
+        assertThat(closed.duplicateOfKey()).isEqualTo(original.key());
     }
 
     private void enableBugReports(Project target) {

@@ -8,17 +8,18 @@ import org.mapstruct.Mapping;
 @Mapper(componentModel = "spring", imports = CustomFieldValueMaps.class)
 public abstract class BugReportMapper {
 
-    @Mapping(target = "projectId", source = "project.id")
-    @Mapping(target = "testResultId", source = "testResult.id")
-    @Mapping(target = "testCaseTitle", source = "testResult.testCase.title")
-    @Mapping(target = "testRunId", source = "testRun.id")
-    @Mapping(target = "testRunName", source = "testRun.name")
-    @Mapping(target = "assigneeId", source = "assignee.id")
-    @Mapping(target = "assigneeName", source = "assignee.displayName")
-    @Mapping(target = "reporterName", ignore = true)
-    @Mapping(target = "projectKey", source = "project.key")
-    @Mapping(target = "exploratorySessionId", source = "exploratorySession.id")
-    @Mapping(target = "exploratorySessionKey", source = "exploratorySession.key")
+    @Mapping(target = "projectId", source = "bugReport.project.id")
+    @Mapping(target = "testResultId", source = "bugReport.testResult.id")
+    @Mapping(target = "testCaseTitle", source = "bugReport.testResult.testCase.title")
+    @Mapping(target = "testRunId", source = "bugReport.testRun.id")
+    @Mapping(target = "testRunName", source = "bugReport.testRun.name")
+    @Mapping(target = "assigneeId", source = "bugReport.assignee.id")
+    @Mapping(target = "assigneeName", source = "bugReport.assignee.displayName")
+    @Mapping(target = "duplicateOfId", source = "bugReport.duplicateOf.id")
+    @Mapping(target = "duplicateOfKey", source = "bugReport.duplicateOf.key")
+    @Mapping(target = "projectKey", source = "bugReport.project.key")
+    @Mapping(target = "exploratorySessionId", source = "bugReport.exploratorySession.id")
+    @Mapping(target = "exploratorySessionKey", source = "bugReport.exploratorySession.key")
     @Mapping(target = "customFields", expression = "java(CustomFieldValueMaps.toMap(bugReport.getCustomFieldValues()))")
-    public abstract BugReportResponse toResponse(BugReport bugReport);
+    public abstract BugReportResponse toResponse(BugReport bugReport, String reporterName);
 }

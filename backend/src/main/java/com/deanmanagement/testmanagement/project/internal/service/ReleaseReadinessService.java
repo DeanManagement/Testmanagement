@@ -47,7 +47,6 @@ public class ReleaseReadinessService {
 
     /** Bugs at this priority block a release. One line to widen if HIGH should block too. */
     static final Priority BLOCKER_PRIORITY = Priority.CRITICAL;
-    static final Set<BugReportStatus> OPEN_STATUSES = Set.of(BugReportStatus.OPEN, BugReportStatus.IN_PROGRESS);
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
     private static final int PERCENT_DECIMALS = 2;
 
@@ -77,7 +76,7 @@ public class ReleaseReadinessService {
     private Inputs load(UUID projectId, UUID planId, ReleaseGate gate) {
         List<ReadinessResultRow> rows = testResultRepository.findReadinessRows(planId);
         long blockerBugs = gate.maxBlockerBugs() == null ? 0
-                : bugReportRepository.countByProjectIdAndPriorityAndStatusIn(projectId, BLOCKER_PRIORITY, OPEN_STATUSES);
+                : bugReportRepository.countByProjectIdAndPriorityAndStatusIn(projectId, BLOCKER_PRIORITY, BugReportStatus.OPEN_STATUSES);
         BigDecimal coverage = gate.minCoverage() == null ? null : coverageOf(requirementService.coverage(projectId));
         long flaky = gate.maxFlaky() == null ? 0 : flakyCasesIn(rows, flakyTestService.analyse(projectId));
         return new Inputs(countLatest(rows), blockerBugs, coverage, flaky);

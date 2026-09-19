@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.service;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunSummaryResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestRunRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportFilter;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.CreateBugReportRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestRunListFilter;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -139,7 +141,8 @@ class EnvironmentWritePathsTest {
                 null, null, Priority.LOW, "production", null, null, null, null), null);
 
         assertThat(bug.environment()).isEqualTo("staging");
-        assertThat(bugReportService.findByProjectAndEnvironment(projectId, staging.getId()))
+        var byEnvironment = new BugReportFilter(null, List.of(), List.of(), List.of(), false, null, staging.getId());
+        assertThat(bugReportService.search(projectId, byEnvironment, PageRequest.of(0, 20)).getContent())
                 .extracting(BugReportResponse::title).containsExactly("Broken");
     }
 }

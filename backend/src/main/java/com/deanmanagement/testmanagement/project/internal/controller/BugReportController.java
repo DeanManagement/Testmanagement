@@ -6,7 +6,18 @@ import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugRepor
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.ChangeBugStatusRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.CreateBugReportRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.UpdateBugReportRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportFilter;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BulkDeleteBugReportsRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BulkUpdateBugReportsRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkOperationResponse;
+import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.Priority;
+import com.deanmanagement.testmanagement.project.internal.service.BugReportBulkService;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportService;
+import com.deanmanagement.testmanagement.shared.PageableUtils;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -33,26 +44,74 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BugReportController {
 
-    private final BugReportService bugReportService;
+    private static final String UNASSIGNED = "none";
+    private static final String ME = "me";
 
+    private final BugReportService bugReportService;
+    private final BugReportBulkService bulkService;
+
+    /**
+     * The bug list (PRD-045 §3.2). {@code assignee} takes user ids, {@code none} for unassigned and
+     * {@code me}; a bug matching any of them is included. Sortable by key, title, priority, status,
+     * assignee, createdAt and updatedAt.
+     */
     @GetMapping
     @RequireProjectRole
-    public List<BugReportResponse> findAll(@PathVariable UUID projectId,
+    public Page<BugReportResponse> findAll(@PathVariable UUID projectId,
+                                           @RequestParam(required = false) String q,
+                                           @RequestParam(required = false) List<BugReportStatus> status,
+                                           @RequestParam(required = false) List<Priority> priority,
+                                           @RequestParam(required = false) List<String> assignee,
                                            @RequestParam(required = false) UUID testResultId,
-                                           @RequestParam(required = false) UUID environmentId) {
-        if (testResultId != null) {
-            return bugReportService.findByTestResult(projectId, testResultId);
-        }
-        if (environmentId != null) {
-            return bugReportService.findByProjectAndEnvironment(projectId, environmentId);
-        }
-        return bugReportService.findByProject(projectId);
+                                           @RequestParam(required = false) UUID environmentId,
+                                           @PageableDefault(size = PageableUtils.DEFAULT_SIZE) Pageable pageable,
+                                           Authentication authentication) {
+        List<String> assignees = assignee == null ? List.of() : assignee;
+        List<UUID> assigneeIds = assignees.stream()
+                .filter(a -> !UNASSIGNED.equals(a))
+                .map(a -> ME.equals(a) ? actor(authentication) : parseUserId(a))
+                .toList();
+        BugReportFilter filter = new BugReportFilter(q, status, priority, assigneeIds,
+                assignees.contains(UNASSIGNED), testResultId, environmentId);
+        return bugReportService.search(projectId, filter, pageable);
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{idOrKey}")
     @RequireProjectRole
-    public BugReportResponse findById(@PathVariable UUID projectId, @PathVariable UUID id) {
-        return bugReportService.findById(projectId, id);
+    public BugReportResponse findById(@PathVariable UUID projectId, @PathVariable String idOrKey) {
+        return bugReportService.findById(projectId, idOrKey);
+    }
+
+    @PatchMapping("/bulk")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BulkOperationResponse bulkUpdate(@PathVariable UUID projectId,
+                                            @Valid @RequestBody BulkUpdateBugReportsRequest request,
+                                            Authentication authentication) {
+        return affected(bulkService.update(projectId, request, actor(authentication)), "updated");
+    }
+
+    @PostMapping("/bulk-delete")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BulkOperationResponse bulkDelete(@PathVariable UUID projectId,
+                                            @Valid @RequestBody BulkDeleteBugReportsRequest request,
+                                            Authentication authentication) {
+        return affected(bulkService.delete(projectId, request.ids(), actor(authentication)), "deleted");
+    }
+
+    private static BulkOperationResponse affected(int count, String verb) {
+        return new BulkOperationResponse(count, count + " bug report(s) " + verb);
+    }
+
+    private static UUID actor(Authentication authentication) {
+        return authentication != null ? UUID.fromString(authentication.getName()) : null;
+    }
+
+    private static UUID parseUserId(String value) {
+        try {
+            return UUID.fromString(value);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("assignee must be a user id, 'none' or 'me', not '" + value + "'");
+        }
     }
 
     @PostMapping

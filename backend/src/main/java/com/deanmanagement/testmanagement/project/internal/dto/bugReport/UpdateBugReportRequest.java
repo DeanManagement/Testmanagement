@@ -1,6 +1,5 @@
 package com.deanmanagement.testmanagement.project.internal.dto.bugReport;
 
-import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -9,6 +8,7 @@ import jakarta.validation.constraints.Size;
 import java.util.Map;
 import java.util.UUID;
 
+/** Edits a bug's content. Status is not here: it changes only through ChangeBugStatusRequest (PRD-045 §1). */
 public record UpdateBugReportRequest(
         @NotBlank @Size(max = 255) String title,
         String description,
@@ -16,7 +16,6 @@ public record UpdateBugReportRequest(
         String expectedBehavior,
         String actualBehavior,
         @NotNull Priority priority,
-        @NotNull BugReportStatus status,
         String environment,
         UUID testResultId,
         UUID testRunId,
@@ -27,9 +26,9 @@ public record UpdateBugReportRequest(
 ) {
     public UpdateBugReportRequest(String title, String description, String stepsToReproduce,
                                   String expectedBehavior, String actualBehavior, Priority priority,
-                                  BugReportStatus status, String environment, UUID testResultId, UUID testRunId,
+                                  String environment, UUID testResultId, UUID testRunId,
                                   UUID assigneeId, UUID environmentId) {
-        this(title, description, stepsToReproduce, expectedBehavior, actualBehavior, priority, status, environment,
+        this(title, description, stepsToReproduce, expectedBehavior, actualBehavior, priority, environment,
                 testResultId, testRunId, assigneeId, environmentId, null);
     }
 }

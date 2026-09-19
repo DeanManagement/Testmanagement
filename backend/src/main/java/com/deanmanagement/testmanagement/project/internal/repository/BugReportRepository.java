@@ -5,6 +5,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,7 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
-public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
+public interface BugReportRepository extends JpaRepository<BugReport, UUID>, JpaSpecificationExecutor<BugReport> {
 
     /** Release-gate blockers (PRD-037): the project's bugs at a priority, in any of these statuses. */
     long countByProjectIdAndPriorityAndStatusIn(UUID projectId, Priority priority, Collection<BugReportStatus> statuses);
@@ -72,4 +73,9 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
                                          Pageable pageable);
 
     java.util.List<BugReport> findByExploratorySessionIdOrderByCreatedAtAsc(UUID sessionId);
+
+    Optional<BugReport> findByKeyAndProjectId(String key, UUID projectId);
+
+    /** Bulk operations (PRD-045): resolves ids within the project only, so a foreign id is simply absent. */
+    List<BugReport> findByIdInAndProjectId(Collection<UUID> ids, UUID projectId);
 }

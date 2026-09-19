@@ -27,6 +27,10 @@ import java.util.List;
 @NoArgsConstructor
 public class BugReport extends BaseEntity {
 
+    /** {@code <PROJECT>-BUG-<n>} (PRD-045); stored, so a project key rename leaves old bugs as they were. */
+    @Column(name = "bug_key", nullable = false, unique = true, length = 40)
+    private String key;
+
     @Column(nullable = false)
     private String title;
 
@@ -49,6 +53,15 @@ public class BugReport extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private BugReportStatus status;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private BugResolution resolution;
+
+    /** Set with resolution DUPLICATE: the bug this one repeats, in the same project. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "duplicate_of_id")
+    private BugReport duplicateOf;
 
     private String environment;
 

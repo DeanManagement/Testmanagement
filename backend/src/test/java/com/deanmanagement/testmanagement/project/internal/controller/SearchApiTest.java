@@ -116,6 +116,7 @@ class SearchApiTest {
 
     private void seedBugReport(UUID projectId, String title) {
         BugReport bug = new BugReport();
+        bug.setKey("BUG-" + UUID.randomUUID());
         bug.setProject(projectRepository.findById(projectId).orElseThrow());
         bug.setTitle(title);
         bug.setPriority(Priority.HIGH);

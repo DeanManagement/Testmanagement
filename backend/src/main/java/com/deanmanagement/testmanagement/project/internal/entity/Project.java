@@ -41,6 +41,9 @@ public class Project extends BaseEntity {
     @Column(name = "next_session_number", nullable = false)
     private int nextSessionNumber = 1;
 
+    @Column(name = "next_bug_number", nullable = false)
+    private int nextBugNumber = 1;
+
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectMember> members = new ArrayList<>();
 
@@ -67,6 +70,16 @@ public class Project extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "reviewer_min_role", nullable = false, length = 20)
     private ProjectRole reviewerMinRole = ProjectRole.ADMIN;
+
+    /** PRD-045: pre-fills empty fields of a new bug report, from the form and from MCP. */
+    @Column(name = "bug_template_description", columnDefinition = "TEXT")
+    private String bugTemplateDescription;
+
+    @Column(name = "bug_template_steps", columnDefinition = "TEXT")
+    private String bugTemplateSteps;
+
+    @Column(name = "bug_template_environment", columnDefinition = "TEXT")
+    private String bugTemplateEnvironment;
 
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<BugReport> bugReports = new ArrayList<>();

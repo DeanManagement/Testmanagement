@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
 import com.deanmanagement.testmanagement.project.internal.dto.project.ReviewSettingsRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugTemplateRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.dashboard.DashboardResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
@@ -112,6 +113,16 @@ public class ProjectController {
                                                 Authentication authentication) {
         UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         return projectService.updateReviewSettings(id, request, userId);
+    }
+
+    /** PRD-045: what a new bug report's empty fields start with. */
+    @PutMapping("/{id}/settings/bug-template")
+    @RequireProjectRole(value = ProjectRole.ADMIN, pathVariable = "id")
+    public ProjectResponse updateBugTemplate(@PathVariable UUID id,
+                                             @RequestBody BugTemplateRequest request,
+                                             Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return projectService.updateBugTemplate(id, request, userId);
     }
 
     private void requireAdmin(Authentication authentication) {

@@ -67,7 +67,7 @@ class ProjectServiceTest {
     }
 
     private ProjectResponse sampleResponse() {
-        return new ProjectResponse(PROJECT_ID, "Test Project", "A test project", "TEST", false, false, ProjectRole.ADMIN, NOW, NOW, null, null);
+        return new ProjectResponse(PROJECT_ID, "Test Project", "A test project", "TEST", false, false, ProjectRole.ADMIN, NOW, NOW, null, null, null, null, null);
     }
 
     @Test

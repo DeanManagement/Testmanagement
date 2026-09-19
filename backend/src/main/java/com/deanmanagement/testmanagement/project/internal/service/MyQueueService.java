@@ -92,7 +92,7 @@ public class MyQueueService {
         List<MyQueueResponse.StaleBugReportItem> staleBugReports = bugReportRepository
                 .findStaleByCreatedBy(
                         userId,
-                        EnumSet.of(BugReportStatus.OPEN, BugReportStatus.IN_PROGRESS),
+                        BugReportStatus.OPEN_STATUSES,
                         now.minus(BUG_REPORT_STALE_AFTER),
                         limit)
                 .stream()

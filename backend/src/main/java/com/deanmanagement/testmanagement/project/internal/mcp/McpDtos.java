@@ -2,6 +2,7 @@ package com.deanmanagement.testmanagement.project.internal.mcp;
 
 import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
@@ -295,7 +296,8 @@ final class McpDtos {
     // --- bug reports (PRD-027) ---------------------------------------------------------------
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record BugSummary(UUID id, String title, BugReportStatus status, Priority priority,
+    record BugSummary(UUID id, String key, String title, BugReportStatus status,
+                      @Nullable BugResolution resolution, Priority priority,
                       @Nullable String environment, @Nullable UUID testResultId,
                       @Nullable String testCaseTitle, @Nullable UUID testRunId,
                       @Nullable String testRunName, @Nullable String assigneeName) {}
@@ -305,9 +307,10 @@ final class McpDtos {
                    boolean hasMore) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record BugDetail(UUID id, String title, @Nullable String description,
+    record BugDetail(UUID id, String key, String title, @Nullable String description,
                      @Nullable String stepsToReproduce, @Nullable String expectedBehavior,
-                     @Nullable String actualBehavior, BugReportStatus status, Priority priority,
+                     @Nullable String actualBehavior, BugReportStatus status,
+                     @Nullable BugResolution resolution, @Nullable String duplicateOfKey, Priority priority,
                      @Nullable String environment, @Nullable UUID testResultId,
                      @Nullable String testCaseTitle, @Nullable UUID testRunId,
                      @Nullable String testRunName, @Nullable String assigneeName,
@@ -315,7 +318,11 @@ final class McpDtos {
 
     /** A near-match that blocked a bug create, so the agent can update it instead of re-filing. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record DuplicateBug(UUID id, String title, BugReportStatus status) {}
+    record DuplicateBug(UUID id, String key, String title, BugReportStatus status) {}
+
+    /** What assign_bug_reports did (PRD-045 §3.5). */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record BugAssignment(int assigned, @Nullable String assigneeName) {}
 
     // --- history ------------------------------------------------------------------------------
 

@@ -144,6 +144,7 @@ class ReleaseReadinessApiTest {
 
     private void bug(Project target, Priority priority, BugReportStatus status) {
         BugReport bug = new BugReport();
+        bug.setKey("BUG-" + UUID.randomUUID());
         bug.setProject(target);
         bug.setTitle("Bug");
         bug.setPriority(priority);
@@ -204,7 +205,6 @@ class ReleaseReadinessApiTest {
             bug(project, Priority.CRITICAL, BugReportStatus.OPEN);
             bug(project, Priority.CRITICAL, BugReportStatus.RESOLVED);
             bug(project, Priority.CRITICAL, BugReportStatus.CLOSED);
-            bug(project, Priority.CRITICAL, BugReportStatus.WONTFIX);
             bug(project, Priority.HIGH, BugReportStatus.OPEN);
             bug(other, Priority.CRITICAL, BugReportStatus.OPEN);
 

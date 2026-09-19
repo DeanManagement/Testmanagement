@@ -16,6 +16,10 @@ public record ProjectResponse(
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,
-        UUID updatedBy
+        UUID updatedBy,
+        /* PRD-045: pre-fills a new bug report's empty fields. */
+        String bugTemplateDescription,
+        String bugTemplateSteps,
+        String bugTemplateEnvironment
 ) {
 }

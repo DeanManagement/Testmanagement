@@ -87,7 +87,7 @@ class McpBugRunLinkApiTest extends McpToolApiTestSupport {
 
         BugReportResponse updated = bugReportService.update(project.getId(), bug.id(),
                 new UpdateBugReportRequest("Checkout returns 500", null, null, null, null,
-                        Priority.HIGH, BugReportStatus.OPEN, null, resultId, null, null, null), agent);
+                        Priority.HIGH, null, resultId, null, null, null), agent);
 
         assertThat(updated.testRunId()).isEqualTo(run.id());
     }
@@ -98,7 +98,7 @@ class McpBugRunLinkApiTest extends McpToolApiTestSupport {
 
         BugReportResponse updated = bugReportService.update(project.getId(), bug.id(),
                 new UpdateBugReportRequest("Checkout returns 500", null, null, null, null,
-                        Priority.HIGH, BugReportStatus.OPEN, null, null, null, null, null), agent);
+                        Priority.HIGH, null, null, null, null, null), agent);
 
         assertThat(updated.testRunId()).isNull();
     }

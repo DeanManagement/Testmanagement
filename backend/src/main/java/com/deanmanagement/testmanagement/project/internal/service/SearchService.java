@@ -118,11 +118,11 @@ public class SearchService {
         } else {
             String jpql = "SELECT br FROM BugReport br WHERE "
                     + memberJpql("br.project", admin, projectId)
-                    + " AND (LOWER(br.title) LIKE :q OR LOWER(br.description) LIKE :q)"
+                    + " AND (LOWER(br.title) LIKE :q OR LOWER(br.key) LIKE :q OR LOWER(br.description) LIKE :q)"
                     + " ORDER BY br.updatedAt DESC";
             rows = bindLike(em.createQuery(jpql, BugReport.class), q, userId, admin, projectId, limit).getResultList();
         }
-        return rows.stream().map(br -> new SearchHit("bugReport", br.getId(), null, br.getTitle(),
+        return rows.stream().map(br -> new SearchHit("bugReport", br.getId(), br.getKey(), br.getTitle(),
                 br.getProject().getId(), snippet(br.getDescription()))).toList();
     }
 

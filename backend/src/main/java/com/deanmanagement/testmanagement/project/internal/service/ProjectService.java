@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
 import com.deanmanagement.testmanagement.project.internal.dto.project.ReviewSettingsRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugTemplateRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.project.CreateProjectRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.project.ProjectResponse;
@@ -104,6 +105,24 @@ public class ProjectService {
                 AuditEntityType.PROJECT, project.getId(), project.getName(),
                 "Bug reports " + (enabled ? "enabled" : "disabled"));
         return projectMapper.toResponse(project);
+    }
+
+    /** PRD-045: blank clears a field's template. */
+    @Transactional
+    public ProjectResponse updateBugTemplate(UUID id, BugTemplateRequest request, UUID userId) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", id));
+        project.setBugTemplateDescription(blankToNull(request.description()));
+        project.setBugTemplateSteps(blankToNull(request.stepsToReproduce()));
+        project.setBugTemplateEnvironment(blankToNull(request.environment()));
+        project = projectRepository.save(project);
+        auditService.log(project.getId(), userId, AuditAction.UPDATED, AuditEntityType.PROJECT, project.getId(),
+                project.getName(), "Bug report template updated");
+        return projectMapper.toResponse(project);
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
     }
 
     /** PRD-033: switching review on leaves existing ACTIVE cases approved-by-legacy; off keeps IN_REVIEW ones. */

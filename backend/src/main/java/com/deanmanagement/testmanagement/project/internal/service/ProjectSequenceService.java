@@ -46,6 +46,15 @@ public class ProjectSequenceService {
         return number;
     }
 
+    /** PRD-045: numbers {@code PROJ-BUG-N} keys. */
+    @Transactional(propagation = Propagation.MANDATORY)
+    public int nextBugNumber(UUID projectId) {
+        Project project = lock(projectId);
+        int number = project.getNextBugNumber();
+        project.setNextBugNumber(number + 1);
+        return number;
+    }
+
     private Project lock(UUID projectId) {
         return projectRepository.findByIdForUpdate(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));

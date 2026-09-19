@@ -2,6 +2,7 @@ package com.deanmanagement.testmanagement.project.internal.service;
 
 import com.deanmanagement.testmanagement.project.internal.repository.ExploratorySessionRepository;
 import com.deanmanagement.testmanagement.project.internal.entity.ExploratorySession;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportFilter;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.ChangeBugStatusRequest;
@@ -11,6 +12,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
@@ -21,19 +23,24 @@ import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemb
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.spec.BugReportSpecifications;
 import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.user.User;
 import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -55,31 +62,31 @@ public class BugReportService {
     private final ProjectEnvironmentService environmentService;
     private final ExploratorySessionRepository exploratorySessionRepository;
     private final CustomFieldValueWriter customFieldWriter;
+    private final ProjectSequenceService projectSequenceService;
 
+    /** Every bug of the project, unpaged: for duplicate checks, not for display. */
     public List<BugReportResponse> findByProject(UUID projectId) {
         requireBugReportsEnabled(projectId);
         return toResponsesWithReporters(bugReportRepository.findByProjectIdWithDetails(projectId));
     }
 
-    /** Bug reports seen in one environment (PRD-032). */
-    public List<BugReportResponse> findByProjectAndEnvironment(UUID projectId, UUID environmentId) {
+    /** The bug list (PRD-045 §3.2): filtered, sorted and paged in the database. */
+    public Page<BugReportResponse> search(UUID projectId, BugReportFilter filter, Pageable pageable) {
         requireBugReportsEnabled(projectId);
-        return toResponsesWithReporters(bugReportRepository.findByProjectIdWithDetails(projectId).stream()
-                .filter(b -> b.getProjectEnvironment() != null
-                        && b.getProjectEnvironment().getId().equals(environmentId))
-                .toList());
+        Page<BugReport> page = bugReportRepository.findAll(
+                BugReportSpecifications.build(projectId, filter), BugReportSort.toEntitySort(pageable));
+        Map<UUID, String> reporterNames = reporterNames(page.getContent());
+        return page.map(bug -> toResponse(bug, reporterNames));
+    }
+
+    /** By UUID or by key (PROJ-BUG-12), always within the project. */
+    public BugReportResponse findById(UUID projectId, String idOrKey) {
+        requireBugReportsEnabled(projectId);
+        return toResponseWithReporter(require(projectId, idOrKey));
     }
 
     public BugReportResponse findById(UUID projectId, UUID id) {
-        requireBugReportsEnabled(projectId);
-        BugReport bugReport = bugReportRepository.findByIdAndProjectIdWithDetails(id, projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("BugReport", id));
-        return toResponseWithReporter(bugReport);
-    }
-
-    public List<BugReportResponse> findByTestResult(UUID projectId, UUID testResultId) {
-        requireBugReportsEnabled(projectId);
-        return toResponsesWithReporters(bugReportRepository.findByTestResultIdAndProjectId(testResultId, projectId));
+        return findById(projectId, id.toString());
     }
 
     @Transactional
@@ -102,8 +109,10 @@ public class BugReportService {
         bugReport.setExpectedBehavior(request.expectedBehavior());
         bugReport.setActualBehavior(request.actualBehavior());
         bugReport.setPriority(request.priority());
-        bugReport.setStatus(BugReportStatus.OPEN);
+        // New bugs wait for triage (PRD-045); OPEN means someone has confirmed it.
+        bugReport.setStatus(BugReportStatus.NEW);
         bugReport.setProject(project);
+        bugReport.setKey(project.getKey() + "-BUG-" + projectSequenceService.nextBugNumber(projectId));
         customFieldWriter.write(bugReport, request.customFields(), mode);
         UUID environmentId = request.environmentId();
         if (request.exploratorySessionId() != null) {
@@ -129,10 +138,11 @@ public class BugReportService {
 
         bugReport = bugReportRepository.save(bugReport);
         auditService.log(projectId, userId, AuditAction.CREATED,
-                AuditEntityType.BUG_REPORT, bugReport.getId(), bugReport.getTitle(), null);
+                AuditEntityType.BUG_REPORT, bugReport.getId(), label(bugReport), null);
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("bugReportId", bugReport.getId().toString());
+        data.put("key", bugReport.getKey());
         data.put("title", bugReport.getTitle());
         data.put("priority", bugReport.getPriority() != null ? bugReport.getPriority().name() : null);
         data.put("status", bugReport.getStatus().name());
@@ -144,8 +154,7 @@ public class BugReportService {
     @Transactional
     public BugReportResponse update(UUID projectId, UUID id, UpdateBugReportRequest request, UUID userId) {
         requireBugReportsEnabled(projectId);
-        BugReport bugReport = bugReportRepository.findByIdAndProjectIdWithDetails(id, projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("BugReport", id));
+        BugReport bugReport = require(projectId, id.toString());
 
         bugReport.setTitle(request.title());
         bugReport.setDescription(request.description());
@@ -153,7 +162,6 @@ public class BugReportService {
         bugReport.setExpectedBehavior(request.expectedBehavior());
         bugReport.setActualBehavior(request.actualBehavior());
         bugReport.setPriority(request.priority());
-        bugReport.setStatus(request.status());
         // The SPA sends the whole object, so null clears the environment like the other fields.
         bugReport.assignEnvironment(environmentService.resolve(projectId, request.environmentId(), request.environment()));
 
@@ -169,24 +177,61 @@ public class BugReportService {
 
         bugReport = bugReportRepository.save(bugReport);
         auditService.log(projectId, userId, AuditAction.UPDATED,
-                AuditEntityType.BUG_REPORT, bugReport.getId(), bugReport.getTitle(), null);
+                AuditEntityType.BUG_REPORT, bugReport.getId(), label(bugReport), null);
         return toResponseWithReporter(bugReport);
     }
 
     @Transactional
     public BugReportResponse changeStatus(UUID projectId, UUID id, ChangeBugStatusRequest request, UUID userId) {
         requireBugReportsEnabled(projectId);
-        BugReport bugReport = bugReportRepository.findByIdAndProjectIdWithDetails(id, projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("BugReport", id));
+        BugReport bugReport = require(projectId, id.toString());
+        applyStatus(projectId, bugReport, request, userId);
+        return toResponseWithReporter(bugReportRepository.save(bugReport));
+    }
+
+    /**
+     * The status rules, shared by the single and the bulk change (PRD-045 §3.1): closing needs a
+     * resolution, DUPLICATE needs another bug of the project, and reopening clears both.
+     */
+    void applyStatus(UUID projectId, BugReport bugReport, ChangeBugStatusRequest request, UUID userId) {
+        BugResolution resolution = request.resolution();
+        if (request.status() == BugReportStatus.CLOSED && resolution == null) {
+            throw new IllegalArgumentException("Closing a bug needs a resolution: "
+                    + Arrays.toString(BugResolution.values()));
+        }
+        if (resolution != null && request.status().isOpen()) {
+            throw new IllegalArgumentException("A bug in status " + request.status()
+                    + " has no resolution; only RESOLVED and CLOSED take one");
+        }
+        BugReport duplicateOf = resolveDuplicateTarget(projectId, bugReport, resolution, request.duplicateOfId());
 
         BugReportStatus oldStatus = bugReport.getStatus();
         bugReport.setStatus(request.status());
-        bugReport = bugReportRepository.save(bugReport);
+        bugReport.setResolution(resolution);
+        bugReport.setDuplicateOf(duplicateOf);
 
-        String details = oldStatus + " -> " + request.status() + ": " + request.reason();
-        auditService.log(projectId, userId, AuditAction.STATUS_CHANGED,
-                AuditEntityType.BUG_REPORT, bugReport.getId(), bugReport.getTitle(), details);
-        return toResponseWithReporter(bugReport);
+        String outcome = resolution == null ? "" : " (" + resolution
+                + (duplicateOf != null ? " of " + duplicateOf.getKey() : "") + ")";
+        auditService.log(projectId, userId, AuditAction.STATUS_CHANGED, AuditEntityType.BUG_REPORT,
+                bugReport.getId(), label(bugReport),
+                oldStatus + " -> " + request.status() + outcome + ": " + request.reason());
+    }
+
+    private BugReport resolveDuplicateTarget(UUID projectId, BugReport bugReport, BugResolution resolution,
+                                             UUID duplicateOfId) {
+        if (resolution != BugResolution.DUPLICATE) {
+            if (duplicateOfId != null) {
+                throw new IllegalArgumentException("duplicateOfId goes with resolution DUPLICATE only");
+            }
+            return null;
+        }
+        if (duplicateOfId == null) {
+            throw new IllegalArgumentException("Resolution DUPLICATE needs duplicateOfId: the bug this one repeats");
+        }
+        if (duplicateOfId.equals(bugReport.getId())) {
+            throw new IllegalArgumentException("A bug cannot be a duplicate of itself");
+        }
+        return require(projectId, duplicateOfId.toString());
     }
 
     public List<BugReportResponse> findByAssignee(UUID assigneeId) {
@@ -196,11 +241,59 @@ public class BugReportService {
     @Transactional
     public void delete(UUID projectId, UUID id, UUID userId) {
         requireBugReportsEnabled(projectId);
-        BugReport bugReport = bugReportRepository.findByIdAndProjectIdWithDetails(id, projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("BugReport", id));
+        delete(projectId, require(projectId, id.toString()), userId);
+    }
+
+    void delete(UUID projectId, BugReport bugReport, UUID userId) {
         auditService.log(projectId, userId, AuditAction.DELETED,
-                AuditEntityType.BUG_REPORT, bugReport.getId(), bugReport.getTitle(), null);
+                AuditEntityType.BUG_REPORT, bugReport.getId(), label(bugReport), null);
         bugReportRepository.delete(bugReport);
+    }
+
+    /**
+     * Fills a new report's empty fields from the project's template (PRD-045 §3.5). Used where no
+     * form showed the template first; an agent's own text is never overwritten.
+     */
+    public CreateBugReportRequest withTemplate(UUID projectId, CreateBugReportRequest request) {
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
+        boolean namesEnvironment = request.environmentId() != null || !isBlank(request.environment());
+        return new CreateBugReportRequest(request.title(),
+                orTemplate(request.description(), project.getBugTemplateDescription()),
+                orTemplate(request.stepsToReproduce(), project.getBugTemplateSteps()),
+                request.expectedBehavior(), request.actualBehavior(), request.priority(),
+                namesEnvironment ? request.environment() : project.getBugTemplateEnvironment(),
+                request.testResultId(), request.testRunId(), request.assigneeId(), request.environmentId(),
+                request.exploratorySessionId(), request.customFields());
+    }
+
+    private static String orTemplate(String value, String template) {
+        return isBlank(value) ? template : value;
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    /** How activity and notifications name a bug: its key, then its title. */
+    static String label(BugReport bugReport) {
+        return bugReport.getKey() + " " + bugReport.getTitle();
+    }
+
+    /** A UUID or a key; either way only within the project, so a foreign bug is a 404. */
+    BugReport require(UUID projectId, String idOrKey) {
+        Optional<BugReport> found = parseUuid(idOrKey)
+                .map(id -> bugReportRepository.findByIdAndProjectIdWithDetails(id, projectId))
+                .orElseGet(() -> bugReportRepository.findByKeyAndProjectId(idOrKey, projectId));
+        return found.orElseThrow(() -> new ResourceNotFoundException("BugReport", idOrKey));
+    }
+
+    private static Optional<UUID> parseUuid(String value) {
+        try {
+            return Optional.of(UUID.fromString(value));
+        } catch (IllegalArgumentException notAUuid) {
+            return Optional.empty();
+        }
     }
 
     /*
@@ -251,7 +344,7 @@ public class BugReportService {
     }
 
     /** A non-member is reported missing rather than forbidden — see {@code TestRunService}. */
-    private User requireProjectMember(UUID projectId, UUID userId) {
+    User requireProjectMember(UUID projectId, UUID userId) {
         if (!projectMemberRepository.existsByUserIdAndProjectId(userId, projectId)) {
             throw new ResourceNotFoundException("User", userId);
         }
@@ -259,7 +352,7 @@ public class BugReportService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", userId));
     }
 
-    private void requireBugReportsEnabled(UUID projectId) {
+    void requireBugReportsEnabled(UUID projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
         if (!project.isBugReportsEnabled()) {
@@ -267,53 +360,27 @@ public class BugReportService {
         }
     }
 
-    private BugReportResponse toResponseWithReporter(BugReport bugReport) {
-        Map<UUID, String> reporterNames = bugReport.getCreatedBy() != null
-                ? userService.findDisplayNamesByIds(Set.of(bugReport.getCreatedBy()))
-                : Map.of();
-        return toResponseWithReporter(bugReport, reporterNames);
+    BugReportResponse toResponseWithReporter(BugReport bugReport) {
+        return toResponse(bugReport, reporterNames(List.of(bugReport)));
     }
 
     private List<BugReportResponse> toResponsesWithReporters(List<BugReport> bugReports) {
-        Map<UUID, String> reporterNames = userService.findDisplayNamesByIds(bugReports.stream()
-                .map(BugReport::getCreatedBy)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toSet()));
+        Map<UUID, String> names = reporterNames(bugReports);
         return bugReports.stream()
-                .map(bugReport -> toResponseWithReporter(bugReport, reporterNames))
+                .map(bug -> toResponse(bug, names))
                 .toList();
     }
 
-    private BugReportResponse toResponseWithReporter(BugReport bugReport, Map<UUID, String> reporterNames) {
-        BugReportResponse response = bugReportMapper.toResponse(bugReport);
-        String reporterName = bugReport.getCreatedBy() != null
-                ? reporterNames.get(bugReport.getCreatedBy())
-                : null;
-        return new BugReportResponse(
-                response.id(),
-                response.title(),
-                response.description(),
-                response.stepsToReproduce(),
-                response.expectedBehavior(),
-                response.actualBehavior(),
-                response.priority(),
-                response.status(),
-                response.environment(),
-                response.projectId(),
-                response.testResultId(),
-                response.testCaseTitle(),
-                response.testRunId(),
-                response.testRunName(),
-                response.assigneeId(),
-                response.assigneeName(),
-                response.createdBy(),
-                reporterName,
-                response.createdAt(),
-                response.updatedAt(),
-                response.projectKey(),
-                response.exploratorySessionId(),
-                response.exploratorySessionKey(),
-                response.customFields()
-        );
+    private BugReportResponse toResponse(BugReport bugReport, Map<UUID, String> reporterNames) {
+        UUID reporter = bugReport.getCreatedBy();
+        return bugReportMapper.toResponse(bugReport, reporter == null ? null : reporterNames.get(reporter));
+    }
+
+    private Map<UUID, String> reporterNames(List<BugReport> bugReports) {
+        Set<UUID> ids = bugReports.stream()
+                .map(BugReport::getCreatedBy)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+        return ids.isEmpty() ? Map.of() : userService.findDisplayNamesByIds(ids);
     }
 }

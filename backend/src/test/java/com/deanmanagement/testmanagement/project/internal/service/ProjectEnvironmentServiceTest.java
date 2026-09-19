@@ -84,6 +84,7 @@ class ProjectEnvironmentServiceTest {
 
     private UUID bugIn(ProjectEnvironment environment) {
         BugReport bug = new BugReport();
+        bug.setKey("BUG-" + UUID.randomUUID());
         bug.setProject(projectRepository.getReferenceById(projectId));
         bug.setTitle("Bug");
         bug.setPriority(Priority.MEDIUM);

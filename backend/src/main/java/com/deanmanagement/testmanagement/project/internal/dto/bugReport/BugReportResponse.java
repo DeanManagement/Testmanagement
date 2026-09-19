@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.dto.bugReport;
 
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 
 import java.time.Instant;
@@ -9,6 +10,8 @@ import java.util.UUID;
 
 public record BugReportResponse(
         UUID id,
+        /* PRD-045: PROJ-BUG-12 */
+        String key,
         String title,
         String description,
         String stepsToReproduce,
@@ -16,6 +19,10 @@ public record BugReportResponse(
         String actualBehavior,
         Priority priority,
         BugReportStatus status,
+        /* PRD-045: why a resolved or closed bug is; null while open. */
+        BugResolution resolution,
+        UUID duplicateOfId,
+        String duplicateOfKey,
         String environment,
         UUID projectId,
         UUID testResultId,
