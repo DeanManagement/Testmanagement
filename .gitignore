@@ -47,3 +47,7 @@ Thumbs.db
 
 # Docker
 docker-compose.override.yml
+
+# Instance backups (scripts/backup.sh): whole-database dumps, never commit them
+/backups/
+*.dump
