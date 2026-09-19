@@ -43,6 +43,10 @@ export interface TestCase {
   approvedVersion: number | null;
   /** PRD-035: only fields that hold a value, in display order. */
   customFields: CustomFieldValues;
+  /** PRD-036: expected minutes for one execution; null when not estimated. */
+  estimateMinutes: number | null;
+  /** PRD-036: median measured duration of the last 5 executions; detail responses only. */
+  medianActualMs?: number | null;
 }
 
 /** What the caller may do in a case's review; reason explains a refused approve. */
@@ -63,6 +67,7 @@ export interface CreateTestCaseRequest {
   steps?: TestStepRequest[];
   folderId?: string;
   customFields?: CustomFieldValues;
+  estimateMinutes?: number;
 }
 
 export interface UpdateTestCaseRequest {
@@ -74,6 +79,8 @@ export interface UpdateTestCaseRequest {
   labels?: string[];
   steps?: TestStepRequest[];
   customFields?: CustomFieldValues;
+  /** Omitted leaves it alone; 0 clears it. */
+  estimateMinutes?: number;
 }
 
 export interface BulkOperationResponse {

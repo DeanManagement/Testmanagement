@@ -42,6 +42,15 @@
           }
         </div>
       }
+      @if (tc.estimateMinutes != null || tc.medianActualMs != null) {
+        <p class="tc-effort" data-test-id="test-case-detail-effort">
+          <mat-icon class="effort-icon" aria-hidden="true">schedule</mat-icon>
+          <span>{{ 'testCase.detail.estimate' | translate }}: {{ tc.estimateMinutes | duration }}</span>
+          @if (tc.medianActualMs != null) {
+            <span class="effort-median">· {{ 'testCase.detail.medianActual' | translate: { duration: (millisToMinutes(tc.medianActualMs) | duration) } }}</span>
+          }
+        </p>
+      }
       <app-custom-fields-display [values]="tc.customFields" />
     </div>
 

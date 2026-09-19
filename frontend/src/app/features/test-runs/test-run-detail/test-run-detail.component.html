@@ -83,6 +83,21 @@
         <h1 data-test-id="test-run-detail-name">{{ run.name }}</h1>
         <span class="badge badge--{{ run.status | lowercase }}" data-test-id="test-run-detail-status">{{ 'testRun.status.' + run.status | translate }}</span>
       </div>
+      @if (run.results?.length) {
+        @let effort = runEffort(run);
+        <p class="run-effort" data-test-id="test-run-effort">
+          <mat-icon class="env-icon" aria-hidden="true">schedule</mat-icon>
+          @if (effort.estimatedMinutes > 0) {
+            {{ 'timeTracking.remaining' | translate: { duration: (effort.remainingMinutes | duration) } }}
+          } @else {
+            {{ 'timeTracking.noEstimates' | translate }}
+          }
+          @if (effort.pendingUnestimated > 0) {
+            · {{ 'timeTracking.unestimated' | translate: { count: effort.pendingUnestimated } }}
+          }
+          · {{ 'timeTracking.spent' | translate: { duration: (effort.actualMinutes | duration) } }}
+        </p>
+      }
       @if (run.environment) {
         <p class="run-env" data-test-id="test-run-detail-env">
           <mat-icon class="env-icon">dns</mat-icon>
@@ -171,14 +186,33 @@
                     {{ result.testCaseTitle }}
                   </a>
                 </h3>
-                <mat-form-field appearance="outline" class="status-select">
-                  <mat-select [value]="result.status" (selectionChange)="onResultStatusChange(result.id, $event.value)" [attr.data-test-id]="'execution-result-status-' + result.id">
-                    @for (s of resultStatuses; track s) {
-                      <mat-option [value]="s">{{ 'resultStatus.' + s | translate }}</mat-option>
+                <div class="case-controls">
+                  <mat-form-field appearance="outline" class="duration-field" subscriptSizing="dynamic">
+                    <mat-label>{{ 'timeTracking.duration' | translate }}</mat-label>
+                    <input matInput type="number" min="0" step="1" [(ngModel)]="durationInputMinutes"
+                           (blur)="saveDuration(result)" (keydown.enter)="saveDuration(result)"
+                           data-test-id="execution-duration-input" />
+                    <span matTextSuffix>{{ 'duration.minutesUnit' | translate }}</span>
+                    @if (durationInputMinutes == null && result.durationMs == null && run.status === 'IN_PROGRESS') {
+                      <mat-hint data-test-id="execution-running-time">
+                        {{ 'timeTracking.running' | translate: { minutes: runningMinutes(result.id) } }}
+                      </mat-hint>
                     }
-                  </mat-select>
-                </mat-form-field>
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="status-select">
+                    <mat-select [value]="result.status" (selectionChange)="onResultStatusChange(result.id, $event.value)" [attr.data-test-id]="'execution-result-status-' + result.id">
+                      @for (s of resultStatuses; track s) {
+                        <mat-option [value]="s">{{ 'resultStatus.' + s | translate }}</mat-option>
+                      }
+                    </mat-select>
+                  </mat-form-field>
+                </div>
               </div>
+              @if (result.estimateMinutes != null) {
+                <p class="case-estimate" data-test-id="execution-estimate">
+                  {{ 'testCase.detail.estimate' | translate }}: {{ result.estimateMinutes | duration }}
+                </p>
+              }
 
               @if (sortedSteps(result).length) {
                 <div class="steps-list">

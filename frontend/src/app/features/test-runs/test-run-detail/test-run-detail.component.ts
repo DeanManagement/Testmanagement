@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, DestroyRef, HostListener, inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, HostListener, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -19,7 +19,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/compo
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { FormsModule } from '@angular/forms';
 import { TranslateModule } from '@ngx-translate/core';
-import { Observable, combineLatest, of, Subject } from 'rxjs';
+import { Observable, combineLatest, interval, of, Subject } from 'rxjs';
 import { debounceTime, take } from 'rxjs/operators';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
@@ -50,11 +50,19 @@ import { IssueLinksComponent } from '../../../shared/components/issue-links/issu
 import { IssueTrackerApiService } from '../../../core/services/issue-tracker-api.service';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
+import { ExecutionTimer, LONG_DURATION_MS } from './execution-timer';
+import { effortOf, millisToMinutes, minutesToMillis } from '../../../shared/pipes/duration';
+import { DurationPipe } from '../../../shared/pipes/duration.pipe';
+import { EffortSummary } from '../../../shared/models/effort.model';
+
+/** How often the running time on screen advances; it shows whole minutes. */
+const TIMER_TICK_MS = 15_000;
 
 @Component({
   selector: 'app-test-run-detail',
   standalone: true,
   imports: [
+    DurationPipe,
     CustomFieldsDisplayComponent,
     AsyncPipe,
     LocalizedDatePipe,
@@ -123,6 +131,13 @@ export class TestRunDetailComponent implements OnInit {
   resultStatuses: TestResultStatus[] = ['PENDING', 'PASSED', 'FAILED', 'BLOCKED', 'SKIPPED'];
 
   activeResultId: string | null = null;
+
+  /** PRD-036: times each result from when it is opened; see ExecutionTimer for what gets sent. */
+  private readonly timer = new ExecutionTimer();
+  /** A duration the tester typed for the active result, in minutes; null means "use the timer". */
+  durationInputMinutes: number | null = null;
+  /** Ticks while executing so the running time on screen advances; minutes, so 15 s is plenty. */
+  readonly now = signal(Date.now());
   executionSearchTerm = '';
 
   // Bulk result-status selection (PRD-008 §2.1)
@@ -153,6 +168,11 @@ export class TestRunDetailComponent implements OnInit {
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.runId = this.route.snapshot.paramMap.get('runId') ?? '';
+    interval(TIMER_TICK_MS).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+      if (this.currentRun?.status === 'IN_PROGRESS') {
+        this.now.set(Date.now());
+      }
+    });
     if (this.projectId && this.runId) {
       this.projectApi.getById(this.projectId)
         .pipe(take(1), takeUntilDestroyed(this.destroyRef))
@@ -312,14 +332,74 @@ export class TestRunDetailComponent implements OnInit {
   }
 
   onResultStatusChange(resultId: string, status: TestResultStatus): void {
+    const result = this.currentRun?.results?.find(r => r.id === resultId);
+    // Only the result open in the panel is timed; bulk and list changes record no duration rather than a fake one.
+    const durationMs = status === 'PENDING' || resultId !== this.activeResultId || !result
+      ? undefined
+      : this.timer.durationFor(resultId, result.durationMs, this.typedDurationMs(result));
+    this.confirmLongDuration(durationMs, (confirmed) => this.dispatchResultUpdate(resultId, status, confirmed));
+  }
+
+  /** Saves an edited duration on a result that already has a status (before that, it goes with the status). */
+  saveDuration(result: TestResult): void {
+    const typed = this.typedDurationMs(result);
+    if (result.status === 'PENDING' || typed === null || typed === result.durationMs) {
+      return;
+    }
+    this.confirmLongDuration(typed, (confirmed) => {
+      if (confirmed !== undefined) {
+        this.dispatchResultUpdate(result.id, result.status, confirmed);
+      }
+    });
+  }
+
+  /** Running time of the active result, in whole minutes, for the field's placeholder. */
+  runningMinutes(resultId: string): number {
+    this.now();
+    return millisToMinutes(this.timer.elapsedMs(resultId) ?? 0);
+  }
+
+  runEffort(run: TestRun): EffortSummary {
+    return effortOf(run.results ?? []);
+  }
+
+  private typedDurationMs(result: TestResult): number | null {
+    if (this.durationInputMinutes == null || this.durationInputMinutes < 0) {
+      return null;
+    }
+    const typed = minutesToMillis(this.durationInputMinutes);
+    // The field starts out showing the recorded value; unchanged, it is not a manual edit.
+    return result.durationMs !== null && millisToMinutes(result.durationMs) === this.durationInputMinutes ? null : typed;
+  }
+
+  /** Over 8 h is probably a timer left running: ask, and on "no" record the status without it. */
+  private confirmLongDuration(durationMs: number | undefined, proceed: (durationMs: number | undefined) => void): void {
+    if (durationMs === undefined || durationMs <= LONG_DURATION_MS) {
+      proceed(durationMs);
+      return;
+    }
+    const data: ConfirmDialogData = {
+      titleKey: 'timeTracking.longDuration.title',
+      messageKey: 'timeTracking.longDuration.message',
+      messageParams: { minutes: millisToMinutes(durationMs) },
+    };
+    this.dialog.open(ConfirmDialogComponent, { data }).afterClosed()
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed) => proceed(confirmed ? durationMs : undefined));
+  }
+
+  private dispatchResultUpdate(resultId: string, status: TestResultStatus, durationMs: number | undefined): void {
     this.store.dispatch(
       TestRunActions.updateTestResult({
         projectId: this.projectId,
         runId: this.runId,
         resultId,
-        request: { status },
+        request: durationMs === undefined ? { status } : { status, durationMs },
       })
     );
+    if (resultId === this.activeResultId && durationMs !== undefined) {
+      this.durationInputMinutes = millisToMinutes(durationMs);
+    }
   }
 
   toggleBulkMode(): void {
@@ -419,6 +499,11 @@ export class TestRunDetailComponent implements OnInit {
 
   setActiveResult(resultId: string): void {
     this.activeResultId = resultId;
+    if (this.currentRun?.status === 'IN_PROGRESS') {
+      this.timer.open(resultId);
+    }
+    const recorded = this.currentRun?.results?.find(r => r.id === resultId)?.durationMs ?? null;
+    this.durationInputMinutes = recorded === null ? null : millisToMinutes(recorded);
     this.editingComment = null;
     this.loadCommentsForResult(resultId);
     this.linkedBugReports$ = this.store.select(selectLinkedBugReportsFor(resultId));

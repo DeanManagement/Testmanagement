@@ -2,7 +2,7 @@ import { ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, V
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { AsyncPipe, DecimalPipe, LowerCasePipe } from '@angular/common';
+import { AsyncPipe, DecimalPipe, formatDate, LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -20,6 +20,9 @@ import {
   BarElement,
   CategoryScale,
   LinearScale,
+  LineController,
+  LineElement,
+  PointElement,
   Tooltip,
   Legend,
 } from 'chart.js';
@@ -33,17 +36,23 @@ import { EntityHistoryComponent } from '../../../shared/components/entity-histor
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
 
 Chart.register(
-  DoughnutController, BarController,
-  ArcElement, BarElement,
+  DoughnutController, BarController, LineController,
+  ArcElement, BarElement, LineElement, PointElement,
   CategoryScale, LinearScale, Tooltip, Legend
 );
 
 import { EnvironmentRollup, runsByEnvironment } from './runs-by-environment';
+import { burnDownDates } from './burn-down-dates';
+import { BurnDown } from '../../../shared/models/effort.model';
+import { DurationPipe } from '../../../shared/pipes/duration.pipe';
+import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 
 @Component({
   selector: 'app-test-plan-detail',
   standalone: true,
   imports: [
+    DurationPipe,
+    LocalizedDatePipe,
     MatSlideToggleModule,
     AsyncPipe,
     DecimalPipe,
@@ -73,11 +82,13 @@ export class TestPlanDetailComponent implements OnInit {
   @ViewChild('resultDoughnut') resultDoughnutCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('runStatusBar') runStatusBarCanvas!: ElementRef<HTMLCanvasElement>;
   @ViewChild('passRateBar') passRateBarCanvas!: ElementRef<HTMLCanvasElement>;
+  @ViewChild('burnDownLine') burnDownCanvas?: ElementRef<HTMLCanvasElement>;
 
   projectId = '';
   planId = '';
   testPlan$: Observable<TestPlan | undefined> = of(undefined);
   summary: TestPlanSummary | null = null;
+  burnDown: BurnDown | null = null;
   runColumns = ['name', 'environment', 'status', 'total', 'passed', 'failed'];
   environmentColumns = ['environment', 'runs', 'total', 'passed', 'failed', 'passRate'];
   groupByEnvironment = false;
@@ -86,6 +97,7 @@ export class TestPlanDetailComponent implements OnInit {
   private resultDoughnutChart: Chart | null = null;
   private runStatusBarChart: Chart | null = null;
   private passRateBarChart: Chart | null = null;
+  private burnDownChart: Chart | null = null;
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
@@ -95,6 +107,7 @@ export class TestPlanDetailComponent implements OnInit {
       this.store.dispatch(TestPlanActions.loadTestPlan({ projectId: this.projectId, id: this.planId }));
       this.testPlan$ = this.store.select(selectTestPlanById(this.planId));
       this.loadSummary();
+      this.loadBurnDown();
     }
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.summary) {
@@ -121,11 +134,74 @@ export class TestPlanDetailComponent implements OnInit {
     });
   }
 
+  private loadBurnDown(): void {
+    this.testPlanApi.getBurnDown(this.projectId, this.planId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((burnDown) => {
+        this.burnDown = burnDown;
+        this.cdr.detectChanges();
+        this.renderBurnDown();
+      });
+  }
+
   private renderCharts(): void {
     applyChartDefaults(Chart);
     this.renderResultDoughnut();
     this.renderRunStatusBar();
     this.renderPassRateBar();
+    this.renderBurnDown();
+  }
+
+  /**
+   * Actual remaining effort per day against an ideal line to the target date (PRD-036). Both
+   * series share one date axis, so the actual line simply ends at today.
+   */
+  private renderBurnDown(): void {
+    this.burnDownChart?.destroy();
+    this.burnDownChart = null;
+    if (!this.burnDownCanvas || !this.burnDown?.hasEstimates) return;
+    applyChartDefaults(Chart);
+
+    const dates = burnDownDates(this.burnDown);
+    const actual = new Map(this.burnDown.days.map((p) => [p.date, p.remainingMinutes]));
+    const ideal = new Map(this.burnDown.idealLine.map((p) => [p.date, p.remainingMinutes]));
+    const locale = (this.translate.currentLang || 'en') === 'de' ? 'de-DE' : 'en-US';
+    const toHours = (minutes: number | undefined) => (minutes === undefined ? null : Math.round(minutes / 6) / 10);
+
+    this.burnDownChart = new Chart(this.burnDownCanvas.nativeElement, {
+      type: 'line',
+      data: {
+        // A yyyy-MM-dd string parses as local midnight, so it must be formatted locally too: a UTC
+        // formatter shows the day before anywhere east of Greenwich.
+        labels: dates.map((date) => formatDate(date, 'd MMM', locale)),
+        datasets: [
+          {
+            label: this.translate.instant('timeTracking.burnDown.remaining'),
+            data: dates.map((date) => toHours(actual.get(date))),
+            borderColor: '#2196f3',
+            backgroundColor: '#2196f3',
+            pointRadius: 2,
+            tension: 0,
+          },
+          {
+            label: this.translate.instant('timeTracking.burnDown.ideal'),
+            data: dates.map((date) => toHours(ideal.get(date))),
+            borderColor: '#9e9e9e',
+            backgroundColor: '#9e9e9e',
+            borderDash: [6, 4],
+            pointRadius: 0,
+            spanGaps: true,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        scales: {
+          y: { beginAtZero: true, title: { display: true, text: this.translate.instant('timeTracking.burnDown.hours') } },
+        },
+      },
+    });
   }
 
   private renderResultDoughnut(): void {

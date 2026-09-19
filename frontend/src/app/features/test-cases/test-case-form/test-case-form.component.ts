@@ -22,6 +22,7 @@ import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
 import { CustomFieldsFormComponent } from '../../../shared/components/custom-fields/custom-fields-form.component';
 import { CustomFieldValues } from '../../../shared/models/custom-field.model';
+import { MAX_ESTIMATE_MINUTES } from '../../../shared/models/effort.model';
 
 interface StepImageState {
   id?: string;
@@ -86,6 +87,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
     status: ['DRAFT' as TestCaseStatus],
     labels: [''],
     customFields: this.fb.control<CustomFieldValues>({}),
+    estimateMinutes: this.fb.control<number | null>(null, [Validators.min(1), Validators.max(MAX_ESTIMATE_MINUTES)]),
     steps: this.fb.array([]),
   });
 
@@ -116,6 +118,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
             status: tc.status,
             labels: tc.labels?.join(', ') ?? '',
             customFields: tc.customFields ?? {},
+            estimateMinutes: tc.estimateMinutes,
           });
           this.loadedStatus = tc.status;
           this.statuses = selectableStatuses(this.reviewRequired, this.loadedStatus);
@@ -236,11 +239,13 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
       steps,
       customFields: this.form.value.customFields ?? undefined,
     };
+    const estimate = this.form.value.estimateMinutes;
 
     const pendingImages = new Map(this.stepImages);
 
     if (this.editMode && this.testCaseId) {
-      this.testCaseApi.update(this.projectId, this.testCaseId, request).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+      // An emptied estimate is sent as 0, which the server reads as "clear"; omitted would keep it.
+      this.testCaseApi.update(this.projectId, this.testCaseId, { ...request, estimateMinutes: estimate ?? 0 }).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (tc) => {
           this.syncImages(tc, pendingImages).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.store.dispatch(TestCaseActions.updateTestCaseSuccess({ testCase: tc }));
@@ -254,7 +259,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
       });
     } else {
       const folderId = this.route.snapshot.queryParamMap.get('folderId');
-      const createRequest = folderId ? { ...request, folderId } : request;
+      const createRequest = { ...request, estimateMinutes: estimate ?? undefined, ...(folderId ? { folderId } : {}) };
       this.testCaseApi.create(this.projectId, createRequest).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (tc) => {
           this.syncImages(tc, pendingImages).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {

@@ -1,3 +1,5 @@
+import { EffortSummary } from './effort.model';
+
 export type TestPlanStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
 
 export interface TestPlan {
@@ -58,6 +60,8 @@ export interface TestPlanSummary {
   runs: TestPlanRunSummary[];
   /** PRD-034: exploration for this plan, kept apart from run counts and pass rate. */
   sessions: TestPlanSessions;
+  /** PRD-036: over every run except aborted ones. */
+  effort: EffortSummary;
 }
 
 export interface TestPlanSessions {

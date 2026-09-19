@@ -277,7 +277,14 @@
       "testDataHint": "Input values, configurations, or datasets for this step",
       "image": "Image",
       "addImage": "Add Image",
-      "removeImage": "Remove Image"
+      "removeImage": "Remove Image",
+      "estimate": "Estimate",
+      "estimateHint": "How long one execution takes",
+      "estimateRange": "Between 1 and 1440 minutes"
+    },
+    "detail": {
+      "estimate": "Estimate",
+      "medianActual": "median actual {{duration}} (last 5)"
     }
   },
   "testSuite": {
@@ -1202,6 +1209,34 @@
       "from": "{{name}} from",
       "to": "{{name}} to",
       "clear": "Clear"
+    }
+  },
+  "duration": {
+    "minutes": "{{minutes}} min",
+    "hours": "{{hours}} h",
+    "hoursMinutes": "{{hours}} h {{minutes}} min",
+    "minutesUnit": "min"
+  },
+  "timeTracking": {
+    "duration": "Duration",
+    "running": "Running: {{minutes}} min",
+    "estimated": "Estimated {{duration}}",
+    "remaining": "Remaining ~{{duration}}",
+    "spent": "Spent {{duration}}",
+    "unestimated": "{{count}} unestimated",
+    "noEstimates": "No estimates",
+    "longDuration": {
+      "title": "Save a long duration?",
+      "message": "This records {{minutes}} minutes, more than 8 hours. If the timer ran while you were away, choose Cancel: the status is saved without a duration, and you can type the real time."
+    },
+    "burnDown": {
+      "title": "Burn-down",
+      "remaining": "Remaining",
+      "ideal": "Ideal",
+      "hours": "Hours",
+      "liveEstimates": "Uses each test case's current estimate, so changing an estimate also moves past days.",
+      "historyFrom": "Results executed before execution times were recorded are not included; complete from {{date}}.",
+      "noEstimates": "None of this plan's test cases has an estimate yet, so there is nothing to burn down."
     }
   }
 }

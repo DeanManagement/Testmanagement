@@ -277,7 +277,14 @@
       "testDataHint": "Eingabewerte, Konfigurationen oder Datensätze für diesen Schritt",
       "image": "Bild",
       "addImage": "Bild hinzufügen",
-      "removeImage": "Bild entfernen"
+      "removeImage": "Bild entfernen",
+      "estimate": "Schätzung",
+      "estimateHint": "Wie lange eine Ausführung dauert",
+      "estimateRange": "Zwischen 1 und 1440 Minuten"
+    },
+    "detail": {
+      "estimate": "Schätzung",
+      "medianActual": "Median tatsächlich {{duration}} (letzte 5)"
     }
   },
   "testSuite": {
@@ -1202,6 +1209,34 @@
       "from": "{{name}} von",
       "to": "{{name}} bis",
       "clear": "Zurücksetzen"
+    }
+  },
+  "duration": {
+    "minutes": "{{minutes}} Min.",
+    "hours": "{{hours}} Std.",
+    "hoursMinutes": "{{hours}} Std. {{minutes}} Min.",
+    "minutesUnit": "Min."
+  },
+  "timeTracking": {
+    "duration": "Dauer",
+    "running": "Läuft: {{minutes}} Min.",
+    "estimated": "Geschätzt {{duration}}",
+    "remaining": "Verbleibend ~{{duration}}",
+    "spent": "Aufgewendet {{duration}}",
+    "unestimated": "{{count}} ohne Schätzung",
+    "noEstimates": "Keine Schätzungen",
+    "longDuration": {
+      "title": "Lange Dauer speichern?",
+      "message": "Damit werden {{minutes}} Minuten erfasst, mehr als 8 Stunden. Lief der Timer, während Sie weg waren, wählen Sie Abbrechen: Der Status wird ohne Dauer gespeichert, und Sie können die echte Zeit eintragen."
+    },
+    "burnDown": {
+      "title": "Burn-down",
+      "remaining": "Verbleibend",
+      "ideal": "Ideal",
+      "hours": "Stunden",
+      "liveEstimates": "Verwendet die aktuelle Schätzung jedes Testfalls; eine geänderte Schätzung verschiebt daher auch vergangene Tage.",
+      "historyFrom": "Ergebnisse, die vor der Erfassung von Ausführungszeiten ausgeführt wurden, fehlen; vollständig ab {{date}}.",
+      "noEstimates": "Noch keiner der Testfälle dieses Plans hat eine Schätzung, daher gibt es nichts abzubauen."
     }
   }
 }

@@ -75,6 +75,38 @@
         </div>
       </div>
 
+      <p class="plan-effort" data-test-id="test-plan-effort">
+        <mat-icon class="meta-icon" aria-hidden="true">schedule</mat-icon>
+        @if (summary.effort.estimatedMinutes > 0) {
+          {{ 'timeTracking.remaining' | translate: { duration: (summary.effort.remainingMinutes | duration) } }}
+        } @else {
+          {{ 'timeTracking.noEstimates' | translate }}
+        }
+        @if (summary.effort.pendingUnestimated > 0) {
+          · {{ 'timeTracking.unestimated' | translate: { count: summary.effort.pendingUnestimated } }}
+        }
+        · {{ 'timeTracking.spent' | translate: { duration: (summary.effort.actualMinutes | duration) } }}
+      </p>
+
+      @if (burnDown && burnDown.scopeStartsAt) {
+        <div class="chart-card tm-card burn-down-card" data-test-id="test-plan-burn-down">
+          <h3>{{ 'timeTracking.burnDown.title' | translate }}</h3>
+          @if (burnDown.hasEstimates) {
+            <div class="chart-container">
+              <canvas #burnDownLine [attr.aria-label]="'timeTracking.burnDown.title' | translate" role="img"></canvas>
+            </div>
+            <p class="chart-caption">{{ 'timeTracking.burnDown.liveEstimates' | translate }}</p>
+            @if (burnDown.historyAvailableFrom) {
+              <p class="chart-caption" data-test-id="test-plan-burn-down-history">
+                {{ 'timeTracking.burnDown.historyFrom' | translate: { date: (burnDown.historyAvailableFrom | localizedDate) } }}
+              </p>
+            }
+          } @else {
+            <p class="chart-caption" data-test-id="test-plan-burn-down-empty">{{ 'timeTracking.burnDown.noEstimates' | translate }}</p>
+          }
+        </div>
+      }
+
       @if (summary.totalResults > 0) {
         <div class="charts-section" data-test-id="test-plan-charts">
           <div class="chart-card tm-card">

@@ -1,4 +1,5 @@
 import { CustomFieldValues } from './custom-field.model';
+import { EffortSummary } from './effort.model';
 
 export type TestRunStatus = 'PLANNED' | 'IN_PROGRESS' | 'COMPLETED' | 'ABORTED';
 export type TestResultStatus = 'PENDING' | 'PASSED' | 'FAILED' | 'BLOCKED' | 'SKIPPED';
@@ -28,6 +29,11 @@ export interface TestResult {
   /** Parameter set executed (PRD-015); null for an ordinary case. */
   parameterSetName: string | null;
   stepResults: StepResult[];
+  /** PRD-036: when it left PENDING, and the measured effort; null when unknown. */
+  executedAt: string | null;
+  durationMs: number | null;
+  /** PRD-036: the case's live estimate. */
+  estimateMinutes: number | null;
   createdAt: string;
   updatedAt: string;
   createdBy?: string;
@@ -64,6 +70,8 @@ export interface TestRun {
   updatedBy?: string;
   /** PRD-035: on detail responses; only fields that hold a value, in display order. */
   customFields?: CustomFieldValues;
+  /** PRD-036: on detail responses. */
+  effort?: EffortSummary;
 }
 
 export interface TestRunQuery {
@@ -122,6 +130,8 @@ export interface UpdateTestResultRequest {
   status: TestResultStatus;
   comment?: string;
   defectLink?: string;
+  /** PRD-036: omitted leaves the recorded duration alone. */
+  durationMs?: number;
 }
 
 export interface UpdateStepResultRequest {
@@ -146,4 +156,6 @@ export interface TestRunReport {
   results: TestResult[];
   /** PRD-033: results executed against wording that was never approved; empty without review. */
   unapprovedResultIds: string[];
+  /** PRD-036 */
+  effort: EffortSummary;
 }

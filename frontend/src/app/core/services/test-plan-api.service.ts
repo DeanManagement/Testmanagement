@@ -8,6 +8,7 @@ import {
   UpdateTestPlanRequest,
 } from '../../shared/models/test-plan.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
+import { BurnDown } from '../../shared/models/effort.model';
 
 @Injectable({ providedIn: 'root' })
 export class TestPlanApiService {
@@ -23,6 +24,11 @@ export class TestPlanApiService {
 
   getById(projectId: string, id: string): Observable<TestPlan> {
     return this.http.get<TestPlan>(`${this.baseUrl(projectId)}/${id}`).pipe(retryWithBackoff());
+  }
+
+  /** Remaining estimated effort per day, computed on demand (PRD-036). */
+  getBurnDown(projectId: string, id: string): Observable<BurnDown> {
+    return this.http.get<BurnDown>(`${this.baseUrl(projectId)}/${id}/burn-down`).pipe(retryWithBackoff());
   }
 
   getSummary(projectId: string, id: string): Observable<TestPlanSummary> {

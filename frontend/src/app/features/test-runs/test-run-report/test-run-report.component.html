@@ -65,6 +65,15 @@
           </div>
         </div>
 
+        <p class="report-effort" data-test-id="test-run-report-effort">
+          {{ 'timeTracking.estimated' | translate: { duration: (report.effort.estimatedMinutes | duration) } }}
+          · {{ 'timeTracking.remaining' | translate: { duration: (report.effort.remainingMinutes | duration) } }}
+          @if (report.effort.pendingUnestimated > 0) {
+            · {{ 'timeTracking.unestimated' | translate: { count: report.effort.pendingUnestimated } }}
+          }
+          · {{ 'timeTracking.spent' | translate: { duration: (report.effort.actualMinutes | duration) } }}
+        </p>
+
         <div class="chart-container tm-card">
           <h3>{{ 'report.chart' | translate }}</h3>
           <div class="chart-wrapper">

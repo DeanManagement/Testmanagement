@@ -133,3 +133,19 @@
     color: var(--tm-text);
   }
 }
+
+.tc-effort {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  color: var(--tm-text-secondary);
+  font-size: 0.875rem;
+}
+
+.effort-icon {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+}

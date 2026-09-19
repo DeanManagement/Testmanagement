@@ -27,6 +27,7 @@ public abstract class TestRunMapper {
 
     @Mapping(target = "testCaseId", source = "testCase.id")
     @Mapping(target = "testCaseTitle", source = "testCase.title")
+    @Mapping(target = "estimateMinutes", source = "testCase.estimateMinutes")
     public abstract TestResultResponse toResultResponse(TestResult testResult);
 
     @Mapping(target = "testStepId", source = "testStep.id")

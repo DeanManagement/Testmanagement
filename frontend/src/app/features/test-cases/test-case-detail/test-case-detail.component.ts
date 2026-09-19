@@ -33,11 +33,14 @@ import { TestCaseReviewComponent } from '../review/test-case-review.component';
 import { statusLabelKey } from '../review/review-status';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
+import { DurationPipe } from '../../../shared/pipes/duration.pipe';
+import { millisToMinutes } from '../../../shared/pipes/duration';
 
 @Component({
   selector: 'app-test-case-detail',
   standalone: true,
   imports: [
+    DurationPipe,
     CustomFieldsDisplayComponent,
     TestCaseReviewComponent,
     EnvironmentResultsComponent,
@@ -60,6 +63,8 @@ import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-
   styleUrl: './test-case-detail.component.scss',
 })
 export class TestCaseDetailComponent implements OnInit {
+  readonly millisToMinutes = millisToMinutes;
+
   private readonly store = inject(Store);
   private readonly route = inject(ActivatedRoute);
   private readonly testCaseApi = inject(TestCaseApiService);

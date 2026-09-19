@@ -21,6 +21,8 @@ public record TestResultResponse(
         /** When it left PENDING, and the measured effort (PRD-036); both null when unknown. */
         Instant executedAt,
         Long durationMs,
+        /** The case's live estimate (PRD-036), so a client can keep "remaining" current as it records. */
+        Integer estimateMinutes,
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,

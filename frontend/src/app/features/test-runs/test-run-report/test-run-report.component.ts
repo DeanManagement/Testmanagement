@@ -16,6 +16,7 @@ import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { applyChartDefaults } from '../../../core/utils/chart-theme';
 import { resultEvidence } from './result-evidence';
+import { DurationPipe } from '../../../shared/pipes/duration.pipe';
 
 Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
 
@@ -23,6 +24,7 @@ Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
   selector: 'app-test-run-report',
   standalone: true,
   imports: [
+    DurationPipe,
     LocalizedDatePipe,
     LowerCasePipe,
     DecimalPipe,

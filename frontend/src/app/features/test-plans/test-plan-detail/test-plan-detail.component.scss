@@ -233,3 +233,26 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+.plan-effort {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0 0 16px;
+  color: var(--tm-text-secondary);
+}
+
+.burn-down-card {
+  margin-bottom: 24px;
+
+  .chart-container {
+    height: 260px;
+  }
+}
+
+.chart-caption {
+  margin: 8px 0 0;
+  font-size: 0.8rem;
+  color: var(--tm-text-secondary);
+}
