@@ -38,6 +38,13 @@ public class StepResult extends BaseEntity {
     @JoinColumn(name = "test_step_id")
     private TestStep testStep;
 
+    /**
+     * Order within the result (PRD-030): expanded steps come from several owners, each numbered from
+     * 0. Null only for rows written before V62 whose step was already gone.
+     */
+    @Column(name = "position")
+    private Integer position;
+
     @OneToOne(mappedBy = "stepResult", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Screenshot screenshot;
 }

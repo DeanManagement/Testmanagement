@@ -99,4 +99,9 @@ public interface TestCaseRepository extends JpaRepository<TestCase, UUID>, JpaSp
                                         @Param("admin") ProjectRole admin,
                                         @Param("tester") ProjectRole tester,
                                         Pageable pageable);
+
+    /** Test cases with a step referencing the block (PRD-030), in key order of creation. */
+    @Query("SELECT DISTINCT tc FROM TestCase tc JOIN tc.steps s WHERE s.usesSharedStep.id = :sharedStepId "
+            + "ORDER BY tc.createdAt")
+    List<TestCase> findUsingSharedStep(@Param("sharedStepId") UUID sharedStepId);
 }

@@ -55,7 +55,10 @@ public class StepImageService {
         stepImageRepository.delete(image);
     }
 
+    /** Through the case, or through the shared block for a block's step (PRD-030). */
     private UUID projectIdOf(TestStep testStep) {
-        return testStep.getTestCase().getProject().getId();
+        return testStep.getTestCase() != null
+                ? testStep.getTestCase().getProject().getId()
+                : testStep.getSharedStep().getProject().getId();
     }
 }

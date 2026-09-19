@@ -33,9 +33,23 @@ public class TestStep extends BaseEntity {
     @Column(nullable = false)
     private int orderIndex;
 
+    /** The case this step belongs to; null for a step of a shared block (PRD-030). */
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "test_case_id", nullable = false)
+    @JoinColumn(name = "test_case_id")
     private TestCase testCase;
+
+    /** The shared block this step belongs to; null for a case's own step. Exactly one owner is set. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shared_step_id")
+    private SharedStep sharedStep;
+
+    /**
+     * On a case step: the block this step stands for. Its action holds the block title as of the
+     * last save, a readable fallback; expected result, test data and image are not used.
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "uses_shared_step_id")
+    private SharedStep usesSharedStep;
 
     @OneToOne(mappedBy = "testStep", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private StepImage image;
