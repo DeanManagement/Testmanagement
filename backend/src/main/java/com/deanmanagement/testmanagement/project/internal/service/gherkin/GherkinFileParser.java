@@ -3,6 +3,8 @@ package com.deanmanagement.testmanagement.project.internal.service.gherkin;
 import com.deanmanagement.testmanagement.project.internal.dto.TestStepRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.parameter.SaveParameterSetRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
+import io.cucumber.gherkin.GherkinDialect;
+import io.cucumber.gherkin.GherkinDialectProvider;
 import io.cucumber.gherkin.GherkinParser;
 import io.cucumber.messages.types.Background;
 import io.cucumber.messages.types.DataTable;
@@ -24,6 +26,7 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,10 +44,15 @@ public final class GherkinFileParser {
 
     public static final String KEY_TAG_PREFIX = "tm:";
     private static final String PRIORITY_TAG_PREFIX = "priority:";
-    private static final String DEFAULT_EXAMPLES_NAME = "Example";
+    static final String DEFAULT_EXAMPLES_NAME = "Example";
     /** What ParameterSubstitutor accepts inside {@code {…}}; anything else is normalised to '_'. */
     private static final Pattern NOT_A_PARAMETER_CHAR = Pattern.compile("[^A-Za-z0-9_.-]");
     private static final Pattern OUTLINE_PLACEHOLDER = Pattern.compile("<([^<>]+)>");
+    private static final Pattern LANGUAGE_HEADER = Pattern.compile("\\s*#\\s*language\\s*:\\s*([\\w-]+)[^\\n]*");
+    private static final Pattern ERROR_LINE = Pattern.compile("\\((\\d+):");
+    private static final GherkinDialectProvider DIALECTS = new GherkinDialectProvider();
+    private static final String PREVIEW_FILE = "scenario";
+    private static final String PREVIEW_FEATURE = "Preview";
 
     private GherkinFileParser() {
     }
@@ -93,6 +101,53 @@ public final class GherkinFileParser {
             warnings.add(fileName + ": the Feature description is not imported");
         }
         return new ParsedFile(new FileWalker(fileName, feature).walk(), warnings);
+    }
+
+    /**
+     * Exactly one scenario, for the case form's "Edit as Gherkin" (PRD-040 §3.7). The text may leave
+     * out the {@code Feature:} line; one is added, in the language of a {@code # language:} header.
+     */
+    public static Scenario parseScenario(String text) {
+        String withFeature = hasFeatureLine(text) ? text : withFeatureLine(text);
+        int addedLines = withFeature == text ? 0 : 1;
+        ParsedFile parsed;
+        try {
+            parsed = parse(PREVIEW_FILE, withFeature);
+        } catch (IllegalArgumentException e) {
+            // Line numbers as the user sees them, not counting the added Feature line.
+            throw new IllegalArgumentException(shiftLines(e.getMessage(), addedLines));
+        }
+        if (parsed.scenarios().size() != 1) {
+            throw new IllegalArgumentException("Expected exactly one scenario, found " + parsed.scenarios().size());
+        }
+        return parsed.scenarios().getFirst();
+    }
+
+    private static boolean hasFeatureLine(String text) {
+        GherkinDialect dialect = dialectOf(text);
+        return text.lines().map(String::strip)
+                .anyMatch(line -> dialect.getFeatureKeywords().stream().anyMatch(k -> line.startsWith(k + ":")));
+    }
+
+    /** After a {@code # language:} header, which must stay the first line. */
+    private static String withFeatureLine(String text) {
+        String featureLine = dialectOf(text).getFeatureKeywords().getFirst() + ": " + PREVIEW_FEATURE + "\n";
+        Matcher header = LANGUAGE_HEADER.matcher(text);
+        if (header.lookingAt()) {
+            return text.substring(0, header.end()) + "\n" + featureLine + text.substring(header.end()).stripLeading();
+        }
+        return featureLine + text;
+    }
+
+    private static GherkinDialect dialectOf(String text) {
+        Matcher header = LANGUAGE_HEADER.matcher(text);
+        return (header.lookingAt() ? DIALECTS.getDialect(header.group(1)) : Optional.<GherkinDialect>empty())
+                .orElse(DIALECTS.getDefaultDialect());
+    }
+
+    private static String shiftLines(String message, int lines) {
+        return ERROR_LINE.matcher(message).replaceAll(m ->
+                "(" + Math.max(1, Integer.parseInt(m.group(1)) - lines) + ":");
     }
 
     /** Holds what one file's scenarios inherit: the feature, its tags and its background. */

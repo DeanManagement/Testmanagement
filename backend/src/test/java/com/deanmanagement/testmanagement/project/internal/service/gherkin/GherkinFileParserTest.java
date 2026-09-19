@@ -353,4 +353,52 @@ class GherkinFileParserTest {
             assertThat(scenario.steps().getFirst().testData()).isEqualTo("{\"amount\": {amount}}");
         }
     }
+
+    @Nested
+    class Preview {
+
+        @Test
+        void aScenarioWithoutAFeatureLineIsRead() {
+            Scenario scenario = GherkinFileParser.parseScenario("""
+                    @tm:P-3
+                    Scenario: Valid
+                      Given a
+                    """);
+
+            assertThat(scenario.key()).isEqualTo("P-3");
+            assertThat(scenario.title()).isEqualTo("Valid");
+        }
+
+        @Test
+        void aLanguageHeaderStaysFirst() {
+            Scenario scenario = GherkinFileParser.parseScenario("""
+                    # language: de
+                    Szenario: Gültig
+                      Angenommen ein Benutzer
+                    """);
+
+            assertThat(scenario.steps()).extracting(TestStepRequest::action).containsExactly("Angenommen ein Benutzer");
+        }
+
+        @Test
+        void errorsCountLinesAsTheUserWroteThem() {
+            assertThatThrownBy(() -> GherkinFileParser.parseScenario("""
+                    Scenario: S
+                      Given a
+                    @dangling
+                    """))
+                    .hasMessageStartingWith("scenario: (4:");
+        }
+
+        @Test
+        void moreThanOneScenarioIsRefused() {
+            assertThatThrownBy(() -> GherkinFileParser.parseScenario("""
+                    Scenario: One
+                      Given a
+                    Scenario: Two
+                      Given b
+                    """))
+                    .hasMessage("Expected exactly one scenario, found 2");
+        }
+    }
 }

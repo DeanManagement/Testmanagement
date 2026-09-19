@@ -26,6 +26,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -226,5 +227,48 @@ class TestCaseImportExportApiTest {
         mockMvc.perform(multipart("/api/projects/{p}/test-cases/import", projectId)
                         .file(csv(VALID_CSV)).param("folderId", UUID.randomUUID().toString()).with(user(admin)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void exportFeature_downloadsTaggedScenarios() throws Exception {
+        MockMultipartFile feature = new MockMultipartFile("file", "login.feature", "text/plain",
+                "Feature: Login\n  Scenario: Works\n    Given a user\n".getBytes(StandardCharsets.UTF_8));
+        mockMvc.perform(multipart("/api/projects/{p}/test-cases/import", projectId).file(feature).with(user(admin)))
+                .andExpect(status().isOk());
+
+        MvcResult result = mockMvc.perform(get("/api/projects/{p}/test-cases/export", projectId)
+                        .param("format", "feature").with(user(admin)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        assertThat(result.getResponse().getContentType()).startsWith("text/plain");
+        assertThat(result.getResponse().getHeader("Content-Disposition")).contains("Login.feature");
+        assertThat(result.getResponse().getContentAsString(StandardCharsets.UTF_8))
+                .contains("@tm:IMP-").contains("Scenario: Works");
+    }
+
+    @Test
+    void exportFeature_ofAFolderOfAnotherProject_returns404() throws Exception {
+        mockMvc.perform(get("/api/projects/{p}/test-cases/export", projectId)
+                        .param("format", "feature").param("folderId", UUID.randomUUID().toString()).with(user(admin)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void gherkinPreview_readsOneScenarioAndWritesNothing() throws Exception {
+        mockMvc.perform(post("/api/projects/{p}/test-cases/gherkin/preview", projectId)
+                        .contentType("text/plain").content("Scenario: Draft\n  Given <x>\n").with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("Draft"))
+                .andExpect(jsonPath("$.steps[0].action").value("Given <x>"));
+
+        assertThat(testCaseRepository.countByProjectId(projectId)).isZero();
+    }
+
+    @Test
+    void gherkinPreview_invalidGherkin_returns400() throws Exception {
+        mockMvc.perform(post("/api/projects/{p}/test-cases/gherkin/preview", projectId)
+                        .contentType("text/plain").content("Scenario: S\n  Given a\n@dangling\n").with(user(admin)))
+                .andExpect(status().isBadRequest());
     }
 }

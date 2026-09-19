@@ -72,6 +72,7 @@ class GherkinImportTest {
     @Autowired private TestCaseParameterSetRepository parameterSetRepository;
     @Autowired private ProjectService projectService;
     @Autowired private TestCaseService testCaseService;
+    @Autowired private GherkinExporter gherkinExporter;
 
     private UUID projectId;
     private String projectKey;
@@ -258,6 +259,35 @@ class GherkinImportTest {
 
         assertThat(cases()).extracting(TestCase::getStatus).containsOnly(TestCaseStatus.IN_REVIEW);
         assertThat(result.warnings()).extracting(ImportError::message).anyMatch(m -> m.contains("IN_REVIEW"));
+    }
+
+    @Test
+    void anExportedFeatureReImportsWithoutChanges() {
+        importFeature(LOGIN_FEATURE);
+        UUID loginFolder = caseTitled("Valid credentials").getFolder().getId();
+
+        GherkinExporter.ExportFile exported = gherkinExporter.export(projectId, loginFolder);
+        ImportResultResponse result = importFile(exported.fileName(), exported.content(), false);
+
+        assertThat(exported.zip()).isFalse();
+        assertThat(exported.fileName()).isEqualTo("Login.feature");
+        assertThat(result.errors()).isEmpty();
+        assertThat(result.unchanged()).isEqualTo(2);
+        assertThat(result.updated()).isZero();
+        assertThat(result.imported()).isZero();
+    }
+
+    @Test
+    void severalFeaturesExportAsAZipThatReImportsWithoutChanges() {
+        importFeature(LOGIN_FEATURE);
+        importFeature("Feature: Logout\n  Scenario: Bye\n    When they sign out\n");
+
+        GherkinExporter.ExportFile exported = gherkinExporter.export(projectId, null);
+        ImportResultResponse result = importFile(exported.fileName(), exported.content(), false);
+
+        assertThat(exported.zip()).isTrue();
+        assertThat(result.unchanged()).isEqualTo(3);
+        assertThat(cases()).hasSize(3);
     }
 
     private static byte[] zip(String... namesAndContents) throws IOException {
