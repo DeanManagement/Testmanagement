@@ -140,7 +140,7 @@ Gaps against comparable test-management tools, each grounded in the current code
 | [037](PRD-037-release-readiness-quality-gate.md) | Release Readiness / Quality Gate | P2 | S-M | ✅ Implemented |
 | [038](PRD-038-run-comparison.md) | Run Comparison | P2 | S-M | ✅ Implemented |
 | [039](PRD-039-backup-restore.md) | Backup / Restore | P2 (A) · P3 (B) | S (A) · L (B) | ✅ Phase A implemented · Phase B deferred |
-| [040](PRD-040-bdd-gherkin.md) | BDD / Gherkin Authoring | P3 | M | 📝 Draft |
+| [040](PRD-040-bdd-gherkin.md) | BDD / Gherkin Authoring | P3 | M | ✅ Implemented |
 | [041](PRD-041-totp-two-factor.md) | TOTP Two-Factor Authentication | P3 | M | 📝 Draft |
 | [042](PRD-042-ai-case-generation.md) | AI-Assisted Case Generation | P3 | S (A) | 📝 Draft |
 | [043](PRD-043-scheduled-reports.md) | Scheduled Report Emails | P3 | M | 📝 Draft |

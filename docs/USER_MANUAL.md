@@ -353,7 +353,11 @@ bookmarked or shared.
 
 ### Importing
 
-**Import** on the test case list accepts a **CSV** or **JSON** file, up to 500 rows.
+**Import** on the test case list accepts a **CSV** or **JSON** file, up to 500 rows, or Gherkin
+`.feature` files (see [BDD / Gherkin](#bdd--gherkin) below).
+
+**Import into folder** puts the cases in that folder instead of the project root. It starts on the
+folder selected in the list.
 
 Columns: `title`, `description`, `preconditions`, `priority`, `status`, `labels`, `steps`,
 `estimateMinutes` (whole minutes, 1 to 1440; blank for none).
@@ -379,11 +383,12 @@ CSV cannot carry per-step test data. Use JSON if you need it.
 
 ### Exporting
 
-**Export** offers three formats:
+**Export** offers four formats:
 
 - **JSON** — round-trips everything, including step test data and custom fields
 - **CSV** — for spreadsheets and diffing
 - **CSV (Excel)** — same, with a byte-order mark so Excel opens UTF-8 correctly
+- **Gherkin (.feature)** — the selected folder, or the whole project; see below
 
 CSV has one `cf:<Field name>` column per test case custom field, archived ones included, so
 exporting and importing again loses nothing.
@@ -392,6 +397,84 @@ Values that begin with `=`, `+`, `-`, `@`, a tab or a carriage return are prefix
 apostrophe on export, so spreadsheets treat them as text rather than formulas.
 
 Test run and test suite **reports** export as PDF from their own screens.
+
+### BDD / Gherkin
+
+Teams that write Cucumber scenarios can keep their `.feature` files as the source of truth. A
+scenario becomes an ordinary test case, so it can be planned, run by hand, reported on and linked
+like any other; there is no separate "BDD case".
+
+| Gherkin | Becomes |
+|---|---|
+| `Feature:` | a folder (under the folder you import into) |
+| `Rule:` | a folder inside the feature's folder |
+| `Scenario:` / `Scenario Outline:` | a test case; its name is the title |
+| Scenario description | the description |
+| Each step (`Given`, `When`, `Then`, `And`, `But`, `*`) | one step; the action is the line as written, keyword included |
+| A step's doc string or data table | that step's test data |
+| `Background:` steps | the preconditions, one line per step |
+| Tags on the feature, rule and scenario | labels (without the `@`) |
+| `@priority:high` (on the scenario) | the priority; otherwise new cases are `MEDIUM` |
+| `@tm:BDD-17` (on the scenario) | which test case this scenario *is* (see below) |
+| `Examples:` rows | [parameter sets](#parameter-sets), named `Example #1`, `Example #2`… (or after the Examples block's name); `<name>` becomes `{name}` |
+
+Imported scenarios are `ACTIVE` — they are already executable specs — or `IN_REVIEW` in a project
+that [requires review](#review-and-approval). Other languages work: start the file with
+`# language: de` and write `Funktionalität`, `Szenario`, `Angenommen` and so on.
+
+Upload one `.feature` file or a `.zip` of them (other files in the ZIP are ignored). Up to 500
+scenarios per upload.
+
+**The `@tm:` tag.** An untagged scenario always creates a new case. A scenario tagged with a case's
+key, `@tm:BDD-17`, *updates* that case instead: title, description, preconditions, labels, steps and
+parameter sets are replaced by what the file says, and a new [version](#version-history) is recorded.
+If nothing changed, nothing is written and no version is added, so re-importing the same file is
+harmless. The dry run shows how many cases would be **created**, **updated** and left **unchanged**.
+
+- A `@tm:` key that is not a case of this project fails that scenario: it is a typo or a file from
+  another project, and creating a lookalike would hide that.
+- Cases already in a feature's folder that no scenario in the upload claims are listed as warnings.
+  They are never deleted; removing a test case stays your decision.
+- A tagged case is updated where it is; it is not moved if the scenario is now in another feature.
+
+**Recommended flow**
+
+1. Import your existing `.feature` files once.
+2. Export them again (**Export → Gherkin**). Every scenario now carries its `@tm:` tag.
+3. Commit the exported files to your repository, replacing the originals.
+4. When scenarios change, import the changed files again: tagged scenarios update their cases.
+5. Post the Cucumber JSON report from CI (see [Importing a JUnit or Cucumber report](#importing-a-junit-or-cucumber-report)).
+   Results go to the case with the scenario's `@tm:` tag, even if the scenario was renamed.
+
+Step 4 is done in the app, by someone with at least the Tester role: API keys are only accepted on
+the `/api/external/…` CI endpoints, which do not include the import.
+
+**Exporting.** Exporting a folder gives one file for it, with its sub-folders as `Rule:` blocks.
+Exporting the project gives one file per top-level folder, plus `Unfiled.feature` for cases in no
+folder, downloaded together as a ZIP. Each scenario starts with its `@tm:` tag, then
+`@priority:` (unless `MEDIUM`), then its labels. Parameterised cases become `Scenario Outline`s. When
+every case in a file shares its preconditions and they are written as steps, they become a
+`Background:`. A suite written entirely in German exports in German.
+
+**What does not round-trip.** Gherkin has no place for some of what a test case holds, and a file
+has details the tool does not keep:
+
+- A step written without a Gherkin keyword ("Open the login page") exports as `* Open the login page`.
+  Re-importing that file changes the step to include the `*`.
+- **Expected results** export as a `# expected: …` comment under the step. Comments are not imported,
+  so re-importing removes the expected results.
+- Preconditions that are not steps export as a `# preconditions:` comment, and are removed on re-import.
+- Folders nested deeper than feature → rule are exported into their rule; the file notes this.
+- A label with spaces is written with dashes (`@needs-review`), noted in a comment.
+- Not kept from your files: comments, the feature's own description, tag order, blank-line layout,
+  and tags on `Examples:` blocks. The import lists what it dropped as warnings.
+
+**Editing a case as Gherkin.** On a test case's **Steps** tab, **Edit as Gherkin** shows the case as
+one scenario in a plain text box. Edit it and choose **Apply to steps**: the title, description,
+labels and steps are replaced by what you wrote. Nothing is saved until you save the form. Expected
+results are removed (you are warned first), an `Examples:` table is not saved here (manage
+[parameter sets](#parameter-sets) on the case page instead), and text that does not parse shows the
+line and what was expected. Text in another language needs its `# language:` line first.
 
 ---
 
@@ -1098,6 +1181,13 @@ curl -X POST "http://localhost:8089/api/external/projects/TES/test-runs/cucumber
 ```
 
 Optional query parameters: `runName`, `environment`, `testPlanId`. Reports are capped at 10 MB.
+
+A Cucumber scenario tagged `@tm:<case key>` (see [BDD / Gherkin](#bdd--gherkin)) is recorded on
+that case, even if the scenario has been renamed since; untagged scenarios are matched by the title
+`<Feature> - <Scenario>` as before. A key the project does not know falls back to the title and
+starts the result's comment with `Unknown test case key tm:<key>`. Each example row of a
+`Scenario Outline` is recorded on the case's parameter sets in order: the first row on the first
+set, and so on. Rows beyond the last set are recorded without one, with a comment saying so.
 Durations are kept: JUnit's `time` attribute and the sum of a Cucumber scenario's step durations. A
 missing or unreadable `time` just means no duration; it never fails the upload.
 `environment` is matched against the project's [environments](#environments) and added if new;

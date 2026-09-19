@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P3 — driver-dependent: build when a team writing Cucumber scenarios adopts the tool |
@@ -240,12 +240,66 @@ what does not round-trip.
 
 ## 7. Acceptance Criteria
 
-- [ ] `.feature` and `.zip` uploads import through the existing import endpoint with dry run and folder target.
-- [ ] Features, rules, scenarios, backgrounds, tags, doc strings, data tables and examples map as in §1.
-- [ ] Scenarios tagged `@tm:<KEY>` update their case (versioned) instead of creating a new one; unknown keys are errors.
-- [ ] `format=feature` export produces tagged `.feature` files (ZIP for several folders) that re-import without changes.
-- [ ] Cucumber JSON results match cases by `@tm:` tag first, fall back to title matching, and map outline rows to parameter sets.
-- [ ] The test case form can edit a single scenario as Gherkin text via the preview endpoint.
-- [ ] No schema migration; one new dependency (`io.cucumber:gherkin`).
-- [ ] en/de translations and USER_MANUAL section present.
-- [ ] Importer, exporter, parser, ingestion, controller and frontend tests pass.
+- [x] `.feature` and `.zip` uploads import through the existing import endpoint with dry run and folder target.
+- [x] Features, rules, scenarios, backgrounds, tags, doc strings, data tables and examples map as in §1.
+- [x] Scenarios tagged `@tm:<KEY>` update their case (versioned) instead of creating a new one; unknown keys are errors.
+- [x] `format=feature` export produces tagged `.feature` files (ZIP for several folders) that re-import without changes.
+- [x] Cucumber JSON results match cases by `@tm:` tag first, fall back to title matching, and map outline rows to parameter sets.
+- [x] The test case form can edit a single scenario as Gherkin text via the preview endpoint.
+- [x] No schema migration; one new dependency (`io.cucumber:gherkin`, with its own `messages` pinned).
+- [x] en/de translations and USER_MANUAL section present.
+- [x] Importer, exporter, parser, ingestion, controller and frontend tests pass.
+
+## 8. As Built (2026-09-19)
+
+Built as specified in five commits (import; export and preview; CI matching; frontend; a writer fix
+from the browser check), with these differences:
+
+- **Which folders become features on export.** §3.4 says one file per folder that directly contains
+  cases. That splits a feature made only of rules into one file per rule, so an import → export →
+  import would not round-trip. Instead: exporting a folder gives that folder's feature with its
+  sub-folders as rules; exporting the project gives one feature per top-level folder, plus
+  `Unfiled.feature`. Deeper folders are merged into their rule, with a note in the file.
+- **Backgrounds** are written for a rule as well as a feature, when all its cases share the remainder
+  of their preconditions, so what the import turned into preconditions comes back as the same
+  `Background:` blocks.
+- **Examples blocks** are rebuilt from the set names the import gives (`<name> #<n>`), not merged into
+  one table, so named and multiple blocks round-trip. `{x}` is only turned back into `<x>` for the
+  case's own parameters; other braces stay literal.
+- **A tagged case is not moved** when its scenario appears under another feature; §3.3 does not say,
+  and moving cases on import would be a surprise.
+- **`@tm:` and `@priority:` on a feature or rule are ignored with a warning**: inherited, a key would
+  claim every scenario in the feature.
+- **The outline row mismatch note** goes on the affected result's comment: test runs have no comment
+  of their own (§3.5 says "the run's comment").
+- **`folderId` also works for CSV and JSON imports**, and a folder of another project is a 404 for
+  every format.
+- **The preview** takes the scenario without a `Feature:` line (one is added, in the language of a
+  `# language:` header) and reports parse errors with the user's own line numbers. Problems an import
+  would refuse are returned, not thrown, so the form can show them.
+- **Exported tables are column-aligned** and German files use `Regel:`: found in the browser check,
+  since feature files live in git and every diff would show it.
+- **The form's editor recognises English and German step keywords** when writing the text; it adds
+  `# language: de` for a German case, since German steps under an English `Scenario:` are read as the
+  description. Text that yields no steps is refused rather than wiping the case's steps — the
+  browser check caught exactly that.
+- **Not reachable with an API key.** §3.6 says the import endpoint is reachable with a project-scoped
+  API key through the service-user path. It is not: `ApiKeyAuthenticationFilter` only authenticates
+  `/api/external/**` and MCP. Letting a pipeline push feature files needs an
+  `/api/external/projects/{ref}/test-cases/import` endpoint, left out until a pipeline needs it.
+- ZIP uploads are capped at 20 MB uncompressed, and entries other than `.feature` files are ignored.
+
+Tests: `GherkinFileParserTest` (25, mapping, dialects, preview), `GherkinWriterTest` (10, each
+export read back with the parser), `GherkinImportTest` (12, committed state: create, dry run, folder
+reuse, unchanged re-import adds no version, changed re-import versions, unknown key, unmatched-case
+warning, ZIP, review, export → re-import unchanged for one file and for a ZIP), `CucumberKeyTagTest`
+(3), `CiIngestionApiTest` (+3: renamed case, unknown key, outline rows), `TestCaseImportExportApiTest`
+(+6: feature upload, foreign folder on import and export, feature download, preview writes nothing,
+preview 400), and frontend specs for the dialog, the form's editor, the text join and the
+Content-Disposition parser. RBAC is the existing `@RequireProjectRole` on each endpoint (TESTER for
+import and preview, VIEWER for export); no new per-role test was added.
+
+Browser check against a throwaway PostgreSQL with `ddl-auto=validate`: a German feature with a
+background, a rule and an outline imported through the dialog (dry run, then for real), exported,
+re-imported as a dry run (2 unchanged), and edited in the form as Gherkin with a data table added.
+
