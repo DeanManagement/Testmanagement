@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-19 |
 | **Priority** | P2 — the same project state shows as 100 %, 0 % and 10.5 %, so nobody trusts any of them |
@@ -218,3 +218,30 @@ progress, the release gate's in-scope rule, suite report). MCP_SETUP gets the da
 - [ ] Run list shows the result split and optional plan/executor/start/end columns; the dashboard
       results column has a legend; headers translated (en/de).
 - [ ] MCP dashboard and plan outputs updated, with descriptions; USER_MANUAL explains the numbers.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **`PassRate`** is a record in `service/` with `percent()` and `progress()`, both two decimals and
+  null when there is nothing to divide by. The frontend renders every such figure through one
+  `rate` pipe, "–" for null.
+- **The suite report's pass rate** is passed of the cases whose latest result is executed; progress
+  is those cases of all cases in the suite. The report still reads completed runs only, as before.
+- **The plan's per-environment table** still groups runs in the browser (grouping isn't a pass-rate
+  definition), but divides by the runs' `executed` from the backend instead of their totals.
+- **The run report PDF** gains a Progress cell and a one-line definition under the figures; the
+  suite report PDF a Progress column.
+- **The webhook payload's `passRate`** now has two decimals, like every other pass rate (it had
+  one), and is null when nothing ran; chat messages then leave out the "(x%)".
+- **The dashboard** also relabels its "Current pass rate" tooltip with the definition, and the
+  "Latest run results" tile reads "Last completed run: *name*", the name taken from the trend.
+- **The run list's result bar** has its own tooltip with all five counts; the dashboard's existing
+  one names only passed, failed and total.
+- **The column choice** is read and written in `try/catch` (`tc-density`, which the PRD cited as
+  the model, isn't).
+- **The release gate** is relabelled in the UI, the i18n hint and both manuals; its arithmetic and
+  `ReleaseReadinessServiceTest` are untouched. The criterion's API name stays `PASS_RATE`.
+
+Two existing assertions changed because they encoded the old behaviour: a plan with no runs and a
+project with nothing executed now report a null pass rate instead of 0.

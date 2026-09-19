@@ -403,7 +403,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "A test plan gathers the runs for a milestone, such as a release, with a target date. Its page shows progress, the pass rate, results per environment and the runs themselves."
+              "text": "A test plan gathers the runs for a milestone, such as a release, with a target date. Its page shows the pass rate (passed of executed results; pending ones are not counted), progress (executed of all results), results per environment and the runs themselves."
             }
           ]
         },
@@ -438,7 +438,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Editing a plan lets you set a release gate: a minimum effective pass rate, a maximum of open critical bugs, a minimum requirement coverage and a maximum of flaky tests. Release readiness on the plan then says GO or NO GO, criterion by criterion."
+              "text": "Editing a plan lets you set a release gate: a minimum of passed in-scope tests (a test not yet executed counts as not passed), a maximum of open critical bugs, a minimum requirement coverage and a maximum of flaky tests. Release readiness on the plan then says GO or NO GO, criterion by criterion."
             },
             {
               "type": "note",

@@ -403,7 +403,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Ein Testplan fasst die Läufe für einen Meilenstein zusammen, etwa einen Release, mit einem Zieldatum. Seine Seite zeigt den Fortschritt, die Erfolgsrate, die Ergebnisse pro Umgebung und die Läufe selbst."
+              "text": "Ein Testplan fasst die Läufe für einen Meilenstein zusammen, etwa einen Release, mit einem Zieldatum. Seine Seite zeigt die Erfolgsquote (bestanden von den ausgeführten Ergebnissen; ausstehende zählen nicht), den Fortschritt (ausgeführt von allen Ergebnissen), die Ergebnisse pro Umgebung und die Läufe selbst."
             }
           ]
         },
@@ -438,7 +438,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Beim Bearbeiten eines Plans kannst du ein Release-Gate festlegen: eine minimale effektive Erfolgsrate, eine maximale Zahl offener kritischer Fehler, eine minimale Anforderungsabdeckung und eine maximale Zahl instabiler Tests. Die Release-Bereitschaft auf dem Plan sagt dann GO oder NO GO, Kriterium für Kriterium."
+              "text": "Beim Bearbeiten eines Plans kannst du ein Release-Gate festlegen: ein Minimum bestandener Tests im Umfang (ein noch nicht ausgeführter Test zählt als nicht bestanden), eine maximale Zahl offener kritischer Fehler, eine minimale Anforderungsabdeckung und eine maximale Zahl instabiler Tests. Die Release-Bereitschaft auf dem Plan sagt dann GO oder NO GO, Kriterium für Kriterium."
             },
             {
               "type": "note",

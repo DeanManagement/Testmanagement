@@ -588,8 +588,9 @@ when starting a run, pick the plan in the **Test Plan** field to attach it.
 | **Completed** | Finished |
 | **Cancelled** | Abandoned; kept for the record |
 
-The plan detail page rolls up everything attached to it: total runs, completed runs, overall pass
-rate, result distribution, runs by status, and pass rate per run. It is the screen to project on
+The plan detail page rolls up everything attached to it: total runs, completed runs, pass rate and
+progress (see [How the numbers are calculated](#how-the-numbers-are-calculated)), result
+distribution, runs by status, and pass rate per run. It is the screen to project on
 the wall during a release.
 
 It also answers "will we finish by the target date?": the remaining estimated effort across the
@@ -605,7 +606,7 @@ A plan can say what "ready to ship" means. Under **Release gate** on the plan fo
 
 | Threshold | Met when |
 |---|---|
-| **Minimum effective pass rate** | at least this percentage of the plan's latest results passed |
+| **Minimum passed of in-scope tests** | at least this percentage of the plan's test cases passed, by their latest result |
 | **Maximum open critical bugs** | the project has at most this many Open or In Progress bugs of priority Critical |
 | **Minimum requirement coverage** | at least this percentage of the project's requirements is [covered](#9-requirements-and-traceability) |
 | **Maximum flaky tests** | at most this many [flaky](#flaky-test-detection) cases were executed in this plan |
@@ -616,10 +617,11 @@ The plan page then shows **Release readiness**: **GO** when every threshold you 
 when any is not (with the failing ones marked), or **No criteria** without a gate. It is worked out
 each time you look; nothing is stored.
 
-The *effective* pass rate counts each test case once, by its latest result across the plan's runs,
-so a failure that was retested and passed counts as a pass. Pending results count as not passed,
-and aborted runs are ignored. The plan's own pass rate above it counts every result, so the two can
-differ. A parameterized case counts once per parameter set. If a case ran in several environments,
+*Passed of in-scope tests* counts each test case once, by its latest result across the plan's runs,
+so a failure that was retested and passed counts as a pass. Unlike the pass rate, a case not yet
+executed counts as **not passed**: for a release, an untested case is no evidence. Aborted runs are
+ignored. So a plan with 1 of 100 cases run and passed has a pass rate of 100 % but only 1 % passed
+of in-scope tests. A parameterized case counts once per parameter set. If a case ran in several environments,
 the latest run wins. Coverage shows *Not applicable* when the project has no requirements, and does
 not block a GO.
 
@@ -879,8 +881,28 @@ most 200 screenshots and says how many it left out.
 
 **Suite report** — the latest known result for every case in a suite, also as PDF.
 
-**Project dashboard** — test case and suite counts, cases by status and by priority, the latest
-run's results, overall pass rate, a pass-rate trend across recent runs, and recent runs.
+**Project dashboard** — test case and suite counts, the current pass rate, requirement coverage (when
+the project has requirements), cases by status and by priority (critical first), the last completed
+run's results, a pass-rate trend across recent completed runs, and recent runs with their passed /
+failed / total counts.
+
+The **test run list** shows each run's results as a bar (passed, failed, blocked, skipped,
+pending); hover it for the counts. **Columns** (the icon at the end of the header row) adds Plan,
+Executor, Started and Ended; the choice is remembered in this browser.
+
+### How the numbers are calculated
+
+| Figure | Means |
+|---|---|
+| **Pass rate** | Passed of the *executed* results. Every outcome but Pending counts as executed, Skipped included. Pending results are not failures, so they are left out. With nothing executed there is no pass rate: it shows as "–" and as a gap in the trend, never as 0 %. |
+| **Progress** | Executed of all results: how much of the work is done. |
+| **Current pass rate** (dashboard) | The pass rate over test cases, each counted once by its latest executed result in a completed run. |
+| **Suite report** | The pass rate over the suite's cases that have a result; cases never tested count toward progress only. |
+| **Passed of in-scope tests** (release gate) | Stricter on purpose: each case of the plan by its latest result, and a case not yet executed counts as not passed. See [Release gate](#release-gate). |
+
+The same definitions are used in the run report, its PDF, webhook and chat messages, and the MCP
+tools. Before this version, the plan and run reports counted pending results as not passed, so
+their pass rates were lower while a run was under way.
 
 **Your dashboard** — the projects you belong to plus **your queue**: test plans due soon, runs in
 progress, bug reports without recent activity, and old draft test cases.

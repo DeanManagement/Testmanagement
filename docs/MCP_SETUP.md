@@ -310,6 +310,10 @@ action in the UI, and re-testing means a new run rather than editing a signed-of
   and optionally the step (`stepNumber`, from 1 as `get_test_run` numbers them), where it showed up;
   the bug keeps the result it was found in. `create_bug_report` takes a `stepNumber` too, and
   `get_bug_report` lists the bug's `occurrences`.
+- **Pass rates are passed of executed results** in `get_project_dashboard`, `get_test_plan` and
+  `get_test_suite_report`: pending results are not counted, and a
+  pass rate is absent (null) when nothing was executed, which is not 0 %. `get_test_plan` also
+  returns `executed` and `progress`.
 - **Results name their case and executor.** `get_test_run` returns each result's `testCaseKey`,
   who executed it and when. `record_test_result` records the key as the executor, and with
   `cascadeSteps: true` a PASSED or SKIPPED also sets the steps still pending; recorded steps keep
