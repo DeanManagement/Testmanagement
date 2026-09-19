@@ -9,7 +9,9 @@ import com.deanmanagement.testmanagement.project.internal.dto.testrun.RunStatusC
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -57,6 +59,14 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
     @Query("SELECT r FROM TestResult r JOIN r.testRun run "
            + "WHERE r.id = :id AND run.project.id = :projectId")
     Optional<TestResult> findByIdAndProjectId(@Param("id") UUID id, @Param("projectId") UUID projectId);
+
+    /**
+     * Locks the result row, so concurrent updates of its steps derive its status one after another
+     * from committed sibling states (TES-BUG-17).
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM TestResult r WHERE r.id = :id")
+    Optional<TestResult> findByIdForUpdate(@Param("id") UUID id);
 
     /**
      * Terminal results across a project, newest first, for flakiness scoring (PRD-016).

@@ -630,7 +630,10 @@ public class TestRunService {
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", runId));
 
-        TestResult testResult = testResultRepository.findById(resultId)
+        // Locked before any step is read: "Mark every step Passed" updates all steps at once, and each
+        // update derives the result's status from its siblings. Unserialised, every request saw the
+        // others still Pending and the last to commit left the result Pending (TES-BUG-17).
+        TestResult testResult = testResultRepository.findByIdForUpdate(resultId)
                 .filter(r -> r.getTestRun().getId().equals(run.getId()))
                 .orElseThrow(() -> new ResourceNotFoundException("TestResult", resultId));
 
