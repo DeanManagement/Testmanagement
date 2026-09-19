@@ -73,9 +73,23 @@ final class McpDtos {
      * none.
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record Step(String action,
+    record Step(@Nullable String action,
                 @Nullable String expectedResult,
-                @Nullable String testData) {}
+                @Nullable String testData,
+                /* PRD-030: on input, a shared step to use in place of action; on output, the shared
+                   step a step came from. Consecutive steps with the same id are one reference. */
+                @Nullable UUID sharedStepId,
+                @Nullable String sharedStepTitle) {
+        Step(String action, String expectedResult, String testData) {
+            this(action, expectedResult, testData, null, null);
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record SharedStepItem(UUID id, String title, @Nullable String description, int stepCount, long usedByCount) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record SharedStepList(List<SharedStepItem> sharedSteps, long totalElements, boolean hasMore) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record TestCaseDetail(UUID id, String key, String title, @Nullable String description,

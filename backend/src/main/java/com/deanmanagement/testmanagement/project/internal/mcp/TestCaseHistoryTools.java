@@ -74,7 +74,7 @@ public class TestCaseHistoryTools {
 
         List<McpDtos.Step> steps = version.steps() == null ? List.of() : version.steps().stream()
                 .sorted(Comparator.comparingInt(TestCaseVersionResponse.StepSnapshot::orderIndex))
-                .map(s -> new McpDtos.Step(s.action(), s.expectedResult(), s.testData()))
+                .map(s -> new McpDtos.Step(s.action(), s.expectedResult(), s.testData(), null, s.sharedStepTitle()))
                 .toList();
         return new McpDtos.VersionDetail(version.versionNumber(), version.versionAt(),
                 version.title(), version.description(), version.preconditions(), version.priority(),

@@ -17,6 +17,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.TestCaseFol
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.service.CustomFieldWriteMode;
 import com.deanmanagement.testmanagement.project.internal.service.ParameterSetService;
+import com.deanmanagement.testmanagement.project.internal.service.StepExpansion;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseFolderService;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseImportExportService;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
@@ -148,6 +149,11 @@ public class GherkinImporter {
             return;
         }
         counts.updated++;
+        if (caseChanged && existing.getSteps().stream().anyMatch(step -> step.getUsesSharedStep() != null)) {
+            // The file is the source of truth, and a file has no shared steps (PRD-030).
+            warnings.add(new ImportError(row, scenario.location() + ": " + existing.getKey()
+                    + " uses shared steps; the file's steps replace them as local steps"));
+        }
         if (target.dryRun()) {
             return;
         }
@@ -217,7 +223,8 @@ public class GherkinImporter {
     }
 
     private static boolean isCaseChanged(TestCase existing, Scenario scenario) {
-        List<TestStepRequest> currentSteps = existing.getSteps().stream()
+        // As executed: a case using a shared step whose file lists those steps is unchanged (PRD-030).
+        List<TestStepRequest> currentSteps = StepExpansion.expandedSteps(existing.getSteps()).stream()
                 .map(s -> new TestStepRequest(s.getAction(), nullToEmpty(s.getExpectedResult()), nullToEmpty(s.getTestData())))
                 .toList();
         List<TestStepRequest> newSteps = scenario.steps().stream()

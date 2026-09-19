@@ -18,6 +18,8 @@ public interface SharedStepRepository extends JpaRepository<SharedStep, UUID> {
 
     boolean existsByProjectIdAndTitle(UUID projectId, String title);
 
+    List<SharedStep> findByProjectId(UUID projectId);
+
     /**
      * {@code query} is matched case-insensitively anywhere in the title; "" lists all. Never null:
      * PostgreSQL cannot type a null parameter in LIKE.

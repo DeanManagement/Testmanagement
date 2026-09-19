@@ -127,9 +127,11 @@ class McpEndpointApiTest {
                 .containsExactlyInAnyOrder("title", "priority");
 
         JsonNode step = createCase.path("inputSchema").path("properties").path("steps").path("items");
+        // Since PRD-030 a step is an action or a sharedStepId, which a schema cannot say; the tool
+        // checks "one of" itself and names both in its refusal.
         assertThat(required(step))
-                .as("a step needs an action; expectedResult and testData are usually absent")
-                .containsExactly("action");
+                .as("a step is an action or a sharedStepId; nothing is required on its own")
+                .isEmpty();
 
         JsonNode bulkItem = toolNamed(tools, "create_test_cases_bulk")
                 .path("inputSchema").path("properties").path("cases").path("items");

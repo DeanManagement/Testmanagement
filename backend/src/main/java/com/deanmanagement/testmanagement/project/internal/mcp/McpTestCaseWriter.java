@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -52,9 +53,28 @@ public class McpTestCaseWriter {
                 response.status());
     }
 
+    /**
+     * A step is its own text or a shared step (PRD-030). Consecutive steps with the same
+     * sharedStepId become one reference, so the expanded steps get_test_case returns can be sent
+     * back unchanged without turning the shared step into local copies.
+     */
     static List<TestStepRequest> toStepRequests(List<McpDtos.Step> steps) {
-        return steps == null ? null : steps.stream()
-                .map(s -> new TestStepRequest(s.action(), s.expectedResult(), s.testData()))
-                .toList();
+        if (steps == null) {
+            return null;
+        }
+        List<TestStepRequest> requests = new ArrayList<>();
+        UUID previousShared = null;
+        for (McpDtos.Step s : steps) {
+            if (s.sharedStepId() == null) {
+                if (s.action() == null || s.action().isBlank()) {
+                    throw new McpToolException("Each step needs an action, or a sharedStepId from list_shared_steps");
+                }
+                requests.add(new TestStepRequest(s.action(), s.expectedResult(), s.testData()));
+            } else if (!s.sharedStepId().equals(previousShared)) {
+                requests.add(new TestStepRequest(null, null, null, s.sharedStepId()));
+            }
+            previousShared = s.sharedStepId();
+        }
+        return requests;
     }
 }

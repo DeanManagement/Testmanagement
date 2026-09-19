@@ -9,6 +9,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.TestCaseFol
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseParameterSetRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.service.ParameterSetService;
+import com.deanmanagement.testmanagement.project.internal.service.StepExpansion;
 import com.deanmanagement.testmanagement.project.internal.service.gherkin.GherkinWriter.ExportCase;
 import com.deanmanagement.testmanagement.project.internal.service.gherkin.GherkinWriter.FeatureDoc;
 import com.deanmanagement.testmanagement.project.internal.service.gherkin.GherkinWriter.RuleBlock;
@@ -155,7 +156,8 @@ public class GherkinExporter {
     }
 
     private static ExportCase toExportCase(TestCase tc, List<SaveParameterSetRequest> sets) {
-        List<TestStepRequest> steps = tc.getSteps().stream()
+        // Shared steps expanded: Gherkin has no reference, so a re-import makes them local (PRD-030).
+        List<TestStepRequest> steps = StepExpansion.expandedSteps(tc.getSteps()).stream()
                 .map(s -> new TestStepRequest(s.getAction(), s.getExpectedResult(), s.getTestData()))
                 .toList();
         return new ExportCase(tc.getKey(), tc.getTitle(), tc.getDescription(), tc.getPreconditions(),

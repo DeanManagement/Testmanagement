@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.mcp;
 import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestCaseListFilter;
+import com.deanmanagement.testmanagement.project.internal.dto.TestStepResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testCaseFolder.MoveTestCasesRequest;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseFolderService;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.stream.Stream;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -114,7 +116,9 @@ public class TestCaseTools {
             name = "get_test_case",
             description = """
                     One test case in full, including its ordered steps, its estimateMinutes and
-                    medianActualMs (median measured duration of its last 5 executions). Accepts either the case key
+                    medianActualMs (median measured duration of its last 5 executions). Steps are
+                    as executed: a shared step's steps appear in place, each with its sharedStepId
+                    and sharedStepTitle. Accepts either the case key
                     (for example PROJ-12, which is what humans quote) or its UUID.
                     """,
             generateOutputSchema = true,
@@ -129,10 +133,18 @@ public class TestCaseTools {
                 response.id(), response.key(), response.title(), response.description(),
                 response.preconditions(), response.status(), response.priority(), response.labels(),
                 response.folderId(),
-                response.steps() == null ? List.of() : response.steps().stream()
-                        .map(s -> new McpDtos.Step(s.action(), s.expectedResult(), s.testData()))
-                        .toList(),
+                response.steps() == null ? List.of() : executedSteps(response.steps()),
                 response.customFields(), response.estimateMinutes(), response.medianActualMs());
+    }
+
+    /** Shared steps expanded, each of their steps tagged with the shared step (PRD-030). */
+    private static List<McpDtos.Step> executedSteps(List<TestStepResponse> steps) {
+        return steps.stream()
+                .flatMap(s -> s.sharedStepId() == null
+                        ? Stream.of(new McpDtos.Step(s.action(), s.expectedResult(), s.testData()))
+                        : s.expandedSteps().stream().map(b -> new McpDtos.Step(b.action(), b.expectedResult(),
+                                b.testData(), s.sharedStepId(), s.sharedStepTitle())))
+                .toList();
     }
 
     // --- write -----------------------------------------------------------------------------
@@ -147,7 +159,8 @@ public class TestCaseTools {
                     before the case counts as real. In projects that require review ACTIVE means
                     approved and is refused here: use IN_REVIEW.
                     steps: ordered; each has an action, an optional expectedResult and optional
-                    testData. Order comes from the array, not from any index you supply.
+                    testData, or instead a sharedStepId (see list_shared_steps) to use a project's
+                    shared step there. Order comes from the array, not from any index you supply.
                     customFields: keyed by field NAME, not id — call list_custom_fields for names,
                     types and options. MULTI_SELECT takes an array; DATE is yyyy-MM-dd.
                     """,

@@ -13,7 +13,9 @@ import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEnti
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseFolderRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.SharedStepRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.entity.SharedStep;
 import com.deanmanagement.testmanagement.project.internal.service.gherkin.GherkinImporter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
@@ -39,6 +41,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Import/export of a project's test cases as JSON or CSV (PRD-004), and Gherkin import (PRD-040). Import validates per row and
@@ -68,6 +71,7 @@ public class TestCaseImportExportService {
     private final CustomFieldValueWriter customFieldWriter;
     private final TestCaseFolderRepository folderRepository;
     private final GherkinImporter gherkinImporter;
+    private final SharedStepRepository sharedStepRepository;
 
     // ---- Export ----
 
@@ -143,11 +147,13 @@ public class TestCaseImportExportService {
         return csvSafe(value.toString());
     }
 
+    /** Shared steps expanded: a CSV cell has no room for a reference (PRD-030), so this is lossy. */
     private String encodeSteps(TestCaseResponse tc) {
         if (tc.steps() == null || tc.steps().isEmpty()) {
             return "";
         }
         return tc.steps().stream()
+                .flatMap(s -> s.sharedStepId() == null ? Stream.of(s) : s.expandedSteps().stream())
                 .map(s -> nullToEmpty(s.action()) + "|" + nullToEmpty(s.expectedResult()))
                 .reduce((a, b) -> a + STEP_PAIR_SEPARATOR + b)
                 .orElse("");
@@ -188,7 +194,7 @@ public class TestCaseImportExportService {
         String text = stripBom(new String(content, StandardCharsets.UTF_8));
         boolean json = (fileName != null && fileName.toLowerCase().endsWith(".json"))
                 || text.stripLeading().startsWith("[");
-        List<RowData> rows = json ? parseJson(text) : parseCsv(text);
+        List<RowData> rows = json ? parseJson(text, sharedStepIdsByTitle(projectId)) : parseCsv(text);
 
         if (rows.size() > MAX_IMPORT_ROWS) {
             throw new IllegalArgumentException(
@@ -226,7 +232,13 @@ public class TestCaseImportExportService {
     private record RowData(int rowNumber, String title, String description, String preconditions,
                            String priority, String status, List<String> labels,
                            List<TestStepRequest> steps, Map<String, Object> customFields,
-                           String estimateMinutes) {
+                           String estimateMinutes, List<String> unknownSharedSteps) {
+    }
+
+    /** Shared steps are referenced by title in a file (PRD-030): ids differ between projects. */
+    private Map<String, UUID> sharedStepIdsByTitle(UUID projectId) {
+        return sharedStepRepository.findByProjectId(projectId).stream()
+                .collect(Collectors.toMap(SharedStep::getTitle, SharedStep::getId));
     }
 
     private static CreateTestCaseRequest withStatus(CreateTestCaseRequest r, TestCaseStatus status) {
@@ -237,6 +249,10 @@ public class TestCaseImportExportService {
     private CreateTestCaseRequest toRequest(RowData row, UUID folderId) {
         if (row.title() == null || row.title().isBlank()) {
             throw new IllegalArgumentException("title is required");
+        }
+        if (!row.unknownSharedSteps().isEmpty()) {
+            throw new IllegalArgumentException("unknown shared step(s): " + String.join(", ", row.unknownSharedSteps())
+                    + " (create them in this project first)");
         }
         Priority priority = parseEnum(Priority.class, row.priority(), Priority.MEDIUM, "priority");
         TestCaseStatus status = parseEnum(TestCaseStatus.class, row.status(), TestCaseStatus.DRAFT, "status");
@@ -297,7 +313,8 @@ public class TestCaseImportExportService {
                         parseLabels(get(record, "labels")),
                         parseSteps(get(record, "steps")),
                         customFieldCells(record, parser.getHeaderNames()),
-                        get(record, "estimateMinutes")
+                        get(record, "estimateMinutes"),
+                        List.of()
                 ));
             }
         } catch (IOException e) {
@@ -356,7 +373,7 @@ public class TestCaseImportExportService {
         return steps;
     }
 
-    private List<RowData> parseJson(String text) {
+    private List<RowData> parseJson(String text, Map<String, UUID> sharedStepIds) {
         JsonItem[] items;
         try {
             items = objectMapper.readValue(text, JsonItem[].class);
@@ -367,16 +384,24 @@ public class TestCaseImportExportService {
         for (int i = 0; i < items.length; i++) {
             JsonItem item = items[i];
             List<TestStepRequest> steps = new ArrayList<>();
+            List<String> unknown = new ArrayList<>();
             if (item.steps() != null) {
                 for (JsonItem.Step s : item.steps()) {
-                    if (s != null && s.action() != null && !s.action().isBlank()) {
+                    if (s != null && s.sharedStepTitle() != null) {
+                        UUID id = sharedStepIds.get(s.sharedStepTitle());
+                        if (id == null) {
+                            unknown.add("'" + s.sharedStepTitle() + "'");
+                        } else {
+                            steps.add(new TestStepRequest(null, null, null, id));
+                        }
+                    } else if (s != null && s.action() != null && !s.action().isBlank()) {
                         steps.add(new TestStepRequest(s.action(), s.expectedResult(), s.testData()));
                     }
                 }
             }
             rows.add(new RowData(i + 1, item.title(), item.description(), item.preconditions(),
                     item.priority(), item.status(), item.labels(), steps, item.customFields(),
-                    item.estimateMinutes() == null ? null : item.estimateMinutes().toString()));
+                    item.estimateMinutes() == null ? null : item.estimateMinutes().toString(), unknown));
         }
         return rows;
     }
@@ -385,7 +410,8 @@ public class TestCaseImportExportService {
     private record JsonItem(String title, String description, String preconditions, String priority,
                             String status, List<String> labels, List<Step> steps,
                             Map<String, Object> customFields, Object estimateMinutes) {
-        private record Step(String action, String expectedResult, String testData) {
+        /** {@code sharedStepTitle} set: a reference to that shared step of the project (PRD-030). */
+        private record Step(String action, String expectedResult, String testData, String sharedStepTitle) {
         }
     }
 
