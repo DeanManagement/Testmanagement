@@ -13,6 +13,10 @@ public record TestPlanRunSummary(
         int total,
         int passed,
         int failed,
-        Instant endTime
+        Instant endTime,
+        /* PRD-049: so the plan page shows the run's key and pass rate without computing it. */
+        String key,
+        int executed,
+        Double passRate
 ) {
 }

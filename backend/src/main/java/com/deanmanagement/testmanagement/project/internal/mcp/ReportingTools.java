@@ -42,6 +42,9 @@ public class ReportingTools {
             description = """
                     The project at a glance: how many cases, suites and runs there are, and test
                     cases by status and priority.
+                    Every pass rate is PASSED of the executed results (all but PENDING; SKIPPED
+                    counts as executed), in percent, and absent when nothing was executed, which is
+                    not the same as 0 %.
                     overallPassRate is the project's current health: every test case counted once,
                     by its most recent executed result in a completed run. latestResultsByStatus is
                     narrower — the results of the single most recently completed run — and
@@ -140,6 +143,6 @@ public class ReportingTools {
                         .toList();
         return new McpDtos.SuiteReport(report.id(), report.name(), report.total(), report.passed(),
                 report.failed(), report.blocked(), report.skipped(), report.untested(),
-                report.passRate(), results);
+                report.passRate(), results, report.progress());
     }
 }

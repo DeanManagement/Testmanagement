@@ -135,7 +135,8 @@ public class TestPlanningTools {
             name = "get_test_plan",
             description = """
                     One test plan with its execution summary: how many runs it holds, how many are
-                    finished, and the pass/fail breakdown across them.
+                    finished, and the pass/fail breakdown across them. passRate is PASSED of the
+                    executed results (absent when nothing ran); progress is executed of all results.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
@@ -146,7 +147,7 @@ public class TestPlanningTools {
         TestPlanSummaryResponse s = testPlanService.getSummary(caller.projectId(), id);
         return new McpDtos.PlanDetail(s.id(), s.name(), s.status(), s.targetDate(), s.totalRuns(),
                 s.completedRuns(), s.passed(), s.failed(), s.blocked(), s.skipped(), s.pending(),
-                s.passRate(), s.effort());
+                s.passRate(), s.effort(), s.executed(), s.progress());
     }
 
     @McpTool(

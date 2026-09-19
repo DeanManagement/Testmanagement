@@ -100,7 +100,7 @@ public class PdfReportService {
         // Stats
         sb.append("<h2>Summary</h2>\n");
         sb.append("<table class=\"stats\">\n<tr>");
-        sb.append("<th>Total</th><th>Passed</th><th>Failed</th><th>Blocked</th><th>Skipped</th><th>Untested</th><th>Pass Rate</th>");
+        sb.append("<th>Total</th><th>Passed</th><th>Failed</th><th>Blocked</th><th>Skipped</th><th>Untested</th><th>Pass Rate</th><th>Progress</th>");
         sb.append("</tr>\n<tr>");
         sb.append("<td>").append(report.total()).append("</td>");
         sb.append("<td class=\"passed\">").append(report.passed()).append("</td>");
@@ -108,7 +108,8 @@ public class PdfReportService {
         sb.append("<td class=\"blocked\">").append(report.blocked()).append("</td>");
         sb.append("<td class=\"skipped\">").append(report.skipped()).append("</td>");
         sb.append("<td>").append(report.untested()).append("</td>");
-        sb.append("<td><strong>").append(String.format("%.1f%%", report.passRate())).append("</strong></td>");
+        sb.append("<td><strong>").append(percent(report.passRate())).append("</strong></td>");
+        sb.append("<td>").append(percent(report.progress())).append("</td>");
         sb.append("</tr>\n</table>\n");
 
         // Results table
@@ -148,6 +149,11 @@ public class PdfReportService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate PDF report", e);
         }
+    }
+
+    /** One decimal and a percent sign; "–" when there is no figure, e.g. nothing executed (PRD-049). */
+    static String percent(Double value) {
+        return value == null ? "–" : String.format("%.1f%%", value);
     }
 
     static String escapeHtml(String text) {

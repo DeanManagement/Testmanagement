@@ -146,7 +146,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
         resultRecordingTools.recordTestResult(runOf(a).key(), TestResultStatus.FAILED, a.id(), null,
                 null, null, null, null);
 
-        assertThat(reportingTools.getProjectDashboard().overallPassRate()).isZero();
+        assertThat(reportingTools.getProjectDashboard().overallPassRate()).as("nothing executed yet").isNull();
     }
 
     private void completeRun(McpDtos.CreatedTestRun run,

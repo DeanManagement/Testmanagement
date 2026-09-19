@@ -16,8 +16,11 @@ public record TestSuiteReportResponse(
         int blocked,
         int skipped,
         int untested,
-        double passRate,
-        List<TestCaseLatestResult> results
+        /* PRD-049: passed of the cases with an executed latest result; null when there are none. */
+        Double passRate,
+        List<TestCaseLatestResult> results,
+        /* PRD-049: cases with an executed latest result, of all cases in the suite. */
+        Double progress
 ) {
     public record TestCaseLatestResult(
             UUID testCaseId,

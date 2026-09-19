@@ -67,14 +67,11 @@ public class DashboardService {
                 .findTop10ByProjectIdAndStatusOrderByEndTimeDesc(projectId, TestRunStatus.COMPLETED);
         Map<String, Long> latestResultsByStatus = completedRuns.isEmpty()
                 ? new LinkedHashMap<>() : countByStatus(completedRuns.getFirst().getResults());
-        double overallPassRate = currentPassRate(projectId);
+        Double overallPassRate = currentPassRate(projectId);
 
         List<PassRateTrendEntry> passRateTrend = new ArrayList<>();
         for (TestRun run : completedRuns) {
-            List<TestResult> results = run.getResults();
-            int total = results.size();
-            int passed = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.PASSED).count();
-            double passRate = total > 0 ? Math.round(passed * 10000.0 / total) / 100.0 : 0.0;
+            Double passRate = PassRate.of(run.getResults().stream().map(TestResult::getStatus).toList()).percent();
             passRateTrend.add(new PassRateTrendEntry(run.getId(), run.getName(), run.getEndTime(), passRate));
         }
         // Reverse to show oldest first for trend chart
@@ -104,16 +101,11 @@ public class DashboardService {
      * 75% into a 100% project. Counting per case is also what the suite report does, so the two no
      * longer contradict each other about the same case.
      */
-    private double currentPassRate(UUID projectId) {
+    private Double currentPassRate(UUID projectId) {
         Map<UUID, TestResultStatus> currentOutcome = new HashMap<>();
         for (Object[] row : testResultRepository.findExecutedOutcomesOfCompletedRunsNewestFirst(projectId)) {
             currentOutcome.putIfAbsent((UUID) row[0], (TestResultStatus) row[1]);
         }
-        if (currentOutcome.isEmpty()) {
-            return 0.0;
-        }
-        long passed = currentOutcome.values().stream()
-                .filter(status -> status == TestResultStatus.PASSED).count();
-        return Math.round(passed * 10000.0 / currentOutcome.size()) / 100.0;
+        return PassRate.of(currentOutcome.values()).percent();
     }
 }

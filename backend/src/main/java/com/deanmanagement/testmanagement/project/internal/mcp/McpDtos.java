@@ -147,7 +147,8 @@ final class McpDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record PlanDetail(UUID id, String name, TestPlanStatus status, @Nullable LocalDate targetDate,
                       int totalRuns, int completedRuns, int passed, int failed, int blocked,
-                      int skipped, int pending, double passRate, @Nullable EffortSummary effort) {}
+                      int skipped, int pending, @Nullable Double passRate, @Nullable EffortSummary effort,
+                      int executed, @Nullable Double progress) {}
 
     /** @param changed how many cases were actually added or removed; ids already in that state count 0 */
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -350,7 +351,7 @@ final class McpDtos {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record PassRatePoint(UUID testRunId, String name, @Nullable Instant completedAt,
-                         double passRate) {}
+                         @Nullable Double passRate) {}
 
     /**
      * @param latestResultsByStatus the results of the most recently completed run only
@@ -361,7 +362,7 @@ final class McpDtos {
     record Dashboard(long totalTestCases, long totalTestSuites, long totalTestRuns,
                      long completedTestRuns, Map<String, Long> testCasesByStatus,
                      Map<String, Long> testCasesByPriority, Map<String, Long> latestResultsByStatus,
-                     double overallPassRate, List<PassRatePoint> passRateTrend) {}
+                     @Nullable Double overallPassRate, List<PassRatePoint> passRateTrend) {}
 
     /**
      * @param flakyScore proportion of consecutive PASSED/FAILED pairs that flipped, in [0,1]
@@ -381,8 +382,8 @@ final class McpDtos {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record SuiteReport(UUID id, String name, int total, int passed, int failed, int blocked,
-                       int skipped, int untested, double passRate,
-                       List<SuiteCaseResult> results) {}
+                       int skipped, int untested, @Nullable Double passRate,
+                       List<SuiteCaseResult> results, @Nullable Double progress) {}
 
     // --- pipelines ----------------------------------------------------------------------------
 

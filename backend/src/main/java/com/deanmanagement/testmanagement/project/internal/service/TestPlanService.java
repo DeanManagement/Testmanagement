@@ -118,19 +118,23 @@ public class TestPlanService {
             skipped += runSkipped;
             pending += runPending;
 
+            PassRate runRate = PassRate.of(results.stream().map(TestResult::getStatus).toList());
             runSummaries.add(new TestPlanRunSummary(
                     run.getId(), run.getName(), run.getEnvironment(), run.getStatus(),
-                    runTotal, runPassed, runFailed, run.getEndTime()
+                    runTotal, runPassed, runFailed, run.getEndTime(),
+                    run.getKey(), runRate.executed(), runRate.percent()
             ));
         }
 
-        double passRate = totalResults > 0 ? Math.round(passed * 10000.0 / totalResults) / 100.0 : 0.0;
+        PassRate rate = PassRate.of(runs.stream().flatMap(run -> run.getResults().stream())
+                .map(TestResult::getStatus).toList());
 
         return new TestPlanSummaryResponse(
                 plan.getId(), plan.getName(), plan.getStatus(), plan.getTargetDate(),
                 totalRuns, completedRuns, totalResults,
-                passed, failed, blocked, skipped, pending, passRate,
-                runSummaries, sessionsSummary(planId), EffortSummary.of(countedResults(runs))
+                passed, failed, blocked, skipped, pending, rate.percent(),
+                runSummaries, sessionsSummary(planId), EffortSummary.of(countedResults(runs)),
+                rate.executed(), rate.progress()
         );
     }
 

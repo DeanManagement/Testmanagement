@@ -180,18 +180,19 @@ public class TestRunService {
         int blocked = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.BLOCKED).count();
         int skipped = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.SKIPPED).count();
         int pending = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.PENDING).count();
-        double passRate = total > 0 ? Math.round(passed * 10000.0 / total) / 100.0 : 0.0;
+        PassRate rate = PassRate.of(results.stream().map(TestResult::getStatus).toList());
 
         List<TestResultResponse> resultResponses = testRunMapper.toResultResponses(results);
 
         return new TestRunReportResponse(
                 run.getId(), run.getName(), run.getEnvironment(), run.getStatus(),
                 run.getStartTime(), run.getEndTime(),
-                total, passed, failed, blocked, skipped, pending, passRate,
+                total, passed, failed, blocked, skipped, pending, rate.percent(),
                 resultResponses, reviewService.resultsOnUnapprovedWording(run.getProject(), results),
                 EffortSummary.of(results),
                 run.getTestPlan() == null ? null : run.getTestPlan().getId(),
-                run.getTestPlan() == null ? null : run.getTestPlan().getName()
+                run.getTestPlan() == null ? null : run.getTestPlan().getName(),
+                rate.progress()
         );
     }
 

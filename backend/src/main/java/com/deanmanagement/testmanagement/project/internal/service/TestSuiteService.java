@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Objects;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -113,7 +114,7 @@ public class TestSuiteService {
         if (testCases.isEmpty()) {
             return new TestSuiteReportResponse(
                     suite.getId(), suite.getName(), suite.getDescription(),
-                    0, 0, 0, 0, 0, 0, 0.0, List.of());
+                    0, 0, 0, 0, 0, 0, null, List.of(), null);
         }
 
         Set<UUID> testCaseIds = testCases.stream().map(TestCase::getId).collect(Collectors.toSet());
@@ -146,11 +147,14 @@ public class TestSuiteService {
         int blocked = (int) results.stream().filter(r -> r.status() == TestResultStatus.BLOCKED).count();
         int skipped = (int) results.stream().filter(r -> r.status() == TestResultStatus.SKIPPED).count();
         int untested = (int) results.stream().filter(r -> r.status() == null).count();
-        double passRate = total > 0 ? Math.round(passed * 10000.0 / total) / 100.0 : 0.0;
+        // Untested cases count toward progress only: they are not failures (PRD-049).
+        PassRate tested = PassRate.of(results.stream().map(TestSuiteReportResponse.TestCaseLatestResult::status)
+                .filter(Objects::nonNull).toList());
+        PassRate rate = new PassRate(tested.passed(), tested.executed(), total);
 
         return new TestSuiteReportResponse(
                 suite.getId(), suite.getName(), suite.getDescription(),
-                total, passed, failed, blocked, skipped, untested, passRate, results);
+                total, passed, failed, blocked, skipped, untested, rate.percent(), results, rate.progress());
     }
 
     @Transactional

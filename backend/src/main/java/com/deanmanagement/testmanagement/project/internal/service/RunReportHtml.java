@@ -85,7 +85,8 @@ final class RunReportHtml {
                 .append("<td><strong>Start</strong></td><td>").append(time(report.startTime())).append("</td>")
                 .append("<td><strong>End</strong></td><td>").append(time(report.endTime())).append("</td>")
                 .append("</tr>\n</table>\n<table class=\"stats\">\n<tr>")
-                .append("<th>Total</th><th>Passed</th><th>Failed</th><th>Blocked</th><th>Skipped</th><th>Pending</th><th>Pass Rate</th>")
+                .append("<th>Total</th><th>Passed</th><th>Failed</th><th>Blocked</th><th>Skipped</th><th>Pending</th>")
+                .append("<th>Pass Rate</th><th>Progress</th>")
                 .append("</tr>\n<tr>")
                 .append("<td>").append(report.total()).append("</td>")
                 .append("<td class=\"passed\">").append(report.passed()).append("</td>")
@@ -93,8 +94,11 @@ final class RunReportHtml {
                 .append("<td class=\"blocked\">").append(report.blocked()).append("</td>")
                 .append("<td class=\"skipped\">").append(report.skipped()).append("</td>")
                 .append("<td class=\"pending\">").append(report.pending()).append("</td>")
-                .append("<td><strong>").append(String.format("%.1f%%", report.passRate())).append("</strong></td>")
-                .append("</tr>\n</table>\n");
+                .append("<td><strong>").append(PdfReportService.percent(report.passRate())).append("</strong></td>")
+                .append("<td>").append(PdfReportService.percent(report.progress())).append("</td>")
+                .append("</tr>\n</table>\n")
+                .append("<p class=\"meta\">Pass rate: passed of executed results; pending results are not counted. ")
+                .append("Progress: executed of all results.</p>\n");
     }
 
     private void results() {

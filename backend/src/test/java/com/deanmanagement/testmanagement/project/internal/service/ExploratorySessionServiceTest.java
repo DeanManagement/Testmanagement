@@ -354,7 +354,7 @@ class ExploratorySessionServiceTest {
             assertThat(summary.sessions().total()).isEqualTo(1);
             assertThat(summary.sessions().completed()).isEqualTo(1);
             assertThat(summary.totalRuns()).isZero();
-            assertThat(summary.passRate()).isZero();
+            assertThat(summary.passRate()).as("nothing executed is no pass rate, not 0 %").isNull();
         }
 
         @Test

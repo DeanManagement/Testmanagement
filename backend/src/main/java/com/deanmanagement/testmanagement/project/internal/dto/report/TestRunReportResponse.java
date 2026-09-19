@@ -22,7 +22,8 @@ public record TestRunReportResponse(
         int blocked,
         int skipped,
         int pending,
-        double passRate,
+        /* PRD-049: passed of executed; null when nothing was executed. */
+        Double passRate,
         List<TestResultResponse> results,
         /* PRD-033: results executed against wording that was never approved; empty without review. */
         Set<UUID> unapprovedResultIds,
@@ -30,6 +31,8 @@ public record TestRunReportResponse(
         EffortSummary effort,
         /* PRD-048: the plan the run belongs to, if any. */
         UUID testPlanId,
-        String testPlanName
+        String testPlanName,
+        /* PRD-049: executed of total, in percent. */
+        Double progress
 ) {
 }

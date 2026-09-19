@@ -10,7 +10,8 @@ public record DashboardResponse(
         Map<String, Long> testCasesByStatus,
         Map<String, Long> testCasesByPriority,
         Map<String, Long> latestResultsByStatus,
-        double overallPassRate,
+        /* PRD-049: passed of executed, per case; null when nothing has been executed. */
+        Double overallPassRate,
         List<RecentTestRunResponse> recentTestRuns,
         List<PassRateTrendEntry> passRateTrend
 ) {
@@ -37,6 +38,7 @@ public record DashboardResponse(
             UUID testRunId,
             String name,
             Instant completedAt,
-            double passRate
+            /* PRD-049: null when the run executed nothing, so charts leave a gap instead of 0 %. */
+            Double passRate
     ) {}
 }

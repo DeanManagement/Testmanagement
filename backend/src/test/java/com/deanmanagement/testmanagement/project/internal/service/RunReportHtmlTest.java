@@ -77,7 +77,7 @@ class RunReportHtmlTest {
         png.setData(new byte[]{1, 2, 3});
         TestRunReportResponse report = new TestRunReportResponse(UUID.randomUUID(), "Nightly", null,
                 TestRunStatus.COMPLETED, null, null, 1, 1, 0, 0, 0, 0, 100.0, List.of(result), Set.of(), null,
-                UUID.randomUUID(), "2.1");
+                UUID.randomUUID(), "2.1", 100.0);
         return new RunReportHtml(report, Map.of(), options, id -> Optional.of(png), FORMAT).build("SPI", "");
     }
 

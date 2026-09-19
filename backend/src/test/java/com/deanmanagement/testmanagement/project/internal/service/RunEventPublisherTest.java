@@ -76,4 +76,21 @@ class RunEventPublisherTest {
         assertThat((List<?>) data.get("failedTests")).hasSize(RunEventPublisher.MAX_FAILED_TESTS)
                 .first().isEqualTo(Map.of("key", "P-0", "title", "Case 0"));
     }
+
+    /** PRD-049: pending results are not failures; a run that executed nothing has no pass rate. */
+    @Test
+    void passRateCountsOnlyExecutedResults() {
+        publisher.publishFinished(runWith(TestResultStatus.PASSED, TestResultStatus.PENDING, TestResultStatus.PENDING));
+
+        Map<String, Object> data = ((WebhookEvent) published.get(0)).data();
+        assertThat(data.get("passRate")).isEqualTo(100.0);
+        assertThat(data.get("executed")).isEqualTo(1);
+    }
+
+    @Test
+    void aRunThatExecutedNothingHasNoPassRate() {
+        publisher.publishFinished(runWith(TestResultStatus.PENDING));
+
+        assertThat(((WebhookEvent) published.get(0)).data().get("passRate")).isNull();
+    }
 }

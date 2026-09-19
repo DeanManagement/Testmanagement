@@ -22,12 +22,16 @@ public record TestPlanSummaryResponse(
         int blocked,
         int skipped,
         int pending,
-        double passRate,
+        /* PRD-049: passed of executed; null when nothing was executed. */
+        Double passRate,
         List<TestPlanRunSummary> runs,
         /* PRD-034: exploration done for this plan; kept apart from run counts and passRate. */
         SessionsSummary sessions,
         /* PRD-036: over every run of the plan except ABORTED ones. */
-        EffortSummary effort
+        EffortSummary effort,
+        /* PRD-049: results no longer pending, and that as a share of all results. */
+        int executed,
+        Double progress
 ) {
 
     public record SessionsSummary(int total, int completed, long totalMinutes, List<SessionItem> items) {

@@ -47,8 +47,9 @@ record ChatMessage(String headline, Outcome outcome, List<Field> fields, List<St
             return new ChatMessage("▶️ " + subject + " started", Outcome.NEUTRAL, fields, List.of(),
                     "Open run", runLink(baseUrl, project, data));
         }
+        Object passRate = data.get("passRate");
         fields.add(new Field("Passed", data.get("passed") + "/" + data.get("total")
-                + " (" + data.get("passRate") + "%)"));
+                + (passRate == null ? "" : " (" + passRate + "%)")));
         fields.add(new Field("Failed", str(data.get("failed"))));
         fields.add(new Field("Blocked", str(data.get("blocked"))));
         fields.add(new Field("Skipped", str(data.get("skipped"))));

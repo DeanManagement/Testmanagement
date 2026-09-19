@@ -52,7 +52,10 @@ public class RunEventPublisher {
         data.put("failed", count(results, TestResultStatus.FAILED));
         data.put("blocked", count(results, TestResultStatus.BLOCKED));
         data.put("skipped", count(results, TestResultStatus.SKIPPED));
-        data.put("passRate", total > 0 ? Math.round((passed * 1000.0) / total) / 10.0 : 0.0);
+        PassRate rate = PassRate.of(results.stream().map(TestResult::getStatus).toList());
+        // PRD-049: passed of executed; null when nothing ran, rather than a 0 % that reads as failure.
+        data.put("passRate", rate.percent());
+        data.put("executed", rate.executed());
         data.put("failedTests", failedTests(results));
         eventPublisher.publishEvent(new WebhookEvent(type, run.getProject().getId(), data));
     }
