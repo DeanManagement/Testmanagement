@@ -1,0 +1,73 @@
+<div class="picker-filters">
+  <mat-form-field appearance="outline" class="picker-search">
+    <mat-icon matPrefix>search</mat-icon>
+    <mat-label>{{ 'testRun.form.searchTestCases' | translate }}</mat-label>
+    <input matInput [ngModel]="search()" (ngModelChange)="search.set($event)" [ngModelOptions]="{ standalone: true }"
+           data-test-id="tc-picker-search" />
+  </mat-form-field>
+  @if (flatFolders().length) {
+    <mat-form-field appearance="outline" class="picker-select">
+      <mat-label>{{ 'testRun.form.filterByFolder' | translate }}</mat-label>
+      <mat-select [value]="folderId() ?? ''" (selectionChange)="folderId.set($event.value || null)"
+                  data-test-id="tc-picker-folder">
+        <mat-option value="">{{ 'testRun.form.allFolders' | translate }}</mat-option>
+        @for (folder of flatFolders(); track folder.id) {
+          <mat-option [value]="folder.id" [style.padding-left.px]="16 + folder.depth * 16">{{ folder.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+  @if (availableLabels().length) {
+    <mat-form-field appearance="outline" class="picker-select">
+      <mat-label>{{ 'filter.labels' | translate }}</mat-label>
+      <mat-select multiple [value]="labels()" (selectionChange)="labels.set($event.value)" data-test-id="tc-picker-labels">
+        @for (label of availableLabels(); track label) {
+          <mat-option [value]="label">{{ label }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  }
+</div>
+
+<div class="picker-bar">
+  <span class="picker-count" data-test-id="tc-picker-count">{{ 'picker.selected' | translate: { count: selected().length } }}</span>
+  <button mat-button type="button" (click)="selectAllVisible()" [disabled]="!results()?.cases?.length"
+          data-test-id="tc-picker-select-all">{{ 'picker.selectAllVisible' | translate }}</button>
+  <button mat-button type="button" (click)="clearSelection()" [disabled]="!selected().length"
+          data-test-id="tc-picker-clear">{{ 'picker.clear' | translate }}</button>
+</div>
+
+<div class="tc-list">
+  @if (hiddenSelected().length) {
+    <div class="tc-group" data-test-id="tc-picker-hidden-selected">
+      <span class="tc-group-title">{{ 'picker.selectedHidden' | translate }}</span>
+      @for (tc of hiddenSelected(); track tc.id) {
+        <mat-checkbox [checked]="true" (change)="toggle(tc)" class="tc-checkbox">
+          <span class="tc-key">{{ tc.key }}</span> {{ tc.title }}
+        </mat-checkbox>
+      }
+    </div>
+  }
+  @if (results(); as found) {
+    @for (tc of found.cases; track tc.id) {
+      <mat-checkbox [checked]="isSelected(tc.id)" (change)="toggle(tc)" class="tc-checkbox"
+                    [attr.data-test-id]="'tc-picker-checkbox-' + tc.id">
+        <span class="tc-key">{{ tc.key }}</span> {{ tc.title }}
+      </mat-checkbox>
+    } @empty {
+      @if (filtersActive()) {
+        <p class="empty-hint" data-test-id="tc-picker-no-match">
+          {{ 'testCase.list.noMatch' | translate }}
+          <button mat-button type="button" (click)="resetFilters()" data-test-id="tc-picker-reset">{{ 'filter.reset' | translate }}</button>
+        </p>
+      } @else {
+        <p class="empty-hint" data-test-id="tc-picker-empty">{{ 'testCase.list.empty' | translate }}</p>
+      }
+    }
+    @if (found.total > found.cases.length) {
+      <p class="picker-hint" data-test-id="tc-picker-truncated">
+        {{ 'picker.truncated' | translate: { shown: found.cases.length, total: found.total } }}
+      </p>
+    }
+  }
+</div>

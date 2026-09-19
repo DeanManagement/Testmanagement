@@ -34,6 +34,11 @@ export class TestCaseApiService {
     return this.http.get<Page<TestCase>>(this.baseUrl(projectId), { params }).pipe(retryWithBackoff());
   }
 
+  /** PRD-052: every label used in the project, distinct and sorted. */
+  getLabels(projectId: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl(projectId)}/labels`);
+  }
+
   getById(projectId: string, id: string): Observable<TestCase> {
     return this.http.get<TestCase>(`${this.baseUrl(projectId)}/${id}`).pipe(retryWithBackoff());
   }

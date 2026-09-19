@@ -192,6 +192,17 @@
             }
           </mat-select>
         </mat-form-field>
+        @if (availableLabels().length) {
+          <mat-form-field appearance="outline" class="filter-select">
+            <mat-label>{{ 'filter.labels' | translate }}</mat-label>
+            <mat-select multiple [(ngModel)]="labelFilter" (selectionChange)="applyFilters()"
+                        data-test-id="test-case-label-filter">
+              @for (label of availableLabels(); track label) {
+                <mat-option [value]="label">{{ label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
         <app-custom-field-filters [projectId]="projectId" entityType="TEST_CASE" />
         <button mat-icon-button (click)="toggleDensity()"
                 [matTooltip]="'filter.density' | translate"
@@ -207,12 +218,20 @@
         </div>
       } @else if ((testCases$ | async)?.length === 0) {
         <div class="empty-state" data-test-id="test-case-list-empty">
-          <mat-icon>bug_report</mat-icon>
-          <p>{{ 'testCase.list.empty' | translate }}</p>
-          <a mat-flat-button [routerLink]="['new']" [queryParams]="getCreateLink()" class="create-btn" data-test-id="test-case-create-empty-btn">
-            <mat-icon>add</mat-icon>
-            {{ 'testCase.list.create' | translate }}
-          </a>
+          @if (filtersActive) {
+            <mat-icon>filter_alt_off</mat-icon>
+            <p data-test-id="test-case-list-no-match">{{ 'testCase.list.noMatch' | translate }}</p>
+            <button mat-stroked-button type="button" (click)="resetFilters()" data-test-id="test-case-reset-filters">
+              {{ 'filter.reset' | translate }}
+            </button>
+          } @else {
+            <mat-icon>{{ selectedFolderId ? 'folder_open' : 'bug_report' }}</mat-icon>
+            <p>{{ (selectedFolderId ? 'testCase.list.folderEmpty' : 'testCase.list.empty') | translate }}</p>
+            <a mat-flat-button [routerLink]="['new']" [queryParams]="getCreateLink()" class="create-btn" data-test-id="test-case-create-empty-btn">
+              <mat-icon>add</mat-icon>
+              {{ 'testCase.list.create' | translate }}
+            </a>
+          }
         </div>
       } @else if (selectedIds$ | async; as selectedIds) {
         <div class="table-scroll">
@@ -279,7 +298,8 @@
               <th mat-header-cell *matHeaderCellDef>{{ 'testCase.form.labels' | translate }}</th>
               <td mat-cell *matCellDef="let tc">
                 @for (label of tc.labels; track label) {
-                  <mat-chip-option class="label-chip" disabled data-test-id="test-case-label">{{ label }}</mat-chip-option>
+                  <button type="button" class="label-chip" (click)="addLabelFilter(label)"
+                          [matTooltip]="'filter.byLabel' | translate" data-test-id="test-case-label">{{ label }}</button>
                 }
               </td>
             </ng-container>

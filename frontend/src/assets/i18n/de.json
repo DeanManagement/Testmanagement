@@ -258,7 +258,9 @@
     "list": {
       "title": "Testfälle",
       "create": "Testfall erstellen",
-      "empty": "Noch keine Testfälle. Erstellen Sie Ihren ersten Testfall."
+      "empty": "Noch keine Testfälle. Erstellen Sie Ihren ersten Testfall.",
+      "noMatch": "Keine Testfälle passen zu den Filtern.",
+      "folderEmpty": "Dieser Ordner ist leer."
     },
     "form": {
       "createTitle": "Testfall erstellen",
@@ -892,7 +894,10 @@
     "priority": "Priorität",
     "allStatuses": "Alle Status",
     "allPriorities": "Alle Prioritäten",
-    "density": "Zeilendichte umschalten"
+    "density": "Zeilendichte umschalten",
+    "labels": "Labels",
+    "reset": "Filter zurücksetzen",
+    "byLabel": "Nur Testfälle mit diesem Label zeigen"
   },
   "watcher": {
     "myWatched": "Meine beobachteten Elemente",
@@ -1553,5 +1558,12 @@
     "fit": "An Fenster anpassen",
     "actualSize": "100 %",
     "download": "Bild herunterladen"
+  },
+  "picker": {
+    "selected": "{{count}} ausgewählt",
+    "selectAllVisible": "Alle angezeigten auswählen",
+    "clear": "Auswahl aufheben",
+    "selectedHidden": "Ausgewählt, durch die Filter ausgeblendet",
+    "truncated": "{{shown}} von {{total}} angezeigt. Grenze die Filter ein, um den Rest zu sehen."
   }
 }

@@ -31,7 +31,7 @@ import {
 } from 'chart.js';
 import { TestPlanActions } from '../../../store/test-plan/test-plan.actions';
 import { selectTestPlanById } from '../../../store/test-plan/test-plan.selectors';
-import { TestPlan, TestPlanSummary } from '../../../shared/models/test-plan.model';
+import { TestPlan, TestPlanRunSummary, TestPlanSummary } from '../../../shared/models/test-plan.model';
 import { TestPlanApiService } from '../../../core/services/test-plan-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { applyChartDefaults } from '../../../core/utils/chart-theme';
@@ -52,10 +52,13 @@ import { ReleaseReadinessCardComponent } from './release-readiness-card.componen
 import { DurationPipe } from '../../../shared/pipes/duration.pipe';
 import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 
+import { MatSortModule, Sort } from '@angular/material/sort';
+import { sortRows, SortValue } from '../../../shared/utils/sort-rows';
 @Component({
   selector: 'app-test-plan-detail',
   standalone: true,
   imports: [
+    MatSortModule,
     MatTooltipModule,
     RatePipe,
     PlanDefectsComponent,
@@ -98,7 +101,13 @@ export class TestPlanDetailComponent implements OnInit {
   summary: TestPlanSummary | null = null;
   burnDown: BurnDown | null = null;
   readiness: Readiness | null = null;
-  runColumns = ['name', 'environment', 'status', 'total', 'passed', 'failed'];
+  runColumns = ['key', 'name', 'environment', 'status', 'total', 'passed', 'failed'];
+  /** PRD-052: key order by default, which is creation order. */
+  runSort: Sort = { active: 'key', direction: 'asc' };
+
+  sortedRuns(runs: TestPlanRunSummary[]): TestPlanRunSummary[] {
+    return sortRows(runs, this.runSort, runValue);
+  }
   environmentColumns = ['environment', 'runs', 'total', 'passed', 'failed', 'passRate'];
   groupByEnvironment = false;
   environmentRollups: EnvironmentRollup[] = [];
@@ -341,4 +350,8 @@ const MAX_AXIS_LABEL_LENGTH = 16;
 
 function shortLabel(name: string): string {
   return name.length > MAX_AXIS_LABEL_LENGTH ? name.slice(0, MAX_AXIS_LABEL_LENGTH - 1) + '…' : name;
+}
+
+function runValue(run: TestPlanRunSummary, column: string): SortValue {
+  return run[column as keyof TestPlanRunSummary] as SortValue;
 }

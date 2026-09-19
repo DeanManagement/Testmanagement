@@ -21,6 +21,10 @@
     align-items: center;
     justify-content: center;
   }
+
+  &--wide {
+    grid-column: 1 / -1;
+  }
 }
 
 .spec-label {

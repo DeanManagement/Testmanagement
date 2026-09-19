@@ -7,17 +7,16 @@
     <span class="spec-label">{{ 'stepResult.expected' | translate }}</span>
     <span class="spec-text">{{ expectedResult }}</span>
   </div>
-  @if (testData || imageUrl) {
-    <div class="spec-tile">
-      @if (testData) {
-        <span class="spec-label">{{ 'testCase.form.testData' | translate }}</span>
-        <span class="spec-text">{{ testData }}</span>
-      }
+  <!-- PRD-052: a tile only for what exists; alone, it spans the card instead of leaving a gap. -->
+  @if (testData) {
+    <div class="spec-tile" [class.spec-tile--wide]="!imageUrl" data-test-id="step-spec-test-data">
+      <span class="spec-label">{{ 'testCase.form.testData' | translate }}</span>
+      <span class="spec-text">{{ testData }}</span>
     </div>
-    <div class="spec-tile spec-tile--image">
-      @if (imageUrl) {
-        <img [src]="imageUrl | authImage" alt="Reference image" class="ref-image-thumb" loading="lazy" [appEnlarge]="imageUrl" />
-      }
+  }
+  @if (imageUrl) {
+    <div class="spec-tile spec-tile--image" [class.spec-tile--wide]="!testData" data-test-id="step-spec-image">
+      <img [src]="imageUrl | authImage" alt="Reference image" class="ref-image-thumb" loading="lazy" [appEnlarge]="imageUrl" />
     </div>
   }
 </div>

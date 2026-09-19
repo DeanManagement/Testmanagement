@@ -26,30 +26,6 @@
   margin: 0 0 12px;
 }
 
-.folder-filter {
-  margin-bottom: 12px;
-}
-
-.tc-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border: 1px solid var(--tm-border);
-  border-radius: var(--tm-radius);
-  max-height: 300px;
-  overflow-y: auto;
-}
-
-.tc-checkbox {
-  font-size: 14px;
-}
-
-.empty-hint {
-  color: var(--tm-text-secondary);
-  font-size: 14px;
-}
-
 .actions {
   display: flex;
   justify-content: flex-end;

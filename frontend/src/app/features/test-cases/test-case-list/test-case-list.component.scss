@@ -214,6 +214,18 @@
 .label-chip {
   font-size: 11px;
   margin: 2px;
+  padding: 2px 8px;
+  border: 1px solid var(--mat-sys-outline-variant);
+  border-radius: 12px;
+  background: var(--mat-sys-surface-container);
+  color: inherit;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--mat-sys-primary);
+  }
 }
 
 .actions-cell {

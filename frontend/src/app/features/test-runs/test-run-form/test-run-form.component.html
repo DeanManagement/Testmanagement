@@ -60,48 +60,7 @@
         <div class="test-cases-picker" data-test-id="test-run-tc-picker">
           <h3>{{ 'testSuite.form.testCases' | translate }}</h3>
           <p class="picker-hint">{{ 'testRun.form.pickerHint' | translate }}</p>
-
-          @if (folders$ | async; as folders) {
-            @if (folders.length > 0) {
-              <mat-form-field appearance="outline" class="full-width folder-filter">
-                <mat-label>{{ 'testRun.form.filterByFolder' | translate }}</mat-label>
-                <mat-select [value]="selectedFolderId ?? ''" (selectionChange)="filterByFolder($event.value || null)" data-test-id="test-run-folder-filter">
-                  <mat-option value="">{{ 'testRun.form.allFolders' | translate }}</mat-option>
-                  @for (folder of flattenFolders(folders); track folder.id) {
-                    <mat-option [value]="folder.id">{{ folder.name }}</mat-option>
-                  }
-                </mat-select>
-              </mat-form-field>
-            }
-          }
-
-          @if (testCases$ | async; as testCases) {
-            @if (testCases.length > 0) {
-              <mat-form-field appearance="outline" class="full-width search-field">
-                <mat-label>{{ 'testRun.form.searchTestCases' | translate }}</mat-label>
-                <input matInput [(ngModel)]="searchTerm" [ngModelOptions]="{ standalone: true }" data-test-id="test-run-search-input" />
-                <mat-icon matPrefix>search</mat-icon>
-              </mat-form-field>
-            }
-          }
-
-          @if (testCases$ | async; as testCases) {
-            @if (testCases.length === 0) {
-              <p class="empty-hint">{{ 'testCase.list.empty' | translate }}</p>
-            } @else {
-              <div class="tc-list">
-                @for (tc of filterTestCases(testCases); track tc.id) {
-                  <mat-checkbox
-                    [checked]="selectedTestCaseIds.has(tc.id)"
-                    (change)="toggleTestCase(tc.id)"
-                    class="tc-checkbox"
-                    [attr.data-test-id]="'test-run-tc-checkbox-' + tc.id">
-                    {{ tc.title }}
-                  </mat-checkbox>
-                }
-              </div>
-            }
-          }
+          <app-test-case-picker [projectId]="projectId" [(selected)]="selectedCases" />
         </div>
 
         <div class="actions">

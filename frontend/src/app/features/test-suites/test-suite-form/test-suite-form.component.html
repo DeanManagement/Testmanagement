@@ -20,23 +20,8 @@
 
         <div class="test-cases-picker" data-test-id="test-suite-tc-picker">
           <h3>{{ 'testSuite.form.testCases' | translate }}</h3>
-          @if (testCases$ | async; as testCases) {
-            @if (testCases.length === 0) {
-              <p class="empty-hint">{{ 'testCase.list.empty' | translate }}</p>
-            } @else {
-              <div class="tc-list">
-                @for (tc of testCases; track tc.id) {
-                  <mat-checkbox
-                    [checked]="selectedTestCaseIds.has(tc.id)"
-                    (change)="toggleTestCase(tc.id)"
-                    class="tc-checkbox"
-                    [attr.data-test-id]="'test-suite-tc-checkbox-' + tc.id">
-                    {{ tc.title }}
-                  </mat-checkbox>
-                }
-              </div>
-            }
-          }
+          <app-test-case-picker [projectId]="projectId" [selected]="selectedCases"
+                                (selectedChange)="selectionChanged($event)" />
         </div>
 
         <div class="actions">

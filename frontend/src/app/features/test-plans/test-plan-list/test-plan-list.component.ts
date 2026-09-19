@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, LowerCasePipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
+import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
@@ -15,6 +16,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { TestPlanActions } from '../../../store/test-plan/test-plan.actions';
 import { selectAllTestPlans, selectTestPlansLoading, selectTestPlansError } from '../../../store/test-plan/test-plan.selectors';
 import { TestPlan, TestPlanStatus } from '../../../shared/models/test-plan.model';
+import { sortRows, SortValue } from '../../../shared/utils/sort-rows';
 
 @Component({
   selector: 'app-test-plan-list',
@@ -25,6 +27,7 @@ import { TestPlan, TestPlanStatus } from '../../../shared/models/test-plan.model
     RouterLink,
     FormsModule,
     MatTableModule,
+    MatSortModule,
     MatButtonModule,
     MatIconModule,
     MatChipsModule,
@@ -49,6 +52,8 @@ export class TestPlanListComponent implements OnInit {
   searchTerm = '';
   statusFilter: TestPlanStatus | '' = '';
   allStatuses: TestPlanStatus[] = ['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
+  /** PRD-052: none by default, which keeps the server's order. */
+  sort: Sort = { active: '', direction: '' };
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
@@ -66,7 +71,7 @@ export class TestPlanListComponent implements OnInit {
     if (this.statusFilter) {
       result = result.filter(p => p.status === this.statusFilter);
     }
-    return result;
+    return sortRows(result, this.sort, planValue);
   }
 
   retry(): void {
@@ -75,5 +80,15 @@ export class TestPlanListComponent implements OnInit {
 
   deleteTestPlan(id: string): void {
     this.store.dispatch(TestPlanActions.deleteTestPlan({ projectId: this.projectId, id }));
+  }
+}
+
+function planValue(plan: TestPlan, column: string): SortValue {
+  switch (column) {
+    case 'name': return plan.name;
+    case 'status': return plan.status;
+    case 'targetDate': return plan.targetDate;
+    case 'testRunCount': return plan.testRunCount;
+    default: return null;
   }
 }

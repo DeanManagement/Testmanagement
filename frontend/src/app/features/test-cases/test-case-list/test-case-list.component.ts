@@ -1,4 +1,4 @@
-import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -8,7 +8,6 @@ import { MatTableModule } from '@angular/material/table';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { MatChipsModule } from '@angular/material/chips';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatDialog } from '@angular/material/dialog';
@@ -68,7 +67,6 @@ interface FlatFolderNode {
     MatButtonModule,
     MatIconModule,
     MatProgressSpinnerModule,
-    MatChipsModule,
     MatCheckboxModule,
     MatSlideToggleModule,
     MatTreeModule,
@@ -119,6 +117,13 @@ export class TestCaseListComponent implements OnInit {
   searchTerm = '';
   statusFilter: TestCaseStatus | '' = '';
   priorityFilter: Priority | '' = '';
+  /** PRD-052: cases must carry all of these. */
+  labelFilter: string[] = [];
+  readonly availableLabels = signal<string[]>([]);
+  /** Whether a search or filter narrows the list, which decides the empty-state message. */
+  filtersActive = false;
+  /** The cf.* keys in the URL, so resetting the filters can clear them too. */
+  private customFieldKeys: string[] = [];
   sortActive = 'updatedAt';
   sortDirection: 'asc' | 'desc' = 'desc';
   allStatuses: TestCaseStatus[] = ALL_TEST_CASE_STATUSES;
@@ -162,6 +167,8 @@ export class TestCaseListComponent implements OnInit {
     }
 
     this.store.dispatch(TestCaseFolderActions.loadFolders({ projectId: this.projectId }));
+    this.testCaseApi.getLabels(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({ next: (labels) => this.availableLabels.set(labels), error: () => undefined });
     this.projectApi.getById(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe((project) => {
         this.reviewRequired = project.reviewRequired;
@@ -176,6 +183,11 @@ export class TestCaseListComponent implements OnInit {
       this.searchTerm = params.get('q') ?? '';
       this.statusFilter = (params.get('status') as TestCaseStatus) ?? '';
       this.priorityFilter = (params.get('priority') as Priority) ?? '';
+      this.labelFilter = params.getAll('label');
+      const customFieldParams = readCustomFieldParams(params);
+      this.customFieldKeys = Object.keys(customFieldParams);
+      this.filtersActive = !!(this.searchTerm || this.statusFilter || this.priorityFilter
+        || this.labelFilter.length || this.customFieldKeys.length);
       this.selectedFolderId = params.get('folderId');
       this.includeSubfolders = params.get('subfolders') !== '0';
       this.sortActive = params.get('sort')?.split(',')[0] ?? 'updatedAt';
@@ -185,9 +197,10 @@ export class TestCaseListComponent implements OnInit {
         q: this.searchTerm || undefined,
         status: this.statusFilter ? [this.statusFilter] : undefined,
         priority: this.priorityFilter ? [this.priorityFilter] : undefined,
+        label: this.labelFilter.length ? this.labelFilter : undefined,
         folderId: this.selectedFolderId,
         includeSubfolders: this.includeSubfolders,
-        customFieldParams: readCustomFieldParams(params),
+        customFieldParams,
         page: params.get('page') ? Number(params.get('page')) : 0,
         size: params.get('size') ? Number(params.get('size')) : 50,
         sort: params.get('sort') ?? 'updatedAt,desc',
@@ -209,8 +222,30 @@ export class TestCaseListComponent implements OnInit {
         q: this.searchTerm || null,
         status: this.statusFilter || null,
         priority: this.priorityFilter || null,
+        label: this.labelFilter.length ? this.labelFilter : null,
         page: null,
       },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
+  }
+
+  /** A label chip in the table narrows the list to cases that also carry it. */
+  addLabelFilter(label: string): void {
+    if (this.labelFilter.includes(label)) {
+      return;
+    }
+    this.labelFilter = [...this.labelFilter, label];
+    this.applyFilters();
+  }
+
+  /** Clears search and every filter, keeping the folder, sort and page size. */
+  resetFilters(): void {
+    const cleared: Record<string, null> = { q: null, status: null, priority: null, label: null, page: null };
+    this.customFieldKeys.forEach((key) => (cleared[key] = null));
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: cleared,
       queryParamsHandling: 'merge',
       replaceUrl: true,
     });

@@ -7,15 +7,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
-import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { TranslateModule } from '@ngx-translate/core';
-import { AsyncPipe } from '@angular/common';
 import { TestSuiteActions } from '../../../store/test-suite/test-suite.actions';
 import { selectTestSuiteById } from '../../../store/test-suite/test-suite.selectors';
-import { TestCaseActions } from '../../../store/test-case/test-case.actions';
-import { selectAllTestCases } from '../../../store/test-case/test-case.selectors';
+import { TestCaseSummary } from '../../../shared/models/test-suite.model';
+import { TestCasePickerComponent } from '../../../shared/components/test-case-picker/test-case-picker.component';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
 
@@ -24,17 +22,16 @@ import { FieldErrorComponent } from '../../../shared/components/field-error/fiel
   standalone: true,
   imports: [
     FieldErrorComponent,
-    AsyncPipe,
     ReactiveFormsModule,
     RouterLink,
     MatFormFieldModule,
     MatInputModule,
     MatButtonModule,
     MatCardModule,
-    MatCheckboxModule,
     MatIconModule,
     MatProgressSpinnerModule,
     TranslateModule,
+    TestCasePickerComponent,
   ],
   templateUrl: './test-suite-form.component.html',
   styleUrl: './test-suite-form.component.scss',
@@ -52,9 +49,7 @@ export class TestSuiteFormComponent implements OnInit, HasUnsavedChanges {
   suiteId: string | null = null;
   saving = false;
   dirty = false;
-  selectedTestCaseIds = new Set<string>();
-
-  testCases$ = this.store.select(selectAllTestCases);
+  selectedCases: TestCaseSummary[] = [];
 
   form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -65,30 +60,21 @@ export class TestSuiteFormComponent implements OnInit, HasUnsavedChanges {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.suiteId = this.route.snapshot.paramMap.get('suiteId');
 
-    // Load available test cases
-    if (this.projectId) {
-      this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId, query: { size: 200 } }));
-    }
-
     if (this.suiteId) {
       this.editMode = true;
       this.store.dispatch(TestSuiteActions.loadTestSuites({ projectId: this.projectId, query: { size: 200 } }));
       this.store.select(selectTestSuiteById(this.suiteId)).pipe(takeUntilDestroyed(this.destroyRef)).subscribe((suite) => {
         if (suite) {
           this.form.patchValue({ name: suite.name, description: suite.description });
-          this.selectedTestCaseIds = new Set(suite.testCases?.map((tc) => tc.id) ?? []);
+          this.selectedCases = suite.testCases ?? [];
           this.cdr.detectChanges();
         }
       });
     }
   }
 
-  toggleTestCase(id: string): void {
-    if (this.selectedTestCaseIds.has(id)) {
-      this.selectedTestCaseIds.delete(id);
-    } else {
-      this.selectedTestCaseIds.add(id);
-    }
+  selectionChanged(cases: TestCaseSummary[]): void {
+    this.selectedCases = cases;
     this.markDirty();
   }
 
@@ -98,7 +84,7 @@ export class TestSuiteFormComponent implements OnInit, HasUnsavedChanges {
     this.form.markAsPristine();
     this.saving = true;
 
-    const testCaseIds = [...this.selectedTestCaseIds];
+    const testCaseIds = this.selectedCases.map((tc) => tc.id);
 
     if (this.editMode && this.suiteId) {
       this.store.dispatch(

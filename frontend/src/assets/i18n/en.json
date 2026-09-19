@@ -258,7 +258,9 @@
     "list": {
       "title": "Test Cases",
       "create": "Create Test Case",
-      "empty": "No test cases yet. Create your first test case."
+      "empty": "No test cases yet. Create your first test case.",
+      "noMatch": "No test cases match the filters.",
+      "folderEmpty": "This folder is empty."
     },
     "form": {
       "createTitle": "Create Test Case",
@@ -892,7 +894,10 @@
     "priority": "Priority",
     "allStatuses": "All Statuses",
     "allPriorities": "All Priorities",
-    "density": "Toggle row density"
+    "density": "Toggle row density",
+    "labels": "Labels",
+    "reset": "Reset filters",
+    "byLabel": "Show only cases with this label"
   },
   "watcher": {
     "myWatched": "My Watched Items",
@@ -1553,5 +1558,12 @@
     "fit": "Fit to window",
     "actualSize": "100 %",
     "download": "Download image"
+  },
+  "picker": {
+    "selected": "{{count}} selected",
+    "selectAllVisible": "Select all shown",
+    "clear": "Clear selection",
+    "selectedHidden": "Selected, hidden by the filters",
+    "truncated": "Showing {{shown}} of {{total}}. Narrow the filters to see the rest."
   }
 }
