@@ -341,6 +341,25 @@ class McpEndpointApiTest {
                 .contains("curl");
     }
 
+    /**
+     * A malformed message is answered with the SDK's McpError as the body. Serialized as-is, that
+     * exception carried its whole stack trace, cause and suppressed exceptions to any caller holding
+     * a key — found on production with a stray closing brace.
+     */
+    @Test
+    void aMalformedMessageIsRefusedWithoutAStackTrace() throws Exception {
+        HttpResponse<String> response = post(
+                "{\"jsonrpc\":\"2.0\",\"id\":3,\"method\":\"tools/list\",\"params\":{}}}", "X-API-Key", rawKey);
+
+        assertThat(response.statusCode()).isEqualTo(400);
+        assertThat(response.body()).contains("Invalid message format")
+                .doesNotContain("stackTrace")
+                .doesNotContain("className")
+                .doesNotContain("\"cause\"")
+                .doesNotContain("suppressed")
+                .doesNotContain("io.modelcontextprotocol");
+    }
+
     private HttpResponse<String> postWithAccept(String accept) throws Exception {
         return post(INITIALIZE, "X-API-Key", rawKey, "POST", accept);
     }
