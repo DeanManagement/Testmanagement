@@ -47,6 +47,7 @@ import { StepSpecCardComponent } from '../../../shared/components/step-spec-card
 import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
 import { IssueLinksComponent } from '../../../shared/components/issue-links/issue-links.component';
+import { AttachmentsComponent } from '../../../shared/components/attachments/attachments.component';
 import { IssueTrackerApiService } from '../../../core/services/issue-tracker-api.service';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
@@ -91,6 +92,7 @@ import { sharedStepHeadingAt } from '../../../shared/utils/shared-step-groups';
     EntityHistoryComponent,
     WatchToggleComponent,
     IssueLinksComponent,
+    AttachmentsComponent,
   ],
   templateUrl: './test-run-detail.component.html',
   styleUrl: './test-run-detail.component.scss',

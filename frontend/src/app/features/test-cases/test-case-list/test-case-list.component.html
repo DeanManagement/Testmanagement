@@ -252,6 +252,12 @@
               <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'testCase.form.title' | translate }}</th>
               <td mat-cell *matCellDef="let tc">
                 <a [routerLink]="[tc.id]" class="item-link" data-test-id="test-case-link">{{ tc.title }}</a>
+                @if (tc.attachments?.length; as count) {
+                  <span class="attachment-count" [matTooltip]="'attachment.count' | translate: { count }"
+                        data-test-id="test-case-attachment-count">
+                    <mat-icon aria-hidden="true">attach_file</mat-icon>{{ count }}
+                  </span>
+                }
               </td>
             </ng-container>
 

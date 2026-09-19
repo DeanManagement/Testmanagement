@@ -225,6 +225,8 @@
                 </p>
               }
 
+              <app-attachments [projectId]="projectId" [testCaseId]="result.testCaseId" [execution]="true" />
+
               @if (sortedSteps(result).length) {
                 <div class="steps-list">
                   @for (step of sortedSteps(result); track step.id; let i = $index) {

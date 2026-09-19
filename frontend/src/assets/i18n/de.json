@@ -562,7 +562,8 @@
       "REQUIREMENT": "Anforderung",
       "ENVIRONMENT": "Umgebung",
       "EXPLORATORY_SESSION": "Explorative Session",
-      "SHARED_STEP": "Gemeinsamer Schritt"
+      "SHARED_STEP": "Gemeinsamer Schritt",
+      "ATTACHMENT": "Anhang"
     },
     "objects": {
       "PROJECT": "das Projekt",
@@ -577,7 +578,8 @@
       "REQUIREMENT": "die Anforderung",
       "ENVIRONMENT": "die Umgebung",
       "EXPLORATORY_SESSION": "die explorative Session",
-      "SHARED_STEP": "den gemeinsamen Schritt"
+      "SHARED_STEP": "den gemeinsamen Schritt",
+      "ATTACHMENT": "den Anhang"
     },
     "sentences": {
       "CREATED": "{{user}} hat {{object}} erstellt",
@@ -1020,7 +1022,7 @@
   },
   "version": {
     "title": "Versionsverlauf",
-    "hint": "Jede Änderung sichert den vorherigen Stand, damit nachvollziehbar bleibt, was ein früherer Durchlauf tatsächlich ausgeführt hat.",
+    "hint": "Jede Änderung sichert den vorherigen Stand, damit nachvollziehbar bleibt, was ein früherer Durchlauf tatsächlich ausgeführt hat. Anhänge werden nicht versioniert: Hinzufügen oder Entfernen siehst du in der Projektaktivität.",
     "noHistory": "Dieser Testfall wurde noch nicht bearbeitet, es gibt nichts zu vergleichen.",
     "label": "v{{number}}",
     "current": "aktuell",
@@ -1371,5 +1373,18 @@
     "edit": "Gemeinsamen Schritt bearbeiten",
     "convert": "In lokale Schritte umwandeln",
     "convertConfirm": "Diesen gemeinsamen Schritt durch eine Kopie seiner Schritte ersetzen? Der Testfall folgt dem gemeinsamen Schritt dann nicht mehr; spätere Änderungen daran erreichen ihn nicht."
+  },
+  "attachment": {
+    "title": "Anhänge",
+    "upload": "Datei anhängen",
+    "dropHint": "oder Datei hierher ziehen. Bilder, PDF, ZIP, Office-Dokumente und Textdateien bis 10 MB.",
+    "empty": "Keine Dateien angehängt.",
+    "download": "Herunterladen",
+    "delete": "Anhang löschen",
+    "deleteConfirm": "„{{name}}“ löschen? Das lässt sich nicht rückgängig machen.",
+    "duplicate": "Eine identische Datei ist bereits als „{{name}}“ angehängt.",
+    "tooLarge": "Die Datei ist grösser als 10 MB.",
+    "uploadFailed": "Die Datei konnte nicht hochgeladen werden.",
+    "count": "{{count}} Anhang/Anhänge"
   }
 }

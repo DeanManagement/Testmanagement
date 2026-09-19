@@ -1,0 +1,60 @@
+<ng-template #list>
+  <ul class="attachment-list" data-test-id="attachment-list">
+    @for (attachment of attachments(); track attachment.id) {
+      <li class="attachment-row" [attr.data-test-id]="'attachment-' + attachment.id">
+        @if (isImage(attachment)) {
+          <img class="attachment-thumb" [src]="imageUrl(attachment) | authImage" [alt]="attachment.fileName" />
+        } @else {
+          <mat-icon class="attachment-icon" aria-hidden="true">{{ icon(attachment) }}</mat-icon>
+        }
+        <button mat-button type="button" class="attachment-name" (click)="download(attachment)"
+                [matTooltip]="'attachment.download' | translate">{{ attachment.fileName }}</button>
+        <span class="attachment-meta">{{ formatSize(attachment.sizeBytes) }} · {{ attachment.createdAt | localizedDate }}</span>
+        @if (canEdit && !execution) {
+          <button mat-icon-button type="button" (click)="remove(attachment)"
+                  [attr.aria-label]="'attachment.delete' | translate" data-test-id="attachment-delete">
+            <mat-icon>delete</mat-icon>
+          </button>
+        }
+      </li>
+    }
+  </ul>
+</ng-template>
+
+@if (execution) {
+  @if (attachments().length) {
+    <details class="attachments-execution" data-test-id="attachments-execution">
+      <summary>{{ 'attachment.title' | translate }} ({{ attachments().length }})</summary>
+      <ng-container [ngTemplateOutlet]="list" />
+    </details>
+  }
+} @else {
+  <div class="attachments-card" [class.dragging]="dragging()"
+       (dragover)="canEdit && onDragOver($event)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
+    @if (canEdit) {
+      <div class="attachment-upload">
+        <button mat-stroked-button type="button" [disabled]="progress() !== null" (click)="fileInput.click()"
+                data-test-id="attachment-upload-btn">
+          <mat-icon>attach_file</mat-icon>
+          {{ 'attachment.upload' | translate }}
+        </button>
+        <input #fileInput type="file" hidden (change)="onFileSelected($event)" data-test-id="attachment-input" />
+        <span class="section-hint">{{ 'attachment.dropHint' | translate }}</span>
+      </div>
+    }
+    @if (progress() !== null) {
+      <mat-progress-bar mode="determinate" [value]="progress()" />
+    }
+    @if (error(); as message) {
+      <p class="attachment-error" role="alert" data-test-id="attachment-error">{{ message | translate }}</p>
+    }
+    @if (duplicateOf(); as name) {
+      <p class="attachment-warning" data-test-id="attachment-duplicate">{{ 'attachment.duplicate' | translate: { name } }}</p>
+    }
+    @if (attachments().length) {
+      <ng-container [ngTemplateOutlet]="list" />
+    } @else if (loaded()) {
+      <p class="section-hint" data-test-id="attachment-empty">{{ 'attachment.empty' | translate }}</p>
+    }
+  </div>
+}

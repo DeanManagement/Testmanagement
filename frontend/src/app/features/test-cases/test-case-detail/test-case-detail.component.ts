@@ -9,7 +9,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateModule } from '@ngx-translate/core';
-import { Observable, of } from 'rxjs';
+import { combineLatest, Observable, of } from 'rxjs';
 import { filter, switchMap, take } from 'rxjs/operators';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
@@ -33,6 +33,8 @@ import { EnvironmentResultsComponent } from '../environment-results/environment-
 import { TestCaseReviewComponent } from '../review/test-case-review.component';
 import { statusLabelKey } from '../review/review-status';
 import { ProjectApiService } from '../../../core/services/project-api.service';
+import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
+import { AttachmentsComponent } from '../../../shared/components/attachments/attachments.component';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
 import { DurationPipe } from '../../../shared/pipes/duration.pipe';
 import { millisToMinutes } from '../../../shared/pipes/duration';
@@ -41,6 +43,7 @@ import { millisToMinutes } from '../../../shared/pipes/duration';
   selector: 'app-test-case-detail',
   standalone: true,
   imports: [
+    AttachmentsComponent,
     DurationPipe,
     CustomFieldsDisplayComponent,
     TestCaseReviewComponent,
@@ -72,6 +75,7 @@ export class TestCaseDetailComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
   private readonly projectApi = inject(ProjectApiService);
+  private readonly memberApi = inject(ProjectMemberApiService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   projectId = '';
@@ -79,6 +83,8 @@ export class TestCaseDetailComponent implements OnInit {
   testCase$: Observable<TestCase | undefined> = of(undefined);
   /** PRD-033: whether ACTIVE means approved in this project. */
   reviewRequired = false;
+  /** TESTER and up may upload and delete attachments; viewers see them read-only. */
+  canWrite = false;
   readonly statusLabelKey = statusLabelKey;
   @ViewChild('versions') private versions?: TestCaseVersionsComponent;
   @ViewChild('versionsSection') private versionsSection?: ElementRef<HTMLElement>;
@@ -129,6 +135,16 @@ export class TestCaseDetailComponent implements OnInit {
         .subscribe((project) => {
           this.reviewRequired = project.reviewRequired;
           this.cdr.detectChanges();
+        });
+      combineLatest([this.memberApi.getByProject(this.projectId), this.authUser$.pipe(take(1))])
+        .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: ([members, user]) => {
+            const role = members.find((m) => m.userId === user?.id)?.role;
+            this.canWrite = !!user && (user.systemAdmin || role === 'ADMIN' || role === 'TESTER');
+            this.cdr.detectChanges();
+          },
+          error: () => undefined,
         });
       this.comments$ = this.store.select(selectCommentsForEntity('TEST_CASE', this.testCaseId));
       this.store.dispatch(CommentActions.loadComments({

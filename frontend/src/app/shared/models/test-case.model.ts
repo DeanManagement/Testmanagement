@@ -53,6 +53,20 @@ export interface TestCase {
   estimateMinutes: number | null;
   /** PRD-036: median measured duration of the last 5 executions; detail responses only. */
   medianActualMs?: number | null;
+  /** PRD-044: metadata only; on list and detail responses, null on write responses. */
+  attachments?: Attachment[] | null;
+}
+
+/** A file attached to a test case (PRD-044); the bytes are fetched separately. */
+export interface Attachment {
+  id: string;
+  testCaseId: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  sha256: string;
+  createdAt: string;
+  createdBy: string | null;
 }
 
 /** What the caller may do in a case's review; reason explains a refused approve. */
