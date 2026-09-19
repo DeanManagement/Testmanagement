@@ -171,6 +171,11 @@
         </div>
       }
 
+      <div class="detail-section tm-card" data-test-id="bug-report-attachments">
+        <h3>{{ 'attachment.title' | translate }}</h3>
+        <app-attachments [url]="attachmentsUrl(bug)" [canEdit]="canWrite()" />
+      </div>
+
       <div class="detail-section tm-card" data-test-id="bug-report-history">
         <h3>{{ 'history.title' | translate }}</h3>
         <app-entity-history [projectId]="projectId" [entityId]="bug.id" [changedAt]="bug.updatedAt" />

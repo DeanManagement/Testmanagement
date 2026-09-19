@@ -1,11 +1,12 @@
 import { Component, Input } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { AuthImagePipe } from '../../pipes/auth-image.pipe';
+import { EnlargeImageDirective } from '../image-viewer/enlarge-image.directive';
 
 @Component({
   selector: 'app-step-spec-card',
   standalone: true,
-  imports: [TranslateModule, AuthImagePipe],
+  imports: [TranslateModule, AuthImagePipe, EnlargeImageDirective],
   templateUrl: './step-spec-card.component.html',
   styleUrl: './step-spec-card.component.scss',
 })

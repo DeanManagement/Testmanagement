@@ -25,11 +25,14 @@ import { CustomFieldsFormComponent } from '../../../shared/components/custom-fie
 import { CustomFieldValues } from '../../../shared/models/custom-field.model';
 import { EnvironmentInputComponent } from '../../../shared/components/environment-input/environment-input.component';
 import { EnvironmentApiService } from '../../../core/services/environment-api.service';
+import { BugReportApiService } from '../../../core/services/bug-report-api.service';
+import { AttachmentsComponent } from '../../../shared/components/attachments/attachments.component';
 
 @Component({
   selector: 'app-bug-report-form',
   standalone: true,
   imports: [
+    AttachmentsComponent,
     CustomFieldsFormComponent,
     FieldErrorComponent,
     ReactiveFormsModule,
@@ -54,6 +57,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
   private readonly route = inject(ActivatedRoute);
   private readonly memberApi = inject(ProjectMemberApiService);
   private readonly projectApi = inject(ProjectApiService);
+  private readonly bugReportApi = inject(BugReportApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -67,6 +71,10 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
   saving = false;
   dirty = false;
   members: ProjectMember[] = [];
+  /** PRD-051: files picked before the bug exists; the create effect uploads them after saving. */
+  queuedFiles: File[] = [];
+  /** Step screenshots of the result reported from, which the server copies onto the new bug. */
+  screenshotCount = 0;
 
   priorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
@@ -125,6 +133,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
       this.form.patchValue({ actualBehavior: params['actualBehavior'] });
     }
     this.stepResultId = params['stepResultId'] ?? null;
+    this.screenshotCount = Number(params['screenshots']) || 0;
     this.exploratorySessionId = params['exploratorySessionId'] ?? null;
 
     if (!this.isEdit && this.projectId) {
@@ -203,6 +212,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             stepResultId: this.stepResultId ?? undefined,
             customFields: value.customFields ?? undefined,
           },
+          files: this.queuedFiles,
         })
       );
     }
@@ -227,9 +237,14 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     this.cdr.detectChanges();
   }
 
+  /** Edit mode uploads straight to the bug; a new bug queues its files until it is saved. */
+  get attachmentsUrl(): string | null {
+    return this.isEdit ? this.bugReportApi.attachmentsUrl(this.projectId, this.bugId) : null;
+  }
+
   hasUnsavedChanges(): boolean {
     // form.dirty covers every field; dirty covers what lives outside the form controls and
-    // re-arms the guard after a failed save.
-    return (this.form.dirty || this.dirty) && !this.saving;
+    // re-arms the guard after a failed save. Queued files are lost on leaving, so they count too.
+    return (this.form.dirty || this.dirty || this.queuedFiles.length > 0) && !this.saving;
   }
 }

@@ -1,7 +1,9 @@
 import { TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
-import { provideMockStore } from '@ngrx/store/testing';
+import { MockStore, provideMockStore } from '@ngrx/store/testing';
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { of } from 'rxjs';
 import { beforeEach, describe, expect, it } from 'vitest';
@@ -11,6 +13,7 @@ import { ProjectMemberApiService } from '../../../core/services/project-member-a
 import { EnvironmentApiService } from '../../../core/services/environment-api.service';
 import { CustomFieldApiService } from '../../../core/services/custom-field-api.service';
 import { initialBugReportState } from '../../../store/bug-report/bug-report.state';
+import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 
 /** PRD-045: the project's template fills a new report's empty fields, never an edited one. */
 describe('BugReportFormComponent – template', () => {
@@ -22,6 +25,8 @@ describe('BugReportFormComponent – template', () => {
       imports: [BugReportFormComponent, TranslateModule.forRoot()],
       providers: [
         provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
         provideNoopAnimations(),
         provideMockStore({ initialState: { bugReports: initialBugReportState } }),
         { provide: ProjectApiService, useValue: { getById: () => of(project) } },
@@ -64,5 +69,67 @@ describe('BugReportFormComponent – template', () => {
     const form = create({ bugId: 'b1' });
 
     expect(form.form.value.description).toBe('');
+  });
+});
+
+/** PRD-051: files picked before the bug exists travel with the create and are uploaded after it. */
+describe('BugReportFormComponent – attachments', () => {
+  function create(query: Record<string, string> = {}): {
+    form: BugReportFormComponent; store: MockStore; element: HTMLElement;
+  } {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [BugReportFormComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        provideMockStore({ initialState: { bugReports: initialBugReportState } }),
+        { provide: ProjectApiService, useValue: { getById: () => of({}) } },
+        { provide: ProjectMemberApiService, useValue: { getByProject: () => of([]) } },
+        { provide: EnvironmentApiService, useValue: { getAll: () => of([]), getActive: () => of([]), invalidate: () => undefined } },
+        { provide: CustomFieldApiService, useValue: { getActive: () => of([]) } },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            snapshot: { paramMap: convertToParamMap({}), queryParams: query },
+            parent: { snapshot: { paramMap: convertToParamMap({ id: 'p1' }) } },
+          },
+        },
+      ],
+    });
+    const fixture = TestBed.createComponent(BugReportFormComponent);
+    fixture.detectChanges();
+    return { form: fixture.componentInstance, store: TestBed.inject(MockStore), element: fixture.nativeElement };
+  }
+
+  it('sends queued files with the create', () => {
+    const { form, store } = create();
+    const dispatched: unknown[] = [];
+    store.scannedActions$.subscribe((action) => dispatched.push(action));
+    const file = new File(['png'], 'shot.png', { type: 'image/png' });
+    form.queuedFiles = [file];
+    form.form.patchValue({ title: 'Checkout fails' });
+
+    form.onSubmit();
+
+    expect(dispatched).toContainEqual(expect.objectContaining({
+      type: BugReportActions.createBugReport.type, files: [file],
+    }));
+  });
+
+  it('counts queued files as unsaved changes', () => {
+    const { form } = create();
+
+    form.queuedFiles = [new File(['a'], 'a.txt')];
+
+    expect(form.hasUnsavedChanges()).toBe(true);
+  });
+
+  it('says the result\'s step screenshots will be attached', () => {
+    const { element } = create({ testResultId: 'r1', screenshots: '3' });
+
+    expect(element.querySelector('[data-test-id="bug-report-form-screenshots-note"]')).not.toBeNull();
   });
 });

@@ -3,7 +3,8 @@
     @for (attachment of attachments(); track attachment.id) {
       <li class="attachment-row" [attr.data-test-id]="'attachment-' + attachment.id">
         @if (isImage(attachment)) {
-          <img class="attachment-thumb" [src]="imageUrl(attachment) | authImage" [alt]="attachment.fileName" />
+          <img class="attachment-thumb" [src]="imageUrl(attachment) | authImage" [alt]="attachment.fileName"
+               [appEnlarge]="imageUrl(attachment)" [enlargeName]="attachment.fileName" />
         } @else {
           <mat-icon class="attachment-icon" aria-hidden="true">{{ icon(attachment) }}</mat-icon>
         }
@@ -38,7 +39,7 @@
           <mat-icon>attach_file</mat-icon>
           {{ 'attachment.upload' | translate }}
         </button>
-        <input #fileInput type="file" hidden (change)="onFileSelected($event)" data-test-id="attachment-input" />
+        <input #fileInput type="file" multiple hidden (change)="onFileSelected($event)" data-test-id="attachment-input" />
         <span class="section-hint">{{ 'attachment.dropHint' | translate }}</span>
       </div>
     }
@@ -50,6 +51,21 @@
     }
     @if (duplicateOf(); as name) {
       <p class="attachment-warning" data-test-id="attachment-duplicate">{{ 'attachment.duplicate' | translate: { name } }}</p>
+    }
+    @if (queued().length) {
+      <ul class="attachment-list" data-test-id="attachment-queue">
+        @for (file of queued(); track $index) {
+          <li class="attachment-row">
+            <mat-icon class="attachment-icon" aria-hidden="true">schedule</mat-icon>
+            <span class="attachment-queued-name">{{ file.name }}</span>
+            <span class="attachment-meta">{{ formatSize(file.size) }} · {{ 'attachment.queued' | translate }}</span>
+            <button mat-icon-button type="button" (click)="removeQueued(file)"
+                    [attr.aria-label]="'attachment.delete' | translate" data-test-id="attachment-queue-remove">
+              <mat-icon>close</mat-icon>
+            </button>
+          </li>
+        }
+      </ul>
     }
     @if (attachments().length) {
       <ng-container [ngTemplateOutlet]="list" />

@@ -57,10 +57,14 @@ export interface TestCase {
   attachments?: Attachment[] | null;
 }
 
-/** A file attached to a test case (PRD-044); the bytes are fetched separately. */
+/**
+ * A file attached to a test case (PRD-044) or a bug report (PRD-051); exactly one owner id is set.
+ * The bytes are fetched separately.
+ */
 export interface Attachment {
   id: string;
-  testCaseId: string;
+  testCaseId: string | null;
+  bugReportId: string | null;
   fileName: string;
   contentType: string;
   sizeBytes: number;

@@ -120,7 +120,8 @@
           </div>
           <p class="note-body">{{ note.body }}</p>
           @if (note.hasImage) {
-            <img class="note-image" [src]="imageUrl(note) | authImage" [alt]="'session.screenshot' | translate" />
+            <img class="note-image" [src]="imageUrl(note) | authImage" [alt]="'session.screenshot' | translate"
+                 [appEnlarge]="imageUrl(note)" />
           }
         </div>
       }

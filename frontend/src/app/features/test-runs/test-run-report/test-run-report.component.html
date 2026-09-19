@@ -128,6 +128,7 @@
                         }
                         @if (showScreenshots && step.screenshotId) {
                           <img class="step-shot" [src]="screenshotUrl(step.screenshotId) | authImage" loading="lazy"
+                               [appEnlarge]="screenshotUrl(step.screenshotId)"
                                [alt]="'stepResult.screenshot' | translate" />
                         }
                       </li>

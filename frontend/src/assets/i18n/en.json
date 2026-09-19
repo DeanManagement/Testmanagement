@@ -1528,7 +1528,7 @@
   "attachment": {
     "title": "Attachments",
     "upload": "Attach file",
-    "dropHint": "or drop a file here. Images, PDF, ZIP, Office documents and text files up to 10 MB.",
+    "dropHint": "or drop or paste files here. Images, PDF, ZIP, Office documents and text files up to 10 MB.",
     "empty": "No files attached.",
     "download": "Download",
     "delete": "Delete attachment",
@@ -1536,7 +1536,10 @@
     "duplicate": "An identical file is already attached as \"{{name}}\".",
     "tooLarge": "The file is larger than 10 MB.",
     "uploadFailed": "The file could not be uploaded.",
-    "count": "{{count}} attachment(s)"
+    "count": "{{count}} attachment(s)",
+    "queued": "attached when saved",
+    "screenshotsCopied": "The {{count}} step screenshot(s) of this result will be attached.",
+    "uploadsFailed": "The bug was saved, but these files could not be attached: {{names}}"
   },
   "metrics": {
     "passRateHint": "Passed of the executed results. Pending results are not counted; skipped ones are.",
@@ -1544,5 +1547,11 @@
     "progress": "Progress {{executed}} / {{total}} ({{rate}})",
     "nothingExecuted": "Nothing executed yet",
     "progressLabel": "Progress"
+  },
+  "imageViewer": {
+    "enlarge": "Enlarge image",
+    "fit": "Fit to window",
+    "actualSize": "100 %",
+    "download": "Download image"
   }
 }

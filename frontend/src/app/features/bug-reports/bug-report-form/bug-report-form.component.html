@@ -63,6 +63,16 @@
 
     <app-custom-fields-form [projectId]="projectId" entityType="BUG_REPORT" formControlName="customFields" />
 
+    <section class="attachments-field" data-test-id="bug-report-form-attachments">
+      <h3>{{ 'attachment.title' | translate }}</h3>
+      @if (!isEdit && screenshotCount) {
+        <p class="section-hint" data-test-id="bug-report-form-screenshots-note">
+          {{ 'attachment.screenshotsCopied' | translate: { count: screenshotCount } }}
+        </p>
+      }
+      <app-attachments [url]="attachmentsUrl" [canEdit]="true" (queuedChange)="queuedFiles = $event" />
+    </section>
+
     <div class="form-actions">
       <a mat-stroked-button [routerLink]="['/projects', projectId, 'bug-reports']" data-test-id="bug-report-form-cancel">
         {{ 'common.cancel' | translate }}

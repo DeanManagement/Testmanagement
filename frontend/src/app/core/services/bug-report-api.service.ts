@@ -45,6 +45,11 @@ export class BugReportApiService {
     return this.getAll(projectId, { testResultId, size: 200 }).pipe(map((page) => page.content));
   }
 
+  /** The collection {@link AttachmentApiService} works on (PRD-051). */
+  attachmentsUrl(projectId: string, bugId: string): string {
+    return `${this.baseUrl(projectId)}/${bugId}/attachments`;
+  }
+
   create(projectId: string, request: CreateBugReportRequest): Observable<BugReport> {
     return this.http.post<BugReport>(this.baseUrl(projectId), request);
   }

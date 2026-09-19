@@ -17,8 +17,10 @@ export const BugReportActions = createActionGroup({
     'Load Bug Reports By Test Result Success': props<{ testResultId: string; bugReports: BugReport[] }>(),
     'Load Bug Reports By Test Result Failure': props<{ error: string }>(),
 
-    'Create Bug Report': props<{ projectId: string; request: CreateBugReportRequest }>(),
-    'Create Bug Report Success': props<{ bugReport: BugReport }>(),
+    /** files: attachments queued in the form (PRD-051), uploaded once the bug exists. */
+    'Create Bug Report': props<{ projectId: string; request: CreateBugReportRequest; files?: File[] }>(),
+    /** failedUploads: names of queued files the server refused; the bug itself was saved. */
+    'Create Bug Report Success': props<{ bugReport: BugReport; failedUploads?: string[] }>(),
     'Create Bug Report Failure': props<{ error: string }>(),
 
     'Update Bug Report': props<{ projectId: string; id: string; request: UpdateBugReportRequest }>(),

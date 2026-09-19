@@ -489,3 +489,13 @@ a {
 .cdk-overlay-pane .mat-mdc-dialog-container .mat-mdc-dialog-title + .mat-mdc-dialog-content {
   padding-top: 8px;
 }
+
+/* PRD-051: thumbnails that open the shared image viewer. */
+.enlargeable {
+  cursor: zoom-in;
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary);
+    outline-offset: 2px;
+  }
+}

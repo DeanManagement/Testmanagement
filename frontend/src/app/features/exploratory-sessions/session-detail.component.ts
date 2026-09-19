@@ -23,6 +23,7 @@ import {
   SessionNoteType,
 } from '../../shared/models/exploratory-session.model';
 import { AuthImagePipe } from '../../shared/pipes/auth-image.pipe';
+import { EnlargeImageDirective } from '../../shared/components/image-viewer/enlarge-image.directive';
 import { LocalizedDatePipe } from '../../shared/pipes/localized-date.pipe';
 import { bugPrefillFromNote, elapsedMinutes, noteTypeForShortcut, timeboxProgress } from './session-time';
 
@@ -38,7 +39,7 @@ const CLOCK_TICK_MS = 15_000;
   selector: 'app-session-detail',
   standalone: true,
   imports: [FormsModule, LowerCasePipe, RouterLink, MatButtonModule, MatButtonToggleModule, MatFormFieldModule,
-    MatIconModule, MatInputModule, MatProgressBarModule, MatTooltipModule, TranslateModule, AuthImagePipe,
+    MatIconModule, MatInputModule, MatProgressBarModule, MatTooltipModule, TranslateModule, AuthImagePipe, EnlargeImageDirective,
     LocalizedDatePipe],
   templateUrl: './session-detail.component.html',
   styleUrl: './session-detail.component.scss',

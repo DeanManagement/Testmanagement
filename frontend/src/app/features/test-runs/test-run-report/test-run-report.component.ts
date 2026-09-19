@@ -16,6 +16,7 @@ import { StepResult, TestResult, TestRunReport } from '../../../shared/models/te
 import { FormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
+import { EnlargeImageDirective } from '../../../shared/components/image-viewer/enlarge-image.directive';
 import { worstFirst } from '../../../shared/utils/test-result-triage';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -31,7 +32,7 @@ Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
   imports: [
     RatePipe,
     MatTooltipModule,
-    AuthImagePipe,
+    AuthImagePipe, EnlargeImageDirective,
     FormsModule,
     MatCheckboxModule,
     DurationPipe,

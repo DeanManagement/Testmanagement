@@ -46,6 +46,7 @@ import { CommentListComponent } from '../../../shared/components/comment-list/co
 import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
 import { KeyboardShortcutsDialogComponent } from '../keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.component';
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
+import { EnlargeImageDirective } from '../../../shared/components/image-viewer/enlarge-image.directive';
 import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 import { failuresOf, isFailure, worstFirst } from '../../../shared/utils/test-result-triage';
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
@@ -93,7 +94,7 @@ import { sharedStepHeadingAt } from '../../../shared/utils/shared-step-groups';
     MatTooltipModule,
     CommentListComponent,
     CommentFormComponent,
-    AuthImagePipe,
+    AuthImagePipe, EnlargeImageDirective,
     StepSpecCardComponent,
     EntityHistoryComponent,
     WatchToggleComponent,
@@ -537,6 +538,10 @@ export class TestRunDetailComponent implements OnInit {
     }
   }
 
+  caseAttachmentsUrl(testCaseId: string): string {
+    return this.testCaseApi.attachmentsUrl(this.projectId, testCaseId);
+  }
+
   getScreenshotUrl(screenshotId: string): string {
     return this.testRunApi.getScreenshotUrl(screenshotId);
   }
@@ -789,6 +794,8 @@ export class TestRunDetailComponent implements OnInit {
         stepResultId: step?.id,
         stepsToReproduce: step ? this.translate.instant('bugReport.fromStep', { number, action: step.action }) : undefined,
         actualBehavior: step?.actualResult || undefined,
+        // PRD-051: the server copies these onto the bug; the form says so beforehand.
+        screenshots: this.sortedSteps(result).filter((s) => s.screenshotId).length || undefined,
       },
     });
   }

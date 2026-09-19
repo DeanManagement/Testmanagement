@@ -3,11 +3,14 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { provideHttpClient } from '@angular/common/http';
 import { provideTranslateService } from '@ngx-translate/core';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AttachmentsComponent } from './attachments.component';
 import { Attachment } from '../../models/test-case.model';
 
-/** PRD-044: the card on the case page, and the read-only list while executing a run. */
+/**
+ * PRD-044/051: the card on a case or bug page, the queue in the Report Bug form, and the read-only
+ * list while executing a run.
+ */
 describe('AttachmentsComponent', () => {
   const url = '/api/projects/p1/test-cases/tc1/attachments';
 
@@ -17,7 +20,7 @@ describe('AttachmentsComponent', () => {
 
   function attachment(id: string, fileName = `${id}.pdf`, sha256 = `sha-${id}`): Attachment {
     return {
-      id, testCaseId: 'tc1', fileName, contentType: 'application/pdf', sizeBytes: 2048, sha256,
+      id, testCaseId: 'tc1', bugReportId: null, fileName, contentType: 'application/pdf', sizeBytes: 2048, sha256,
       createdAt: '2026-09-19T10:00:00Z', createdBy: null,
     };
   }
@@ -25,8 +28,7 @@ describe('AttachmentsComponent', () => {
   function setUp(inputs: { canEdit?: boolean; execution?: boolean }, existing: Attachment[]): void {
     fixture = TestBed.createComponent(AttachmentsComponent);
     component = fixture.componentInstance;
-    fixture.componentRef.setInput('projectId', 'p1');
-    fixture.componentRef.setInput('testCaseId', 'tc1');
+    fixture.componentRef.setInput('url', url);
     fixture.componentRef.setInput('canEdit', inputs.canEdit ?? false);
     fixture.componentRef.setInput('execution', inputs.execution ?? false);
     fixture.detectChanges();
@@ -71,7 +73,7 @@ describe('AttachmentsComponent', () => {
   it('appends an uploaded file to the list', () => {
     setUp({ canEdit: true }, []);
 
-    component.upload(new File(['%PDF-'], 'spec.pdf', { type: 'application/pdf' }));
+    component.addFiles([new File(['%PDF-'], 'spec.pdf', { type: 'application/pdf' })]);
     http.expectOne(url).flush(attachment('a1', 'spec.pdf'));
 
     expect(component.attachments().map((a) => a.fileName)).toEqual(['spec.pdf']);
@@ -81,7 +83,7 @@ describe('AttachmentsComponent', () => {
   it('shows the server validation message inline', () => {
     setUp({ canEdit: true }, []);
 
-    component.upload(new File(['<html>'], 'x.pdf', { type: 'application/pdf' }));
+    component.addFiles([new File(['<html>'], 'x.pdf', { type: 'application/pdf' })]);
     http.expectOne(url).flush({ message: 'The file\'s content does not match its type application/pdf' },
       { status: 400, statusText: 'Bad Request' });
     fixture.detectChanges();
@@ -93,7 +95,7 @@ describe('AttachmentsComponent', () => {
   it('warns when the same bytes are already attached', () => {
     setUp({ canEdit: true }, [attachment('a1', 'first.pdf', 'same')]);
 
-    component.upload(new File(['%PDF-'], 'again.pdf', { type: 'application/pdf' }));
+    component.addFiles([new File(['%PDF-'], 'again.pdf', { type: 'application/pdf' })]);
     http.expectOne(url).flush(attachment('a2', 'again.pdf', 'same'));
 
     expect(component.duplicateOf()).toBe('first.pdf');
@@ -115,4 +117,100 @@ describe('AttachmentsComponent', () => {
       expect(byTestId('attachment-upload-btn')).toBeNull();
     });
   });
+  it('uploads several files one after another', () => {
+    setUp({ canEdit: true }, []);
+
+    component.addFiles([new File(['a'], 'a.txt', { type: 'text/plain' }), new File(['b'], 'b.txt', { type: 'text/plain' })]);
+    http.expectOne(url).flush(attachment('a1', 'a.txt'));
+    http.expectOne(url).flush(attachment('a2', 'b.txt'));
+
+    expect(component.attachments().map((a) => a.fileName)).toEqual(['a.txt', 'b.txt']);
+  });
+
+  it('keeps uploading the rest when one file is refused', () => {
+    setUp({ canEdit: true }, []);
+
+    component.addFiles([new File(['<svg/>'], 'x.svg'), new File(['b'], 'b.txt', { type: 'text/plain' })]);
+    http.expectOne(url).flush({ message: 'refused' }, { status: 400, statusText: 'Bad Request' });
+    http.expectOne(url).flush(attachment('a2', 'b.txt'));
+
+    expect(component.attachments().map((a) => a.fileName)).toEqual(['b.txt']);
+    expect(component.error()).toBe('refused');
+  });
+
+  it('attaches an image pasted anywhere on the page', () => {
+    setUp({ canEdit: true }, []);
+
+    document.dispatchEvent(paste([new File(['png'], 'image.png', { type: 'image/png' })]));
+
+    http.expectOne(url).flush(attachment('a1', 'image.png'));
+    expect(component.attachments().map((a) => a.fileName)).toEqual(['image.png']);
+  });
+
+  it('leaves pasted text alone', () => {
+    setUp({ canEdit: true }, []);
+    const event = paste([]);
+
+    document.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(false);
+  });
+
+  it('ignores a paste from a viewer', () => {
+    setUp({ canEdit: false }, []);
+
+    document.dispatchEvent(paste([new File(['png'], 'image.png', { type: 'image/png' })]));
+
+    http.expectNone(url);
+  });
+
+  it('opens the image viewer from a thumbnail', async () => {
+    globalThis.URL.createObjectURL = vi.fn(() => 'blob:x');
+    setUp({ canEdit: true }, [{ ...attachment('a1', 'shot.png'), contentType: 'image/png' }]);
+    http.expectOne(`${url}/a1`).flush(new Blob(['png']));
+
+    (fixture.nativeElement.querySelector('.attachment-thumb') as HTMLElement).click();
+    await fixture.whenStable();
+
+    expect(document.querySelector('[data-test-id="image-viewer-name"]')?.textContent).toContain('shot.png');
+  });
+
+  describe('before the owner is saved', () => {
+    beforeEach(() => {
+      fixture = TestBed.createComponent(AttachmentsComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('url', null);
+      fixture.componentRef.setInput('canEdit', true);
+      fixture.detectChanges();
+    });
+
+    it('queues files instead of uploading them, and reports the queue', () => {
+      const emitted: File[][] = [];
+      component.queuedChange.subscribe((files) => emitted.push(files));
+      const file = new File(['a'], 'a.txt', { type: 'text/plain' });
+
+      component.addFiles([file]);
+      fixture.detectChanges();
+
+      http.expectNone(() => true);
+      expect(emitted).toEqual([[file]]);
+      expect(byTestId('attachment-queue')?.textContent).toContain('a.txt');
+    });
+
+    it('takes a queued file back out', () => {
+      const file = new File(['a'], 'a.txt', { type: 'text/plain' });
+      component.addFiles([file]);
+
+      component.removeQueued(file);
+
+      expect(component.queued()).toEqual([]);
+    });
+  });
 });
+
+/** A paste event carrying files, which jsdom's ClipboardEvent cannot be constructed with. */
+function paste(files: File[]): Event {
+  const event = new Event('paste', { cancelable: true });
+  Object.defineProperty(event, 'clipboardData', { value: { files } });
+  return event;
+}

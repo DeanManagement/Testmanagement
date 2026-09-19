@@ -89,7 +89,7 @@
 
     <div class="attachments-section tm-card" data-test-id="test-case-attachments-section">
       <h3>{{ 'attachment.title' | translate }}</h3>
-      <app-attachments [projectId]="projectId" [testCaseId]="testCaseId" [canEdit]="canWrite" />
+      <app-attachments [url]="attachmentsUrl" [canEdit]="canWrite" />
     </div>
 
     <div class="review-section tm-card" data-test-id="test-case-review-section">

@@ -92,6 +92,10 @@ export class TestCaseDetailComponent implements OnInit {
   readonly statusLabelKey = statusLabelKey;
   @ViewChild('versions') private versions?: TestCaseVersionsComponent;
   @ViewChild('versionsSection') private versionsSection?: ElementRef<HTMLElement>;
+  get attachmentsUrl(): string {
+    return this.testCaseApi.attachmentsUrl(this.projectId, this.testCaseId);
+  }
+
   getStepImageUrl(imageId: string): string {
     return this.testCaseApi.getStepImageUrl(imageId);
   }

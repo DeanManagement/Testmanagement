@@ -63,7 +63,7 @@
             <input type="file" accept="image/*" hidden #imageInput (change)="onImageSelected(i, $event)" />
             @if (imagePreview(i); as preview) {
               <div class="step-image-preview">
-                <img [src]="preview | authImage" alt="Step image" loading="lazy" />
+                <img [src]="preview | authImage" alt="Step image" loading="lazy" [appEnlarge]="preview" />
                 <button mat-icon-button type="button" (click)="removeImage(i)" class="remove-image" [attr.data-test-id]="'test-case-remove-image-' + i" [attr.aria-label]="'Remove image for step ' + (i + 1)">
                   <mat-icon>close</mat-icon>
                 </button>

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpEvent, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { Attachment, BulkOperationResponse, TestCaseContext, TestCaseExecution, CreateTestCaseRequest, GherkinPreview, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
+import { BulkOperationResponse, TestCaseContext, TestCaseExecution, CreateTestCaseRequest, GherkinPreview, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 import { Page } from '../../shared/models/page.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
 
@@ -69,28 +69,9 @@ export class TestCaseApiService {
     return this.http.post<ImportResult>(`${this.baseUrl(projectId)}/import`, formData, { params });
   }
 
+  /** The collection {@link AttachmentApiService} works on (PRD-044). */
   attachmentsUrl(projectId: string, testCaseId: string): string {
     return `${this.baseUrl(projectId)}/${testCaseId}/attachments`;
-  }
-
-  getAttachments(projectId: string, testCaseId: string): Observable<Attachment[]> {
-    return this.http.get<Attachment[]>(this.attachmentsUrl(projectId, testCaseId));
-  }
-
-  /** Emits upload progress events, then the stored attachment. */
-  uploadAttachment(projectId: string, testCaseId: string, file: File): Observable<HttpEvent<Attachment>> {
-    const formData = new FormData();
-    formData.append('file', file);
-    return this.http.post<Attachment>(this.attachmentsUrl(projectId, testCaseId), formData,
-      { reportProgress: true, observe: 'events' });
-  }
-
-  downloadAttachment(projectId: string, testCaseId: string, id: string): Observable<Blob> {
-    return this.http.get(`${this.attachmentsUrl(projectId, testCaseId)}/${id}`, { responseType: 'blob' });
-  }
-
-  deleteAttachment(projectId: string, testCaseId: string, id: string): Observable<void> {
-    return this.http.delete<void>(`${this.attachmentsUrl(projectId, testCaseId)}/${id}`);
   }
 
   /** PRD-050: who made the case, its folder path and the suites that include it. */

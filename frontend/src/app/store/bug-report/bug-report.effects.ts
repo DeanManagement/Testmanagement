@@ -3,15 +3,18 @@ import { Router } from '@angular/router';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
-import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
+import { from, Observable, of } from 'rxjs';
+import { catchError, concatMap, filter, map, mergeMap, switchMap, tap, toArray } from 'rxjs/operators';
 import { BugReportActions } from './bug-report.actions';
 import { BugReportApiService } from '../../core/services/bug-report-api.service';
+import { AttachmentApiService } from '../../core/services/attachment-api.service';
+import { BugReport } from '../../shared/models/bug-report.model';
 
 @Injectable()
 export class BugReportEffects {
   private readonly actions$ = inject(Actions);
   private readonly bugReportApi = inject(BugReportApiService);
+  private readonly attachmentApi = inject(AttachmentApiService);
   private readonly router = inject(Router);
   private readonly snackBar = inject(MatSnackBar);
   private readonly translate = inject(TranslateService);
@@ -55,9 +58,11 @@ export class BugReportEffects {
   createBugReport$ = createEffect(() =>
     this.actions$.pipe(
       ofType(BugReportActions.createBugReport),
-      mergeMap(({ projectId, request }) =>
+      mergeMap(({ projectId, request, files }) =>
         this.bugReportApi.create(projectId, request).pipe(
-          map((bugReport) => BugReportActions.createBugReportSuccess({ bugReport })),
+          switchMap((bugReport) => this.uploadQueued(bugReport, files ?? []).pipe(
+            map((failedUploads) => BugReportActions.createBugReportSuccess({ bugReport, failedUploads })),
+          )),
           catchError((error) => of(BugReportActions.createBugReportFailure({ error: error.message })))
         )
       )
@@ -68,7 +73,9 @@ export class BugReportEffects {
     () =>
       this.actions$.pipe(
         ofType(BugReportActions.createBugReportSuccess),
-        tap(() => this.snackBar.open(this.translate.instant('common.savedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 })),
+        tap(({ failedUploads }) => this.snackBar.open(failedUploads?.length
+          ? this.translate.instant('attachment.uploadsFailed', { names: failedUploads.join(', ') })
+          : this.translate.instant('common.savedSuccessfully'), this.translate.instant('common.close'), { duration: 3000 })),
         tap(({ bugReport }) =>
           this.router.navigate(['/projects', bugReport.projectId, 'bug-reports', bugReport.id])
         )
@@ -151,4 +158,23 @@ export class BugReportEffects {
       )
     )
   );
+
+  /**
+   * Uploads the form's queued files one by one after the bug exists (PRD-051), before navigating, so
+   * the detail page lists them. A refused file does not undo the bug: its name is reported instead.
+   */
+  private uploadQueued(bug: BugReport, files: File[]): Observable<string[]> {
+    if (!files.length) {
+      return of([]);
+    }
+    const url = this.bugReportApi.attachmentsUrl(bug.projectId, bug.id);
+    return from(files).pipe(
+      concatMap((file) => this.attachmentApi.uploadQuietly(url, file).pipe(
+        map(() => null),
+        catchError(() => of(file.name)),
+      )),
+      filter((name): name is string => name !== null),
+      toArray(),
+    );
+  }
 }

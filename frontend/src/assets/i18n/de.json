@@ -1528,7 +1528,7 @@
   "attachment": {
     "title": "Anhänge",
     "upload": "Datei anhängen",
-    "dropHint": "oder Datei hierher ziehen. Bilder, PDF, ZIP, Office-Dokumente und Textdateien bis 10 MB.",
+    "dropHint": "oder Dateien hierher ziehen oder einfügen. Bilder, PDF, ZIP, Office-Dokumente und Textdateien bis 10 MB.",
     "empty": "Keine Dateien angehängt.",
     "download": "Herunterladen",
     "delete": "Anhang löschen",
@@ -1536,7 +1536,10 @@
     "duplicate": "Eine identische Datei ist bereits als „{{name}}“ angehängt.",
     "tooLarge": "Die Datei ist grösser als 10 MB.",
     "uploadFailed": "Die Datei konnte nicht hochgeladen werden.",
-    "count": "{{count}} Anhang/Anhänge"
+    "count": "{{count}} Anhang/Anhänge",
+    "queued": "wird beim Speichern angehängt",
+    "screenshotsCopied": "Die {{count}} Schritt-Screenshot(s) dieses Ergebnisses werden angehängt.",
+    "uploadsFailed": "Der Fehler wurde gespeichert, diese Dateien konnten aber nicht angehängt werden: {{names}}"
   },
   "metrics": {
     "passRateHint": "Bestanden von den ausgeführten Ergebnissen. Ausstehende zählen nicht, übersprungene schon.",
@@ -1544,5 +1547,11 @@
     "progress": "Fortschritt {{executed}} / {{total}} ({{rate}})",
     "nothingExecuted": "Noch nichts ausgeführt",
     "progressLabel": "Fortschritt"
+  },
+  "imageViewer": {
+    "enlarge": "Bild vergrössern",
+    "fit": "An Fenster anpassen",
+    "actualSize": "100 %",
+    "download": "Bild herunterladen"
   }
 }

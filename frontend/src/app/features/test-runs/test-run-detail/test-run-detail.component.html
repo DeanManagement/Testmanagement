@@ -241,7 +241,7 @@
               }
               <app-case-context [result]="result" [projectId]="projectId" />
 
-              <app-attachments [projectId]="projectId" [testCaseId]="result.testCaseId" [execution]="true" />
+              <app-attachments [url]="caseAttachmentsUrl(result.testCaseId)" [execution]="true" />
 
               @if (sortedSteps(result).length) {
                 <div class="steps-list">
@@ -294,7 +294,8 @@
                       <div class="step-screenshot">
                         @if (step.screenshotId) {
                           <div class="screenshot-preview">
-                            <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" loading="lazy" />
+                            <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" loading="lazy"
+                                 [appEnlarge]="getScreenshotUrl(step.screenshotId)" />
                             <button mat-icon-button class="screenshot-delete" (click)="deleteScreenshot(result.id, step)"
                                     [attr.aria-label]="'a11y.deleteScreenshot' | translate">
                               <mat-icon>close</mat-icon>
@@ -501,7 +502,8 @@
                         }
                         @if (step.screenshotId) {
                           <div class="screenshot-preview screenshot-preview--readonly">
-                            <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" loading="lazy" />
+                            <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" loading="lazy"
+                                 [appEnlarge]="getScreenshotUrl(step.screenshotId)" />
                           </div>
                         }
                       </div>

@@ -9,6 +9,7 @@ import { TranslateModule } from '@ngx-translate/core';
 import { forkJoin, Observable, of } from 'rxjs';
 import { TestStep } from '../../models/test-case.model';
 import { AuthImagePipe } from '../../pipes/auth-image.pipe';
+import { EnlargeImageDirective } from '../image-viewer/enlarge-image.directive';
 import { FieldErrorComponent } from '../field-error/field-error.component';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 
@@ -86,7 +87,7 @@ export function syncStepImages(api: TestCaseApiService, savedSteps: TestStep[],
     MatIconModule,
     MatInputModule,
     TranslateModule,
-    AuthImagePipe,
+    AuthImagePipe, EnlargeImageDirective,
     FieldErrorComponent,
   ],
   templateUrl: './step-list-editor.component.html',

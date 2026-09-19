@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, OnInit } from '@angular/core';
+import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -11,7 +11,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { TranslateModule } from '@ngx-translate/core';
-import { Observable, of } from 'rxjs';
+import { combineLatest, Observable, of } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { selectBugReportById } from '../../../store/bug-report/bug-report.selectors';
@@ -21,11 +21,15 @@ import { ChangeBugStatusDialogComponent, ChangeBugStatusDialogData } from '../ch
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
 import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
+import { AttachmentsComponent } from '../../../shared/components/attachments/attachments.component';
+import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
+import { selectAuthUser } from '../../../store/auth/auth.selectors';
 
 @Component({
   selector: 'app-bug-report-detail',
   standalone: true,
   imports: [
+    AttachmentsComponent,
     CustomFieldsDisplayComponent,
     EntityHistoryComponent,
     AsyncPipe,
@@ -48,12 +52,15 @@ export class BugReportDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly dialog = inject(MatDialog);
   private readonly bugReportApi = inject(BugReportApiService);
+  private readonly memberApi = inject(ProjectMemberApiService);
   private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
   bugId = '';
   bugReport$: Observable<BugReport | undefined> = of(undefined);
   readonly statuses = ALL_BUG_STATUSES;
+  /** TESTER and up may attach and remove files; viewers see them read-only. */
+  readonly canWrite = signal(false);
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
@@ -65,6 +72,25 @@ export class BugReportDetailComponent implements OnInit {
         this.bugReport$ = this.store.select(selectBugReportById(this.bugId));
       }
     });
+    if (this.projectId) {
+      this.loadRole();
+    }
+  }
+
+  attachmentsUrl(bug: BugReport): string {
+    return this.bugReportApi.attachmentsUrl(this.projectId, bug.id);
+  }
+
+  private loadRole(): void {
+    combineLatest([this.memberApi.getByProject(this.projectId), this.store.select(selectAuthUser).pipe(take(1))])
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: ([members, user]) => {
+          const role = members.find((m) => m.userId === user?.id)?.role;
+          this.canWrite.set(!!user && (user.systemAdmin || role === 'ADMIN' || role === 'TESTER'));
+        },
+        error: () => undefined,
+      });
   }
 
   onStatusChange(bug: BugReport, newStatus: BugReportStatus): void {
