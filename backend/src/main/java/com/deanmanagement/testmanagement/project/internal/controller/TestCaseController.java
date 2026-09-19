@@ -149,6 +149,15 @@ public class TestCaseController {
         return testCaseService.update(projectId, id, request, userId);
     }
 
+    /** PRD-030: replaces a shared step reference with copies of the block's steps. */
+    @PostMapping("/{id}/steps/{stepId}/inline")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestCaseResponse inlineSharedStep(@PathVariable UUID projectId, @PathVariable UUID id,
+                                             @PathVariable UUID stepId, Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return testCaseService.inlineSharedStep(projectId, id, stepId, userId);
+    }
+
     @DeleteMapping("/{id}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @RequireProjectRole(ProjectRole.TESTER)

@@ -112,13 +112,15 @@ public class CiIngestionService {
             }
             run.getResults().add(result);
 
-            List<TestStep> steps = testCase.getSteps();
+            // Matched by index against the steps as executed, shared blocks expanded (PRD-030).
+            List<TestStep> steps = StepExpansion.expandedSteps(testCase.getSteps());
             if (!ciResult.steps().isEmpty() && steps != null && !steps.isEmpty()) {
                 int count = Math.min(ciResult.steps().size(), steps.size());
                 for (int i = 0; i < count; i++) {
                     StepResult stepResult = new StepResult();
                     stepResult.setTestResult(result);
                     stepResult.setTestStep(steps.get(i));
+                    stepResult.setPosition(i);
                     stepResult.setStatus(ciResult.steps().get(i).status());
                     result.getStepResults().add(stepResult);
                 }

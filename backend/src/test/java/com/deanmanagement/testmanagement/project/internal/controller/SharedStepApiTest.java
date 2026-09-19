@@ -296,4 +296,38 @@ class SharedStepApiTest {
             assertThatThrownBy(() -> insertStep(null, block, block)).isInstanceOf(DataIntegrityViolationException.class);
         }
     }
+
+    @Nested
+    class References {
+
+        private String caseWithReference(String blockId) throws Exception {
+            String body = "{\"title\":\"Checkout\",\"priority\":\"MEDIUM\",\"status\":\"ACTIVE\",\"steps\":["
+                    + "{\"action\":\"Reset\"},{\"sharedStepId\":\"" + blockId + "\"}]}";
+            return mockMvc.perform(post("/api/projects/" + project.getId() + "/test-cases").with(user(tester))
+                            .contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isCreated())
+                    .andExpect(jsonPath("$.steps[1].sharedStepTitle").value("Log in as admin"))
+                    .andExpect(jsonPath("$.steps[1].expandedSteps.length()").value(2))
+                    .andReturn().getResponse().getContentAsString();
+        }
+
+        @Test
+        void aCaseSavedWithAReferenceComesBackExpanded() throws Exception {
+            caseWithReference(createLoginBlock());
+        }
+
+        @Test
+        void onlyATesterConvertsAReferenceToLocalSteps() throws Exception {
+            String json = caseWithReference(createLoginBlock());
+            String caseId = JsonPath.read(json, "$.id");
+            String stepId = JsonPath.read(json, "$.steps[1].id");
+            String url = "/api/projects/" + project.getId() + "/test-cases/" + caseId + "/steps/" + stepId + "/inline";
+
+            mockMvc.perform(post(url).with(user(viewer))).andExpect(status().isForbidden());
+            mockMvc.perform(post(url).with(user(tester)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.steps.length()").value(3))
+                    .andExpect(jsonPath("$.steps[1].action").value("Open the login page"));
+        }
+    }
 }

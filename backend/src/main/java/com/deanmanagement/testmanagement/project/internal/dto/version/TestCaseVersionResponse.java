@@ -26,11 +26,19 @@ public record TestCaseVersionResponse(
         /* PRD-036 */
         Integer estimateMinutes
 ) {
+    /**
+     * A step as it was executed. Since PRD-030 snapshots hold the expanded steps, with the shared
+     * block each came from; older snapshots have no {@code sharedStepTitle}.
+     */
     public record StepSnapshot(
             int orderIndex,
             String action,
             String expectedResult,
-            String testData
+            String testData,
+            String sharedStepTitle
     ) {
+        public StepSnapshot(int orderIndex, String action, String expectedResult, String testData) {
+            this(orderIndex, action, expectedResult, testData, null);
+        }
     }
 }

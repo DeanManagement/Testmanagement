@@ -318,10 +318,13 @@ public class TestRunService {
             result.setParameterValuesJson(set.getValuesJson());
         }
 
-        for (TestStep step : tc.getSteps()) {
+        // Shared blocks expanded (PRD-030): results point at the block's own steps, in order.
+        List<TestStep> steps = StepExpansion.expandedSteps(tc.getSteps());
+        for (int i = 0; i < steps.size(); i++) {
             StepResult stepResult = new StepResult();
             stepResult.setTestResult(result);
-            stepResult.setTestStep(step);
+            stepResult.setTestStep(steps.get(i));
+            stepResult.setPosition(i);
             stepResult.setStatus(TestResultStatus.PENDING);
             result.getStepResults().add(stepResult);
         }

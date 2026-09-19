@@ -20,9 +20,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Map;
+import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -75,26 +74,29 @@ public class ExternalTestRunService {
             run.getResults().add(result);
 
             if (resultReq.stepResults() != null && !resultReq.stepResults().isEmpty()) {
-                Map<Integer, TestStep> stepMap = testCase.getSteps().stream()
-                        .collect(Collectors.toMap(TestStep::getOrderIndex, s -> s));
+                // stepIndex counts the steps as executed, shared blocks expanded (PRD-030).
+                List<TestStep> steps = StepExpansion.expandedSteps(testCase.getSteps());
 
                 for (ExternalStepResultRequest stepReq : resultReq.stepResults()) {
-                    TestStep step = stepMap.get(stepReq.stepIndex() - 1);
-                    if (step == null) {
+                    int index = stepReq.stepIndex() - 1;
+                    if (index < 0 || index >= steps.size()) {
                         throw new ResourceNotFoundException("TestStep", "index " + stepReq.stepIndex());
                     }
                     StepResult stepResult = new StepResult();
                     stepResult.setTestResult(result);
-                    stepResult.setTestStep(step);
+                    stepResult.setTestStep(steps.get(index));
+                    stepResult.setPosition(index);
                     stepResult.setStatus(stepReq.status());
                     stepResult.setActualResult(stepReq.actualResult());
                     result.getStepResults().add(stepResult);
                 }
             } else {
-                for (TestStep step : testCase.getSteps()) {
+                List<TestStep> steps = StepExpansion.expandedSteps(testCase.getSteps());
+                for (int i = 0; i < steps.size(); i++) {
                     StepResult stepResult = new StepResult();
                     stepResult.setTestResult(result);
-                    stepResult.setTestStep(step);
+                    stepResult.setTestStep(steps.get(i));
+                    stepResult.setPosition(i);
                     stepResult.setStatus(resultReq.status());
                     result.getStepResults().add(stepResult);
                 }

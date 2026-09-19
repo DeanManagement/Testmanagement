@@ -13,6 +13,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.spec.TestCa
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.SharedStep;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
@@ -31,6 +32,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -53,6 +55,7 @@ public class TestCaseService {
     private final ProjectSequenceService projectSequenceService;
     private final TestCaseReviewService reviewService;
     private final CustomFieldValueWriter customFieldWriter;
+    private final SharedStepService sharedStepService;
 
     public Page<TestCaseResponse> findByProject(UUID projectId, TestCaseListFilter filter, Pageable pageable) {
         Set<UUID> folderIds = null;
@@ -182,7 +185,8 @@ public class TestCaseService {
             tc.getSteps().clear();
             List<TestStep> newSteps = buildSteps(request.steps(), tc);
             for (TestStep newStep : newSteps) {
-                StepImage img = existingImages.remove(newStep.getOrderIndex());
+                // A reference has no image of its own: the block's steps carry theirs (PRD-030).
+                StepImage img = newStep.getUsesSharedStep() == null ? existingImages.remove(newStep.getOrderIndex()) : null;
                 if (img != null) {
                     img.setTestStep(newStep);
                     newStep.setImage(img);
@@ -262,19 +266,96 @@ public class TestCaseService {
                 projectTestCases.size() + " test cases deleted");
     }
 
+    /**
+     * A step is its own text, or a reference to a shared block of the case's project (PRD-030). A
+     * reference keeps the block title as its action, a readable fallback for clients that do not
+     * know references; a block of another project is a 404, never silently dropped.
+     */
     private List<TestStep> buildSteps(List<TestStepRequest> stepRequests, TestCase testCase) {
         if (stepRequests == null) return new ArrayList<>();
         List<TestStep> steps = new ArrayList<>();
         for (int i = 0; i < stepRequests.size(); i++) {
             TestStepRequest sr = stepRequests.get(i);
             TestStep step = new TestStep();
-            step.setAction(sr.action());
-            step.setExpectedResult(sr.expectedResult());
-            step.setTestData(sr.testData());
+            if (sr.sharedStepId() != null) {
+                SharedStep block = sharedStepService.require(testCase.getProject().getId(), sr.sharedStepId());
+                step.setUsesSharedStep(block);
+                step.setAction(block.getTitle());
+            } else {
+                if (sr.action() == null || sr.action().isBlank()) {
+                    throw new IllegalArgumentException("Step " + (i + 1) + " needs an action or a shared step");
+                }
+                step.setAction(sr.action());
+                step.setExpectedResult(sr.expectedResult());
+                step.setTestData(sr.testData());
+            }
             step.setOrderIndex(i);
             step.setTestCase(testCase);
             steps.add(step);
         }
         return steps;
+    }
+
+    /**
+     * Replaces a reference with copies of its block's steps, images included, so the case no longer
+     * follows the block (PRD-030 §3.2). What a tester executes is unchanged, so an approval carries
+     * over; a version is still written, since the case's own steps changed.
+     */
+    @Transactional
+    public TestCaseResponse inlineSharedStep(UUID projectId, UUID id, UUID stepId, UUID userId) {
+        TestCase tc = testCaseRepository.findById(id)
+                .filter(t -> t.getProject().getId().equals(projectId))
+                .orElseThrow(() -> new ResourceNotFoundException("TestCase", id));
+        TestStep reference = tc.getSteps().stream()
+                .filter(s -> s.getId().equals(stepId))
+                .findFirst()
+                .orElseThrow(() -> new ResourceNotFoundException("TestStep", stepId));
+        SharedStep block = reference.getUsesSharedStep();
+        if (block == null) {
+            throw new IllegalArgumentException("Step " + stepId + " is not a shared step");
+        }
+        TestCaseStatus statusBefore = tc.getStatus();
+        int versionBefore = tc.getCurrentVersion();
+        versionService.snapshotBeforeEdit(tc);
+
+        List<TestStep> ordered = new ArrayList<>(tc.getSteps().stream()
+                .sorted(Comparator.comparingInt(TestStep::getOrderIndex)).toList());
+        int at = ordered.indexOf(reference);
+        List<TestStep> copies = block.getSteps().stream()
+                .sorted(Comparator.comparingInt(TestStep::getOrderIndex))
+                .map(source -> copyStep(source, tc))
+                .toList();
+        ordered.remove(at);
+        ordered.addAll(at, copies);
+        for (int i = 0; i < ordered.size(); i++) {
+            ordered.get(i).setOrderIndex(i);
+        }
+        tc.getSteps().remove(reference);
+        tc.getSteps().addAll(copies);
+        // In memory too: the response is mapped from this list, before any reload applies @OrderBy.
+        tc.getSteps().sort(Comparator.comparingInt(TestStep::getOrderIndex));
+        reviewService.afterEdit(tc, statusBefore, versionBefore, false);
+
+        TestCase saved = testCaseRepository.save(tc);
+        auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_CASE,
+                saved.getId(), saved.getTitle(), "Converted shared step \"" + block.getTitle() + "\" to local steps");
+        return testCaseMapper.toResponse(saved);
+    }
+
+    private static TestStep copyStep(TestStep source, TestCase owner) {
+        TestStep copy = new TestStep();
+        copy.setTestCase(owner);
+        copy.setAction(source.getAction());
+        copy.setExpectedResult(source.getExpectedResult());
+        copy.setTestData(source.getTestData());
+        if (source.getImage() != null) {
+            StepImage image = new StepImage();
+            image.setFileName(source.getImage().getFileName());
+            image.setContentType(source.getImage().getContentType());
+            image.setData(source.getImage().getData());
+            image.setTestStep(copy);
+            copy.setImage(image);
+        }
+        return copy;
     }
 }

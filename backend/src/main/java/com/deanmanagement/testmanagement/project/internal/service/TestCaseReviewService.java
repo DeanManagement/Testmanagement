@@ -259,6 +259,14 @@ public class TestCaseReviewService {
         for (int i = 0; i < requested.size(); i++) {
             TestStepRequest want = requested.get(i);
             TestStep have = ordered.get(i);
+            // A reference is compared by block (PRD-030): its own text is only the block title.
+            UUID haveBlock = have.getUsesSharedStep() == null ? null : have.getUsesSharedStep().getId();
+            if (!Objects.equals(want.sharedStepId(), haveBlock)) {
+                return false;
+            }
+            if (haveBlock != null) {
+                continue;
+            }
             if (!Objects.equals(blankToNull(want.action()), blankToNull(have.getAction()))
                     || !Objects.equals(blankToNull(want.expectedResult()), blankToNull(have.getExpectedResult()))
                     || !Objects.equals(blankToNull(want.testData()), blankToNull(have.getTestData()))) {

@@ -10,6 +10,8 @@ import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.SharedStep;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.SharedStepRepository;
@@ -23,10 +25,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -45,6 +49,8 @@ public class SharedStepService {
     private final TestCaseRepository testCaseRepository;
     private final TestCaseMapper testCaseMapper;
     private final AuditService auditService;
+    private final TestCaseVersionService versionService;
+    private final TestCaseReviewService reviewService;
 
     public Page<SharedStepSummary> list(UUID projectId, String query, Pageable pageable) {
         Page<SharedStep> page = sharedStepRepository.search(projectId, query == null ? "" : query.trim(), pageable);
@@ -87,6 +93,10 @@ public class SharedStepService {
      * Steps are matched by id and updated in place, not cleared and rebuilt: a rebuilt step is a new
      * row, and every recorded result pointing at the old one — in every run of every case using the
      * block — would lose its step text.
+     *
+     * <p>When the steps change, every case using the block gets a version first, holding the wording
+     * it had until now (PRD-011), and counts as a content edit for review (PRD-033): an approved case
+     * whose block changed goes back to review, as it would if its own steps had been edited.
      */
     @Transactional
     public SharedStepResponse update(UUID projectId, UUID id, SaveSharedStepRequest request, UUID userId) {
@@ -94,6 +104,22 @@ public class SharedStepService {
         String title = request.title().trim();
         if (!block.getTitle().equals(title) && sharedStepRepository.existsByProjectIdAndTitle(projectId, title)) {
             throw new DuplicateKeyException("title", title);
+        }
+        List<TestCase> users = testCaseRepository.findUsingSharedStep(id);
+        if (isStepsChanged(block, request.steps())) {
+            // Before applySteps: the snapshot must read the block's old text.
+            for (TestCase tc : users) {
+                TestCaseStatus statusBefore = tc.getStatus();
+                int versionBefore = tc.getCurrentVersion();
+                versionService.snapshotBeforeEdit(tc);
+                reviewService.afterEdit(tc, statusBefore, versionBefore, true);
+            }
+        }
+        if (!block.getTitle().equals(title)) {
+            // Reference rows keep the title as their fallback text.
+            users.forEach(tc -> tc.getSteps().stream()
+                    .filter(step -> step.getUsesSharedStep() != null && id.equals(step.getUsesSharedStep().getId()))
+                    .forEach(step -> step.setAction(title)));
         }
         block.setTitle(title);
         block.setDescription(request.description());
@@ -125,6 +151,30 @@ public class SharedStepService {
     }
 
     // ---- helpers --------------------------------------------------------------------------------
+
+    /** Whether what a tester executes changes: a step added, removed, moved or reworded. */
+    private static boolean isStepsChanged(SharedStep block, List<SharedStepStepRequest> requested) {
+        List<TestStep> current = block.getSteps().stream()
+                .sorted(Comparator.comparingInt(TestStep::getOrderIndex)).toList();
+        if (current.size() != requested.size()) {
+            return true;
+        }
+        for (int i = 0; i < current.size(); i++) {
+            TestStep have = current.get(i);
+            SharedStepStepRequest want = requested.get(i);
+            if (!have.getId().equals(want.id())
+                    || !Objects.equals(emptyToNull(have.getAction()), emptyToNull(want.action()))
+                    || !Objects.equals(emptyToNull(have.getExpectedResult()), emptyToNull(want.expectedResult()))
+                    || !Objects.equals(emptyToNull(have.getTestData()), emptyToNull(want.testData()))) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String emptyToNull(String s) {
+        return s == null || s.isEmpty() ? null : s;
+    }
 
     private void applySteps(SharedStep block, List<SharedStepStepRequest> requested) {
         Map<UUID, TestStep> existing = block.getSteps().stream()

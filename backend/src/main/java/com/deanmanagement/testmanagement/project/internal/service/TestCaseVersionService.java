@@ -18,7 +18,6 @@ import tools.jackson.databind.ObjectMapper;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -105,11 +104,7 @@ public class TestCaseVersionService {
     // ---- mapping ----------------------------------------------------------
 
     private TestCaseVersionResponse fromLiveCase(TestCase testCase) {
-        List<TestCaseVersionResponse.StepSnapshot> steps = testCase.getSteps().stream()
-                .sorted(Comparator.comparingInt(TestStep::getOrderIndex))
-                .map(s -> new TestCaseVersionResponse.StepSnapshot(
-                        s.getOrderIndex(), s.getAction(), s.getExpectedResult(), s.getTestData()))
-                .toList();
+        List<TestCaseVersionResponse.StepSnapshot> steps = snapshotsOf(testCase.getSteps());
 
         return new TestCaseVersionResponse(
                 null,
@@ -144,12 +139,23 @@ public class TestCaseVersionService {
                 version.getEstimateMinutes());
     }
 
+    /**
+     * The steps as a tester would have executed them (PRD-030): shared blocks expanded, each step
+     * numbered in the expanded list and tagged with its block's title.
+     */
+    private static List<TestCaseVersionResponse.StepSnapshot> snapshotsOf(List<TestStep> caseSteps) {
+        List<StepExpansion.ExpandedStep> expanded = StepExpansion.expand(caseSteps);
+        List<TestCaseVersionResponse.StepSnapshot> snapshots = new ArrayList<>();
+        for (int i = 0; i < expanded.size(); i++) {
+            TestStep s = expanded.get(i).step();
+            snapshots.add(new TestCaseVersionResponse.StepSnapshot(i, s.getAction(), s.getExpectedResult(),
+                    s.getTestData(), expanded.get(i).block() == null ? null : expanded.get(i).block().getTitle()));
+        }
+        return snapshots;
+    }
+
     private String serialiseSteps(List<TestStep> steps) {
-        List<TestCaseVersionResponse.StepSnapshot> snapshots = steps.stream()
-                .sorted(Comparator.comparingInt(TestStep::getOrderIndex))
-                .map(s -> new TestCaseVersionResponse.StepSnapshot(
-                        s.getOrderIndex(), s.getAction(), s.getExpectedResult(), s.getTestData()))
-                .toList();
+        List<TestCaseVersionResponse.StepSnapshot> snapshots = snapshotsOf(steps);
         try {
             return objectMapper.writeValueAsString(snapshots);
         } catch (Exception e) {

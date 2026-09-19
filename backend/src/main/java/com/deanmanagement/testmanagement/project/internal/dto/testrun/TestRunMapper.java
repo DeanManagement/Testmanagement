@@ -34,10 +34,22 @@ public abstract class TestRunMapper {
     @Mapping(target = "action", source = "testStep.action")
     @Mapping(target = "expectedResult", source = "testStep.expectedResult")
     @Mapping(target = "testData", source = "testStep.testData")
-    @Mapping(target = "orderIndex", source = "testStep.orderIndex")
+    @Mapping(target = "orderIndex", expression = "java(orderIndexOf(stepResult))")
+    @Mapping(target = "sharedStepTitle", source = "testStep.sharedStep.title")
     @Mapping(target = "screenshotId", source = "screenshot.id")
     @Mapping(target = "stepImageId", expression = "java(stepResult.getTestStep() != null && stepResult.getTestStep().getImage() != null ? stepResult.getTestStep().getImage().getId() : null)")
     public abstract StepResultResponse toStepResultResponse(StepResult stepResult);
+
+    /**
+     * The result's own order (PRD-030): expanded steps come from several owners, each numbered from
+     * 0. Rows without one (their step was gone before V62 backfilled positions) fall back to 0.
+     */
+    protected int orderIndexOf(StepResult stepResult) {
+        if (stepResult.getPosition() != null) {
+            return stepResult.getPosition();
+        }
+        return stepResult.getTestStep() != null ? stepResult.getTestStep().getOrderIndex() : 0;
+    }
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "key", ignore = true)

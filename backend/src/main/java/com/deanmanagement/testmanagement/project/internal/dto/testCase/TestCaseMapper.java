@@ -7,6 +7,9 @@ import com.deanmanagement.testmanagement.project.internal.dto.customField.Custom
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
+import java.util.Comparator;
+import java.util.List;
+
 @Mapper(componentModel = "spring", imports = CustomFieldValueMaps.class)
 public abstract class TestCaseMapper {
 
@@ -20,7 +23,21 @@ public abstract class TestCaseMapper {
     }
 
     @Mapping(target = "imageId", expression = "java(step.getImage() != null ? step.getImage().getId() : null)")
+    @Mapping(target = "sharedStepId", source = "usesSharedStep.id")
+    @Mapping(target = "sharedStepTitle", source = "usesSharedStep.title")
+    @Mapping(target = "expandedSteps", expression = "java(expandedStepsOf(step))")
     public abstract TestStepResponse toStepResponse(TestStep step);
+
+    /** A reference's block steps in order; null for a local step. Blocks do not nest, so this ends. */
+    protected List<TestStepResponse> expandedStepsOf(TestStep step) {
+        if (step.getUsesSharedStep() == null) {
+            return null;
+        }
+        return step.getUsesSharedStep().getSteps().stream()
+                .sorted(Comparator.comparingInt(TestStep::getOrderIndex))
+                .map(this::toStepResponse)
+                .toList();
+    }
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "key", ignore = true)
