@@ -10,6 +10,8 @@ import { CustomFieldApiService } from '../../../core/services/custom-field-api.s
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { GherkinPreview } from '../../../shared/models/test-case.model';
+import { SharedStep } from '../../../shared/models/shared-step.model';
+import { MatDialog } from '@angular/material/dialog';
 import { TestCaseFormComponent } from './test-case-form.component';
 
 const PREVIEW: GherkinPreview = {
@@ -20,17 +22,23 @@ const PREVIEW: GherkinPreview = {
 
 describe('TestCaseFormComponent – Edit as Gherkin (PRD-040 §3.7)', () => {
   let previewGherkin: ReturnType<typeof vi.fn>;
+  let create: ReturnType<typeof vi.fn>;
+  let pickedSharedStep: SharedStep | undefined;
 
   beforeEach(() => {
     TestBed.resetTestingModule();
     previewGherkin = vi.fn(() => of(PREVIEW));
+    create = vi.fn(() => of({ id: 'new', steps: [] }));
+    pickedSharedStep = undefined;
     TestBed.configureTestingModule({
       imports: [TestCaseFormComponent, TranslateModule.forRoot()],
       providers: [
-        provideRouter([]),
+        // Saving navigates to the saved case; any route will do here.
+        provideRouter([{ path: '**', children: [] }]),
         provideNoopAnimations(),
         provideMockStore(),
-        { provide: TestCaseApiService, useValue: { previewGherkin } },
+        { provide: TestCaseApiService, useValue: { previewGherkin, create } },
+        { provide: MatDialog, useValue: { open: () => ({ afterClosed: () => of(pickedSharedStep) }) } },
         { provide: ProjectApiService, useValue: { getById: () => of({ reviewRequired: false }) } },
         { provide: CustomFieldApiService, useValue: { getActive: () => of([]) } },
         {
@@ -73,7 +81,7 @@ describe('TestCaseFormComponent – Edit as Gherkin (PRD-040 §3.7)', () => {
     expect(previewGherkin).toHaveBeenCalledWith('proj', 'Scenario: From Gherkin\n  Given <amount>\n');
     expect(form.form.value.title).toBe('From Gherkin');
     expect(form.form.value.labels).toBe('smoke');
-    expect(form.steps.value).toEqual([{ action: 'Given {amount}', expectedResult: '', testData: '| a |' }]);
+    expect(form.steps.value).toMatchObject([{ action: 'Given {amount}', expectedResult: '', testData: '| a |', sharedStepId: null }]);
     expect(form.gherkinText).toBeNull();
     expect(form.hasUnsavedChanges()).toBe(true);
   });
@@ -112,5 +120,34 @@ describe('TestCaseFormComponent – Edit as Gherkin (PRD-040 §3.7)', () => {
 
     expect(form.gherkinError).toBe('testCase.form.gherkin.noSteps');
     expect(form.steps.length).toBe(1);
+  });
+
+  describe('shared steps (PRD-030)', () => {
+    const LOGIN: SharedStep = {
+      id: 'login', title: 'Log in', description: null, usedByCount: 0, createdAt: '', updatedAt: '',
+      steps: [{ id: 's1', action: 'Open page', expectedResult: '', testData: '', orderIndex: 0, imageId: null }],
+    };
+
+    it('should insert a reference and save it as a sharedStepId only', () => {
+      pickedSharedStep = LOGIN;
+      const form = createForm();
+
+      form.insertSharedStep();
+      form.onSubmit();
+
+      expect(form.hasReferences).toBe(true);
+      expect(create.mock.calls[0][1].steps).toEqual([
+        { action: 'Open the page', expectedResult: 'It loads', testData: undefined },
+        { sharedStepId: 'login' },
+      ]);
+    });
+
+    it('should leave the steps alone when the picker is closed without a choice', () => {
+      const form = createForm();
+
+      form.insertSharedStep();
+
+      expect(form.steps.length).toBe(1);
+    });
   });
 });

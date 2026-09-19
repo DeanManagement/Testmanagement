@@ -69,6 +69,11 @@ export class TestCaseApiService {
     return this.http.post<ImportResult>(`${this.baseUrl(projectId)}/import`, formData, { params });
   }
 
+  /** Replaces a shared step reference with copies of its steps, images included (PRD-030). */
+  inlineSharedStep(projectId: string, testCaseId: string, stepId: string): Observable<TestCase> {
+    return this.http.post<TestCase>(`${this.baseUrl(projectId)}/${testCaseId}/steps/${stepId}/inline`, {});
+  }
+
   /** Reads one scenario; the server writes nothing (PRD-040 §3.6). */
   previewGherkin(projectId: string, text: string): Observable<GherkinPreview> {
     return this.http.post<GherkinPreview>(`${this.baseUrl(projectId)}/gherkin/preview`, text, {

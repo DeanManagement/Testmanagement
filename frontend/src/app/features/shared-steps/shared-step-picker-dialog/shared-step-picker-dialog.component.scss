@@ -1,0 +1,58 @@
+:host {
+  display: block;
+  min-width: min(90vw, 480px);
+}
+
+.search {
+  width: 100%;
+  // Room for the outlined field's floating label, which the dialog content would otherwise clip.
+  margin-top: 8px;
+}
+
+.spinner {
+  display: flex;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.empty {
+  color: var(--tm-text-secondary);
+}
+
+.results {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+}
+
+.result {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  height: auto;
+  padding: 8px 12px;
+}
+
+.result-title {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.result-meta {
+  color: var(--tm-text-secondary);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* Material wraps a button's content in its own label, which is where the layout has to go. */
+.result ::ng-deep .mdc-button__label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}

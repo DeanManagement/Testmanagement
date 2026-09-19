@@ -149,3 +149,27 @@
   width: 18px;
   height: 18px;
 }
+
+/* PRD-030: steps that come from a shared step, under its title. */
+.shared-step-heading {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 12px 0 4px;
+  font-weight: 600;
+  font-size: 13px;
+
+  mat-icon { font-size: 18px; width: 18px; height: 18px; color: var(--tm-primary); }
+
+  a { color: inherit; text-decoration: underline; }
+}
+
+.convert-btn {
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.step-row--shared {
+  border-left: 3px solid var(--tm-primary-lighter);
+  padding-left: 8px;
+}

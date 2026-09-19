@@ -297,7 +297,8 @@
         "dropsExpected": "Erwartete Ergebnisse gibt es in Gherkin nicht: beim Übernehmen werden sie aus den Schritten entfernt.",
         "apply": "In Schritte übernehmen",
         "examplesNotSaved": "Die Examples-Tabelle wird hier nicht gespeichert: Parametersätze verwaltest du auf der Testfallseite. Platzhalter wurden als {name} geschrieben.",
-        "noSteps": "Keine Schritte gefunden. Sind die Schritte nicht auf Englisch, beginne den Text mit einer Sprachzeile wie \"# language: de\"."
+        "noSteps": "Keine Schritte gefunden. Sind die Schritte nicht auf Englisch, beginne den Text mit einer Sprachzeile wie \"# language: de\".",
+        "noShared": "Gherkin kennt keine gemeinsamen Schritte. Wandle sie zuerst auf der Testfallseite in lokale Schritte um."
       }
     },
     "detail": {
@@ -1319,5 +1320,30 @@
       "OTHER_CHANGE": "Andere Änderung",
       "UNCHANGED": "Unverändert"
     }
+  },
+  "sharedStep": {
+    "title": "Gemeinsame Schritte",
+    "cardHint": "Schrittblöcke, einmal gepflegt und in vielen Testfällen verwendet",
+    "description": "Ein gemeinsamer Schritt ist ein Block von Schritten, etwa \"Als Admin anmelden\", der einmal gepflegt und in beliebig vielen Testfällen verwendet wird. Änderst du ihn hier, folgen alle Testfälle, die ihn verwenden, und ebenso später erstellte Testläufe.",
+    "create": "Neuer gemeinsamer Schritt",
+    "search": "Nach Titel suchen",
+    "none": "Keine passenden gemeinsamen Schritte.",
+    "emptyHint": "Noch keine gemeinsamen Schritte. Lege einen an für Schritte, die du immer wieder zwischen Testfällen kopierst.",
+    "stepCount": "{{count}} Schritt(e)",
+    "usedBy": "verwendet in {{count}} Testfall/Testfällen",
+    "createTitle": "Neuer gemeinsamer Schritt",
+    "editTitle": "Gemeinsamen Schritt bearbeiten",
+    "editWarning": "Verwendet in {{count}} Testfall/Testfällen. Speichern ändert die Schritte all dieser Testfälle; jeder behält eine Version mit dem bisherigen Wortlaut, und in einem Projekt mit Review gehen sie zurück ins Review.",
+    "titleLabel": "Titel",
+    "whereUsed": "Verwendet in",
+    "notUsed": "Kein Testfall verwendet diesen gemeinsamen Schritt.",
+    "deleteTitle": "Gemeinsamen Schritt löschen",
+    "deleteConfirm": "Diesen gemeinsamen Schritt löschen? Das geht nur, solange kein Testfall ihn verwendet.",
+    "insert": "Gemeinsamen Schritt einfügen",
+    "emptyWarning": "Dieser gemeinsame Schritt hat keine Schritte und fügt bei der Ausführung nichts hinzu.",
+    "editedElsewhere": "Seine Schritte bearbeitest du auf der Seite des gemeinsamen Schritts.",
+    "edit": "Gemeinsamen Schritt bearbeiten",
+    "convert": "In lokale Schritte umwandeln",
+    "convertConfirm": "Diesen gemeinsamen Schritt durch eine Kopie seiner Schritte ersetzen? Der Testfall folgt dem gemeinsamen Schritt dann nicht mehr; spätere Änderungen daran erreichen ihn nicht."
   }
 }

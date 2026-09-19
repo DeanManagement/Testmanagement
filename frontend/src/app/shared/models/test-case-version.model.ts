@@ -20,6 +20,8 @@ export interface TestCaseVersionStep {
   action: string;
   expectedResult: string | null;
   testData: string | null;
+  /** PRD-030: the shared step it came from; absent in versions saved before shared steps. */
+  sharedStepTitle?: string | null;
 }
 
 export interface TestCaseVersionSummary {

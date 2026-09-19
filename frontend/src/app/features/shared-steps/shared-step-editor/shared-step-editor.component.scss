@@ -1,0 +1,74 @@
+.full-width {
+  width: 100%;
+}
+
+.used-by-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 12px;
+  margin: 0 0 16px;
+  border-radius: 8px;
+  background: var(--tm-tint-warn-bg);
+  color: var(--tm-text);
+  font-size: 14px;
+
+  mat-icon { color: var(--tm-warn); flex-shrink: 0; }
+}
+
+.steps-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 8px 0 12px;
+
+  h3 { margin: 0; }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.delete-btn {
+  color: var(--tm-danger);
+}
+
+.usages {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--tm-border);
+
+  h3 { margin: 0 0 8px; }
+
+  ul { margin: 0; padding-left: 20px; }
+
+  li { margin: 4px 0; }
+
+  a { font-weight: 600; margin-right: 6px; text-decoration: underline; }
+}
+
+.usages-empty {
+  color: var(--tm-text-secondary);
+}
+
+/* As on the test case form, whose card this page mirrors. */
+:host ::ng-deep {
+  .mat-mdc-card {
+    border: 1px solid var(--tm-border);
+    box-shadow: var(--tm-shadow) !important;
+    border-radius: var(--tm-radius);
+  }
+
+  .mat-mdc-card-header {
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--tm-border);
+    margin-bottom: 24px;
+  }
+}

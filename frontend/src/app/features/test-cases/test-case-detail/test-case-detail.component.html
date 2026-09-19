@@ -54,12 +54,23 @@
       <app-custom-fields-display [values]="tc.customFields" />
     </div>
 
-    @if (tc.steps.length) {
+    @if (executedSteps(tc).length) {
       <div class="steps-section tm-card" data-test-id="test-case-steps-section">
         <h3>{{ 'testCase.form.steps' | translate }}</h3>
         <div class="steps-list" data-test-id="test-case-steps-list">
-          @for (step of tc.steps; track step.id; let i = $index) {
-            <div class="step-row">
+          @let steps = executedSteps(tc);
+          @for (step of steps; track step.id + (step.referenceId ?? ''); let i = $index) {
+            @if (headingAt(steps, i); as title) {
+              <div class="shared-step-heading" [attr.data-test-id]="'test-case-shared-heading-' + i">
+                <mat-icon>link</mat-icon>
+                <a [routerLink]="['/projects', projectId, 'shared-steps', step.sharedStepId]">{{ title }}</a>
+                <button mat-button type="button" class="convert-btn" (click)="convertToLocal(step.referenceId!)"
+                        [attr.data-test-id]="'test-case-convert-shared-' + i">
+                  {{ 'sharedStep.convert' | translate }}
+                </button>
+              </div>
+            }
+            <div class="step-row" [class.step-row--shared]="!!step.sharedStepTitle">
               <div class="step-header">
                 <span class="step-number">{{ i + 1 }}</span>
               </div>
@@ -119,7 +130,7 @@
       <app-test-case-parameters
         [projectId]="projectId"
         [testCaseId]="testCaseId"
-        [steps]="tc.steps"
+        [steps]="executedSteps(tc)"
         [canEdit]="true"></app-test-case-parameters>
     </div>
 

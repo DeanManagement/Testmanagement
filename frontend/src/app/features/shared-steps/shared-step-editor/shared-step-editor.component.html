@@ -1,0 +1,71 @@
+<div class="form-container form-container--wide">
+  <mat-card>
+    <mat-card-header>
+      <mat-card-title data-test-id="shared-step-editor-title">
+        {{ (sharedStepId ? 'sharedStep.editTitle' : 'sharedStep.createTitle') | translate }}
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      @if (usages.length > 0) {
+        <p class="used-by-warning" data-test-id="shared-step-used-by-warning">
+          <mat-icon>info</mat-icon>
+          {{ 'sharedStep.editWarning' | translate: { count: usages.length } }}
+        </p>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="save()" data-test-id="shared-step-form">
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'sharedStep.titleLabel' | translate }}</mat-label>
+          <input matInput formControlName="title" data-test-id="shared-step-title-input" aria-required="true" />
+          <mat-error><app-field-error [control]="form.controls.title" /></mat-error>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'testCase.form.description' | translate }}</mat-label>
+          <textarea matInput formControlName="description" rows="2" data-test-id="shared-step-description-input"></textarea>
+        </mat-form-field>
+
+        <div class="steps-header">
+          <h3>{{ 'testCase.form.steps' | translate }}</h3>
+          <button mat-stroked-button type="button" (click)="addStep()" data-test-id="shared-step-add-step-btn">
+            <mat-icon>add</mat-icon>
+            {{ 'testCase.form.addStep' | translate }}
+          </button>
+        </div>
+        <app-step-list-editor [steps]="steps" [images]="stepImages" />
+
+        <div class="actions">
+          @if (sharedStepId) {
+            <button mat-button type="button" class="delete-btn" (click)="delete()" data-test-id="shared-step-delete-btn">
+              <mat-icon>delete</mat-icon>
+              {{ 'common.delete' | translate }}
+            </button>
+          }
+          <span class="spacer"></span>
+          <a mat-button [routerLink]="['/projects', projectId, 'shared-steps']" data-test-id="shared-step-cancel">{{ 'common.cancel' | translate }}</a>
+          <button mat-flat-button type="submit" [disabled]="form.invalid || saving" data-test-id="shared-step-save">
+            {{ 'common.save' | translate }}
+          </button>
+        </div>
+      </form>
+
+      @if (sharedStepId) {
+        <section class="usages" data-test-id="shared-step-usages">
+          <h3>{{ 'sharedStep.whereUsed' | translate }}</h3>
+          @if (usages.length === 0) {
+            <p class="usages-empty">{{ 'sharedStep.notUsed' | translate }}</p>
+          } @else {
+            <ul>
+              @for (u of usages; track u.testCaseId) {
+                <li>
+                  <a [routerLink]="['/projects', projectId, 'test-cases', u.testCaseId]">{{ u.key }}</a>
+                  {{ u.title }}
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+    </mat-card-content>
+  </mat-card>
+</div>

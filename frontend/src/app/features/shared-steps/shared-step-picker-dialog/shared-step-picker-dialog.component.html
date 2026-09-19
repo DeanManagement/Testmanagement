@@ -1,0 +1,31 @@
+<h2 mat-dialog-title>{{ 'sharedStep.insert' | translate }}</h2>
+<mat-dialog-content>
+  <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+    <mat-icon matPrefix>search</mat-icon>
+    <mat-label>{{ 'sharedStep.search' | translate }}</mat-label>
+    <input matInput [formControl]="query" cdkFocusInitial data-test-id="shared-step-picker-search" />
+  </mat-form-field>
+
+  @if (loading) {
+    <div class="spinner"><mat-spinner diameter="28"></mat-spinner></div>
+  } @else if (results.length === 0) {
+    <p class="empty" data-test-id="shared-step-picker-empty">{{ 'sharedStep.none' | translate }}</p>
+  } @else {
+    <ul class="results" data-test-id="shared-step-picker-results">
+      @for (s of results; track s.id) {
+        <li>
+          <button mat-button type="button" class="result" (click)="pick(s)" [attr.data-test-id]="'shared-step-pick-' + s.id">
+            <span class="result-title">{{ s.title }}</span>
+            <span class="result-meta">
+              {{ 'sharedStep.stepCount' | translate: { count: s.stepCount } }} ·
+              {{ 'sharedStep.usedBy' | translate: { count: s.usedByCount } }}
+            </span>
+          </button>
+        </li>
+      }
+    </ul>
+  }
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close data-test-id="shared-step-picker-cancel">{{ 'common.cancel' | translate }}</button>
+</mat-dialog-actions>

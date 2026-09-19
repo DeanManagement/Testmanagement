@@ -1,0 +1,46 @@
+<div class="shared-steps-container">
+  <div class="page-header">
+    <div class="page-header-left">
+      <a mat-button [routerLink]="['/projects', projectId]" class="back-link" data-test-id="shared-steps-back">
+        <mat-icon>arrow_back</mat-icon>
+        {{ 'common.back' | translate }}
+      </a>
+      <h1 data-test-id="shared-steps-title">{{ 'sharedStep.title' | translate }}</h1>
+    </div>
+    <a mat-flat-button [routerLink]="['new']" data-test-id="shared-step-create-btn">
+      <mat-icon>add</mat-icon>
+      {{ 'sharedStep.create' | translate }}
+    </a>
+  </div>
+
+  <p class="page-hint">{{ 'sharedStep.description' | translate }}</p>
+
+  <mat-form-field appearance="outline" class="search" subscriptSizing="dynamic">
+    <mat-icon matPrefix>search</mat-icon>
+    <mat-label>{{ 'sharedStep.search' | translate }}</mat-label>
+    <input matInput [formControl]="query" data-test-id="shared-steps-search" />
+  </mat-form-field>
+
+  @if (loading) {
+    <div class="loading-state"><mat-spinner diameter="32"></mat-spinner></div>
+  } @else if (sharedSteps.length === 0) {
+    <div class="empty-state tm-card" data-test-id="shared-steps-empty">
+      <mat-icon>link</mat-icon>
+      <p>{{ (query.value ? 'sharedStep.none' : 'sharedStep.emptyHint') | translate }}</p>
+    </div>
+  } @else {
+    <div class="list tm-card" data-test-id="shared-steps-list">
+      @for (s of sharedSteps; track s.id) {
+        <a class="row" [routerLink]="[s.id]" [attr.data-test-id]="'shared-step-row-' + s.id">
+          <div class="row-main">
+            <span class="row-title">{{ s.title }}</span>
+            @if (s.description) { <span class="row-description">{{ s.description }}</span> }
+          </div>
+          <span class="row-meta">{{ 'sharedStep.stepCount' | translate: { count: s.stepCount } }}</span>
+          <span class="row-meta" [class.row-meta--unused]="s.usedByCount === 0">{{ 'sharedStep.usedBy' | translate: { count: s.usedByCount } }}</span>
+          <span class="row-meta row-date">{{ s.updatedAt | localizedDate: 'mediumDate' }}</span>
+        </a>
+      }
+    </div>
+  }
+</div>

@@ -222,7 +222,12 @@
               @if (sortedSteps(result).length) {
                 <div class="steps-list">
                   @for (step of sortedSteps(result); track step.id; let i = $index) {
-                    <div class="step-row" [attr.data-test-id]="'step-result-row-' + step.id">
+                    @if (headingAt(sortedSteps(result), i); as title) {
+                      <div class="shared-step-heading" [attr.data-test-id]="'step-shared-heading-' + step.id">
+                        <mat-icon>link</mat-icon>{{ title }}
+                      </div>
+                    }
+                    <div class="step-row" [class.step-row--shared]="!!step.sharedStepTitle" [attr.data-test-id]="'step-result-row-' + step.id">
                       <div class="step-header">
                         <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
                         <span class="badge badge--{{ step.status | lowercase }} badge--small">{{ 'resultStatus.' + step.status | translate }}</span>
@@ -412,7 +417,12 @@
                 @if (sortedSteps(result).length) {
                   <div class="steps-list">
                     @for (step of sortedSteps(result); track step.id; let i = $index) {
-                      <div class="step-row" [attr.data-test-id]="'step-result-row-' + step.id">
+                      @if (headingAt(sortedSteps(result), i); as title) {
+                        <div class="shared-step-heading" [attr.data-test-id]="'step-shared-heading-' + step.id">
+                          <mat-icon>link</mat-icon>{{ title }}
+                        </div>
+                      }
+                      <div class="step-row" [class.step-row--shared]="!!step.sharedStepTitle" [attr.data-test-id]="'step-result-row-' + step.id">
                         <div class="step-header">
                           <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
                           <span class="badge badge--{{ step.status | lowercase }} badge--small">{{ 'resultStatus.' + step.status | translate }}</span>

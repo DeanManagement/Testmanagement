@@ -58,6 +58,7 @@ import { EffortSummary } from '../../../shared/models/effort.model';
 /** How often the running time on screen advances; it shows whole minutes. */
 const TIMER_TICK_MS = 15_000;
 
+import { sharedStepHeadingAt } from '../../../shared/utils/shared-step-groups';
 @Component({
   selector: 'app-test-run-detail',
   standalone: true,
@@ -555,6 +556,9 @@ export class TestRunDetailComponent implements OnInit {
       this.activeResultId = results[newIdx].id;
     }
   }
+
+  /** PRD-030: a heading above the first step of each shared step. */
+  readonly headingAt = sharedStepHeadingAt;
 
   sortedSteps(result: TestResult): StepResult[] {
     return [...result.stepResults].sort((a, b) => a.orderIndex - b.orderIndex);

@@ -29,6 +29,11 @@ export const projectsRoutes: Routes = [
       import('../test-cases/test-cases.routes').then((m) => m.testCasesRoutes),
   },
   {
+    path: ':id/shared-steps',
+    loadChildren: () =>
+      import('../shared-steps/shared-steps.routes').then((m) => m.sharedStepsRoutes),
+  },
+  {
     path: ':id/test-suites',
     loadChildren: () =>
       import('../test-suites/test-suites.routes').then((m) => m.testSuitesRoutes),

@@ -69,6 +69,6 @@ function argumentLines(testData: string): string[] {
   return [indent + DOC_STRING, ...rows.map((row) => indent + row), indent + DOC_STRING];
 }
 
-function oneLine(text: string): string {
+function oneLine(text: string | undefined): string {
   return (text ?? '').trim().replace(/\s*\n\s*/g, ' ');
 }

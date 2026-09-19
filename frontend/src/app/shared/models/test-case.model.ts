@@ -7,12 +7,18 @@ export interface TestStep {
   testData: string;
   orderIndex: number;
   imageId: string | null;
+  /** PRD-030, on a reference to a shared step: which one, its title, and its steps as they run. */
+  sharedStepId?: string | null;
+  sharedStepTitle?: string | null;
+  expandedSteps?: TestStep[] | null;
 }
 
+/** A step of its own, or with sharedStepId a reference to a shared step (the rest is then ignored). */
 export interface TestStepRequest {
-  action: string;
-  expectedResult: string;
+  action?: string;
+  expectedResult?: string;
   testData?: string;
+  sharedStepId?: string;
 }
 
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';

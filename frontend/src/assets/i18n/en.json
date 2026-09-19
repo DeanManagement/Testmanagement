@@ -297,7 +297,8 @@
         "dropsExpected": "Expected results have no Gherkin form: applying removes them from the steps.",
         "apply": "Apply to steps",
         "examplesNotSaved": "The Examples table is not saved here: manage parameter sets on the test case page. Placeholders were written as {name}.",
-        "noSteps": "No steps found. If the steps are not in English, start the text with a language line such as \"# language: de\"."
+        "noSteps": "No steps found. If the steps are not in English, start the text with a language line such as \"# language: de\".",
+        "noShared": "Gherkin has no shared steps. Convert them to local steps on the test case page first."
       }
     },
     "detail": {
@@ -1319,5 +1320,30 @@
       "OTHER_CHANGE": "Other change",
       "UNCHANGED": "Unchanged"
     }
+  },
+  "sharedStep": {
+    "title": "Shared steps",
+    "cardHint": "Blocks of steps kept once and used by many test cases",
+    "description": "A shared step is a block of steps, such as \"Log in as admin\", kept once and used by any number of test cases. Edit it here and every test case using it follows, as do runs created afterwards.",
+    "create": "New shared step",
+    "search": "Search by title",
+    "none": "No shared steps match.",
+    "emptyHint": "No shared steps yet. Create one for steps you keep copying between test cases.",
+    "stepCount": "{{count}} step(s)",
+    "usedBy": "used by {{count}} test case(s)",
+    "createTitle": "New shared step",
+    "editTitle": "Edit shared step",
+    "editWarning": "Used by {{count}} test case(s). Saving changes the steps of all of them; each keeps a version with its previous wording, and in a project that requires review they go back to review.",
+    "titleLabel": "Title",
+    "whereUsed": "Where used",
+    "notUsed": "No test case uses this shared step.",
+    "deleteTitle": "Delete shared step",
+    "deleteConfirm": "Delete this shared step? This is only possible while no test case uses it.",
+    "insert": "Insert shared step",
+    "emptyWarning": "This shared step has no steps, so it adds nothing when run.",
+    "editedElsewhere": "Its steps are edited on the shared step's own page.",
+    "edit": "Edit shared step",
+    "convert": "Convert to local steps",
+    "convertConfirm": "Replace this shared step with a copy of its steps? The test case stops following the shared step; later edits to it no longer reach this case."
   }
 }

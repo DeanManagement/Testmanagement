@@ -14,24 +14,26 @@ import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectTestCaseById } from '../../../store/test-case/test-case.selectors';
-import { GherkinPreview, Priority, TestCase, TestCaseStatus, TestStepRequest } from '../../../shared/models/test-case.model';
+import { GherkinPreview, Priority, TestCaseStatus, TestStepRequest } from '../../../shared/models/test-case.model';
 import { toGherkin } from './gherkin-text';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
-import { forkJoin, Observable, of } from 'rxjs';
 import { take } from 'rxjs/operators';
-import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
+import {
+  localStepGroup,
+  referenceStepGroup,
+  StepImageState,
+  StepListEditorComponent,
+  syncStepImages,
+} from '../../../shared/components/step-list-editor/step-list-editor.component';
+import { SharedStepPickerDialogComponent } from '../../shared-steps/shared-step-picker-dialog/shared-step-picker-dialog.component';
+import { SharedStep } from '../../../shared/models/shared-step.model';
+import { MatDialog } from '@angular/material/dialog';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
 import { CustomFieldsFormComponent } from '../../../shared/components/custom-fields/custom-fields-form.component';
 import { CustomFieldValues } from '../../../shared/models/custom-field.model';
 import { MAX_ESTIMATE_MINUTES } from '../../../shared/models/effort.model';
-
-interface StepImageState {
-  id?: string;
-  file?: File;
-  preview?: string;
-  removed?: boolean;
-}
 
 import { selectableStatuses } from '../review/review-status';
 import { ProjectApiService } from '../../../core/services/project-api.service';
@@ -52,7 +54,8 @@ import { ProjectApiService } from '../../../core/services/project-api.service';
     MatIconModule,
     MatTabsModule,
     TranslateModule,
-    AuthImagePipe,
+    StepListEditorComponent,
+    MatTooltipModule,
   ],
   templateUrl: './test-case-form.component.html',
   styleUrl: './test-case-form.component.scss',
@@ -67,6 +70,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
   private readonly projectApi = inject(ProjectApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly translate = inject(TranslateService);
+  private readonly dialog = inject(MatDialog);
 
   editMode = false;
   projectId = '';
@@ -135,14 +139,10 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
           this.steps.clear();
           this.stepImages.clear();
           tc.steps?.forEach((step, index) => {
-            this.steps.push(
-              this.fb.group({
-                action: [step.action, Validators.required],
-                expectedResult: [step.expectedResult],
-                testData: [step.testData],
-              })
-            );
-            if (step.imageId) {
+            this.steps.push(step.sharedStepId
+              ? referenceStepGroup(this.fb, step.sharedStepId, step.sharedStepTitle ?? step.action, step.expandedSteps ?? [])
+              : localStepGroup(this.fb, step));
+            if (step.imageId && !step.sharedStepId) {
               this.stepImages.set(index, {
                 id: step.imageId,
                 preview: this.testCaseApi.getStepImageUrl(step.imageId),
@@ -156,13 +156,24 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
   }
 
   addStep(): void {
-    this.steps.push(
-      this.fb.group({
-        action: ['', Validators.required],
-        expectedResult: [''],
-        testData: [''],
-      })
-    );
+    this.steps.push(localStepGroup(this.fb));
+  }
+
+  get hasReferences(): boolean {
+    return (this.steps.value as { sharedStepId: string | null }[]).some((s) => !!s.sharedStepId);
+  }
+
+  /** PRD-030: picks one of the project's shared steps and adds a reference to it at the end. */
+  insertSharedStep(): void {
+    this.dialog.open(SharedStepPickerDialogComponent, { width: '560px', data: { projectId: this.projectId } })
+      .afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((picked: SharedStep | undefined) => {
+        if (picked) {
+          this.steps.push(referenceStepGroup(this.fb, picked.id, picked.title, picked.steps));
+          this.markDirty();
+          this.cdr.detectChanges();
+        }
+      });
   }
 
   openGherkin(): void {
@@ -226,11 +237,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
     });
     this.steps.clear();
     for (const step of preview.steps) {
-      this.steps.push(this.fb.group({
-        action: [step.action, Validators.required],
-        expectedResult: [''],
-        testData: [step.testData ?? ''],
-      }));
+      this.steps.push(localStepGroup(this.fb, { action: step.action, testData: step.testData ?? '' }));
     }
     const notes = [...preview.warnings];
     if (preview.parameterSets.length > 0) {
@@ -239,57 +246,6 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
     this.gherkinNotes = notes;
     this.gherkinText = null;
     this.markDirty();
-  }
-
-  removeStep(index: number): void {
-    this.steps.removeAt(index);
-    this.stepImages.delete(index);
-    const updated = new Map<number, StepImageState>();
-    this.stepImages.forEach((value, key) => {
-      if (key > index) {
-        updated.set(key - 1, value);
-      } else {
-        updated.set(key, value);
-      }
-    });
-    this.stepImages = updated;
-  }
-
-  onImageSelected(index: number, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    if (!input.files?.length) return;
-    const file = input.files[0];
-    const reader = new FileReader();
-    reader.onload = () => {
-      this.stepImages.set(index, {
-        ...this.stepImages.get(index),
-        file,
-        preview: reader.result as string,
-        removed: false,
-      });
-      this.cdr.detectChanges();
-    };
-    reader.readAsDataURL(file);
-    input.value = '';
-  }
-
-  removeImage(index: number): void {
-    const state = this.stepImages.get(index);
-    if (state?.id) {
-      this.stepImages.set(index, { id: state.id, removed: true });
-    } else {
-      this.stepImages.delete(index);
-    }
-  }
-
-  getImagePreview(index: number): string | undefined {
-    const state = this.stepImages.get(index);
-    if (state?.removed) return undefined;
-    return state?.preview;
-  }
-
-  hasImage(index: number): boolean {
-    return !!this.getImagePreview(index);
   }
 
   markDirty(): void {
@@ -306,11 +262,10 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
     this.saving = true;
 
     const labels = splitLabels(this.form.value.labels ?? '');
-    const steps = this.steps.value.map((s: TestStepRequest) => ({
-      action: s.action,
-      expectedResult: s.expectedResult,
-      testData: s.testData || undefined,
-    }));
+    const steps: TestStepRequest[] = this.steps.value.map((s: { action: string; expectedResult: string; testData: string; sharedStepId: string | null }) =>
+      s.sharedStepId
+        ? { sharedStepId: s.sharedStepId }
+        : { action: s.action, expectedResult: s.expectedResult, testData: s.testData || undefined });
 
     const request = {
       title: this.form.value.title!,
@@ -330,7 +285,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
       // An emptied estimate is sent as 0, which the server reads as "clear"; omitted would keep it.
       this.testCaseApi.update(this.projectId, this.testCaseId, { ...request, estimateMinutes: estimate ?? 0 }).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (tc) => {
-          this.syncImages(tc, pendingImages).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+          syncStepImages(this.testCaseApi, tc.steps, pendingImages).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.store.dispatch(TestCaseActions.updateTestCaseSuccess({ testCase: tc }));
             this.saving = false;
             this.cdr.detectChanges();
@@ -345,7 +300,7 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
       const createRequest = { ...request, estimateMinutes: estimate ?? undefined, ...(folderId ? { folderId } : {}) };
       this.testCaseApi.create(this.projectId, createRequest).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
         next: (tc) => {
-          this.syncImages(tc, pendingImages).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
+          syncStepImages(this.testCaseApi, tc.steps, pendingImages).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe(() => {
             this.store.dispatch(TestCaseActions.createTestCaseSuccess({ testCase: tc }));
             this.saving = false;
             this.cdr.detectChanges();
@@ -358,24 +313,6 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
     }
   }
 
-  private syncImages(savedTestCase: TestCase, images: Map<number, StepImageState>): Observable<unknown> {
-    const ops: Observable<unknown>[] = [];
-    const sortedSteps = [...savedTestCase.steps].sort((a, b) => a.orderIndex - b.orderIndex);
-
-    images.forEach((state, index) => {
-      const step = sortedSteps[index];
-      if (!step) return;
-
-      if (state.removed && state.id) {
-        ops.push(this.testCaseApi.deleteStepImage(state.id));
-      }
-      if (state.file && !state.removed) {
-        ops.push(this.testCaseApi.uploadStepImage(step.id, state.file));
-      }
-    });
-
-    return ops.length ? forkJoin(ops) : of(null);
-  }
 }
 
 function splitLabels(labels: string): string[] {

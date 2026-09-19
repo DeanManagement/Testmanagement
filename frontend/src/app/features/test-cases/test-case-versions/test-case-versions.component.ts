@@ -88,6 +88,11 @@ export class TestCaseVersionsComponent implements OnChanges {
     return `/api/projects/${this.projectId}/test-cases/${this.testCaseId}/versions`;
   }
 
+  /** After a change made elsewhere on the page, e.g. converting a shared step (PRD-030). */
+  reload(): void {
+    this.load();
+  }
+
   private load(): void {
     this.loading = true;
     this.http.get<TestCaseVersionSummary[]>(this.baseUrl())
@@ -186,7 +191,8 @@ export class TestCaseVersionsComponent implements OnChanges {
     if (!step) {
       return '';
     }
-    const parts = [step.action];
+    // The shared step a step came from is part of what changed (PRD-030).
+    const parts = step.sharedStepTitle ? [`[${step.sharedStepTitle}]`, step.action] : [step.action];
     if (step.expectedResult) {
       parts.push(`→ ${step.expectedResult}`);
     }

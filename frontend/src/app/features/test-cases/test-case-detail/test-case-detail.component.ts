@@ -10,7 +10,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
 import { TranslateModule } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
-import { take } from 'rxjs/operators';
+import { filter, switchMap, take } from 'rxjs/operators';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectTestCaseById } from '../../../store/test-case/test-case.selectors';
@@ -25,6 +25,7 @@ import { CommentFormComponent } from '../../../shared/components/comment-form/co
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
 import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 import { TestCaseVersionsComponent } from '../test-case-versions/test-case-versions.component';
+import { ExecutedStep, expandSteps, sharedStepHeadingAt } from '../../../shared/utils/shared-step-groups';
 import { TestCaseParametersComponent } from '../test-case-parameters/test-case-parameters.component';
 
 import { EnvironmentResultsComponent } from '../environment-results/environment-results.component';
@@ -83,6 +84,32 @@ export class TestCaseDetailComponent implements OnInit {
   @ViewChild('versionsSection') private versionsSection?: ElementRef<HTMLElement>;
   getStepImageUrl(imageId: string): string {
     return this.testCaseApi.getStepImageUrl(imageId);
+  }
+
+  readonly headingAt = sharedStepHeadingAt;
+  private expandedFor: { testCase: TestCase; steps: ExecutedStep[] } | null = null;
+
+  /** The steps as executed, shared steps in place (PRD-030); kept per case so inputs stay stable. */
+  executedSteps(testCase: TestCase): ExecutedStep[] {
+    if (this.expandedFor?.testCase !== testCase) {
+      this.expandedFor = { testCase, steps: expandSteps(testCase.steps) };
+    }
+    return this.expandedFor.steps;
+  }
+
+  /** The server copies the shared step's steps and images into the case, and writes a version. */
+  convertToLocal(referenceStepId: string): void {
+    this.dialog.open(ConfirmDialogComponent, {
+      data: { titleKey: 'sharedStep.convert', messageKey: 'sharedStep.convertConfirm' } as ConfirmDialogData,
+    }).afterClosed().pipe(
+      filter(Boolean),
+      switchMap(() => this.testCaseApi.inlineSharedStep(this.projectId, this.testCaseId, referenceStepId)),
+      take(1),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe((testCase) => {
+      this.store.dispatch(TestCaseActions.updateTestCaseSuccess({ testCase }));
+      this.versions?.reload();
+    });
   }
 
   comments$: Observable<Comment[]> = of([]);
