@@ -46,6 +46,42 @@
           </mat-form-field>
         }
 
+        <mat-expansion-panel class="gate-panel" [expanded]="gateExpanded" formGroupName="gate"
+                             data-test-id="test-plan-gate-panel">
+          <mat-expansion-panel-header>
+            <mat-panel-title>{{ 'readiness.gate.title' | translate }}</mat-panel-title>
+          </mat-expansion-panel-header>
+          <p class="gate-hint">{{ 'readiness.gate.hint' | translate }}</p>
+          <div class="gate-grid">
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'readiness.gate.minPassRate' | translate }}</mat-label>
+              <input matInput type="number" min="0" max="100" step="0.01" formControlName="minPassRate"
+                     data-test-id="test-plan-gate-pass-rate" />
+              <span matTextSuffix>%</span>
+              <mat-error>{{ 'readiness.gate.percentRange' | translate }}</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'readiness.gate.maxBlockerBugs' | translate }}</mat-label>
+              <input matInput type="number" min="0" step="1" formControlName="maxBlockerBugs"
+                     data-test-id="test-plan-gate-blocker-bugs" />
+              <mat-error>{{ 'readiness.gate.notNegative' | translate }}</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'readiness.gate.minCoverage' | translate }}</mat-label>
+              <input matInput type="number" min="0" max="100" step="0.01" formControlName="minCoverage"
+                     data-test-id="test-plan-gate-coverage" />
+              <span matTextSuffix>%</span>
+              <mat-error>{{ 'readiness.gate.percentRange' | translate }}</mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>{{ 'readiness.gate.maxFlaky' | translate }}</mat-label>
+              <input matInput type="number" min="0" step="1" formControlName="maxFlaky"
+                     data-test-id="test-plan-gate-flaky" />
+              <mat-error>{{ 'readiness.gate.notNegative' | translate }}</mat-error>
+            </mat-form-field>
+          </div>
+        </mat-expansion-panel>
+
         <div class="actions">
           <a mat-button [routerLink]="['/projects', projectId, 'test-plans']" data-test-id="test-plan-form-cancel">{{ 'common.cancel' | translate }}</a>
           <button mat-flat-button type="submit" [disabled]="form.invalid || saving" data-test-id="test-plan-form-submit">

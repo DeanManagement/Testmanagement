@@ -11,7 +11,7 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Observable, of } from 'rxjs';
-import { take } from 'rxjs/operators';
+import { distinctUntilChanged, filter, map, take } from 'rxjs/operators';
 import {
   Chart,
   DoughnutController,
@@ -44,6 +44,8 @@ Chart.register(
 import { EnvironmentRollup, runsByEnvironment } from './runs-by-environment';
 import { burnDownDates } from './burn-down-dates';
 import { BurnDown } from '../../../shared/models/effort.model';
+import { Readiness } from '../../../shared/models/readiness.model';
+import { ReleaseReadinessCardComponent } from './release-readiness-card.component';
 import { DurationPipe } from '../../../shared/pipes/duration.pipe';
 import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 
@@ -51,6 +53,7 @@ import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
   selector: 'app-test-plan-detail',
   standalone: true,
   imports: [
+    ReleaseReadinessCardComponent,
     DurationPipe,
     LocalizedDatePipe,
     MatSlideToggleModule,
@@ -89,6 +92,7 @@ export class TestPlanDetailComponent implements OnInit {
   testPlan$: Observable<TestPlan | undefined> = of(undefined);
   summary: TestPlanSummary | null = null;
   burnDown: BurnDown | null = null;
+  readiness: Readiness | null = null;
   runColumns = ['name', 'environment', 'status', 'total', 'passed', 'failed'];
   environmentColumns = ['environment', 'runs', 'total', 'passed', 'failed', 'passRate'];
   groupByEnvironment = false;
@@ -108,6 +112,14 @@ export class TestPlanDetailComponent implements OnInit {
       this.testPlan$ = this.store.select(selectTestPlanById(this.planId));
       this.loadSummary();
       this.loadBurnDown();
+      // The plan form saves and navigates here without waiting, so a readiness fetched on arrival
+      // can predate the new gate. Fetching whenever the stored plan changes also covers that save.
+      this.testPlan$.pipe(
+        map((plan) => plan?.updatedAt),
+        filter((updatedAt): updatedAt is string => !!updatedAt),
+        distinctUntilChanged(),
+        takeUntilDestroyed(this.destroyRef),
+      ).subscribe(() => this.loadReadiness());
     }
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.summary) {
@@ -132,6 +144,14 @@ export class TestPlanDetailComponent implements OnInit {
       this.cdr.detectChanges();
       this.renderCharts();
     });
+  }
+
+  private loadReadiness(): void {
+    this.testPlanApi.getReadiness(this.projectId, this.planId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((readiness) => {
+        this.readiness = readiness;
+        this.cdr.detectChanges();
+      });
   }
 
   private loadBurnDown(): void {

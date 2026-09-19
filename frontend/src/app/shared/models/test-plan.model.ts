@@ -1,3 +1,4 @@
+import { ReleaseGate } from './readiness.model';
 import { EffortSummary } from './effort.model';
 
 export type TestPlanStatus = 'OPEN' | 'IN_PROGRESS' | 'COMPLETED' | 'CANCELLED';
@@ -15,6 +16,8 @@ export interface TestPlan {
   updatedAt: string;
   createdBy?: string;
   updatedBy?: string;
+  /** PRD-037: always present; all-null thresholds mean no criteria. */
+  gate: ReleaseGate;
 }
 
 export interface CreateTestPlanRequest {
@@ -22,6 +25,7 @@ export interface CreateTestPlanRequest {
   description?: string;
   targetDate?: string;
   assigneeId?: string;
+  gate?: ReleaseGate;
 }
 
 export interface UpdateTestPlanRequest {
@@ -30,6 +34,8 @@ export interface UpdateTestPlanRequest {
   status?: TestPlanStatus;
   targetDate?: string;
   assigneeId?: string;
+  /** Omitted leaves the gate as it is; a null threshold switches that criterion off. */
+  gate?: ReleaseGate;
 }
 
 export interface TestPlanRunSummary {

@@ -13,6 +13,7 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { TranslateModule } from '@ngx-translate/core';
 import { TestPlanActions } from '../../../store/test-plan/test-plan.actions';
 import { selectTestPlanById } from '../../../store/test-plan/test-plan.selectors';
@@ -21,6 +22,7 @@ import { ProjectMemberApiService } from '../../../core/services/project-member-a
 import { ProjectMember } from '../../../shared/models/project-member.model';
 import { HasUnsavedChanges } from '../../../core/guards/unsaved-changes.guard';
 import { FieldErrorComponent } from '../../../shared/components/field-error/field-error.component';
+import { hasCriteria, toGate } from './release-gate-form';
 
 @Component({
   selector: 'app-test-plan-form',
@@ -38,6 +40,7 @@ import { FieldErrorComponent } from '../../../shared/components/field-error/fiel
     MatNativeDateModule,
     MatIconModule,
     MatProgressSpinnerModule,
+    MatExpansionModule,
     TranslateModule,
   ],
   templateUrl: './test-plan-form.component.html',
@@ -59,6 +62,8 @@ export class TestPlanFormComponent implements OnInit, HasUnsavedChanges {
   dirty = false;
   statuses: TestPlanStatus[] = ['OPEN', 'IN_PROGRESS', 'COMPLETED', 'CANCELLED'];
   members: ProjectMember[] = [];
+  /** The gate section starts open when the plan already has one, so nobody misses it's on. */
+  gateExpanded = false;
 
   form = this.fb.group({
     name: ['', [Validators.required, Validators.maxLength(255)]],
@@ -66,6 +71,13 @@ export class TestPlanFormComponent implements OnInit, HasUnsavedChanges {
     targetDate: [null as Date | null],
     status: [null as TestPlanStatus | null],
     assigneeId: [''],
+    // PRD-037: each empty means that criterion is off.
+    gate: this.fb.group({
+      minPassRate: [null as number | null, [Validators.min(0), Validators.max(100)]],
+      maxBlockerBugs: [null as number | null, [Validators.min(0)]],
+      minCoverage: [null as number | null, [Validators.min(0), Validators.max(100)]],
+      maxFlaky: [null as number | null, [Validators.min(0)]],
+    }),
   });
 
   ngOnInit(): void {
@@ -90,7 +102,9 @@ export class TestPlanFormComponent implements OnInit, HasUnsavedChanges {
             targetDate: plan.targetDate ? new Date(plan.targetDate) : null,
             status: plan.status,
             assigneeId: plan.assigneeId || '',
+            gate: plan.gate,
           });
+          this.gateExpanded = hasCriteria(plan.gate);
           this.cdr.detectChanges();
         }
       });
@@ -117,6 +131,7 @@ export class TestPlanFormComponent implements OnInit, HasUnsavedChanges {
             status: this.form.value.status || undefined,
             targetDate,
             assigneeId: this.form.value.assigneeId || undefined,
+            gate: toGate(this.form.getRawValue().gate),
           },
         })
       );
@@ -130,6 +145,7 @@ export class TestPlanFormComponent implements OnInit, HasUnsavedChanges {
             description: this.form.value.description || undefined,
             targetDate,
             assigneeId: this.form.value.assigneeId || undefined,
+            gate: toGate(this.form.getRawValue().gate),
           },
         })
       );

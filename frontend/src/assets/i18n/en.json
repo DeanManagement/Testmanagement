@@ -1238,5 +1238,41 @@
       "historyFrom": "Results executed before execution times were recorded are not included; complete from {{date}}.",
       "noEstimates": "None of this plan's test cases has an estimate yet, so there is nothing to burn down."
     }
+  },
+  "readiness": {
+    "title": "Release readiness",
+    "criterion": "Criterion",
+    "actual": "Actual",
+    "threshold": "Threshold",
+    "outcomeColumn": "Outcome",
+    "verdict": {
+      "GO": "GO",
+      "NO_GO": "NO GO",
+      "NO_CRITERIA": "No criteria"
+    },
+    "outcome": {
+      "PASS": "Pass",
+      "FAIL": "Fail",
+      "NOT_APPLICABLE": "Not applicable"
+    },
+    "name": {
+      "PASS_RATE": "Effective pass rate",
+      "BLOCKER_BUGS": "Open critical bugs",
+      "COVERAGE": "Requirement coverage",
+      "FLAKY_TESTS": "Flaky tests"
+    },
+    "effectiveHint": "Each test case's latest result across this plan's runs, so a failure retested and passed counts once, as a pass. Pending counts as not passed. The plan's pass rate above counts every result, so the two can differ. If a case ran in several environments, the latest run wins.",
+    "noCriteria": "This plan has no release gate. Edit the plan to set thresholds.",
+    "counts": "Latest results: {{passed}} passed, {{failed}} failed, {{blocked}} blocked, {{skipped}} skipped, {{pending}} pending, of {{considered}}.",
+    "gate": {
+      "title": "Release gate",
+      "hint": "Optional. The plan's readiness is GO when every threshold you set is met; leave a field empty to not use it. CI can check it through the API.",
+      "minPassRate": "Minimum effective pass rate",
+      "maxBlockerBugs": "Maximum open critical bugs",
+      "minCoverage": "Minimum requirement coverage",
+      "maxFlaky": "Maximum flaky tests",
+      "percentRange": "Between 0 and 100",
+      "notNegative": "Must not be negative"
+    }
   }
 }

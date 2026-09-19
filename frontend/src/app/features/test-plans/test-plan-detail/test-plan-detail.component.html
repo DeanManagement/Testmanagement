@@ -75,6 +75,10 @@
         </div>
       </div>
 
+      @if (readiness) {
+        <app-release-readiness-card [readiness]="readiness" [projectId]="projectId" />
+      }
+
       <p class="plan-effort" data-test-id="test-plan-effort">
         <mat-icon class="meta-icon" aria-hidden="true">schedule</mat-icon>
         @if (summary.effort.estimatedMinutes > 0) {

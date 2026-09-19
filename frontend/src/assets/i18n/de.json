@@ -1238,5 +1238,41 @@
       "historyFrom": "Ergebnisse, die vor der Erfassung von Ausführungszeiten ausgeführt wurden, fehlen; vollständig ab {{date}}.",
       "noEstimates": "Noch keiner der Testfälle dieses Plans hat eine Schätzung, daher gibt es nichts abzubauen."
     }
+  },
+  "readiness": {
+    "title": "Release-Bereitschaft",
+    "criterion": "Kriterium",
+    "actual": "Ist",
+    "threshold": "Schwelle",
+    "outcomeColumn": "Ergebnis",
+    "verdict": {
+      "GO": "GO",
+      "NO_GO": "NO GO",
+      "NO_CRITERIA": "Keine Kriterien"
+    },
+    "outcome": {
+      "PASS": "Erfüllt",
+      "FAIL": "Nicht erfüllt",
+      "NOT_APPLICABLE": "Nicht anwendbar"
+    },
+    "name": {
+      "PASS_RATE": "Effektive Erfolgsquote",
+      "BLOCKER_BUGS": "Offene kritische Fehler",
+      "COVERAGE": "Anforderungsabdeckung",
+      "FLAKY_TESTS": "Instabile Tests"
+    },
+    "effectiveHint": "Das jeweils letzte Ergebnis jedes Testfalls über die Läufe dieses Plans: Ein Fehlschlag, der erneut getestet und bestanden wurde, zählt einmal, als bestanden. Ausstehende zählen als nicht bestanden. Die Erfolgsquote des Plans oben zählt jedes Ergebnis, daher können beide abweichen. Lief ein Fall in mehreren Umgebungen, gilt der letzte Lauf.",
+    "noCriteria": "Dieser Plan hat kein Release-Gate. Bearbeiten Sie den Plan, um Schwellen festzulegen.",
+    "counts": "Letzte Ergebnisse: {{passed}} bestanden, {{failed}} fehlgeschlagen, {{blocked}} blockiert, {{skipped}} übersprungen, {{pending}} ausstehend, von {{considered}}.",
+    "gate": {
+      "title": "Release-Gate",
+      "hint": "Optional. Die Bereitschaft des Plans ist GO, wenn jede gesetzte Schwelle erfüllt ist; ein leeres Feld wird nicht verwendet. CI kann sie über die API prüfen.",
+      "minPassRate": "Minimale effektive Erfolgsquote",
+      "maxBlockerBugs": "Maximal offene kritische Fehler",
+      "minCoverage": "Minimale Anforderungsabdeckung",
+      "maxFlaky": "Maximal instabile Tests",
+      "percentRange": "Zwischen 0 und 100",
+      "notNegative": "Darf nicht negativ sein"
+    }
   }
 }
