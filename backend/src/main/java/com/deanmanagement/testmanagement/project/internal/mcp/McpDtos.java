@@ -106,7 +106,11 @@ final class McpDtos {
                           @Nullable String preconditions, TestCaseStatus status, Priority priority,
                           @Nullable Set<String> labels, @Nullable UUID folderId,
                           List<Step> steps, @Nullable Map<String, Object> customFields,
-                          @Nullable Integer estimateMinutes, @Nullable Long medianActualMs) {}
+                          @Nullable Integer estimateMinutes, @Nullable Long medianActualMs,
+                          List<Attachment> attachments) {}
+
+    /** Metadata only (PRD-044 §3.8): the agent can tell a human the file exists, not fetch it. */
+    record Attachment(String fileName, String contentType, long sizeBytes) {}
 
     /** A custom field definition (PRD-035); agents write values keyed by {@code name}. */
     @JsonInclude(JsonInclude.Include.NON_NULL)

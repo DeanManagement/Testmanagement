@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.dto.testCase;
 
 import com.deanmanagement.testmanagement.project.internal.dto.TestStepResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
@@ -15,11 +16,12 @@ public abstract class TestCaseMapper {
 
     @Mapping(target = "folderId", expression = "java(testCase.getFolder() != null ? testCase.getFolder().getId() : null)")
     @Mapping(target = "customFields", expression = "java(CustomFieldValueMaps.toMap(testCase.getCustomFieldValues()))")
-    public abstract TestCaseResponse toDetailResponse(TestCase testCase, Long medianActualMs);
+    public abstract TestCaseResponse toDetailResponse(TestCase testCase, Long medianActualMs,
+                                                      List<AttachmentSummary> attachments);
 
-    /** Without the median, which costs a query per case and is only shown on the detail page. */
+    /** Without the median or attachments, which cost queries and are only read where they are shown. */
     public TestCaseResponse toResponse(TestCase testCase) {
-        return toDetailResponse(testCase, null);
+        return toDetailResponse(testCase, null, null);
     }
 
     @Mapping(target = "imageId", expression = "java(step.getImage() != null ? step.getImage().getId() : null)")

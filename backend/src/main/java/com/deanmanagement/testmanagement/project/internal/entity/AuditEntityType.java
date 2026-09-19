@@ -13,5 +13,6 @@ public enum AuditEntityType {
     REQUIREMENT,
     ENVIRONMENT,
     EXPLORATORY_SESSION,
-    SHARED_STEP
+    SHARED_STEP,
+    ATTACHMENT
 }

@@ -116,7 +116,9 @@ public class TestCaseTools {
             name = "get_test_case",
             description = """
                     One test case in full, including its ordered steps, its estimateMinutes and
-                    medianActualMs (median measured duration of its last 5 executions). Steps are
+                    medianActualMs (median measured duration of its last 5 executions), and the
+                    names of files attached to it (not their content: ask the human to open them in
+                    the app when a step needs one). Steps are
                     as executed: a shared step's steps appear in place, each with its sharedStepId
                     and sharedStepTitle. Accepts either the case key
                     (for example PROJ-12, which is what humans quote) or its UUID.
@@ -134,7 +136,10 @@ public class TestCaseTools {
                 response.preconditions(), response.status(), response.priority(), response.labels(),
                 response.folderId(),
                 response.steps() == null ? List.of() : executedSteps(response.steps()),
-                response.customFields(), response.estimateMinutes(), response.medianActualMs());
+                response.customFields(), response.estimateMinutes(), response.medianActualMs(),
+                response.attachments().stream()
+                        .map(a -> new McpDtos.Attachment(a.fileName(), a.contentType(), a.sizeBytes()))
+                        .toList());
     }
 
     /** Shared steps expanded, each of their steps tagged with the shared step (PRD-030). */

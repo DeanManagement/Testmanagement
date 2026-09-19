@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
 import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
 import com.deanmanagement.testmanagement.project.internal.dto.report.TestRunReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuiteReportResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
@@ -14,7 +15,11 @@ import java.io.ByteArrayOutputStream;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +28,7 @@ public class PdfReportService {
     private final TestRunService testRunService;
     private final TestSuiteService testSuiteService;
     private final ProjectRepository projectRepository;
+    private final AttachmentService attachmentService;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter
             .ofPattern("yyyy-MM-dd HH:mm")
@@ -33,7 +39,8 @@ public class PdfReportService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
         TestRunReportResponse report = testRunService.getReport(projectId, testRunId);
 
-        String html = buildTestRunHtml(project.getName(), report);
+        String html = buildTestRunHtml(project.getName(), report,
+                attachmentNames(report.results().stream().map(TestResultResponse::testCaseId).toList()));
         return renderPdf(html);
     }
 
@@ -42,11 +49,27 @@ public class PdfReportService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
         TestSuiteReportResponse report = testSuiteService.getReport(projectId, suiteId);
 
-        String html = buildTestSuiteHtml(project.getName(), report);
+        String html = buildTestSuiteHtml(project.getName(), report, attachmentNames(report.results().stream()
+                .map(TestSuiteReportResponse.TestCaseLatestResult::testCaseId).toList()));
         return renderPdf(html);
     }
 
-    private String buildTestRunHtml(String projectName, TestRunReportResponse report) {
+    /** File names per case, never bytes (PRD-044 §3.6): the report says a file exists, not what is in it. */
+    private Map<UUID, List<AttachmentSummary>> attachmentNames(List<UUID> testCaseIds) {
+        return attachmentService.summariesByTestCase(testCaseIds.stream().filter(Objects::nonNull).toList());
+    }
+
+    private static void appendAttachments(StringBuilder sb, List<AttachmentSummary> attachments) {
+        if (attachments == null || attachments.isEmpty()) {
+            return;
+        }
+        sb.append("<br/><span class=\"attachments\">Attachments: ")
+                .append(escapeHtml(attachments.stream().map(AttachmentSummary::fileName).collect(Collectors.joining(", "))))
+                .append("</span>");
+    }
+
+    private String buildTestRunHtml(String projectName, TestRunReportResponse report,
+                                    Map<UUID, List<AttachmentSummary>> attachments) {
         StringBuilder sb = new StringBuilder();
         sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         sb.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" ");
@@ -96,6 +119,7 @@ public class PdfReportService {
                 sb.append("<br/><span class=\"unapproved\">Executed unapproved wording (v")
                         .append(result.executedVersion()).append(")</span>");
             }
+            appendAttachments(sb, attachments.get(result.testCaseId()));
             sb.append("</td>");
             sb.append("<td class=\"").append(result.status().name().toLowerCase()).append("\">");
             sb.append(result.status()).append("</td>");
@@ -109,7 +133,8 @@ public class PdfReportService {
         return sb.toString();
     }
 
-    private String buildTestSuiteHtml(String projectName, TestSuiteReportResponse report) {
+    private String buildTestSuiteHtml(String projectName, TestSuiteReportResponse report,
+                                      Map<UUID, List<AttachmentSummary>> attachments) {
         StringBuilder sb = new StringBuilder();
         sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
         sb.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" ");
@@ -148,7 +173,9 @@ public class PdfReportService {
         sb.append("</tr>\n");
         for (TestSuiteReportResponse.TestCaseLatestResult result : report.results()) {
             sb.append("<tr>");
-            sb.append("<td>").append(escapeHtml(result.testCaseTitle())).append("</td>");
+            sb.append("<td>").append(escapeHtml(result.testCaseTitle()));
+            appendAttachments(sb, attachments.get(result.testCaseId()));
+            sb.append("</td>");
             if (result.status() != null) {
                 sb.append("<td class=\"").append(result.status().name().toLowerCase()).append("\">");
                 sb.append(result.status()).append("</td>");
@@ -252,5 +279,6 @@ public class PdfReportService {
             .skipped { color: #9e9e9e; font-weight: bold; }
             .pending { color: #2196f3; font-weight: bold; }
             .unapproved { color: #b45309; font-size: 9px; }
+            .attachments { color: #555; font-size: 9px; }
             """;
 }

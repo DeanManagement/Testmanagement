@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkDeleteRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkOperationResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkStatusRequest;
@@ -56,6 +57,7 @@ public class TestCaseService {
     private final TestCaseReviewService reviewService;
     private final CustomFieldValueWriter customFieldWriter;
     private final SharedStepService sharedStepService;
+    private final AttachmentService attachmentService;
 
     public Page<TestCaseResponse> findByProject(UUID projectId, TestCaseListFilter filter, Pageable pageable) {
         Set<UUID> folderIds = null;
@@ -64,15 +66,18 @@ public class TestCaseService {
                     ? folderRepository.findSubtreeIds(projectId, filter.folderId())
                     : Set.of(filter.folderId());
         }
-        return testCaseRepository.findAll(TestCaseSpecifications.build(projectId, filter, folderIds), pageable)
-                .map(testCaseMapper::toResponse);
+        Page<TestCase> page = testCaseRepository.findAll(TestCaseSpecifications.build(projectId, filter, folderIds), pageable);
+        Map<UUID, List<AttachmentSummary>> attachments =
+                attachmentService.summariesByTestCase(page.map(TestCase::getId).getContent());
+        return page.map(tc -> testCaseMapper.toDetailResponse(tc, null, attachments.getOrDefault(tc.getId(), List.of())));
     }
 
     public TestCaseResponse findById(UUID projectId, UUID id) {
         TestCase tc = testCaseRepository.findByIdWithSteps(id)
                 .filter(t -> t.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestCase", id));
-        return testCaseMapper.toDetailResponse(tc, medianActualMs(id));
+        return testCaseMapper.toDetailResponse(tc, medianActualMs(id),
+                attachmentService.summariesByTestCase(List.of(id)).getOrDefault(id, List.of()));
     }
 
     /**

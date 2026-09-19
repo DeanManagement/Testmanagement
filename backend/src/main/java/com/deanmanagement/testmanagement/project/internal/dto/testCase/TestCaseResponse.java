@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.dto.testCase;
 
 import com.deanmanagement.testmanagement.project.internal.dto.TestStepResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 
@@ -35,6 +36,8 @@ public record TestCaseResponse(
         /* PRD-036 */
         Integer estimateMinutes,
         /* PRD-036: median measured duration of the last 5 executions; on the detail response only. */
-        Long medianActualMs
+        Long medianActualMs,
+        /* PRD-044: metadata only, never bytes; null on write responses, where nothing reads it. */
+        List<AttachmentSummary> attachments
 ) {
 }

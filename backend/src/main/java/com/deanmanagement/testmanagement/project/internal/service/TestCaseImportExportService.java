@@ -2,6 +2,7 @@ package com.deanmanagement.testmanagement.project.internal.service;
 
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
+import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
 import com.deanmanagement.testmanagement.project.internal.dto.TestStepRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.io.ImportResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.io.ImportResultResponse.ImportError;
@@ -9,6 +10,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.testCase.CreateTes
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldResponse;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
@@ -72,12 +74,17 @@ public class TestCaseImportExportService {
     private final TestCaseFolderRepository folderRepository;
     private final GherkinImporter gherkinImporter;
     private final SharedStepRepository sharedStepRepository;
+    private final AttachmentService attachmentService;
 
     // ---- Export ----
 
     public byte[] exportJson(UUID projectId) {
-        List<TestCaseResponse> cases = testCaseRepository.findByProjectIdWithSteps(projectId).stream()
-                .map(testCaseMapper::toResponse)
+        List<TestCase> entities = testCaseRepository.findByProjectIdWithSteps(projectId);
+        // Metadata only (PRD-044 §3.6): an export stays a readable text file, and import ignores it.
+        Map<UUID, List<AttachmentSummary>> attachments =
+                attachmentService.summariesByTestCase(entities.stream().map(TestCase::getId).toList());
+        List<TestCaseResponse> cases = entities.stream()
+                .map(tc -> testCaseMapper.toDetailResponse(tc, null, attachments.getOrDefault(tc.getId(), List.of())))
                 .toList();
         return objectMapper.writeValueAsString(cases).getBytes(StandardCharsets.UTF_8);
     }
@@ -213,6 +220,11 @@ public class TestCaseImportExportService {
                     request = withStatus(request, TestCaseStatus.IN_REVIEW);
                     warnings.add(new ImportError(row.rowNumber(), "status ACTIVE imported as IN_REVIEW: this project requires review"));
                 }
+                if (row.attachmentCount() > 0) {
+                    // An export carries attachment metadata, not bytes (PRD-044 §3.6); say so rather than
+                    // let anyone believe the files came across.
+                    warnings.add(new ImportError(row.rowNumber(), row.attachmentCount() + " attachment(s) not imported"));
+                }
                 // Checked here rather than left to create(), so a dry run reports the same errors and a
                 // bad row fails before it reaches the write transaction.
                 customFieldWriter.validate(projectId, CustomFieldEntityType.TEST_CASE, request.customFields());
@@ -232,7 +244,7 @@ public class TestCaseImportExportService {
     private record RowData(int rowNumber, String title, String description, String preconditions,
                            String priority, String status, List<String> labels,
                            List<TestStepRequest> steps, Map<String, Object> customFields,
-                           String estimateMinutes, List<String> unknownSharedSteps) {
+                           String estimateMinutes, List<String> unknownSharedSteps, int attachmentCount) {
     }
 
     /** Shared steps are referenced by title in a file (PRD-030): ids differ between projects. */
@@ -314,7 +326,8 @@ public class TestCaseImportExportService {
                         parseSteps(get(record, "steps")),
                         customFieldCells(record, parser.getHeaderNames()),
                         get(record, "estimateMinutes"),
-                        List.of()
+                        List.of(),
+                        0
                 ));
             }
         } catch (IOException e) {
@@ -401,7 +414,8 @@ public class TestCaseImportExportService {
             }
             rows.add(new RowData(i + 1, item.title(), item.description(), item.preconditions(),
                     item.priority(), item.status(), item.labels(), steps, item.customFields(),
-                    item.estimateMinutes() == null ? null : item.estimateMinutes().toString(), unknown));
+                    item.estimateMinutes() == null ? null : item.estimateMinutes().toString(), unknown,
+                    item.attachments() == null ? 0 : item.attachments().size()));
         }
         return rows;
     }
@@ -409,7 +423,7 @@ public class TestCaseImportExportService {
     /** JSON import shape; server-managed fields (id, key, timestamps) are ignored on read. */
     private record JsonItem(String title, String description, String preconditions, String priority,
                             String status, List<String> labels, List<Step> steps,
-                            Map<String, Object> customFields, Object estimateMinutes) {
+                            Map<String, Object> customFields, Object estimateMinutes, List<Object> attachments) {
         /** {@code sharedStepTitle} set: a reference to that shared step of the project (PRD-030). */
         private record Step(String action, String expectedResult, String testData, String sharedStepTitle) {
         }

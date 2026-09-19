@@ -113,6 +113,11 @@ app:
     # start and printed ONCE to the log; the seeded admin must change it on first login.
     password: ${ADMIN_PASSWORD:}
     display-name: ${ADMIN_DISPLAY_NAME:Administrator}
+  attachments:
+    # PRD-044: files on test cases live in the database and in every backup, so both are bounded.
+    # Per file, spring.servlet.multipart.max-file-size applies. 0 = no project quota.
+    max-per-case: ${APP_ATTACHMENTS_MAX_PER_CASE:20}
+    max-project-bytes: ${APP_ATTACHMENTS_MAX_PROJECT_BYTES:524288000}
   search:
     # Postgres full-text (tsvector) search. Disable for non-Postgres deployments to use LIKE.
     full-text: ${SEARCH_FULL_TEXT:true}
