@@ -1307,16 +1307,54 @@ schedule.
 
 ### Backups
 
-Everything lives in PostgreSQL, including uploaded screenshots and Allure reports. The
-application container holds no state and can be recreated freely.
+Everything lives in PostgreSQL, including uploaded screenshots, step images and Allure reports. The
+application container holds no state and can be recreated freely, so a database dump is a complete
+backup. Two scripts in the repository take and restore one; run them from the checkout, next to
+`docker-compose.yml` and your `.env`. Neither needs PostgreSQL installed on the host.
+
+**Taking a backup** — the database must be running; the app may keep running:
 
 ```bash
-docker compose exec testmanagement-db \
-  pg_dump -U testmanagement testmanagement | gzip > backup-$(date +%F).sql.gz
+./scripts/backup.sh                 # into ./backups
+./scripts/backup.sh /srv/tm-backups # or anywhere else
 ```
 
-Back up your `.env` separately and just as carefully. Losing `APP_ENCRYPTION_KEY` means re-entering
-every stored tracker token and OIDC secret; losing `JWT_SECRET` signs everyone out.
+Each backup is one file, `testmanagement-<date and time, UTC>-V<schema>.dump`. It only gets that name
+once the dump has finished, so a failed or interrupted backup never leaves a file that looks usable.
+
+**Back up your `.env` too, separately and just as carefully**: it is not in the dump. Losing
+`APP_ENCRYPTION_KEY` means re-entering every stored issue-tracker token, build-server token and OIDC
+secret; losing `JWT_SECRET` signs everyone out.
+
+**Scheduling** — the script is cron-friendly: it prints only on success and exits non-zero on
+failure. For a nightly backup that keeps two weeks:
+
+```cron
+30 2 * * *  cd /opt/testmanagement && ./scripts/backup.sh /srv/tm-backups && find /srv/tm-backups -name '*.dump' -mtime +14 -delete
+```
+
+Copying the backups off the machine is up to your usual tooling.
+
+**Restoring** — a restore replaces the whole instance, every project. It only goes into an **empty**
+database, and refuses otherwise rather than mixing old and new data:
+
+```bash
+docker compose stop testmanagement           # the app must not be running
+docker compose down -v                       # DELETES the current database volume
+docker compose up -d testmanagement-db       # a fresh, empty database
+./scripts/restore.sh backups/testmanagement-20260919T020000Z-V61.dump
+docker compose up -d                         # start the app
+```
+
+`restore.sh` checks, before writing anything, that the app is stopped, that the database is empty,
+and that the backup is not from a **newer** version of the app than this checkout (reading the
+version from the backup itself, not from its file name). A backup from an older version is fine: the
+app upgrades it on start. The restore runs in one transaction, so a failure leaves the database
+empty rather than half-filled.
+
+Restoring onto a machine with a different `APP_ENCRYPTION_KEY` works, but stored tracker,
+build-server and OIDC secrets can't be decrypted; the app says so where they are used, and you
+re-enter them.
 
 Note that PostgreSQL only applies its password when the data volume is first created. Changing it
 later means changing it inside the database too, not just in `.env`.
@@ -1324,12 +1362,14 @@ later means changing it inside the database too, not just in `.env`.
 ### Upgrading
 
 ```bash
+./scripts/backup.sh
 git pull
 docker compose up --build -d
 ```
 
-Flyway applies database migrations automatically at startup. Take a backup first — migrations are
-not reversible.
+Flyway applies database migrations automatically at startup. Migrations are not reversible, so take
+a backup first: if an upgrade goes wrong, check out the previous version and
+[restore](#backups) that backup.
 
 ### Health
 

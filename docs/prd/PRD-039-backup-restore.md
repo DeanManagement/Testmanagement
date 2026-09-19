@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Phase A implemented 2026-09-19 — see §8 · Phase B deferred until driven |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P2 for Phase A (cheap, closes a real self-hosting gap) · P3 for Phase B (driver-dependent) |
@@ -261,10 +261,10 @@ None. Archive transfer is an operator action, not an agent action.
 ## 7. Acceptance Criteria
 
 **Phase A**
-- [ ] `scripts/backup.sh` produces a custom-format dump named with timestamp and schema version, atomically.
-- [ ] `scripts/restore.sh` refuses non-empty targets, dumps newer than the checkout, and a running app container.
-- [ ] A backup → wipe → restore → start cycle serves previously stored cases and screenshots.
-- [ ] USER_MANUAL documents backup, restore, cron scheduling and the `.env` requirement.
+- [x] `scripts/backup.sh` produces a custom-format dump named with timestamp and schema version, atomically.
+- [x] `scripts/restore.sh` refuses non-empty targets, dumps newer than the checkout, and a running app container.
+- [x] A backup → wipe → restore → start cycle serves previously stored cases and screenshots.
+- [x] USER_MANUAL documents backup, restore, cron scheduling and the `.env` requirement.
 
 **Phase B (when driven)**
 - [ ] Project admins can download a streamed project archive with a versioned manifest.
@@ -274,3 +274,36 @@ None. Archive transfer is an operator action, not an agent action.
 - [ ] Import emits no webhooks, notifications, snapshots or per-entity audit noise.
 - [ ] A guard test fails when a new project-scoped table is neither exported nor explicitly excluded.
 - [ ] Round-trip, RBAC, format-version and streaming tests pass.
+
+## 8. As Built (2026-09-19)
+
+**Phase A is built; Phase B is deferred**, as §1 recommends: no migration, split or archiving request
+has come up, and every future project-scoped table would have to join the archive.
+
+Phase A as specified, with these differences:
+
+- **The version check reads the dump, not its name.** `restore.sh` extracts the dump's own
+  `flyway_schema_history` rows (`pg_restore --data-only --table=flyway_schema_history`) and takes the
+  highest successful version before writing anything, instead of trusting the file name and
+  re-checking after the restore has committed. A post-restore check would come too late: Flyway's
+  default `ignoreMigrationPatterns` is `*:future`, so an app started on a too-new database would not
+  stop itself. A renamed file therefore cannot lie.
+- **Bash rather than POSIX `sh`**, like `dev.sh`: `pipefail` is what makes a failing `pg_dump` in a
+  pipe fail the script. Written for macOS's bash 3.2.
+- **`backup.sh` refuses a database the app has never started on** (no migration history), rather
+  than producing a dump with no version.
+- **`restore.sh` also refuses an unreachable database**, and a missing or empty file.
+- `/backups/` and `*.dump` are ignored by git.
+
+Tests: `scripts/tests/backup-restore.test.sh` (10, against a stub `docker`: naming and content, no
+partial file after a failed dump, each refusal, older and equal versions accepted, failed migrations
+in the history ignored). There is no CI with Docker, so the round trip was run once by hand against a
+throwaway compose project, with `COMPOSE_FILE` adding an override to move the published port:
+backup refused before the first app start → app started (V1–V61) → case with a step and a 4 KB step
+image created → `backup.sh` → restore over the live database refused → `down -v` → `restore.sh` →
+app started ("schema up to date", `ddl-auto=validate`) → case served and the image's SHA-256
+identical. A dump carrying a forged V999 history row, renamed to claim V61, was refused before writing
+(0 tables afterwards).
+
+To repeat the round trip: the same steps with `COMPOSE_PROJECT_NAME` set to a throwaway name, so the
+real volume is never touched.
