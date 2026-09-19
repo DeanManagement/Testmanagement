@@ -158,8 +158,8 @@ enforced only in the frontend (041); comments on a deleted test case are never c
 From the 49 reports the test team filed on the test instance (v2.0.0) on 2026-09-16/17. 28 of them
 are change requests filed as bugs; each PRD lists the reports it resolves by id. The other 21 are
 bugs: 5 are already fixed on `main` (language persistence `95dad30`, add-step icon `0d73ea6`, deep-link
-run refresh `f5cc79f`, run-form case picker `d166e85`, import 500 `16790c6`) and 16 remain for fixing,
-not for PRDs.
+run refresh `f5cc79f`, run-form case picker `d166e85`, import 500 `16790c6`); the other 16 were fixed
+on 2026-09-19 (`01d7da0` to `a71a07b`) and need a deploy to reach the test instance.
 
 | PRD | Title | Priority | Size | Status |
 |---|---|---|---|---|
