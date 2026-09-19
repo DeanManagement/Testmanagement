@@ -16,7 +16,7 @@
             },
             {
               "type": "p",
-              "text": "Your landing page is the dashboard. It shows what is waiting on you: runs in progress, work assigned to you, and items you are watching."
+              "text": "Your landing page is the dashboard: a welcome banner, your queue of work waiting on you, and the projects you belong to."
             }
           ]
         },
@@ -28,7 +28,7 @@
               "items": [
                 "Projects — each project is a self-contained area with its own test cases, runs and members.",
                 "My test runs — the runs you are named as executor on.",
-                "My bugs — bug reports you raised.",
+                "My bug reports — bug reports assigned to you, across all projects.",
                 "Watched — items you are notified about when they change."
               ]
             },
@@ -135,7 +135,7 @@
               "type": "steps",
               "items": [
                 "Open the project and go to Test cases.",
-                "Choose New test case.",
+                "Choose Create Test Case.",
                 "Give it a title — short, and phrased as a claim, e.g. \"Login with valid credentials\".",
                 "Record preconditions if the case needs a particular starting state.",
                 "Add steps: an action and an expected result for each.",
@@ -201,7 +201,7 @@
             {
               "type": "steps",
               "items": [
-                "In the project, go to Test runs and choose New test run.",
+                "In the project, go to Test runs and choose Start Test Run.",
                 "Give a name and an environment — the environment is what later explains what was tested against.",
                 "Select test cases, individually or via a suite.",
                 "Start. The run moves to In progress and the execution view opens.",
@@ -229,7 +229,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "A screenshot can be attached to any step. From a failed or blocked result you can raise a bug report or — if configured — create and link an issue in the tracker directly."
+              "text": "A screenshot can be attached to any step. When a case's result is Failed or Blocked, you can report a bug from it, provided bug reports are switched on for the project. With an issue tracker configured, you can also create and link an issue there directly. A single failed step is not enough: set the case's result."
             }
           ]
         }
@@ -246,7 +246,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "The eye icon on a test run, test plan or bug report starts watching it. Changes then appear under the bell at the top right."
+              "text": "The bookmark icon on a test run, test plan or bug report starts watching it. Changes then appear under the bell at the top right."
             },
             {
               "type": "p",

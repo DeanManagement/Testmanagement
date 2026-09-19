@@ -4,7 +4,7 @@
     {
       "id": "erste-schritte",
       "title": "Erste Schritte",
-      "summary": "Was Sie hier sehen und wo Sie anfangen.",
+      "summary": "Was du hier siehst und wo du anfängst.",
       "audiences": ["EVERYONE"],
       "sections": [
         {
@@ -12,11 +12,11 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Sie halten fest, was geprüft werden soll (Testfälle), führen diese Prüfungen durch (Testläufe) und lesen ab, was dabei herauskam. Alles andere — Ordner, Suites, Pläne, Berichte — dient nur dazu, diese drei Dinge übersichtlich zu halten."
+              "text": "Du hältst fest, was geprüft werden soll (Testfälle), führst diese Prüfungen durch (Testläufe) und liest ab, was dabei herauskam. Alles andere — Ordner, Suites, Pläne, Berichte — dient nur dazu, diese drei Dinge übersichtlich zu halten."
             },
             {
               "type": "p",
-              "text": "Ihre Startseite ist das Dashboard. Es zeigt, was gerade auf Sie wartet: laufende Testläufe, Ihnen zugewiesene Aufgaben und Einträge, die Sie beobachten."
+              "text": "Deine Startseite ist das Dashboard: ein Willkommensbanner, deine Warteschlange mit der Arbeit, die auf dich wartet, und die Projekte, in denen du Mitglied bist."
             }
           ]
         },
@@ -27,14 +27,14 @@
               "type": "ul",
               "items": [
                 "Projekte — jedes Projekt ist ein abgeschlossener Bereich mit eigenen Testfällen, Läufen und Mitgliedern.",
-                "Meine Testläufe — die Läufe, für die Sie als ausführende Person eingetragen sind.",
-                "Meine Fehler — von Ihnen gemeldete Fehlerberichte.",
-                "Beobachtet — Einträge, über deren Änderungen Sie benachrichtigt werden."
+                "Meine Testläufe — die Läufe, für die du als ausführende Person eingetragen bist.",
+                "Meine Fehlermeldungen — Fehlerberichte, die dir zugewiesen sind, über alle Projekte.",
+                "Beobachtet — Einträge, über deren Änderungen du benachrichtigt wirst."
               ]
             },
             {
               "type": "note",
-              "text": "Sie sehen ausschliesslich Projekte, in denen Sie Mitglied sind. Fehlt ein Projekt, bitten Sie dessen Administrator um Aufnahme."
+              "text": "Du siehst ausschliesslich Projekte, in denen du Mitglied bist. Fehlt ein Projekt, bitte dessen Administrator um Aufnahme."
             }
           ]
         }
@@ -43,7 +43,7 @@
     {
       "id": "rollen",
       "title": "Rollen verstehen",
-      "summary": "Warum Sie manches sehen und manches nicht.",
+      "summary": "Warum du manches siehst und manches nicht.",
       "audiences": ["EVERYONE"],
       "sections": [
         {
@@ -59,11 +59,11 @@
             },
             {
               "type": "p",
-              "text": "Ihre Rolle gilt je Projekt. Sie können in einem Projekt Tester und in einem anderen nur Betrachter sein."
+              "text": "Deine Rolle gilt je Projekt. Du kannst in einem Projekt Tester und in einem anderen nur Betrachter sein."
             },
             {
               "type": "note",
-              "text": "Dieses Handbuch zeigt nur Kapitel, die zu Ihren Rollen passen. Wenn Sie eine Anleitung vermissen, fehlt Ihnen vermutlich die passende Rolle — fragen Sie den Projektadministrator."
+              "text": "Dieses Handbuch zeigt nur Kapitel, die zu deinen Rollen passen. Wenn du eine Anleitung vermisst, fehlt dir vermutlich die passende Rolle — frag den Projektadministrator."
             }
           ]
         }
@@ -116,7 +116,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Jeder Lauf hat einen Bericht mit Kennzahlen, einem Diagramm und der vollständigen Ergebnisliste. Über die Schaltfläche PDF erzeugen Sie eine Fassung zum Weitergeben."
+              "text": "Jeder Lauf hat einen Bericht mit Kennzahlen, einem Diagramm und der vollständigen Ergebnisliste. Über die Schaltfläche PDF erzeugst du eine Fassung zum Weitergeben."
             }
           ]
         }
@@ -135,7 +135,7 @@
               "type": "steps",
               "items": [
                 "Projekt öffnen und zu Testfälle wechseln.",
-                "Neuer Testfall wählen.",
+                "Testfall erstellen wählen.",
                 "Titel vergeben — kurz und als Aussage, etwa «Anmeldung mit gültigen Zugangsdaten».",
                 "Vorbedingungen erfassen, sofern der Fall einen bestimmten Ausgangszustand braucht.",
                 "Schritte hinzufügen: je Schritt eine Aktion und das erwartete Ergebnis.",
@@ -144,7 +144,7 @@
             },
             {
               "type": "note",
-              "text": "Schreiben Sie erwartete Ergebnisse überprüfbar. «Funktioniert» lässt sich nicht prüfen, «Die Bestätigungsseite erscheint mit der Bestellnummer» schon."
+              "text": "Schreib erwartete Ergebnisse überprüfbar. «Funktioniert» lässt sich nicht prüfen, «Die Bestätigungsseite erscheint mit der Bestellnummer» schon."
             }
           ]
         },
@@ -153,11 +153,11 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Bei jeder Änderung wird die vorherige Fassung als Version gesichert. Über den Verlauf sehen Sie, was wann geändert wurde — wichtig, wenn ein Ergebnis auf eine ältere Fassung des Falls verweist."
+              "text": "Bei jeder Änderung wird die vorherige Fassung als Version gesichert. Über den Verlauf siehst du, was wann geändert wurde — wichtig, wenn ein Ergebnis auf eine ältere Fassung des Falls verweist."
             },
             {
               "type": "note",
-              "text": "Ersetzen Sie die Schrittliste, gehen Screenshots verloren, die an nicht mehr vorhandenen Schritten hingen."
+              "text": "Ersetzt du die Schrittliste, gehen Screenshots verloren, die an nicht mehr vorhandenen Schritten hingen."
             }
           ]
         }
@@ -183,7 +183,7 @@
             },
             {
               "type": "note",
-              "text": "Verwenden Sie bestehende Labels weiter, statt neue zu erfinden. Zwei Schreibweisen desselben Themas teilen die Trefferliste und niemand merkt es."
+              "text": "Verwende bestehende Labels weiter, statt neue zu erfinden. Zwei Schreibweisen desselben Themas teilen die Trefferliste und niemand merkt es."
             }
           ]
         }
@@ -201,7 +201,7 @@
             {
               "type": "steps",
               "items": [
-                "Im Projekt zu Testläufe wechseln und Neuer Testlauf wählen.",
+                "Im Projekt zu Testläufe wechseln und Testlauf starten wählen.",
                 "Namen und Umgebung angeben — die Umgebung erklärt später, wogegen geprüft wurde.",
                 "Testfälle auswählen, einzeln oder über eine Suite.",
                 "Starten. Der Lauf wechselt auf In Arbeit und die Ausführungsansicht öffnet sich.",
@@ -211,7 +211,7 @@
             },
             {
               "type": "note",
-              "text": "Halten Sie bei Abweichungen fest, was tatsächlich passiert ist, nicht nur dass etwas fehlschlug. «Fehler» hilft niemandem; «Fehlermeldung 500 nach dem Absenden» schon."
+              "text": "Halte bei Abweichungen fest, was tatsächlich passiert ist, nicht nur dass etwas fehlschlug. «Fehler» hilft niemandem; «Fehlermeldung 500 nach dem Absenden» schon."
             }
           ]
         },
@@ -229,7 +229,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Zu jedem Schritt lässt sich ein Screenshot hinzufügen. Aus einem fehlgeschlagenen oder blockierten Ergebnis heraus können Sie einen Fehlerbericht erfassen oder — sofern eingerichtet — direkt ein Ticket im Issue-Tracker anlegen und verknüpfen."
+              "text": "Zu jedem Schritt lässt sich ein Screenshot hinzufügen. Steht das Ergebnis eines Falls auf Fehlgeschlagen oder Blockiert, kannst du daraus einen Fehlerbericht erfassen, sofern das Projekt Fehlerberichte eingeschaltet hat. Ist ein Issue-Tracker eingerichtet, kannst du auch direkt ein Ticket anlegen und verknüpfen. Ein einzelner fehlgeschlagener Schritt reicht dafür nicht: Setze das Ergebnis des Falls."
             }
           ]
         }
@@ -246,11 +246,11 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Über das Augensymbol auf einem Testlauf, Testplan oder Fehlerbericht beobachten Sie den Eintrag. Änderungen erscheinen anschliessend in der Glocke oben rechts."
+              "text": "Über das Lesezeichen-Symbol auf einem Testlauf, Testplan oder Fehlerbericht beobachtest du den Eintrag. Änderungen erscheinen anschliessend in der Glocke oben rechts."
             },
             {
               "type": "p",
-              "text": "Unter Benachrichtigungseinstellungen legen Sie fest, worüber Sie zusätzlich per E-Mail informiert werden möchten."
+              "text": "Unter Benachrichtigungseinstellungen legst du fest, worüber du zusätzlich per E-Mail informiert werden möchtest."
             }
           ]
         }
@@ -275,7 +275,7 @@
             },
             {
               "type": "note",
-              "text": "Vergeben Sie die geringste Rolle, die für die Aufgabe reicht. Eine Rolle lässt sich jederzeit erhöhen; eine zu weit vergebene fällt selten jemandem auf."
+              "text": "Vergib die geringste Rolle, die für die Aufgabe reicht. Eine Rolle lässt sich jederzeit erhöhen; eine zu weit vergebene fällt selten jemandem auf."
             }
           ]
         },
@@ -284,11 +284,11 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Unter Anforderungen halten Sie fest, was das Produkt leisten soll, und verknüpfen die Testfälle, die es belegen. Die Abdeckungsmatrix zeigt anschliessend, welche Anforderungen tatsächlich nachgewiesen sind."
+              "text": "Unter Anforderungen hältst du fest, was das Produkt leisten soll, und verknüpfst die Testfälle, die es belegen. Die Abdeckungsmatrix zeigt anschliessend, welche Anforderungen tatsächlich nachgewiesen sind."
             },
             {
               "type": "note",
-              "text": "Achten Sie auf den Status «ungetestet»: eine Anforderung mit verknüpftem Testfall, der nie ausgeführt wurde. Auf dem Papier abgedeckt, tatsächlich unbelegt."
+              "text": "Achte auf den Status «ungetestet»: eine Anforderung mit verknüpftem Testfall, der nie ausgeführt wurde. Auf dem Papier abgedeckt, tatsächlich unbelegt."
             }
           ]
         }
@@ -305,7 +305,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Unter Einstellungen verwalten Sie Benutzerkonten und richten optional Single Sign-on ein. Ohne SSO melden sich Benutzer mit E-Mail und Passwort an."
+              "text": "Unter Einstellungen verwaltest du Benutzerkonten und richtest optional Single Sign-on ein. Ohne SSO melden sich Benutzer mit E-Mail und Passwort an."
             }
           ]
         },
@@ -321,7 +321,7 @@
               "items": [
                 "Neu generieren ersetzt das Geheimnis. Projekt, Rolle und Verlauf bleiben; der alte Schlüssel funktioniert sofort nicht mehr.",
                 "Widerrufen entzieht dem Schlüssel zusätzlich seine Projektmitgliedschaft.",
-                "Generieren Sie neu, sobald ein Schlüssel irgendwo aufgetaucht ist, wo er nicht hingehört."
+                "Generiere neu, sobald ein Schlüssel irgendwo aufgetaucht ist, wo er nicht hingehört."
               ]
             }
           ]
