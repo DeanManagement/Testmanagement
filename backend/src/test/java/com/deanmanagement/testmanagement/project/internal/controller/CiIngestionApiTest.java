@@ -38,6 +38,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.notNullValue;
+import static org.hamcrest.Matchers.everyItem;
 import static org.hamcrest.Matchers.hasItem;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -185,6 +187,17 @@ class CiIngestionApiTest {
                         hasItem(containsString("expected 2 but was 3"))));
 
         assertThat(testCaseRepository.countByProjectId(projectId)).isEqualTo(4);
+    }
+
+    /** PRD-048: an upload's results were executed by the key's service user. */
+    @Test
+    void junitResultsRecordTheKeysServiceUserAsExecutor() throws Exception {
+        mockMvc.perform(post("/api/external/projects/{k}/test-runs/junit", KEY)
+                        .header("X-API-Key", apiKey)
+                        .contentType(MediaType.APPLICATION_XML).content(SUREFIRE_XML))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.results[*].executedBy", everyItem(notNullValue())))
+                .andExpect(jsonPath("$.results[0].executedByName", containsString("ci-test-key")));
     }
 
     /** PRD-031: run-level events only, never one TEST_FAILED per ingested result. */

@@ -60,8 +60,9 @@ public class CiIngestionService {
      *        triggered workflow passes back, linking the created run to its pipeline run.
      */
     @Transactional
+    /** {@code executor}: the calling key's service user, or null (PRD-048). */
     public TestRunResponse ingest(String projectRef, String runName, String environment,
-                                  UUID testPlanId, List<CiResult> results, UUID pipelineRunId) {
+                                  UUID testPlanId, List<CiResult> results, UUID pipelineRunId, UUID executor) {
         Project project = refResolver.resolveProject(projectRef);
         var pipelineRun = pipelineRunLinker.resolve(pipelineRunId, project.getId());
 
@@ -100,7 +101,7 @@ public class CiIngestionService {
             result.setTestRun(run);
             result.setTestCase(testCase);
             result.setExecutedVersion(testCase.getCurrentVersion());
-            result.setStatus(ciResult.status());
+            result.setStatus(ciResult.status(), executor);
             result.setComment(ciResult.message());
             result.setDurationMs(ciResult.durationMs());
             if (ciResult.testCaseKey() != null && keyed == null) {

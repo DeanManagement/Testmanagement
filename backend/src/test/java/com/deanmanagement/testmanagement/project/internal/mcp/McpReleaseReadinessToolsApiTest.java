@@ -46,7 +46,7 @@ class McpReleaseReadinessToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Run", null, Set.of(pay.id(), browse.id()),
                 null, planId);
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.PASSED, pay.id(), null, null, null,
-                null);
+                null, null);
         authenticateAs(project, ProjectRole.VIEWER);
 
         ReadinessResponse viaMcp = reportingTools.getReleaseReadiness(planId);

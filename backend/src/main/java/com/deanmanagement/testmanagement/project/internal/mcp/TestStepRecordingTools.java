@@ -95,7 +95,7 @@ public class TestStepRecordingTools {
         var update = new UpdateStepResultRequest(status,
                 actualResult == null ? step.actualResult() : actualResult);
         validator.validate(update);
-        testRunService.updateStepResult(caller.projectId(), runId, result.id(), step.id(), update);
+        testRunService.updateStepResult(caller.projectId(), runId, result.id(), step.id(), update, caller.userId());
 
         TestResultResponse recorded = testRunService.findById(caller.projectId(), runId).results()
                 .stream().filter(r -> r.id().equals(result.id())).findFirst().orElseThrow();

@@ -21,7 +21,7 @@ class EffortSummaryTest {
     private static TestResult result(TestCase testCase, TestResultStatus status, Long durationMs) {
         TestResult result = new TestResult();
         result.setTestCase(testCase);
-        result.setStatus(status);
+        result.setStatus(status, null);
         result.setDurationMs(durationMs);
         return result;
     }

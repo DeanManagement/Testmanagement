@@ -157,8 +157,9 @@ public class TestRunReadTools {
                 com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse>of()
                 : run.results()).stream()
                 .filter(r -> onlyStatus == null || onlyStatus.isEmpty() || onlyStatus.contains(r.status()))
-                .map(r -> new McpDtos.TestResult(r.id(), r.testCaseId(), r.testCaseTitle(),
-                        r.status(), r.comment(), r.defectLink(), r.parameterSetName(), r.durationMs()))
+                .map(r -> new McpDtos.TestResult(r.id(), r.testCaseId(), r.testCaseKey(), r.testCaseTitle(),
+                        r.status(), r.comment(), r.defectLink(), r.parameterSetName(), r.durationMs(),
+                        r.executedByName(), r.executedAt()))
                 .toList();
 
         return new McpDtos.TestRunDetail(run.id(), run.key(), run.name(), run.environment(),

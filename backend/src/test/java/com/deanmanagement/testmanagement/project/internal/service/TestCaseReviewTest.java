@@ -393,7 +393,7 @@ class TestCaseReviewTest {
         void ciIngestionCreatesNewCasesInReview() {
             as(author);
             ciIngestionService.ingest(project.getKey(), "Nightly", null, null,
-                    List.of(new CiResult("suite", "new automated test", TestResultStatus.PASSED, null, List.of(), null)), null);
+                    List.of(new CiResult("suite", "new automated test", TestResultStatus.PASSED, null, List.of(), null)), null, null);
 
             TestCase created = testCaseRepository.findFirstByProjectIdAndTitle(project.getId(), "new automated test")
                     .orElseThrow();

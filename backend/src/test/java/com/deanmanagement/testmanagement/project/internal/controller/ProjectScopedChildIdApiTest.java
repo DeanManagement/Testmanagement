@@ -399,7 +399,7 @@ class ProjectScopedChildIdApiTest {
         TestResult result = new TestResult();
         result.setTestRun(run);
         result.setTestCase(testCase);
-        result.setStatus(TestResultStatus.FAILED);
+        result.setStatus(TestResultStatus.FAILED, null);
         return testResultRepository.save(result);
     }
 }

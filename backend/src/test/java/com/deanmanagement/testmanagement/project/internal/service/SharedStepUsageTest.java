@@ -209,7 +209,7 @@ class SharedStepUsageTest {
                     new CiResult.CiStep("pay", TestResultStatus.SKIPPED));
 
             TestRunResponse run = ciIngestionService.ingest(project.getKey(), "CI", null, null, List.of(new CiResult(
-                    "s", "t", TestResultStatus.FAILED, null, ciSteps, null, tc.key())), null);
+                    "s", "t", TestResultStatus.FAILED, null, ciSteps, null, tc.key())), null, null);
 
             assertThat(run.results().getFirst().stepResults().stream()
                     .sorted(Comparator.comparingInt(StepResultResponse::orderIndex)))
@@ -229,7 +229,7 @@ class SharedStepUsageTest {
                     new ExternalCreateTestRunRequest("Ext", null, List.of(new ExternalTestResultRequest(tc.key(),
                             TestResultStatus.FAILED, null, null,
                             List.of(new ExternalStepResultRequest(3, TestResultStatus.FAILED, "wrong password")), null))),
-                    null);
+                    null, null);
 
             StepResultResponse step = run.results().getFirst().stepResults().getFirst();
             assertThat(step.action()).isEqualTo("Sign in as {user}");

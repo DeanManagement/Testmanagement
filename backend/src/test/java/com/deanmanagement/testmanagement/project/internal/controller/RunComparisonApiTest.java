@@ -125,7 +125,7 @@ class RunComparisonApiTest {
         Map<UUID, TestResultStatus> statuses = Map.of(checkout, checkoutStatus, search, searchStatus);
         for (var result : run.results()) {
             testRunService.updateResult(project.getId(), run.id(), result.id(),
-                    new UpdateTestResultRequest(statuses.get(result.testCaseId()), null, null));
+                    new UpdateTestResultRequest(statuses.get(result.testCaseId()), null, null), null);
         }
         entityManager.flush();
         return run.id();
@@ -190,11 +190,11 @@ class RunComparisonApiTest {
             ciIngestionService.ingest(project.getKey(), "CI", null, null, List.of(
                     new CiResult("suite", "com.shop.CartTest.adds", TestResultStatus.PASSED, null, List.of(), null),
                     new CiResult("suite", "com.shop.CartTest.removes", TestResultStatus.PASSED, null, List.of(), null)),
-                    null);
+                    null, null);
             UUID head = ciIngestionService.ingest(project.getKey(), "CI", null, null, List.of(
                     new CiResult("suite", "com.shop.CartTest.adds", TestResultStatus.FAILED, "boom", List.of(), null),
                     new CiResult("suite", "com.shop.CartTest.removes", TestResultStatus.PASSED, null, List.of(), null)),
-                    null).id();
+                    null, null).id();
             entityManager.flush();
 
             compare(head, viewer)

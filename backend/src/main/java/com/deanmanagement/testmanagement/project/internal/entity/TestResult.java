@@ -21,6 +21,7 @@ import lombok.Setter;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "test_results")
@@ -41,6 +42,14 @@ public class TestResult extends BaseEntity {
     @Setter(AccessLevel.NONE)
     @Column(name = "executed_at")
     private Instant executedAt;
+
+    /**
+     * Who executed it (PRD-048): set with {@code executedAt}, so it names the tester, not whoever
+     * edited the result last. Null while pending, and for anonymous CI uploads.
+     */
+    @Setter(AccessLevel.NONE)
+    @Column(name = "executed_by")
+    private UUID executedBy;
 
     /** Measured effort in milliseconds (PRD-036): the execution timer, a manual edit, or a CI report. */
     @Column(name = "duration_ms")
@@ -86,16 +95,19 @@ public class TestResult extends BaseEntity {
     private List<StepResult> stepResults = new ArrayList<>();
 
     /**
-     * The one place {@code executedAt} is decided, so every path that sets a status follows the
+     * The one place {@code executedAt} and {@code executedBy} are decided, so every path that sets a status follows the
      * same rule (PRD-036 §3.2): leaving PENDING stamps it, returning to PENDING clears it, and a
-     * correction such as PASSED to FAILED keeps it, because the result was already executed.
+     * correction such as PASSED to FAILED keeps it, because the result was already executed. The
+     * executor is explicit, not read from a security context, so every caller has to say who it is.
      * Hibernate reads fields directly, so loading a row never passes through here.
      */
-    public void setStatus(TestResultStatus status) {
+    public void setStatus(TestResultStatus status, UUID executor) {
         if (status == TestResultStatus.PENDING) {
             this.executedAt = null;
+            this.executedBy = null;
         } else if (status != null && this.executedAt == null) {
             this.executedAt = Instant.now();
+            this.executedBy = executor;
         }
         this.status = status;
     }

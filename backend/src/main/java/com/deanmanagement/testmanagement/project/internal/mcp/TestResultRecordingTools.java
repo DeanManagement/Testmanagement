@@ -65,7 +65,9 @@ public class TestResultRecordingTools {
             @McpToolParam(description = "What you observed", required = false) String comment,
             @McpToolParam(description = "URL of a related defect", required = false) String defectLink,
             @McpToolParam(description = "How long the execution took, in milliseconds", required = false)
-            Long durationMs) {
+            Long durationMs,
+            @McpToolParam(description = "With PASSED or SKIPPED: also set the steps still PENDING; steps "
+                    + "already recorded keep their outcome", required = false) Boolean cascadeSteps) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
@@ -98,9 +100,9 @@ public class TestResultRecordingTools {
         if (target != null) {
             // Absent comment/defectLink leave the result's own alone (updateResult treats null as
             // unchanged), so a retried record never erases evidence already on the result.
-            var update = new UpdateTestResultRequest(status, comment, defectLink, durationMs);
+            var update = new UpdateTestResultRequest(status, comment, defectLink, durationMs, cascadeSteps);
             validator.validate(update);
-            recordedId = testRunService.updateResult(caller.projectId(), runId, target.id(), update)
+            recordedId = testRunService.updateResult(caller.projectId(), runId, target.id(), update, caller.userId())
                     .id();
         } else {
             // Only reached when the case genuinely is not in the run. Appending is right for
@@ -108,7 +110,7 @@ public class TestResultRecordingTools {
             // says which happened.
             var create = new CreateTestResultRequest(testCaseId, status, comment, defectLink, durationMs);
             validator.validate(create);
-            target = testRunService.addResult(caller.projectId(), runId, create);
+            target = testRunService.addResult(caller.projectId(), runId, create, caller.userId());
             recordedId = target.id();
             added = true;
         }
@@ -184,7 +186,7 @@ public class TestResultRecordingTools {
             var update = new UpdateTestResultRequest(entry.status(), entry.comment(), entry.defectLink(),
                     entry.durationMs());
             validator.validate(update);
-            testRunService.updateResult(caller.projectId(), runId, target.id(), update);
+            testRunService.updateResult(caller.projectId(), runId, target.id(), update, caller.userId());
         }
 
         McpDtos.CompletedTestRun counts =

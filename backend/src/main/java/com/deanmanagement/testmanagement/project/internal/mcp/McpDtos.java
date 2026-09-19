@@ -215,9 +215,11 @@ final class McpDtos {
      *                        several results and the agent has to address one by {@code id}
      */
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record TestResult(UUID id, UUID testCaseId, String testCaseTitle, TestResultStatus status,
+    record TestResult(UUID id, UUID testCaseId, String testCaseKey, String testCaseTitle, TestResultStatus status,
                       @Nullable String comment, @Nullable String defectLink,
-                      @Nullable String parameterSetName, @Nullable Long durationMs) {}
+                      @Nullable String parameterSetName, @Nullable Long durationMs,
+                      /* PRD-048: who executed it and when; absent while pending. */
+                      @Nullable String executedBy, @Nullable Instant executedAt) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record TestRunDetail(UUID id, String key, String name, @Nullable String environment,

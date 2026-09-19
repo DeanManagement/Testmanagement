@@ -27,6 +27,9 @@ public record TestRunReportResponse(
         /* PRD-033: results executed against wording that was never approved; empty without review. */
         Set<UUID> unapprovedResultIds,
         /* PRD-036 */
-        EffortSummary effort
+        EffortSummary effort,
+        /* PRD-048: the plan the run belongs to, if any. */
+        UUID testPlanId,
+        String testPlanName
 ) {
 }

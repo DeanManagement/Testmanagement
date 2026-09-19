@@ -91,7 +91,7 @@ class TimeTrackingWritePathsTest {
             TestRunResponse run = runWithOnePendingResult();
 
             testRunService.updateResult(projectId, run.id(), run.results().getFirst().id(),
-                    new UpdateTestResultRequest(TestResultStatus.PASSED, null, null));
+                    new UpdateTestResultRequest(TestResultStatus.PASSED, null, null), null);
 
             assertThat(onlyResultOf(run.id()).executedAt()).isNotNull();
         }
@@ -101,10 +101,10 @@ class TimeTrackingWritePathsTest {
             TestRunResponse run = runWithOnePendingResult();
             UUID resultId = run.results().getFirst().id();
             testRunService.updateResult(projectId, run.id(), resultId,
-                    new UpdateTestResultRequest(TestResultStatus.PASSED, null, null));
+                    new UpdateTestResultRequest(TestResultStatus.PASSED, null, null), null);
 
             testRunService.updateResult(projectId, run.id(), resultId,
-                    new UpdateTestResultRequest(TestResultStatus.PENDING, null, null));
+                    new UpdateTestResultRequest(TestResultStatus.PENDING, null, null), null);
 
             assertThat(onlyResultOf(run.id()).executedAt()).isNull();
         }
@@ -126,7 +126,7 @@ class TimeTrackingWritePathsTest {
             TestResultResponse result = run.results().getFirst();
 
             testRunService.updateStepResult(projectId, run.id(), result.id(), result.stepResults().getFirst().id(),
-                    new UpdateStepResultRequest(TestResultStatus.FAILED, "Blank page"));
+                    new UpdateStepResultRequest(TestResultStatus.FAILED, "Blank page"), null);
 
             assertThat(onlyResultOf(run.id()).executedAt()).isNotNull();
         }
@@ -137,7 +137,7 @@ class TimeTrackingWritePathsTest {
                     new CreateTestRunRequest("Run", null, null, null, null), null);
 
             TestResultResponse added = testRunService.addResult(projectId, run.id(),
-                    new CreateTestResultRequest(testCase.id(), TestResultStatus.PASSED, null, null, 61_000L));
+                    new CreateTestResultRequest(testCase.id(), TestResultStatus.PASSED, null, null, 61_000L), null);
 
             assertThat(added.executedAt()).isNotNull();
             assertThat(added.durationMs()).isEqualTo(61_000L);
@@ -147,7 +147,7 @@ class TimeTrackingWritePathsTest {
         void theExternalApiStampsResultsAndKeepsTheirDuration() {
             TestRunResponse run = externalTestRunService.createExternalRun(projectId.toString(),
                     new ExternalCreateTestRunRequest("CI", null, List.of(new ExternalTestResultRequest(
-                            testCase.key(), TestResultStatus.PASSED, null, null, null, 420L))), null);
+                            testCase.key(), TestResultStatus.PASSED, null, null, null, 420L))), null, null);
 
             TestResultResponse result = onlyResultOf(run.id());
             assertThat(result.executedAt()).isNotNull();
@@ -157,7 +157,7 @@ class TimeTrackingWritePathsTest {
         @Test
         void ciIngestionStampsResultsAndKeepsTheirDuration() {
             TestRunResponse run = ciIngestionService.ingest(projectId.toString(), "Nightly", null, null,
-                    List.of(new CiResult("suite", "Pay", TestResultStatus.FAILED, "boom", List.of(), 1234L)), null);
+                    List.of(new CiResult("suite", "Pay", TestResultStatus.FAILED, "boom", List.of(), 1234L)), null, null);
 
             TestResultResponse result = onlyResultOf(run.id());
             assertThat(result.executedAt()).isNotNull();
@@ -173,10 +173,10 @@ class TimeTrackingWritePathsTest {
             TestRunResponse run = runWithOnePendingResult();
             UUID resultId = run.results().getFirst().id();
             testRunService.updateResult(projectId, run.id(), resultId,
-                    new UpdateTestResultRequest(TestResultStatus.PASSED, null, null, 300_000L));
+                    new UpdateTestResultRequest(TestResultStatus.PASSED, null, null, 300_000L), null);
 
             testRunService.updateResult(projectId, run.id(), resultId,
-                    new UpdateTestResultRequest(TestResultStatus.FAILED, "Wrong total", null));
+                    new UpdateTestResultRequest(TestResultStatus.FAILED, "Wrong total", null), null);
 
             assertThat(onlyResultOf(run.id()).durationMs()).isEqualTo(300_000L);
         }
@@ -186,10 +186,10 @@ class TimeTrackingWritePathsTest {
             TestRunResponse run = runWithOnePendingResult();
             UUID resultId = run.results().getFirst().id();
             testRunService.updateResult(projectId, run.id(), resultId,
-                    new UpdateTestResultRequest(TestResultStatus.PASSED, null, null, 3_600_000L));
+                    new UpdateTestResultRequest(TestResultStatus.PASSED, null, null, 3_600_000L), null);
 
             testRunService.updateResult(projectId, run.id(), resultId,
-                    new UpdateTestResultRequest(TestResultStatus.PASSED, null, null, 600_000L));
+                    new UpdateTestResultRequest(TestResultStatus.PASSED, null, null, 600_000L), null);
 
             assertThat(onlyResultOf(run.id()).durationMs()).isEqualTo(600_000L);
         }

@@ -91,7 +91,7 @@ class EffortRollUpTest {
 
     private void execute(TestRunResponse run, UUID caseId, Long durationMs) {
         testRunService.updateResult(projectId, run.id(), resultFor(run, caseId),
-                new UpdateTestResultRequest(TestResultStatus.PASSED, null, null, durationMs));
+                new UpdateTestResultRequest(TestResultStatus.PASSED, null, null, durationMs), null);
     }
 
     @Nested
@@ -162,7 +162,7 @@ class EffortRollUpTest {
             Instant oldest = Instant.now().minus(durationsOldestFirst.length, ChronoUnit.DAYS);
             for (int i = 0; i < durationsOldestFirst.length; i++) {
                 UUID resultId = testRunService.addResult(projectId, runId, new CreateTestResultRequest(
-                        thirtyMinuteCase, TestResultStatus.PASSED, null, null, durationsOldestFirst[i])).id();
+                        thirtyMinuteCase, TestResultStatus.PASSED, null, null, durationsOldestFirst[i]), null).id();
                 entityManager.flush();
                 jdbc.update("UPDATE test_results SET executed_at = ? WHERE id = ?",
                         Timestamp.from(oldest.plus(i, ChronoUnit.DAYS)), resultId);

@@ -84,7 +84,7 @@ class FlakyAutoLabelTest {
             TestResult result = new TestResult();
             result.setTestRun(run);
             result.setTestCase(testCase);
-            result.setStatus(outcomes.charAt(i) == 'P' ? TestResultStatus.PASSED : TestResultStatus.FAILED);
+            result.setStatus(outcomes.charAt(i) == 'P' ? TestResultStatus.PASSED : TestResultStatus.FAILED, null);
             testResultRepository.save(result);
         }
     }

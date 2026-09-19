@@ -96,7 +96,7 @@ class TestRunListApiTest {
         TestResult result = new TestResult();
         result.setTestRun(run);
         result.setTestCase(testCase);
-        result.setStatus(status);
+        result.setStatus(status, null);
         testResultRepository.save(result);
     }
 

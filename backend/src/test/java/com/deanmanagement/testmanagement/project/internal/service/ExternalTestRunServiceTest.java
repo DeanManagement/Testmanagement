@@ -137,7 +137,7 @@ class ExternalTestRunServiceTest {
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));
         when(testRunMapper.toResponse(any(TestRun.class))).thenReturn(sampleRunResponse());
 
-        externalTestRunService.createExternalRun(PROJECT_KEY, request, null);
+        externalTestRunService.createExternalRun(PROJECT_KEY, request, null, null);
 
         ArgumentCaptor<TestRun> captor = ArgumentCaptor.forClass(TestRun.class);
         verify(testRunRepository).save(captor.capture());
@@ -175,7 +175,7 @@ class ExternalTestRunServiceTest {
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));
         when(testRunMapper.toResponse(any(TestRun.class))).thenReturn(sampleRunResponse());
 
-        externalTestRunService.createExternalRun(PROJECT_KEY, request, null);
+        externalTestRunService.createExternalRun(PROJECT_KEY, request, null, null);
 
         ArgumentCaptor<TestRun> captor = ArgumentCaptor.forClass(TestRun.class);
         verify(testRunRepository).save(captor.capture());
@@ -197,7 +197,7 @@ class ExternalTestRunServiceTest {
                 new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
 
-        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_KEY, request, null))
+        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_KEY, request, null, null))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("Project");
     }
@@ -212,7 +212,7 @@ class ExternalTestRunServiceTest {
                 new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, null)
         ));
 
-        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_KEY, request, null))
+        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_KEY, request, null, null))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("TestCase");
     }
@@ -232,7 +232,7 @@ class ExternalTestRunServiceTest {
                 new ExternalTestResultRequest(TEST_CASE_KEY, TestResultStatus.PASSED, null, null, stepResults)
         ));
 
-        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_KEY, request, null))
+        assertThatThrownBy(() -> externalTestRunService.createExternalRun(PROJECT_KEY, request, null, null))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("TestStep");
     }
@@ -259,7 +259,7 @@ class ExternalTestRunServiceTest {
         when(testRunRepository.save(any(TestRun.class))).thenAnswer(inv -> inv.getArgument(0));
         when(testRunMapper.toResponse(any(TestRun.class))).thenReturn(sampleRunResponse());
 
-        externalTestRunService.createExternalRun(PROJECT_KEY, request, null);
+        externalTestRunService.createExternalRun(PROJECT_KEY, request, null, null);
 
         ArgumentCaptor<TestRun> captor = ArgumentCaptor.forClass(TestRun.class);
         verify(testRunRepository).save(captor.capture());

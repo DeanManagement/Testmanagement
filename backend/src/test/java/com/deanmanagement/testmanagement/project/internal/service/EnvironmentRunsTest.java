@@ -171,7 +171,7 @@ class EnvironmentRunsTest {
             TestRunResponse created = testRunService.create(project.getId(), new CreateTestRunRequest(
                     "Run", environment, Set.of(testCase.getId()), null, null), null);
             TestRun run = testRunRepository.findById(created.id()).orElseThrow();
-            run.getResults().forEach(result -> result.setStatus(status));
+            run.getResults().forEach(result -> result.setStatus(status, null));
             run.setEndTime(endTime);
             testRunRepository.saveAndFlush(run);
         }

@@ -2,7 +2,9 @@ package com.deanmanagement.testmanagement.project.internal.service;
 
 import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
+import com.deanmanagement.testmanagement.project.internal.dto.report.RunReportOptions;
 import com.deanmanagement.testmanagement.project.internal.dto.report.TestRunReportResponse;
+import com.deanmanagement.testmanagement.project.internal.repository.ScreenshotRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuiteReportResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
@@ -29,18 +31,26 @@ public class PdfReportService {
     private final TestSuiteService testSuiteService;
     private final ProjectRepository projectRepository;
     private final AttachmentService attachmentService;
+    private final ScreenshotRepository screenshotRepository;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter
             .ofPattern("yyyy-MM-dd HH:mm")
             .withZone(ZoneId.systemDefault());
 
     public byte[] generateTestRunReport(UUID projectId, UUID testRunId) {
+        return generateTestRunReport(projectId, testRunId, RunReportOptions.RESULTS_ONLY);
+    }
+
+    /** With steps and screenshots on request (PRD-048); screenshots are read from the database. */
+    public byte[] generateTestRunReport(UUID projectId, UUID testRunId, RunReportOptions options) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
         TestRunReportResponse report = testRunService.getReport(projectId, testRunId);
 
-        String html = buildTestRunHtml(project.getName(), report,
-                attachmentNames(report.results().stream().map(TestResultResponse::testCaseId).toList()));
+        String html = new RunReportHtml(report,
+                attachmentNames(report.results().stream().map(TestResultResponse::testCaseId).toList()),
+                options, screenshotRepository::findById, DATE_FMT)
+                .build(project.getName(), CSS);
         return renderPdf(html);
     }
 
@@ -66,71 +76,6 @@ public class PdfReportService {
         sb.append("<br/><span class=\"attachments\">Attachments: ")
                 .append(escapeHtml(attachments.stream().map(AttachmentSummary::fileName).collect(Collectors.joining(", "))))
                 .append("</span>");
-    }
-
-    private String buildTestRunHtml(String projectName, TestRunReportResponse report,
-                                    Map<UUID, List<AttachmentSummary>> attachments) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
-        sb.append("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Strict//EN\" ");
-        sb.append("\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd\">\n");
-        sb.append("<html xmlns=\"http://www.w3.org/1999/xhtml\">\n<head>\n");
-        sb.append("<style>\n").append(CSS).append("\n</style>\n</head>\n<body>\n");
-
-        // Header
-        sb.append("<div class=\"header\">\n");
-        sb.append("  <h1>").append(escapeHtml(projectName)).append(" — Test Run Report</h1>\n");
-        sb.append("  <p class=\"subtitle\">").append(escapeHtml(report.name())).append("</p>\n");
-        sb.append("  <p class=\"meta\">Generated: ").append(DATE_FMT.format(Instant.now())).append("</p>\n");
-        sb.append("</div>\n");
-
-        // Summary
-        sb.append("<h2>Summary</h2>\n");
-        sb.append("<table class=\"summary\">\n<tr>");
-        sb.append("<td><strong>Status</strong></td><td>").append(report.status()).append("</td>");
-        sb.append("<td><strong>Environment</strong></td><td>").append(report.environment() != null ? escapeHtml(report.environment()) : "-").append("</td>");
-        sb.append("</tr>\n<tr>");
-        sb.append("<td><strong>Start</strong></td><td>").append(report.startTime() != null ? DATE_FMT.format(report.startTime()) : "-").append("</td>");
-        sb.append("<td><strong>End</strong></td><td>").append(report.endTime() != null ? DATE_FMT.format(report.endTime()) : "-").append("</td>");
-        sb.append("</tr>\n</table>\n");
-
-        // Stats
-        sb.append("<table class=\"stats\">\n<tr>");
-        sb.append("<th>Total</th><th>Passed</th><th>Failed</th><th>Blocked</th><th>Skipped</th><th>Pending</th><th>Pass Rate</th>");
-        sb.append("</tr>\n<tr>");
-        sb.append("<td>").append(report.total()).append("</td>");
-        sb.append("<td class=\"passed\">").append(report.passed()).append("</td>");
-        sb.append("<td class=\"failed\">").append(report.failed()).append("</td>");
-        sb.append("<td class=\"blocked\">").append(report.blocked()).append("</td>");
-        sb.append("<td class=\"skipped\">").append(report.skipped()).append("</td>");
-        sb.append("<td class=\"pending\">").append(report.pending()).append("</td>");
-        sb.append("<td><strong>").append(String.format("%.1f%%", report.passRate())).append("</strong></td>");
-        sb.append("</tr>\n</table>\n");
-
-        // Results table
-        sb.append("<h2>Test Results</h2>\n");
-        sb.append("<table class=\"results\">\n<tr>");
-        sb.append("<th>Test Case</th><th>Status</th><th>Comment</th><th>Defect Link</th>");
-        sb.append("</tr>\n");
-        for (TestResultResponse result : report.results()) {
-            sb.append("<tr>");
-            sb.append("<td>").append(escapeHtml(result.testCaseTitle()));
-            if (report.unapprovedResultIds().contains(result.id())) {
-                sb.append("<br/><span class=\"unapproved\">Executed unapproved wording (v")
-                        .append(result.executedVersion()).append(")</span>");
-            }
-            appendAttachments(sb, attachments.get(result.testCaseId()));
-            sb.append("</td>");
-            sb.append("<td class=\"").append(result.status().name().toLowerCase()).append("\">");
-            sb.append(result.status()).append("</td>");
-            sb.append("<td>").append(escapeHtml(ResultEvidence.of(result)).replace("\n", "<br/>")).append("</td>");
-            sb.append("<td>").append(result.defectLink() != null ? escapeHtml(result.defectLink()) : "-").append("</td>");
-            sb.append("</tr>\n");
-        }
-        sb.append("</table>\n");
-
-        sb.append("</body>\n</html>");
-        return sb.toString();
     }
 
     private String buildTestSuiteHtml(String projectName, TestSuiteReportResponse report,
@@ -205,7 +150,7 @@ public class PdfReportService {
         }
     }
 
-    private static String escapeHtml(String text) {
+    static String escapeHtml(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;")
                 .replace("<", "&lt;")
@@ -280,5 +225,9 @@ public class PdfReportService {
             .pending { color: #2196f3; font-weight: bold; }
             .unapproved { color: #b45309; font-size: 9px; }
             .attachments { color: #555; font-size: 9px; }
+            .key { white-space: nowrap; font-weight: bold; }
+            table.steps { margin: 0; font-size: 9px; }
+            table.steps th { background: #f5f5f5; }
+            img.screenshot { max-width: 220px; max-height: 160px; }
             """;
 }

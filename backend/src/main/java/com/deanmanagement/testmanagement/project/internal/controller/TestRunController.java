@@ -9,6 +9,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTest
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.StepResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.report.RunReportOptions;
 import com.deanmanagement.testmanagement.project.internal.dto.report.TestRunReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunSummaryResponse;
@@ -107,8 +108,10 @@ public class TestRunController {
 
     @GetMapping("/{id}/report/pdf")
     @RequireProjectRole
-    public ResponseEntity<byte[]> getReportPdf(@PathVariable UUID projectId, @PathVariable UUID id) {
-        byte[] pdf = pdfReportService.generateTestRunReport(projectId, id);
+    public ResponseEntity<byte[]> getReportPdf(@PathVariable UUID projectId, @PathVariable UUID id,
+                                               @RequestParam(defaultValue = "false") boolean steps,
+                                               @RequestParam(defaultValue = "false") boolean screenshots) {
+        byte[] pdf = pdfReportService.generateTestRunReport(projectId, id, new RunReportOptions(steps, screenshots));
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_PDF);
         headers.setContentDispositionFormData("attachment", "test-run-report.pdf");
@@ -184,8 +187,9 @@ public class TestRunController {
     @ResponseStatus(HttpStatus.CREATED)
     public TestResultResponse addResult(@PathVariable UUID projectId,
                                         @PathVariable UUID runId,
-                                        @Valid @RequestBody CreateTestResultRequest request) {
-        return testRunService.addResult(projectId, runId, request);
+                                        @Valid @RequestBody CreateTestResultRequest request,
+                                        Authentication authentication) {
+        return testRunService.addResult(projectId, runId, request, actor(authentication));
     }
 
     @PutMapping("/{runId}/results/{resultId}")
@@ -193,8 +197,9 @@ public class TestRunController {
     public TestResultResponse updateResult(@PathVariable UUID projectId,
                                            @PathVariable UUID runId,
                                            @PathVariable UUID resultId,
-                                           @Valid @RequestBody UpdateTestResultRequest request) {
-        return testRunService.updateResult(projectId, runId, resultId, request);
+                                           @Valid @RequestBody UpdateTestResultRequest request,
+                                           Authentication authentication) {
+        return testRunService.updateResult(projectId, runId, resultId, request, actor(authentication));
     }
 
     @PutMapping("/{runId}/results/{resultId}/steps/{stepResultId}")
@@ -203,8 +208,9 @@ public class TestRunController {
                                                @PathVariable UUID runId,
                                                @PathVariable UUID resultId,
                                                @PathVariable UUID stepResultId,
-                                               @Valid @RequestBody UpdateStepResultRequest request) {
-        return testRunService.updateStepResult(projectId, runId, resultId, stepResultId, request);
+                                               @Valid @RequestBody UpdateStepResultRequest request,
+                                               Authentication authentication) {
+        return testRunService.updateStepResult(projectId, runId, resultId, stepResultId, request, actor(authentication));
     }
 
     @PostMapping("/{runId}/results/bulk-status")
@@ -216,5 +222,9 @@ public class TestRunController {
             Authentication authentication) {
         UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         return testRunService.bulkUpdateResultStatus(projectId, runId, request, userId);
+    }
+
+    private static UUID actor(Authentication authentication) {
+        return authentication != null ? UUID.fromString(authentication.getName()) : null;
     }
 }

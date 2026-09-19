@@ -119,7 +119,7 @@ class MediaCacheHeadersApiTest {
         TestResult result = new TestResult();
         result.setTestRun(run);
         result.setTestCase(testCase);
-        result.setStatus(TestResultStatus.PENDING);
+        result.setStatus(TestResultStatus.PENDING, null);
         result = testResultRepository.save(result);
 
         StepResult stepResult = new StepResult();

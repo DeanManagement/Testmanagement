@@ -39,7 +39,7 @@ class RunEventPublisherTest {
             testCase.setTitle("Case " + i);
             TestResult result = new TestResult();
             result.setTestCase(testCase);
-            result.setStatus(statuses[i]);
+            result.setStatus(statuses[i], null);
             run.getResults().add(result);
         }
         return run;

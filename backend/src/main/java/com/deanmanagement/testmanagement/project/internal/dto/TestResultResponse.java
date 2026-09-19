@@ -9,7 +9,13 @@ import java.util.UUID;
 public record TestResultResponse(
         UUID id,
         UUID testCaseId,
+        /* PRD-048: the case's key, and its live preconditions and description for the tester. */
+        String testCaseKey,
         String testCaseTitle,
+        String testCasePreconditions,
+        String testCaseDescription,
+        /* PRD-048: the case's current version; differs from executedVersion when it changed since. */
+        Integer testCaseVersion,
         TestResultStatus status,
         String comment,
         String defectLink,
@@ -20,6 +26,9 @@ public record TestResultResponse(
         List<StepResultResponse> stepResults,
         /** When it left PENDING, and the measured effort (PRD-036); both null when unknown. */
         Instant executedAt,
+        /* PRD-048: who executed it; the name is null for a deleted user or an anonymous upload. */
+        UUID executedBy,
+        String executedByName,
         Long durationMs,
         /** The case's live estimate (PRD-036), so a client can keep "remaining" current as it records. */
         Integer estimateMinutes,

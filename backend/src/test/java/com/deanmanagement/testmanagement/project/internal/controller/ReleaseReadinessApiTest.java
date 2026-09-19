@@ -136,7 +136,7 @@ class ReleaseReadinessApiTest {
             UUID caseId = cases.get(i);
             UUID resultId = run.results().stream().filter(r -> r.testCaseId().equals(caseId)).findFirst().orElseThrow().id();
             testRunService.updateResult(project.getId(), run.id(), resultId,
-                    new UpdateTestResultRequest(statuses[i], null, null));
+                    new UpdateTestResultRequest(statuses[i], null, null), null);
         }
         entityManager.flush();
         return run;

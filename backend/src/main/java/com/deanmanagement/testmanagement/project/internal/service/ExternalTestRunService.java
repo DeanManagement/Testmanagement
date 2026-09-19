@@ -41,8 +41,9 @@ public class ExternalTestRunService {
      * @param pipelineRunId optional PRD-024 correlation, see {@link PipelineRunLinker}.
      */
     @Transactional
+    /** {@code executor}: the calling key's service user, recorded as who executed each result (PRD-048). */
     public TestRunResponse createExternalRun(String projectRef, ExternalCreateTestRunRequest request,
-                                             UUID pipelineRunId) {
+                                             UUID pipelineRunId, UUID executor) {
         Project project = refResolver.resolveProject(projectRef);
         var pipelineRun = pipelineRunLinker.resolve(pipelineRunId, project.getId());
 
@@ -67,7 +68,7 @@ public class ExternalTestRunService {
             result.setTestRun(run);
             result.setTestCase(testCase);
             result.setExecutedVersion(testCase.getCurrentVersion());
-            result.setStatus(resultReq.status());
+            result.setStatus(resultReq.status(), executor);
             result.setComment(resultReq.comment());
             result.setDefectLink(resultReq.defectLink());
             result.setDurationMs(resultReq.durationMs());

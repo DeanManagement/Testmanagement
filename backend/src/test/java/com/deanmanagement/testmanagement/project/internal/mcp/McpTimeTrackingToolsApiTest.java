@@ -39,7 +39,7 @@ class McpTimeTrackingToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun run = runOf(pay, browse);
 
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.PASSED, pay.id(), null, null,
-                null, 180_000L);
+                null, 180_000L, null);
 
         McpDtos.TestRunDetail detail = testRunReadTools.getTestRun(run.key(), null);
         assertThat(detail.effort()).isEqualTo(new EffortSummary(30, 10, 3, 0));

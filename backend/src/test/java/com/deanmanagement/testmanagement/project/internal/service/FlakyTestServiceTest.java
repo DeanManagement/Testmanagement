@@ -94,7 +94,7 @@ class FlakyTestServiceTest {
                 case 'B' -> TestResultStatus.BLOCKED;
                 case 'S' -> TestResultStatus.SKIPPED;
                 default -> throw new IllegalArgumentException("Unknown outcome " + outcomes.charAt(i));
-            });
+            }, null);
             testResultRepository.save(result);
         }
     }
@@ -297,7 +297,7 @@ class FlakyTestServiceTest {
         TestResult otherResult = new TestResult();
         otherResult.setTestRun(otherRun);
         otherResult.setTestCase(theirs);
-        otherResult.setStatus(TestResultStatus.FAILED);
+        otherResult.setStatus(TestResultStatus.FAILED, null);
         testResultRepository.save(otherResult);
 
         assertThat(service.analyse(project.getId()))

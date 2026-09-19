@@ -116,7 +116,7 @@ class MediaContentTypeApiTest {
         TestResult result = new TestResult();
         result.setTestRun(run);
         result.setTestCase(testCase);
-        result.setStatus(TestResultStatus.PENDING);
+        result.setStatus(TestResultStatus.PENDING, null);
         result = testResultRepository.save(result);
 
         stepResult = new StepResult();

@@ -90,7 +90,7 @@ class BulkResultStatusApiTest {
         TestResult result = new TestResult();
         result.setTestRun(run);
         result.setTestCase(tc);
-        result.setStatus(TestResultStatus.PENDING);
+        result.setStatus(TestResultStatus.PENDING, null);
         return testResultRepository.save(result).getId();
     }
 

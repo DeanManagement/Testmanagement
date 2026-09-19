@@ -24,11 +24,11 @@ class McpRunComparisonToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase pay = createCase("Pay");
         McpDtos.CreatedTestCase browse = createCase("Browse");
         McpDtos.CreatedTestRun base = runOf(pay, browse);
-        resultRecordingTools.recordTestResult(base.key(), TestResultStatus.PASSED, pay.id(), null, null, null, null);
-        resultRecordingTools.recordTestResult(base.key(), TestResultStatus.PASSED, browse.id(), null, null, null, null);
+        resultRecordingTools.recordTestResult(base.key(), TestResultStatus.PASSED, pay.id(), null, null, null, null, null);
+        resultRecordingTools.recordTestResult(base.key(), TestResultStatus.PASSED, browse.id(), null, null, null, null, null);
         McpDtos.CreatedTestRun head = runOf(pay, browse);
-        resultRecordingTools.recordTestResult(head.key(), TestResultStatus.FAILED, pay.id(), null, "boom", null, null);
-        resultRecordingTools.recordTestResult(head.key(), TestResultStatus.PASSED, browse.id(), null, null, null, null);
+        resultRecordingTools.recordTestResult(head.key(), TestResultStatus.FAILED, pay.id(), null, "boom", null, null, null);
+        resultRecordingTools.recordTestResult(head.key(), TestResultStatus.PASSED, browse.id(), null, null, null, null, null);
 
         RunComparisonResponse viaMcp = testRunReadTools.compareTestRuns(head.key(), base.key());
 

@@ -88,7 +88,7 @@ class ExecutedVersionStampingTest {
         result.setTestRun(run);
         result.setTestCase(testCase);
         result.setExecutedVersion(testCase.getCurrentVersion());
-        result.setStatus(TestResultStatus.PASSED);
+        result.setStatus(TestResultStatus.PASSED, null);
         return testResultRepository.save(result).getId();
     }
 
@@ -144,7 +144,7 @@ class ExecutedVersionStampingTest {
         TestResult legacy = new TestResult();
         legacy.setTestRun(run);
         legacy.setTestCase(testCase);
-        legacy.setStatus(TestResultStatus.PASSED);
+        legacy.setStatus(TestResultStatus.PASSED, null);
         // No executed version — the backfill deliberately leaves these null rather than claiming
         // they ran against v1, which was reconstructed from today's text.
         UUID legacyId = testResultRepository.save(legacy).getId();

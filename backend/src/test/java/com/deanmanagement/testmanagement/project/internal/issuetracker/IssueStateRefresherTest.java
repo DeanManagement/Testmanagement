@@ -126,7 +126,7 @@ class IssueStateRefresherTest {
         TestResult result = new TestResult();
         result.setTestRun(run);
         result.setTestCase(testCase);
-        result.setStatus(TestResultStatus.FAILED);
+        result.setStatus(TestResultStatus.FAILED, null);
         result = testResultRepository.save(result);
 
         IssueLink link = new IssueLink();

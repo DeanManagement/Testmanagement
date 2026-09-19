@@ -19,6 +19,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -52,9 +53,10 @@ public class ExternalTestRunController {
     @ResponseStatus(HttpStatus.CREATED)
     public TestRunResponse create(@PathVariable String projectRef,
                                   @Valid @RequestBody ExternalCreateTestRunRequest request,
-                                  @RequestParam(required = false) UUID pipelineRunId) {
+                                  @RequestParam(required = false) UUID pipelineRunId,
+                                  Authentication authentication) {
         requireTester(projectRef);
-        return externalTestRunService.createExternalRun(projectRef, request, pipelineRunId);
+        return externalTestRunService.createExternalRun(projectRef, request, pipelineRunId, executor(authentication));
     }
 
     @PostMapping(value = "/junit", consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.TEXT_XML_VALUE})
@@ -64,13 +66,14 @@ public class ExternalTestRunController {
                                        @RequestParam(required = false) String runName,
                                        @RequestParam(required = false) String environment,
                                        @RequestParam(required = false) UUID testPlanId,
-                                       @RequestParam(required = false) UUID pipelineRunId) {
+                                       @RequestParam(required = false) UUID pipelineRunId,
+                                       Authentication authentication) {
         requireTester(projectRef);
         checkSize(body);
         // With a pipelineRunId and no explicit name the run is named after its workflow (PRD-024).
         String name = runName != null ? runName : pipelineRunId != null ? null : "JUnit import";
         return ciIngestionService.ingest(projectRef, name, environment, testPlanId,
-                jUnitXmlParser.parse(body), pipelineRunId);
+                jUnitXmlParser.parse(body), pipelineRunId, executor(authentication));
     }
 
     @PostMapping(value = "/cucumber", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -80,12 +83,13 @@ public class ExternalTestRunController {
                                           @RequestParam(required = false) String runName,
                                           @RequestParam(required = false) String environment,
                                           @RequestParam(required = false) UUID testPlanId,
-                                          @RequestParam(required = false) UUID pipelineRunId) {
+                                          @RequestParam(required = false) UUID pipelineRunId,
+                                          Authentication authentication) {
         requireTester(projectRef);
         checkSize(body);
         String name = runName != null ? runName : pipelineRunId != null ? null : "Cucumber import";
         return ciIngestionService.ingest(projectRef, name, environment, testPlanId,
-                cucumberJsonParser.parse(body), pipelineRunId);
+                cucumberJsonParser.parse(body), pipelineRunId, executor(authentication));
     }
 
     /**
@@ -99,6 +103,18 @@ public class ExternalTestRunController {
     private void requireTester(String projectRef) {
         Project project = refResolver.resolveProject(projectRef);
         projectAccessService.requireRoleForCurrentUser(project.getId(), ProjectRole.TESTER);
+    }
+
+    /** The key's service user; null when the caller is not a user (PRD-048 records no executor then). */
+    private static UUID executor(Authentication authentication) {
+        if (authentication == null) {
+            return null;
+        }
+        try {
+            return UUID.fromString(authentication.getName());
+        } catch (IllegalArgumentException notAUser) {
+            return null;
+        }
     }
 
     private void checkSize(byte[] body) {

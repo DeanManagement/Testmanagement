@@ -181,7 +181,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase second = createCase("Second");
         McpDtos.CreatedTestRun source = runOf(first, second);
         resultRecordingTools.recordTestResult(source.key(), TestResultStatus.FAILED, first.id(), null,
-                "broken", null, null);
+                "broken", null, null, null);
         testRunWriteTools.completeTestRun(source.key(), null, null);
 
         McpDtos.CreatedTestRun clone = maintenanceTools.cloneTestRun(source.key(), "Re-test", null);

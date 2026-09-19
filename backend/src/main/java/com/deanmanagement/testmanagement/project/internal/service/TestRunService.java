@@ -67,6 +67,9 @@ import com.deanmanagement.testmanagement.project.internal.dto.report.TestRunRepo
 @Transactional(readOnly = true)
 public class TestRunService {
 
+    /** PRD-048: statuses a result may pass down to its pending steps; a failure belongs to one step. */
+    private static final Set<TestResultStatus> CASCADABLE = Set.of(TestResultStatus.PASSED, TestResultStatus.SKIPPED);
+
     private final TestRunRepository testRunRepository;
     private final TestResultRepository testResultRepository;
     private final StepResultRepository stepResultRepository;
@@ -179,16 +182,16 @@ public class TestRunService {
         int pending = (int) results.stream().filter(r -> r.getStatus() == TestResultStatus.PENDING).count();
         double passRate = total > 0 ? Math.round(passed * 10000.0 / total) / 100.0 : 0.0;
 
-        List<TestResultResponse> resultResponses = results.stream()
-                .map(testRunMapper::toResultResponse)
-                .toList();
+        List<TestResultResponse> resultResponses = testRunMapper.toResultResponses(results);
 
         return new TestRunReportResponse(
                 run.getId(), run.getName(), run.getEnvironment(), run.getStatus(),
                 run.getStartTime(), run.getEndTime(),
                 total, passed, failed, blocked, skipped, pending, passRate,
                 resultResponses, reviewService.resultsOnUnapprovedWording(run.getProject(), results),
-                EffortSummary.of(results)
+                EffortSummary.of(results),
+                run.getTestPlan() == null ? null : run.getTestPlan().getId(),
+                run.getTestPlan() == null ? null : run.getTestPlan().getName()
         );
     }
 
@@ -333,7 +336,7 @@ public class TestRunService {
         // Stamp the version being executed (PRD-011). Later edits to the case bump its
         // current version but must not rewrite what this result ran against.
         result.setExecutedVersion(tc.getCurrentVersion());
-        result.setStatus(TestResultStatus.PENDING);
+        result.setStatus(TestResultStatus.PENDING, null);
         if (set != null) {
             result.setParameterSetName(set.getName());
             result.setParameterValuesJson(set.getValuesJson());
@@ -510,7 +513,7 @@ public class TestRunService {
     }
 
     @Transactional
-    public TestResultResponse addResult(UUID projectId, UUID runId, CreateTestResultRequest request) {
+    public TestResultResponse addResult(UUID projectId, UUID runId, CreateTestResultRequest request, UUID userId) {
         TestRun run = testRunRepository.findById(runId)
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", runId));
@@ -524,7 +527,7 @@ public class TestRunService {
         result.setTestRun(run);
         result.setTestCase(testCase);
         result.setExecutedVersion(testCase.getCurrentVersion());
-        result.setStatus(request.status());
+        result.setStatus(request.status(), userId);
         // Null leaves them alone and "" clears (PRD-047). The SPA sends only the status when a tester
         // clicks it, which used to wipe a comment or defect link written by CI or an agent.
         if (request.comment() != null) {
@@ -544,7 +547,7 @@ public class TestRunService {
 
     @Transactional
     public TestResultResponse updateResult(UUID projectId, UUID runId, UUID resultId,
-                                           UpdateTestResultRequest request) {
+                                           UpdateTestResultRequest request, UUID userId) {
         TestRun run = testRunRepository.findById(runId)
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", runId));
@@ -553,7 +556,18 @@ public class TestRunService {
                 .filter(r -> r.getTestRun().getId().equals(run.getId()))
                 .orElseThrow(() -> new ResourceNotFoundException("TestResult", resultId));
 
-        result.setStatus(request.status());
+        boolean cascade = Boolean.TRUE.equals(request.cascadeSteps());
+        if (cascade && !CASCADABLE.contains(request.status())) {
+            throw new IllegalArgumentException("Only PASSED and SKIPPED cascade to the steps; a failure belongs "
+                    + "to the step that failed, so set that one");
+        }
+        result.setStatus(request.status(), userId);
+        if (cascade) {
+            // Only what nobody has recorded yet: a step already marked keeps its own outcome (PRD-048).
+            result.getStepResults().stream()
+                    .filter(step -> step.getStatus() == TestResultStatus.PENDING)
+                    .forEach(step -> step.setStatus(request.status()));
+        }
         // Null leaves them alone and "" clears (PRD-047). The SPA sends only the status when a tester
         // clicks it, which used to wipe a comment or defect link written by CI or an agent.
         if (request.comment() != null) {
@@ -593,7 +607,7 @@ public class TestRunService {
         }
 
         for (TestResult result : results) {
-            result.setStatus(request.status());
+            result.setStatus(request.status(), userId);
             if (request.cascadeSteps()) {
                 result.getStepResults().forEach(sr -> sr.setStatus(request.status()));
             }
@@ -610,7 +624,7 @@ public class TestRunService {
 
     @Transactional
     public StepResultResponse updateStepResult(UUID projectId, UUID runId, UUID resultId, UUID stepResultId,
-                                               UpdateStepResultRequest request) {
+                                               UpdateStepResultRequest request, UUID userId) {
         TestRun run = testRunRepository.findById(runId)
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", runId));
@@ -631,7 +645,7 @@ public class TestRunService {
         // Auto-compute worst status from all sibling step results and update parent
         TestResultStatus worstStatus = computeWorstStepStatus(testResult.getStepResults());
         if (testResult.getStatus() != worstStatus) {
-            testResult.setStatus(worstStatus);
+            testResult.setStatus(worstStatus, userId);
             testResultRepository.save(testResult);
         }
 

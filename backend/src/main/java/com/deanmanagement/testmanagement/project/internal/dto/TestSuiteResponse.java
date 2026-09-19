@@ -14,5 +14,5 @@ public record TestSuiteResponse(
         UUID createdBy,
         UUID updatedBy
 ) {
-    public record TestCaseSummary(UUID id, String title) {}
+    public record TestCaseSummary(UUID id, String key, String title) {}
 }

@@ -197,9 +197,9 @@ class TestPlanServiceTest {
         run1.setStatus(TestRunStatus.COMPLETED);
 
         TestResult r1 = new TestResult();
-        r1.setStatus(TestResultStatus.PASSED);
+        r1.setStatus(TestResultStatus.PASSED, null);
         TestResult r2 = new TestResult();
-        r2.setStatus(TestResultStatus.FAILED);
+        r2.setStatus(TestResultStatus.FAILED, null);
         run1.getResults().addAll(List.of(r1, r2));
 
         TestRun run2 = new TestRun();
@@ -208,7 +208,7 @@ class TestPlanServiceTest {
         run2.setStatus(TestRunStatus.IN_PROGRESS);
 
         TestResult r3 = new TestResult();
-        r3.setStatus(TestResultStatus.PASSED);
+        r3.setStatus(TestResultStatus.PASSED, null);
         run2.getResults().add(r3);
 
         plan.getTestRuns().addAll(List.of(run1, run2));

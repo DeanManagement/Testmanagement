@@ -18,8 +18,8 @@ class ResultEvidenceTest {
     }
 
     private static TestResultResponse result(String comment, List<StepResultResponse> steps) {
-        return new TestResultResponse(UUID.randomUUID(), UUID.randomUUID(), "Checkout",
-                TestResultStatus.FAILED, comment, null, 1, null, steps, null, null, null, null, null, null, null);
+        return new TestResultResponse(UUID.randomUUID(), UUID.randomUUID(), "SPI-1", "Checkout", null, null, null,
+                TestResultStatus.FAILED, comment, null, 1, null, steps, null, null, null, null, null, null, null, null, null);
     }
 
     @Test
