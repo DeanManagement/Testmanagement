@@ -114,6 +114,7 @@ export class TestPlanFormComponent implements OnInit, HasUnsavedChanges {
   onSubmit(): void {
     if (this.form.invalid) return;
     this.dirty = false;
+    this.form.markAsPristine();
     this.saving = true;
 
     const targetDate = this.form.value.targetDate
@@ -152,12 +153,11 @@ export class TestPlanFormComponent implements OnInit, HasUnsavedChanges {
     }
   }
 
-  markDirty(): void {
-    this.dirty = true;
-  }
 
   hasUnsavedChanges(): boolean {
-    return this.dirty && !this.saving;
+    // form.dirty covers every field; dirty covers what lives outside the form controls and
+    // re-arms the guard after a failed save.
+    return (this.form.dirty || this.dirty) && !this.saving;
   }
 
   private formatDate(date: Date): string {

@@ -150,4 +150,43 @@ describe('TestCaseFormComponent – Edit as Gherkin (PRD-040 §3.7)', () => {
       expect(form.steps.length).toBe(1);
     });
   });
+
+  describe('unsaved changes', () => {
+    function freshForm(): TestCaseFormComponent {
+      const fixture = TestBed.createComponent(TestCaseFormComponent);
+      fixture.detectChanges();
+      return fixture.componentInstance;
+    }
+
+    it('should not count a form nobody has touched', () => {
+      expect(freshForm().hasUnsavedChanges()).toBe(false);
+    });
+
+    it('should count an edit to any field, not just the title', () => {
+      const form = freshForm();
+
+      form.form.controls.description.setValue('Changed');
+      form.form.controls.description.markAsDirty();
+
+      expect(form.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('should count a step added or removed', () => {
+      const form = freshForm();
+
+      form.addStep();
+      form.steps.markAsDirty();
+
+      expect(form.hasUnsavedChanges()).toBe(true);
+    });
+
+    it('should let a save navigate away', () => {
+      const form = createForm();
+      form.form.controls.title.markAsDirty();
+
+      form.onSubmit();
+
+      expect(form.hasUnsavedChanges()).toBe(false);
+    });
+  });
 });

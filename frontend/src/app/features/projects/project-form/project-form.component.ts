@@ -71,6 +71,7 @@ export class ProjectFormComponent implements OnInit, HasUnsavedChanges {
   onSubmit(): void {
     if (this.form.invalid) return;
     this.dirty = false;
+    this.form.markAsPristine();
     this.saving = true;
 
     if (this.editMode && this.projectId) {
@@ -96,11 +97,10 @@ export class ProjectFormComponent implements OnInit, HasUnsavedChanges {
     }
   }
 
-  markDirty(): void {
-    this.dirty = true;
-  }
 
   hasUnsavedChanges(): boolean {
-    return this.dirty && !this.saving;
+    // form.dirty covers every field; dirty covers what lives outside the form controls and
+    // re-arms the guard after a failed save.
+    return (this.form.dirty || this.dirty) && !this.saving;
   }
 }

@@ -253,12 +253,15 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
   }
 
   hasUnsavedChanges(): boolean {
-    return this.dirty && !this.saving;
+    // form.dirty covers every field; dirty covers what lives outside the form controls and
+    // re-arms the guard after a failed save.
+    return (this.form.dirty || this.dirty) && !this.saving;
   }
 
   onSubmit(): void {
     if (this.form.invalid || this.saving) return;
     this.dirty = false;
+    this.form.markAsPristine();
     this.saving = true;
 
     const labels = splitLabels(this.form.value.labels ?? '');

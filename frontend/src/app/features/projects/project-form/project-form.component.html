@@ -14,7 +14,7 @@
       <form [formGroup]="form" (ngSubmit)="onSubmit()" data-test-id="project-form">
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{ 'project.form.name' | translate }}</mat-label>
-          <input matInput formControlName="name" (ngModelChange)="markDirty()" data-test-id="project-name-input" aria-required="true" />
+          <input matInput formControlName="name" data-test-id="project-name-input" aria-required="true" />
           <mat-error><app-field-error [control]="form.controls.name" /></mat-error>
         </mat-form-field>
 
