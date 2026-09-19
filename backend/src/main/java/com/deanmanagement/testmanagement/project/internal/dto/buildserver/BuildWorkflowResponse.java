@@ -16,6 +16,7 @@ public record BuildWorkflowResponse(
         Map<String, String> defaultParameters,
         boolean active,
         List<UUID> projectIds,
-        Instant updatedAt
+        Instant updatedAt,
+        boolean pullTestResults
 ) {
 }

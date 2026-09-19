@@ -77,6 +77,10 @@ public class IssueTrackerConfigService {
         config.setBaseUrl(request.baseUrl().trim());
         config.setProjectRef(request.projectRef().trim());
         config.setActive(request.active() == null || request.active());
+        // Azure DevOps settings only; switching to another tracker clears them (PRD-026).
+        boolean azure = request.provider() == IssueTrackerProviderType.AZURE_DEVOPS;
+        config.setApiVersion(azure ? trimToNull(request.apiVersion()) : null);
+        config.setWorkItemType(azure ? trimToNull(request.workItemType()) : null);
         if (!isBlank(request.apiToken())) {
             config.setApiTokenEncrypted(tokenCipher.encrypt(request.apiToken()));
             // A new token invalidates whatever the old one failed at.
@@ -170,7 +174,13 @@ public class IssueTrackerConfigService {
                 config.getLastError(),
                 config.getLastErrorAt(),
                 config.getUpdatedAt(),
-                config.getAuthUsername());
+                config.getAuthUsername(),
+                config.getApiVersion(),
+                config.getWorkItemType());
+    }
+
+    private static String trimToNull(String value) {
+        return isBlank(value) ? null : value.trim();
     }
 
     /**

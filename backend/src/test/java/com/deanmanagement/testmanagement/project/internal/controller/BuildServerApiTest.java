@@ -206,6 +206,28 @@ class BuildServerApiTest {
     // with allow-private-targets so stub servers on 127.0.0.1 (and unresolvable example.com
     // fixtures) work on CI runners without outbound DNS.
 
+    /** PRD-026: an Azure DevOps server keeps its API version, and a workflow whether it pulls results. */
+    @Test
+    void azureDevOpsServerAndWorkflowKeepTheirSettings() throws Exception {
+        String serverJson = mockMvc.perform(post("/api/build-servers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Azure\",\"provider\":\"AZURE_DEVOPS\","
+                                + "\"baseUrl\":\"https://dev.azure.com/contoso\",\"apiToken\":\"pat\",\"apiVersion\":\"7.1\"}")
+                        .with(user(sysAdmin).roles("ADMIN")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.apiVersion").value("7.1"))
+                .andReturn().getResponse().getContentAsString();
+        String serverId = com.jayway.jsonpath.JsonPath.read(serverJson, "$.id");
+
+        mockMvc.perform(post("/api/build-servers/" + serverId + "/workflows")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"CI\",\"repoRef\":\"Payments\",\"workflowRef\":\"42\","
+                                + "\"pullTestResults\":true}")
+                        .with(user(sysAdmin).roles("ADMIN")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.pullTestResults").value(true));
+    }
+
     @Test
     void workflowAssignments_areReplacedAsASet() throws Exception {
         BuildServerConfig config = saveServer();

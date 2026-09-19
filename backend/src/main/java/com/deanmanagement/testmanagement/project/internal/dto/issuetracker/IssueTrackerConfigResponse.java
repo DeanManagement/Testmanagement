@@ -21,6 +21,8 @@ public record IssueTrackerConfigResponse(
         Instant lastErrorAt,
         Instant updatedAt,
         // Not a secret (PRD-029 §3.1); returned so the settings form can show which account is in use.
-        String authUsername
+        String authUsername,
+        String apiVersion,
+        String workItemType
 ) {
 }

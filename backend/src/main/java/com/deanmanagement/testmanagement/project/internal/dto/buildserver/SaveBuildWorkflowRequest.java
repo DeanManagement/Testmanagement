@@ -12,6 +12,8 @@ public record SaveBuildWorkflowRequest(
         @Size(max = 300) String workflowRef,
         @Size(max = 200) String defaultRef,
         Map<String, String> defaultParameters,
-        Boolean active
+        Boolean active,
+        /* PRD-026 §3.4: pull the results the build server collected once a run finishes. */
+        Boolean pullTestResults
 ) {
 }

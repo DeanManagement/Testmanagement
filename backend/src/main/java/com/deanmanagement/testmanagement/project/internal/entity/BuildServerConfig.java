@@ -59,4 +59,8 @@ public class BuildServerConfig extends BaseEntity {
 
     @Column(name = "last_error_at")
     private Instant lastErrorAt;
+
+    /** Azure DevOps only (PRD-026): the {@code api-version} to send; null means the adapter's default. */
+    @Column(name = "api_version", length = 10)
+    private String apiVersion;
 }

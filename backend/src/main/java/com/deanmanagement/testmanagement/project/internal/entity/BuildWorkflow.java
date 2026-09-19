@@ -60,4 +60,11 @@ public class BuildWorkflow extends BaseEntity {
 
     @Column(nullable = false)
     private boolean active = true;
+
+    /**
+     * PRD-026 §3.4: once a triggered run finishes, read the test results the build server already
+     * collected. Only providers that can (Azure DevOps) honour it.
+     */
+    @Column(name = "pull_test_results", nullable = false)
+    private boolean pullTestResults;
 }

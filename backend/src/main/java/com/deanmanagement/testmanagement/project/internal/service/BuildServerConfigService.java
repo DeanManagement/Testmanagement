@@ -8,6 +8,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.buildserver.Discov
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.DiscoverWorkflowsResponse.DiscoveredWorkflowResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.SaveBuildServerConfigRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.BuildServerConfig;
+import com.deanmanagement.testmanagement.project.internal.entity.BuildServerProviderType;
 import com.deanmanagement.testmanagement.project.internal.repository.BuildServerConfigRepository;
 import com.deanmanagement.testmanagement.shared.crypto.AesGcmCipher;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
@@ -72,6 +73,8 @@ public class BuildServerConfigService {
         config.setProvider(request.provider());
         config.setBaseUrl(request.baseUrl().trim());
         config.setActive(request.active() == null || request.active());
+        config.setApiVersion(request.provider() == BuildServerProviderType.AZURE_DEVOPS
+                ? trimToNull(request.apiVersion()) : null);
         if (!isBlank(request.apiToken())) {
             config.setApiTokenEncrypted(secretCipher.encrypt(request.apiToken()));
             // A new token invalidates whatever the old one failed at.
@@ -163,7 +166,12 @@ public class BuildServerConfigService {
                 config.getApiTokenEncrypted() != null && !config.getApiTokenEncrypted().isBlank(),
                 config.getLastError(),
                 config.getLastErrorAt(),
-                config.getUpdatedAt());
+                config.getUpdatedAt(),
+                config.getApiVersion());
+    }
+
+    private static String trimToNull(String value) {
+        return isBlank(value) ? null : value.trim();
     }
 
     private static boolean isBlank(String value) {

@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.dto.buildserver;
 import com.deanmanagement.testmanagement.project.internal.entity.BuildServerProviderType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 /**
@@ -14,6 +15,9 @@ public record SaveBuildServerConfigRequest(
         @NotNull BuildServerProviderType provider,
         @NotBlank @Size(max = 500) String baseUrl,
         @Size(max = 500) String apiToken,
-        Boolean active
+        Boolean active,
+        /* PRD-026: Azure DevOps only, e.g. 7.1 or 6.0; blank means the default. Ignored for other providers. */
+        @Size(max = 10) @Pattern(regexp = "^$|^\\d+\\.\\d+(-preview(\\.\\d+)?)?$",
+                message = "must look like 7.1 or 6.0") String apiVersion
 ) {
 }

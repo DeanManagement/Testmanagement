@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.buildserver;
 
+import com.deanmanagement.testmanagement.project.internal.ci.CiResult;
 import com.deanmanagement.testmanagement.project.internal.entity.BuildServerConfig;
 import com.deanmanagement.testmanagement.project.internal.entity.BuildServerProviderType;
 import com.deanmanagement.testmanagement.project.internal.entity.PipelineRunStatus;
@@ -52,6 +53,16 @@ public interface BuildServerProvider {
         throw new UnsupportedOperationException(type() + " does not support workflow discovery");
     }
 
+    /**
+     * The test results the build server itself collected for a finished run (PRD-026 §3.4), at most
+     * {@code limit} of them. Lets results reach the tool without the pipeline reporting back.
+     *
+     * @throws UnsupportedOperationException when the provider keeps no test results of its own.
+     */
+    default PulledResults fetchTestResults(DecryptedConfig config, StatusQuery query, int limit) {
+        throw new UnsupportedOperationException(type() + " does not keep test results to pull");
+    }
+
     /** A config paired with its plaintext token, assembled per call and never stored. */
     record DecryptedConfig(BuildServerConfig config, String token) {
         public String baseUrl() {
@@ -91,5 +102,9 @@ public interface BuildServerProvider {
     }
 
     record DiscoveredWorkflow(String name, String repoRef, String workflowRef, String defaultRef) {
+    }
+
+    /** @param truncated true when the run had more results than the limit allowed */
+    record PulledResults(List<CiResult> results, boolean truncated) {
     }
 }

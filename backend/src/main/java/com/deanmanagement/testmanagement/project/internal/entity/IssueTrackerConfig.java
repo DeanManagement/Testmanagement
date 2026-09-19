@@ -66,4 +66,12 @@ public class IssueTrackerConfig extends BaseEntity {
 
     @Column(name = "last_error_at")
     private Instant lastErrorAt;
+
+    /** Azure DevOps only (PRD-026): the {@code api-version} to send; null means the adapter's default. */
+    @Column(name = "api_version", length = 10)
+    private String apiVersion;
+
+    /** Azure DevOps only: the work item type bugs are filed as; null means {@code Bug}. */
+    @Column(name = "work_item_type", length = 100)
+    private String workItemType;
 }

@@ -63,6 +63,7 @@ public class BuildWorkflowService {
         workflow.setDefaultRef(trimToNull(request.defaultRef()));
         workflow.setDefaultParameters(parameterCodec.toJson(request.defaultParameters()));
         workflow.setActive(request.active() == null || request.active());
+        workflow.setPullTestResults(Boolean.TRUE.equals(request.pullTestResults()));
         return workflow;
     }
 
@@ -142,7 +143,8 @@ public class BuildWorkflowService {
                 assignmentRepository.findByWorkflowId(workflow.getId()).stream()
                         .map(ProjectBuildWorkflow::getProjectId)
                         .toList(),
-                workflow.getUpdatedAt());
+                workflow.getUpdatedAt(),
+                workflow.isPullTestResults());
     }
 
     private static String trimToNull(String value) {

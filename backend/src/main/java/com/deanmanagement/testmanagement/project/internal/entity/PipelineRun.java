@@ -75,4 +75,8 @@ public class PipelineRun extends BaseEntity {
 
     @Column(name = "finished_at")
     private Instant finishedAt;
+
+    /** When its test results were pulled from the build server, or the pull gave up (PRD-026 §3.4). */
+    @Column(name = "results_pulled_at")
+    private Instant resultsPulledAt;
 }

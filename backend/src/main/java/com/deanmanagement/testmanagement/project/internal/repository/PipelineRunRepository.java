@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -30,4 +31,17 @@ public interface PipelineRunRepository extends JpaRepository<PipelineRun, UUID> 
             + "ORDER BY r.lastPolledAt ASC NULLS FIRST")
     List<PipelineRun> findPollable(@Param("statuses") Collection<PipelineRunStatus> statuses,
                                    Pageable pageable);
+
+    /** PRD-026 §3.4: finished runs whose workflow pulls test results and that have none yet. */
+    String PULLABLE = "FROM PipelineRun r JOIN r.workflow w JOIN w.buildServerConfig c "
+            + "WHERE r.status IN :statuses AND r.resultsPulledAt IS NULL AND r.testRun IS NULL "
+            + "AND w.pullTestResults = true AND c.active = true AND r.finishedAt >= :finishedAfter";
+
+    @Query("SELECT r " + PULLABLE + " ORDER BY r.finishedAt ASC")
+    List<PipelineRun> findPullable(@Param("statuses") Collection<PipelineRunStatus> statuses,
+                                   @Param("finishedAfter") Instant finishedAfter, Pageable pageable);
+
+    @Query("SELECT COUNT(r) > 0 " + PULLABLE)
+    boolean existsPullable(@Param("statuses") Collection<PipelineRunStatus> statuses,
+                           @Param("finishedAfter") Instant finishedAfter);
 }

@@ -25,19 +25,27 @@ public class PipelineStatusPoller {
     private final BuildServerConfigRepository configRepository;
     private final PipelineRunRepository runRepository;
     private final PipelineRunRefresher refresher;
+    private final PipelineResultPuller resultPuller;
 
     @Scheduled(fixedDelayString = "${app.buildserver.poll-interval-ms:15000}")
     public void poll() {
         if (!configRepository.existsByActiveTrue()) {
             return;
         }
-        if (!runRepository.existsByStatusIn(PipelineRunRefresher.NON_TERMINAL)) {
-            return;
+        if (runRepository.existsByStatusIn(PipelineRunRefresher.NON_TERMINAL)) {
+            try {
+                refresher.refreshBatch();
+            } catch (Exception e) {
+                log.warn("Pipeline status poll pass failed: {}", e.getMessage());
+            }
         }
-        try {
-            refresher.refreshBatch();
-        } catch (Exception e) {
-            log.warn("Pipeline status poll pass failed: {}", e.getMessage());
+        // PRD-026 §3.4: after the refresh, so a run that just finished is pulled in the same pass.
+        if (resultPuller.hasWork()) {
+            try {
+                resultPuller.pullBatch();
+            } catch (Exception e) {
+                log.warn("Pipeline test result pull failed: {}", e.getMessage());
+            }
         }
     }
 }

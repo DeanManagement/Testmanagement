@@ -116,7 +116,9 @@ abstract class HttpBuildProviderSupport {
             throw new UpstreamServiceException(providerName() + " rate limit reached; try again shortly");
         }
         if (status < 200 || status >= 300) {
-            throw new UpstreamServiceException(providerName() + " returned HTTP " + status);
+            String hint = failureHint(response);
+            throw new UpstreamServiceException(providerName() + " returned HTTP " + status
+                    + (hint == null ? "" : "; " + hint));
         }
         return response;
     }
@@ -161,9 +163,19 @@ abstract class HttpBuildProviderSupport {
             throw new UpstreamServiceException(providerName() + " rate limit reached; try again shortly");
         }
         if (status < 200 || status >= 300) {
-            throw new UpstreamServiceException(providerName() + " returned HTTP " + status);
+            String hint = failureHint(response);
+            throw new UpstreamServiceException(providerName() + " returned HTTP " + status
+                    + (hint == null ? "" : "; " + hint));
         }
         return response;
+    }
+
+    /**
+     * What the admin can do about an otherwise unexplained error response, or null. For servers
+     * whose error body names a setting, such as Azure DevOps rejecting its api-version.
+     */
+    protected String failureHint(HttpResponse<String> response) {
+        return null;
     }
 
     protected JsonNode parseBody(HttpResponse<String> response) {
@@ -173,6 +185,14 @@ abstract class HttpBuildProviderSupport {
         }
         if (body.length() > MAX_RESPONSE_BYTES) {
             throw new UpstreamServiceException(providerName() + " response was too large to process");
+        }
+        // A server that answers with a sign-in page instead of JSON rejected the token, whatever the
+        // status says: Azure DevOps answers a bad PAT with 203 and HTML, and a server behind an SSO
+        // proxy may answer 200 (PRD-026 §3.2). Reporting that as a malformed response would hide it.
+        String contentType = response.headers().firstValue("Content-Type").orElse("").toLowerCase();
+        if (response.statusCode() == 203 || contentType.contains("html")) {
+            throw new UpstreamServiceException(providerName()
+                    + " rejected the configured access token (it answered with a sign-in page)");
         }
         try {
             return objectMapper.readTree(body);

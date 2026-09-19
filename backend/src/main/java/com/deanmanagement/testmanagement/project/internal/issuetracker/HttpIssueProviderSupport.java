@@ -101,7 +101,11 @@ abstract class HttpIssueProviderSupport {
         return parse(exchange(request, config), config);
     }
 
-    private HttpResponse<String> exchange(HttpRequest request, IssueTrackerProvider.DecryptedConfig config) {
+    /**
+     * Sends without judging the status, for callers that need to read an error before deciding
+     * (Azure DevOps names a rejected field in a 400). Pair with {@link #parse}.
+     */
+    protected HttpResponse<String> exchange(HttpRequest request, IssueTrackerProvider.DecryptedConfig config) {
         try {
             return client().send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
         } catch (InterruptedException e) {
@@ -114,7 +118,7 @@ abstract class HttpIssueProviderSupport {
         }
     }
 
-    private JsonNode parse(HttpResponse<String> response, IssueTrackerProvider.DecryptedConfig config) {
+    protected JsonNode parse(HttpResponse<String> response, IssueTrackerProvider.DecryptedConfig config) {
         rejectFailure(response, config);
 
         String body = response.body();

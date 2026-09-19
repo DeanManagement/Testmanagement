@@ -19,6 +19,7 @@ public record BuildServerConfigResponse(
         boolean tokenSet,
         String lastError,
         Instant lastErrorAt,
-        Instant updatedAt
+        Instant updatedAt,
+        String apiVersion
 ) {
 }

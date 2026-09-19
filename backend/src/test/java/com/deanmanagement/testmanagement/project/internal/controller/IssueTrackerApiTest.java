@@ -128,6 +128,37 @@ class IssueTrackerApiTest {
                 .andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString(TOKEN))));
     }
 
+    /** PRD-026: Azure DevOps keeps its API version and work item type; other trackers drop them. */
+    @Test
+    void azureDevOpsKeepsItsApiVersionAndWorkItemType() throws Exception {
+        String azure = "{\"provider\":\"AZURE_DEVOPS\",\"baseUrl\":\"https://dev.azure.com/contoso\","
+                + "\"projectRef\":\"Payments\",\"apiToken\":\"" + TOKEN + "\",\"apiVersion\":\"6.0\","
+                + "\"workItemType\":\"Product Backlog Item\"}";
+
+        mockMvc.perform(put(configUrl(projectId)).contentType(MediaType.APPLICATION_JSON).content(azure)
+                        .with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.provider").value("AZURE_DEVOPS"))
+                .andExpect(jsonPath("$.apiVersion").value("6.0"))
+                .andExpect(jsonPath("$.workItemType").value("Product Backlog Item"));
+
+        mockMvc.perform(put(configUrl(projectId)).contentType(MediaType.APPLICATION_JSON).content(saveBody(null))
+                        .with(user(admin)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.apiVersion").doesNotExist())
+                .andExpect(jsonPath("$.workItemType").doesNotExist());
+    }
+
+    @Test
+    void anApiVersionThatIsNotAVersionIsRefused() throws Exception {
+        String azure = "{\"provider\":\"AZURE_DEVOPS\",\"baseUrl\":\"https://dev.azure.com/contoso\","
+                + "\"projectRef\":\"Payments\",\"apiToken\":\"t\",\"apiVersion\":\"7.1&x=1\"}";
+
+        mockMvc.perform(put(configUrl(projectId)).contentType(MediaType.APPLICATION_JSON).content(azure)
+                        .with(user(admin)))
+                .andExpect(status().isBadRequest());
+    }
+
     @Test
     void tokenIsEncryptedAtRest() throws Exception {
         mockMvc.perform(put(configUrl(projectId))
@@ -206,7 +237,7 @@ class IssueTrackerApiTest {
                 .andExpect(status().isOk())
                 // LINEAR is declared in the enum but has no adapter, so it must stay hidden.
                 .andExpect(jsonPath("$", org.hamcrest.Matchers.containsInAnyOrder(
-                        "GITLAB", "FORGEJO", "GITHUB", "JIRA")));
+                        "GITLAB", "FORGEJO", "GITHUB", "JIRA", "AZURE_DEVOPS")));
     }
 
     // ---- PRD-029: the Jira Cloud account email --------------------------------------------
