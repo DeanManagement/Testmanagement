@@ -4,11 +4,15 @@ import com.deanmanagement.testmanagement.project.internal.dto.attachment.Attachm
 import com.deanmanagement.testmanagement.project.internal.entity.Attachment;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
+import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
+import com.deanmanagement.testmanagement.project.internal.entity.Screenshot;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.repository.AttachmentRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.ScreenshotRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.shared.exception.ConflictException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,10 +27,14 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * Files attached to a test case (PRD-044). Every lookup goes through the project and the case, so an
- * attachment id from elsewhere is a 404. Limits bound what one case and one project can store, since
- * every byte lives in the database and in every backup.
+ * Files attached to a test case (PRD-044) or a bug report (PRD-051). Every lookup goes through the
+ * project and the owner, so an attachment id from elsewhere is a 404. Limits bound what one owner and
+ * one project can store, since every byte lives in the database and in every backup.
+ *
+ * <p>Bug report methods take the bug already resolved: {@code BugReportAttachmentService} does that
+ * within the project, and checks that bug reports are enabled there.
  */
+@Slf4j
 @Service
 @Transactional(readOnly = true)
 public class AttachmentService {
@@ -36,18 +44,20 @@ public class AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
     private final TestCaseRepository testCaseRepository;
+    private final ScreenshotRepository screenshotRepository;
     private final AuditService auditService;
-    private final int maxPerCase;
+    private final int maxPerOwner;
     private final long maxProjectBytes;
 
     public AttachmentService(AttachmentRepository attachmentRepository, TestCaseRepository testCaseRepository,
-                             AuditService auditService,
-                             @Value("${app.attachments.max-per-case:20}") int maxPerCase,
+                             ScreenshotRepository screenshotRepository, AuditService auditService,
+                             @Value("${app.attachments.max-per-owner:20}") int maxPerOwner,
                              @Value("${app.attachments.max-project-bytes:524288000}") long maxProjectBytes) {
         this.attachmentRepository = attachmentRepository;
         this.testCaseRepository = testCaseRepository;
+        this.screenshotRepository = screenshotRepository;
         this.auditService = auditService;
-        this.maxPerCase = maxPerCase;
+        this.maxPerOwner = maxPerOwner;
         this.maxProjectBytes = maxProjectBytes;
     }
 
@@ -79,36 +89,86 @@ public class AttachmentService {
     public AttachmentSummary upload(UUID projectId, UUID testCaseId, String originalFileName, String declaredType,
                                     byte[] data, UUID userId) {
         TestCase testCase = requireCase(projectId, testCaseId);
-        if (data == null || data.length == 0) {
-            throw new IllegalArgumentException("The file is empty");
+        if (attachmentRepository.countByTestCaseId(testCaseId) >= maxPerOwner) {
+            throw new ConflictException("A test case can have at most " + maxPerOwner + " attachments");
         }
-        String fileName = sanitizeFileName(originalFileName);
-        String contentType = AttachmentMediaTypes.verify(declaredType, fileName, data);
-        if (attachmentRepository.countByTestCaseId(testCaseId) >= maxPerCase) {
-            throw new ConflictException("A test case can have at most " + maxPerCase + " attachments");
-        }
-        if (maxProjectBytes > 0 && attachmentRepository.totalBytesInProject(projectId) + data.length > maxProjectBytes) {
-            throw new ConflictException("The project's attachments would exceed " + maxProjectBytes / (1024 * 1024)
-                    + " MB. Remove files you no longer need, or ask an administrator to raise the limit.");
-        }
-
         Attachment attachment = new Attachment();
         attachment.setTestCase(testCase);
-        attachment.setFileName(fileName);
-        attachment.setContentType(contentType);
-        attachment.setSizeBytes(data.length);
-        attachment.setSha256(sha256(data));
-        attachment.setData(data);
-        attachment = attachmentRepository.save(attachment);
-        audit(projectId, userId, AuditAction.CREATED, attachment, testCase);
-        return summaryOf(attachment);
+        return store(projectId, attachment, originalFileName, declaredType, data, userId);
     }
 
     @Transactional
     public void delete(UUID projectId, UUID testCaseId, UUID id, UUID userId) {
         Attachment attachment = get(projectId, testCaseId, id);
         attachmentRepository.delete(attachment);
-        audit(projectId, userId, AuditAction.DELETED, attachment, attachment.getTestCase());
+        audit(projectId, userId, AuditAction.DELETED, attachment);
+    }
+
+    // ---- bug reports (PRD-051) ------------------------------------------------------------------
+
+    public List<AttachmentSummary> list(BugReport bug) {
+        return attachmentRepository.summariesByBugReport(bug.getId());
+    }
+
+    public Attachment get(BugReport bug, UUID id) {
+        return attachmentRepository.findByIdAndBugReportId(id, bug.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment", id));
+    }
+
+    @Transactional
+    public AttachmentSummary upload(UUID projectId, BugReport bug, String originalFileName, String declaredType,
+                                    byte[] data, UUID userId) {
+        if (attachmentRepository.countByBugReportId(bug.getId()) >= maxPerOwner) {
+            throw new ConflictException("A bug report can have at most " + maxPerOwner + " attachments");
+        }
+        Attachment attachment = new Attachment();
+        attachment.setBugReport(bug);
+        return store(projectId, attachment, originalFileName, declaredType, data, userId);
+    }
+
+    @Transactional
+    public void delete(UUID projectId, BugReport bug, UUID id, UUID userId) {
+        Attachment attachment = get(bug, id);
+        attachmentRepository.delete(attachment);
+        audit(projectId, userId, AuditAction.DELETED, attachment);
+    }
+
+    /**
+     * Copies a result's step screenshots onto a bug filed from it (PRD-051 §3.4). Copies, not
+     * references: a step's screenshot is replaced when someone uploads another, and the evidence on a
+     * bug must not change after it is filed. Stops at the per-owner limit or the project quota rather
+     * than failing: the bug matters more than its screenshots.
+     *
+     * @return how many screenshots were not copied
+     */
+    @Transactional
+    public int copyScreenshots(UUID projectId, BugReport bug, UUID testResultId, UUID userId) {
+        List<Screenshot> screenshots = screenshotRepository.findByTestResultId(testResultId);
+        int copied = 0;
+        for (Screenshot screenshot : screenshots) {
+            if (copied >= maxPerOwner) {
+                break;
+            }
+            Attachment attachment = new Attachment();
+            attachment.setBugReport(bug);
+            try {
+                store(projectId, attachment, "step-" + stepNumber(screenshot, copied) + "-" + screenshot.getFileName(),
+                        screenshot.getContentType(), screenshot.getData(), userId);
+                copied++;
+            } catch (IllegalArgumentException e) {
+                // A legacy screenshot outside today's allowlist: skip it, the others may still fit.
+                log.warn("Screenshot {} not copied to bug {}: {}", screenshot.getId(), bug.getKey(), e.getMessage());
+            } catch (ConflictException e) {
+                log.warn("Screenshots of result {} not copied to bug {}: {}", testResultId, bug.getKey(), e.getMessage());
+                break;
+            }
+        }
+        int skipped = screenshots.size() - copied;
+        if (skipped > 0) {
+            log.warn("{} of {} screenshots of result {} not copied to bug {}", skipped, screenshots.size(),
+                    testResultId, bug.getKey());
+        }
+        return skipped;
     }
 
     // ---- helpers --------------------------------------------------------------------------------
@@ -118,11 +178,47 @@ public class AttachmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("TestCase", testCaseId));
     }
 
-    /** "Which file was attached when" lives in the audit log; attachments are not versioned (§3.5). */
-    private void audit(UUID projectId, UUID userId, AuditAction action, Attachment attachment, TestCase testCase) {
+    /** Checks and saves a file on the owner already set on {@code attachment}. */
+    private AttachmentSummary store(UUID projectId, Attachment attachment, String originalFileName,
+                                    String declaredType, byte[] data, UUID userId) {
+        if (data == null || data.length == 0) {
+            throw new IllegalArgumentException("The file is empty");
+        }
+        String fileName = sanitizeFileName(originalFileName);
+        String contentType = AttachmentMediaTypes.verify(declaredType, fileName, data);
+        if (maxProjectBytes > 0 && attachmentRepository.totalBytesInProject(projectId) + data.length > maxProjectBytes) {
+            throw new ConflictException("The project's attachments would exceed " + maxProjectBytes / (1024 * 1024)
+                    + " MB. Remove files you no longer need, or ask an administrator to raise the limit.");
+        }
+        attachment.setFileName(fileName);
+        attachment.setContentType(contentType);
+        attachment.setSizeBytes(data.length);
+        attachment.setSha256(sha256(data));
+        attachment.setData(data);
+        Attachment saved = attachmentRepository.save(attachment);
+        audit(projectId, userId, AuditAction.CREATED, saved);
+        return summaryOf(saved);
+    }
+
+    /** Steps are numbered from 1; a step without a recorded position takes its place in the list. */
+    private static int stepNumber(Screenshot screenshot, int index) {
+        Integer position = screenshot.getStepResult().getPosition();
+        return (position == null ? index : position) + 1;
+    }
+
+    /**
+     * "Which file was attached when" lives in the audit log; attachments are not versioned (§3.5).
+     * Logged against the owner, so it shows in the case's or the bug's history.
+     */
+    private void audit(UUID projectId, UUID userId, AuditAction action, Attachment attachment) {
+        TestCase testCase = attachment.getTestCase();
+        BugReport bug = attachment.getBugReport();
+        String ownerKey = testCase != null ? testCase.getKey() : bug.getKey();
+        AuditParent parent = testCase != null
+                ? new AuditParent(AuditEntityType.TEST_CASE, testCase.getId())
+                : new AuditParent(AuditEntityType.BUG_REPORT, bug.getId());
         auditService.log(projectId, userId, action, AuditEntityType.ATTACHMENT, attachment.getId(),
-                attachment.getFileName(), testCase.getKey() + " · sha256 " + attachment.getSha256(),
-                FieldChanges.none(), new AuditParent(AuditEntityType.TEST_CASE, testCase.getId()));
+                attachment.getFileName(), ownerKey + " · sha256 " + attachment.getSha256(), FieldChanges.none(), parent);
     }
 
     /**
@@ -151,7 +247,9 @@ public class AttachmentService {
     }
 
     private static AttachmentSummary summaryOf(Attachment a) {
-        return new AttachmentSummary(a.getId(), a.getTestCase().getId(), a.getFileName(), a.getContentType(), a.getSizeBytes(), a.getSha256(),
-                a.getCreatedAt(), a.getCreatedBy());
+        UUID testCaseId = a.getTestCase() == null ? null : a.getTestCase().getId();
+        UUID bugReportId = a.getBugReport() == null ? null : a.getBugReport().getId();
+        return new AttachmentSummary(a.getId(), testCaseId, bugReportId, a.getFileName(), a.getContentType(),
+                a.getSizeBytes(), a.getSha256(), a.getCreatedAt(), a.getCreatedBy());
     }
 }

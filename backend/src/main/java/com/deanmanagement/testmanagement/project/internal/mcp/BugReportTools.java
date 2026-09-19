@@ -10,6 +10,8 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus
 import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
+import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
+import com.deanmanagement.testmanagement.project.internal.service.BugReportAttachmentService;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportBulkService;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportLinkService;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.LinkBugReportRequest;
@@ -28,6 +30,7 @@ import org.springframework.ai.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
@@ -60,8 +63,13 @@ public class BugReportTools {
     private final BugReportBulkService bulkService;
     private final BugReportLinkService linkService;
     private final ProjectMemberRepository projectMemberRepository;
+    private final BugReportAttachmentService attachmentService;
 
     private static final String UNASSIGNED = "none";
+    /** Screenshots are well under this; larger evidence goes through the UI (PRD-051 §3.6). */
+    static final int MAX_ATTACHMENT_BYTES = 2 * 1024 * 1024;
+    /** Base64 turns every 3 bytes into 4 characters; anything longer is refused before decoding. */
+    private static final int MAX_ATTACHMENT_BASE64_CHARS = (MAX_ATTACHMENT_BYTES + 2) / 3 * 4;
 
     @McpTool(
             name = "create_bug_report",
@@ -271,6 +279,57 @@ public class BugReportTools {
     }
 
     @McpTool(
+            name = "add_bug_report_attachment",
+            description = """
+                    Attach a file to a bug report, typically the screenshot that shows the defect.
+                    contentBase64: the file's bytes, base64-encoded, at most 2 MB decoded; larger
+                    evidence has to be attached by a human in the UI.
+                    contentType: image/png, image/jpeg, image/gif, image/webp, application/pdf,
+                    text/plain, application/json and similar. The bytes must match the type; SVG and
+                    HTML are refused. A bug filed with testResultId already carries that result's
+                    step screenshots, so do not attach those again.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
+    @Transactional
+    public McpDtos.Attachment addBugReportAttachment(
+            @McpToolParam(description = "Bug key (PROJ-BUG-12) or UUID") String bugReportId,
+            @McpToolParam(description = "File name shown to humans, e.g. checkout-500.png") String fileName,
+            @McpToolParam(description = "MIME type of the file, e.g. image/png") String contentType,
+            @McpToolParam(description = "The file's bytes, base64-encoded") String contentBase64) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        byte[] data = decodeAttachment(contentBase64);
+        AttachmentSummary stored = enabled(() -> attachmentService.upload(caller.projectId(), bugReportId,
+                fileName, contentType, data, caller.userId()));
+        return attachment(stored);
+    }
+
+    private static byte[] decodeAttachment(String contentBase64) {
+        if (contentBase64 == null || contentBase64.isBlank()) {
+            throw new McpToolException("contentBase64 is required: the file's bytes, base64-encoded.");
+        }
+        if (contentBase64.length() > MAX_ATTACHMENT_BASE64_CHARS) {
+            throw new McpToolException("The file is larger than " + MAX_ATTACHMENT_BYTES / (1024 * 1024)
+                    + " MB. Attach it in the UI instead.");
+        }
+        byte[] data;
+        try {
+            // Line breaks are tolerated; anything else outside the alphabet is refused, not skipped.
+            data = Base64.getDecoder().decode(contentBase64.replaceAll("\\s", ""));
+        } catch (IllegalArgumentException e) {
+            throw new McpToolException("contentBase64 is not valid base64: " + e.getMessage());
+        }
+        // The length check above rounds up to whole base64 groups, so the exact limit is checked here.
+        if (data.length > MAX_ATTACHMENT_BYTES) {
+            throw new McpToolException("The file is larger than " + MAX_ATTACHMENT_BYTES / (1024 * 1024)
+                    + " MB. Attach it in the UI instead.");
+        }
+        return data;
+    }
+
+    @McpTool(
             name = "assign_bug_reports",
             description = """
                     Assign one or more bug reports to a project member, or unassign them.
@@ -367,13 +426,20 @@ public class BugReportTools {
         }
     }
 
-    private static McpDtos.BugDetail detail(BugReportResponse b) {
+    private McpDtos.BugDetail detail(BugReportResponse b) {
+        List<McpDtos.Attachment> attachments = attachmentService.list(b.projectId(), b.id().toString()).stream()
+                .map(BugReportTools::attachment).toList();
         return new McpDtos.BugDetail(b.id(), b.key(), b.title(), b.description(), b.stepsToReproduce(),
                 b.expectedBehavior(), b.actualBehavior(), b.status(), b.resolution(), b.duplicateOfKey(),
                 b.priority(), b.environment(),
                 b.testResultId(), b.testCaseTitle(), b.testRunId(), b.testRunName(),
                 b.assigneeName(), b.reporterName(), b.stepNumber(),
                 b.links().stream().map(l -> new McpDtos.BugOccurrence(l.testResultId(), l.testRunKey(),
-                        l.testCaseKey(), l.stepNumber())).toList());
+                        l.testCaseKey(), l.stepNumber())).toList(),
+                attachments);
+    }
+
+    private static McpDtos.Attachment attachment(AttachmentSummary a) {
+        return new McpDtos.Attachment(a.id(), a.fileName(), a.contentType(), a.sizeBytes());
     }
 }

@@ -12,7 +12,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * A file attached to a test case (PRD-044). Immutable once stored: replacing a file is a delete and
+ * A file attached to a test case (PRD-044) or a bug report (PRD-051); exactly one of the two is set,
+ * which {@code ck_attachments_one_owner} enforces. Immutable once stored: replacing a file is a delete and
  * an upload. Lists read {@code AttachmentSummary} projections, so the bytes are only loaded when a
  * single attachment is downloaded.
  */
@@ -24,8 +25,12 @@ import lombok.Setter;
 public class Attachment extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "test_case_id", nullable = false)
+    @JoinColumn(name = "test_case_id")
     private TestCase testCase;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bug_report_id")
+    private BugReport bugReport;
 
     @Column(nullable = false)
     private String fileName;

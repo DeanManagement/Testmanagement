@@ -14,21 +14,29 @@ import java.util.UUID;
 public interface AttachmentRepository extends JpaRepository<Attachment, UUID> {
 
     /** A constructor projection, so listing never reads the file bytes. */
-    @Query("SELECT new com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary("
-            + "a.id, a.testCase.id, a.fileName, a.contentType, a.sizeBytes, a.sha256, a.createdAt, a.createdBy) "
-            + "FROM Attachment a WHERE a.testCase.id = :testCaseId ORDER BY a.createdAt")
+    String SUMMARY = "SELECT new com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary("
+            + "a.id, tc.id, b.id, a.fileName, a.contentType, a.sizeBytes, a.sha256, a.createdAt, a.createdBy) "
+            + "FROM Attachment a LEFT JOIN a.testCase tc LEFT JOIN a.bugReport b ";
+
+    @Query(SUMMARY + "WHERE tc.id = :testCaseId ORDER BY a.createdAt")
     List<AttachmentSummary> summariesByTestCase(@Param("testCaseId") UUID testCaseId);
 
-    @Query("SELECT new com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary("
-            + "a.id, a.testCase.id, a.fileName, a.contentType, a.sizeBytes, a.sha256, a.createdAt, a.createdBy) "
-            + "FROM Attachment a WHERE a.testCase.id IN :testCaseIds ORDER BY a.createdAt")
+    @Query(SUMMARY + "WHERE tc.id IN :testCaseIds ORDER BY a.createdAt")
     List<AttachmentSummary> summariesByTestCases(@Param("testCaseIds") Collection<UUID> testCaseIds);
 
+    @Query(SUMMARY + "WHERE b.id = :bugReportId ORDER BY a.createdAt")
+    List<AttachmentSummary> summariesByBugReport(@Param("bugReportId") UUID bugReportId);
 
     long countByTestCaseId(UUID testCaseId);
 
-    @Query("SELECT COALESCE(SUM(a.sizeBytes), 0) FROM Attachment a WHERE a.testCase.project.id = :projectId")
+    long countByBugReportId(UUID bugReportId);
+
+    /** Both owners count toward one project quota (PRD-051 §3.2). */
+    @Query("SELECT COALESCE(SUM(a.sizeBytes), 0) FROM Attachment a LEFT JOIN a.testCase tc LEFT JOIN a.bugReport b "
+            + "WHERE tc.project.id = :projectId OR b.project.id = :projectId")
     long totalBytesInProject(@Param("projectId") UUID projectId);
 
     Optional<Attachment> findByIdAndTestCaseId(UUID id, UUID testCaseId);
+
+    Optional<Attachment> findByIdAndBugReportId(UUID id, UUID bugReportId);
 }

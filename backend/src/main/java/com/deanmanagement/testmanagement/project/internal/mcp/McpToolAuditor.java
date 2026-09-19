@@ -91,6 +91,7 @@ public class McpToolAuditor {
             // Every bug tool returns BugDetail, including the two read tools — but the aspect only
             // reaches this for a SUCCESS, and linking a read to what it read is harmless and true.
             case McpDtos.BugDetail bug -> new Created("BUG_REPORT", bug.id());
+            case McpDtos.Attachment attachment -> new Created("ATTACHMENT", attachment.id());
             case null, default -> Created.NONE;
         };
     }

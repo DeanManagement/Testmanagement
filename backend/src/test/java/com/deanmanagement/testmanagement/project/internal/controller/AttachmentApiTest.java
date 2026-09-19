@@ -48,7 +48,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("dev")
 @AutoConfigureMockMvc
 @Transactional
-@TestPropertySource(properties = {"app.attachments.max-per-case=2", "app.attachments.max-project-bytes=64"})
+@TestPropertySource(properties = {"app.attachments.max-per-owner=2", "app.attachments.max-project-bytes=64"})
 class AttachmentApiTest {
 
     private static final byte[] PNG = {(byte) 0x89, 'P', 'N', 'G', 13, 10, 26, 10};

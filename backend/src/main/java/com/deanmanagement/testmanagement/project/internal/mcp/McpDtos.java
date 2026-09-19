@@ -110,8 +110,11 @@ final class McpDtos {
                           @Nullable Integer estimateMinutes, @Nullable Long medianActualMs,
                           List<Attachment> attachments) {}
 
-    /** Metadata only (PRD-044 §3.8): the agent can tell a human the file exists, not fetch it. */
-    record Attachment(String fileName, String contentType, long sizeBytes) {}
+    /**
+     * Metadata only (PRD-044 §3.8): the agent can tell a human the file exists, not fetch it. The id
+     * is what a human's download link is built from.
+     */
+    record Attachment(UUID id, String fileName, String contentType, long sizeBytes) {}
 
     /** A custom field definition (PRD-035); agents write values keyed by {@code name}. */
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -318,7 +321,7 @@ final class McpDtos {
                      @Nullable String testCaseTitle, @Nullable UUID testRunId,
                      @Nullable String testRunName, @Nullable String assigneeName,
                      @Nullable String reporterName, @Nullable Integer stepNumber,
-                     List<BugOccurrence> occurrences) {}
+                     List<BugOccurrence> occurrences, List<Attachment> attachments) {}
 
     /** Where else the bug showed up (PRD-047); the found-in result is on the bug itself. */
     @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -65,6 +65,7 @@ public class BugReportService {
     private final ExploratorySessionRepository exploratorySessionRepository;
     private final CustomFieldValueWriter customFieldWriter;
     private final ProjectSequenceService projectSequenceService;
+    private final AttachmentService attachmentService;
 
     /** Every bug of the project, unpaged: for duplicate checks, not for display. */
     public List<BugReportResponse> findByProject(UUID projectId) {
@@ -147,6 +148,10 @@ public class BugReportService {
         bugReport = bugReportRepository.save(bugReport);
         auditService.log(projectId, userId, AuditAction.CREATED,
                 AuditEntityType.BUG_REPORT, bugReport.getId(), label(bugReport), null);
+        if (bugReport.getTestResult() != null) {
+            // PRD-051 §3.4: the failure's step screenshots come along as the bug's evidence.
+            attachmentService.copyScreenshots(projectId, bugReport, bugReport.getTestResult().getId(), userId);
+        }
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("bugReportId", bugReport.getId().toString());

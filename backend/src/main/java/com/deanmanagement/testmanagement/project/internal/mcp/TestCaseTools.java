@@ -138,7 +138,7 @@ public class TestCaseTools {
                 response.steps() == null ? List.of() : executedSteps(response.steps()),
                 response.customFields(), response.estimateMinutes(), response.medianActualMs(),
                 response.attachments().stream()
-                        .map(a -> new McpDtos.Attachment(a.fileName(), a.contentType(), a.sizeBytes()))
+                        .map(a -> new McpDtos.Attachment(a.id(), a.fileName(), a.contentType(), a.sizeBytes()))
                         .toList());
     }
 
