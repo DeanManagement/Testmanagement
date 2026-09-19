@@ -207,6 +207,10 @@ Open a project and choose **Test Cases**.
 
 Add steps with **Add Step**; they are numbered automatically and can be reordered.
 
+**Estimate** is optional: how many minutes one execution takes (1 to 1440). Estimates add up to the
+remaining effort on runs and plans, and to the plan's burn-down. The case page shows the estimate
+next to the median of the last five measured executions, so you can correct it from evidence.
+
 Leaving the editor with unsaved changes prompts you first.
 
 ### Status meanings
@@ -351,7 +355,8 @@ bookmarked or shared.
 
 **Import** on the test case list accepts a **CSV** or **JSON** file, up to 500 rows.
 
-Columns: `title`, `description`, `preconditions`, `priority`, `status`, `labels`, `steps`.
+Columns: `title`, `description`, `preconditions`, `priority`, `status`, `labels`, `steps`,
+`estimateMinutes` (whole minutes, 1 to 1440; blank for none).
 
 - **`title` is the only required column.** If the header is missing the whole file is rejected;
   if an individual row has a blank title, only that row fails.
@@ -423,6 +428,13 @@ when starting a run, pick the plan in the **Test Plan** field to attach it.
 The plan detail page rolls up everything attached to it: total runs, completed runs, overall pass
 rate, result distribution, runs by status, and pass rate per run. It is the screen to project on
 the wall during a release.
+
+It also answers "will we finish by the target date?": the remaining estimated effort across the
+plan's runs (aborted runs excluded), and a **burn-down** of remaining effort per day against a
+straight line to zero on the target date. New runs added later show as a step up. The chart uses
+each case's current estimate, so correcting an estimate also moves past days. Results executed
+before execution times were recorded (older than this version) are left out, and the chart says
+from when its history is complete.
 
 ---
 
@@ -499,6 +511,15 @@ case, set an outcome per step and an overall outcome:
 
 Record what actually happened in **Actual Result**, and attach a screenshot per step with **Add
 Screenshot**. Reference images from the test case are shown inline for comparison.
+
+**Time is recorded for you.** Opening a case starts a timer (shown under **Duration**); setting the
+case's outcome saves the time with it, keyboard shortcuts included. If you went for lunch, type
+the real minutes into **Duration**, before or after setting the outcome. Correcting an outcome
+later keeps the time first recorded, and anything over 8 hours asks before saving. Outcomes set in
+bulk record no time.
+
+The run header shows the remaining estimated effort, how many pending cases have no estimate (so a
+small number isn't mistaken for "almost done"), and the time spent so far.
 
 ### Keyboard shortcuts
 
@@ -991,7 +1012,7 @@ curl -X POST \
     "name": "CI Build #142",
     "environment": "staging",
     "results": [
-      { "testCaseKey": "TES-1", "status": "PASSED" },
+      { "testCaseKey": "TES-1", "status": "PASSED", "durationMs": 1830 },
       { "testCaseKey": "TES-2", "status": "FAILED",
         "comment": "Assertion failed on line 42",
         "defectLink": "https://issues.example.com/BUG-789",
@@ -1005,7 +1026,8 @@ curl -X POST \
 ```
 
 Results reference test cases by **key** (`TES-1`), and steps by **1-based index**, not by UUID. If
-`stepResults` is omitted, every step of the case takes the result's status.
+`stepResults` is omitted, every step of the case takes the result's status. `durationMs` is
+optional and counts towards the run's and plan's time spent.
 
 The response is `201 Created` with the full run, including the `key` you need for an Allure upload.
 
@@ -1027,6 +1049,8 @@ curl -X POST "http://localhost:8089/api/external/projects/TES/test-runs/cucumber
 ```
 
 Optional query parameters: `runName`, `environment`, `testPlanId`. Reports are capped at 10 MB.
+Durations are kept: JUnit's `time` attribute and the sum of a Cucumber scenario's step durations. A
+missing or unreadable `time` just means no duration; it never fails the upload.
 `environment` is matched against the project's [environments](#environments) and added if new;
 the run's `environment` in the response is the canonical name, which may differ in case from
 what you sent.

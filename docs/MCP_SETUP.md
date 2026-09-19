@@ -163,6 +163,11 @@ first for the names, types and options; an unknown name is refused with the vali
 On update only the names you pass change, and a `null` value clears that field. A field marked
 required never blocks an agent.
 
+**Time** — `create_test_case` / `update_test_case` take `estimateMinutes` (1-1440; `0` clears it on
+update), and `get_test_case` returns it with `medianActualMs`. An agent that executes tests should
+pass `durationMs` to `record_test_result(s)`. `get_test_run` and `get_test_plan` include an
+`effort` object: estimated, remaining and actual minutes, and pending results without an estimate.
+
 ### Executing a run
 
 The one sequence you cannot infer from the tool list. An agent that runs tests itself does:

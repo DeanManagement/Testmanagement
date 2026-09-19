@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P3 — useful once test plans are used for release sign-off |
@@ -123,10 +123,58 @@ Estimates are read live from the case, not snapshotted onto the result: an estim
 - **Risk:** Low. Additive nullable columns and read-side calculations. The one correctness hazard is setting `executedAt` consistently across the four result-writing paths — covered by per-path tests. Burn-down accuracy is bounded by estimate quality, which the UI makes visible via the unestimated count.
 
 ## 7. Acceptance Criteria
-- [ ] Test cases have an optional estimate, editable in the UI, import/export, and MCP, and captured in version snapshots.
-- [ ] Results record `executedAt` on leaving PENDING and an optional `durationMs` from the execution timer, manual edit, external API, JUnit `time` or Cucumber `duration`.
-- [ ] Run report and plan summary show estimated, remaining, actual and unestimated-pending figures from one shared calculation.
-- [ ] Plan detail shows a burn-down with an ideal line to the target date, computed on demand.
-- [ ] Case detail shows the median actual duration of recent executions.
-- [ ] No backfill fabricates execution times for pre-existing results.
-- [ ] Backend and frontend tests pass.
+- [x] Test cases have an optional estimate, editable in the UI, import/export, and MCP, and captured in version snapshots.
+- [x] Results record `executedAt` on leaving PENDING and an optional `durationMs` from the execution timer, manual edit, external API, JUnit `time` or Cucumber `duration`.
+- [x] Run report and plan summary show estimated, remaining, actual and unestimated-pending figures from one shared calculation.
+- [x] Plan detail shows a burn-down with an ideal line to the target date, computed on demand.
+- [x] Case detail shows the median actual duration of recent executions.
+- [x] No backfill fabricates execution times for pre-existing results.
+- [x] Backend and frontend tests pass.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **`executedAt` is decided in `TestResult.setStatus`, not in four service methods.** There are
+  seven paths that set a result's status, not four: `updateStepResult` moves the parent off PENDING
+  too, and `ExternalTestRunService` and `CiIngestionService` create results directly. One rule in
+  the entity covers all of them and any added later. Leaving PENDING stamps it, returning clears
+  it, a correction keeps it. So a CI result's `executedAt` is the moment the server stored it, which
+  is what §4 asked for anyway.
+- **No separate `EffortCalculator`.** The calculation is `EffortSummary.of(results)` on the record
+  the responses carry, because the MapStruct run mapper (in `dto`) needs it and couldn't reach a
+  package-private helper in `service`. The burn-down is a separate pure `BurnDownCalculator`.
+- **Actual includes results set back to PENDING**, following §4 ("it was real effort") where §3.2
+  said "non-pending".
+- **The run detail response carries `effort` too,** not only the report: `get_test_run` reads the
+  detail, and the run header needs no second request.
+- **Each result response carries its case's live `estimateMinutes`,** so the run header recalculates
+  remaining effort as a tester records results instead of reloading the run after each keystroke.
+  The frontend's `effortOf` mirrors `EffortSummary`; reports and plans use the server's figures.
+- **An estimate edit is not a PRD-033 content edit,** so it doesn't send an approved case back to
+  review. On update `null` leaves the estimate alone and `0` clears it.
+- **Burn-down response** adds `hasEstimates` (so the UI shows a message instead of a flat zero) and
+  omits `idealLine` without a target date. A plan older than 366 days shows its most recent year
+  rather than aggregating older days into the first point.
+- **Timer:** only a result's first execution is timed, so correcting a status later never overwrites
+  the recorded duration. The running time shows as a hint under the duration field. A duration over
+  8 h asks first, and "no" saves the status without it. Setting only step statuses moves the result
+  off PENDING on the server without a duration; the timer value goes out with the result's own
+  status, including the Shift+P "all steps passed" shortcut.
+- **JUnit `time`:** besides missing, negative and comma decimals, values that overflow a long
+  (`1e400`) are also treated as unknown.
+
+Tests: `TestResultExecutedAtTest` (5), `TimeTrackingWritePathsTest` (14: every write path, duration
+rules, estimate and its snapshot), `CiDurationParsingTest` (10), `EffortSummaryTest` (6),
+`BurnDownCalculatorTest` (10, fixed days), `EffortRollUpTest` (11: roll-ups, the burn-down query,
+median, import/export), `TimeTrackingApiTest` (6: bounds and burn-down access),
+`McpTimeTrackingToolsApiTest` (3); frontend `duration`, `execution-timer` and `burn-down-dates`
+specs. **1066 backend tests, 35 frontend spec files (191 tests).** V60 applied on PostgreSQL 16 with
+`ddl-auto=validate` and its two CHECK constraints present.
+
+Checked in a browser against PostgreSQL: the burn-down with backdated history and an ideal line
+(this found day labels shifted one day early east of UTC, fixed before commit), recording a result
+with `p` (timed duration stored, remaining updated live), a correction with `f` keeping the
+duration, a manual edit saved, and the case detail's estimate and median. **Not clicked through:**
+the test case form's estimate field, the 8 h confirmation, the run report line and the German
+strings.
