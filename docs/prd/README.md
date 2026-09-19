@@ -153,6 +153,35 @@ its driver. 042 Option A is cheap enough to slot in anywhere.
 events (031); `PLAN_COMPLETED` is declared but never published (031); `forcePasswordChange` is
 enforced only in the frontend (041); comments on a deleted test case are never cleaned up (035).
 
+## v2.5 — proposed (test-team findings, 2026-09-19)
+
+From the 49 reports the test team filed on the test instance (v2.0.0) on 2026-09-16/17. 28 of them
+are change requests filed as bugs; each PRD lists the reports it resolves by id. The other 21 are
+bugs: 5 are already fixed on `main` (language persistence `95dad30`, add-step icon `0d73ea6`, deep-link
+run refresh `f5cc79f`, run-form case picker `d166e85`, import 500 `16790c6`) and 16 remain for fixing,
+not for PRDs.
+
+| PRD | Title | Priority | Size | Status |
+|---|---|---|---|---|
+| [045](PRD-045-bug-report-triage.md) | Bug Report Triage (key, search, bulk, New/resolution, template) | P2 | M-L | 📝 Draft |
+| [046](PRD-046-audit-trail-with-values.md) | Audit Trail with Old/New Values | P2 | M | 📝 Draft |
+| [047](PRD-047-defects-in-execution-and-planning.md) | Defects in Execution and Planning | P2 | M-L | 📝 Draft |
+| [048](PRD-048-execution-and-report-evidence.md) | Execution and Report Evidence | P2 | M | 📝 Draft |
+| [049](PRD-049-metrics-consistency-and-dashboard.md) | Metrics Consistency and Dashboard | P2 | S-M | 📝 Draft |
+| [050](PRD-050-test-case-context.md) | Test Case Context | P2 | S-M | 📝 Draft |
+| [051](PRD-051-bug-report-attachments-and-image-viewer.md) | Bug Report Attachments and Image Viewer (with PRD-044) | P2 | M | 📝 Draft |
+| [052](PRD-052-lists-filters-and-pickers.md) | Lists, Filters and Pickers | P2 | S-M | 📝 Draft |
+
+**Suggested order:** 049 (small, and every later screen shows its numbers) → 045 → 046 → 047 → 048 →
+050 → 052; 051 together with or right after 044. The issue-tracker request (Jira, GitHub, Azure
+DevOps) needs no new PRD: Jira and GitHub are PRD-029 on `main`, Azure DevOps is PRD-026.
+
+**Found while writing these (existing bugs):** dropping a bug card on the Kanban board changes the
+status through a full update, skipping the required reason (045); the test case label filter
+matches *any* label while MCP `search_test_cases` documents *all* (052); the dashboard hides a real
+0 % pass rate (049); `list_custom_fields` returns an array like the two reported MCP tools (bug
+report `7a792e91`); `step_images` and `screenshots` allow duplicate rows per owner (bug report `bd5b0f76`).
+
 ## Status legend
-Every PRD up to 028 except 026 is **Implemented**; 029–044 are drafts. New work should get a new PRD rather than
+Every PRD up to 028 except 026 is **Implemented**; 029–040 are implemented except where noted, 041–044 and 045–052 are drafts. New work should get a new PRD rather than
 extending a shipped one.
