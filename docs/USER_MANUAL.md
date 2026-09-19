@@ -902,16 +902,47 @@ also raise one directly from **Bug Reports**.
 | Environment | Where it happened |
 | Assignee | Who owns it |
 
+Every bug gets a key like `SPI-BUG-12`, numbered per project and never reused. Use it to talk
+about a bug, to find it with search, or in a URL: `/bug-reports/SPI-BUG-12` works.
+
 | Status | Meaning |
 |---|---|
-| **Open** | Reported, not started |
+| **New** | Reported, nobody has looked at it yet. Every new bug starts here |
+| **Open** | Confirmed: a real defect that needs fixing |
 | **In Progress** | Being worked on |
 | **Resolved** | Fixed, awaiting verification |
-| **Closed** | Verified and done |
-| **Won't Fix** | Acknowledged, deliberately not fixing |
+| **Closed** | Done, with a resolution that says why |
 
-Status changes require a reason, which is kept in the history. Linked test cases and runs stay
-clickable from the bug, and linked bugs are shown on the result they came from.
+New, Open and In Progress count as open, for example for a plan's release gate.
+
+**Changing the status** always asks for a reason, which is kept in the history. Closing also asks
+for a **resolution**: *Fixed*, *Won't fix*, *Duplicate*, *Cannot reproduce*, *Not a bug* or
+*Deferred*. A duplicate names the bug it repeats, and links to it. Resolved may carry a resolution
+too. Reopening a bug clears it. Editing a bug never changes its status; use the status field on
+the bug's page, or drag the card on the board, which asks for the same reason and resolution.
+
+### Triage
+
+The **Bug Reports** list is built for going through many bugs at once:
+
+- **Search** matches the key, the title and every text field.
+- **Filter** by status, priority and assignee. The assignee filter has *Me* and *Unassigned*
+  entries, and several choices combine: *Me* plus *Unassigned* shows both.
+- **Sort** by any column. Filters, sort order and page are in the URL, so bookmark or share a view.
+- **Select** bugs with the checkboxes (the header box selects the page), then **Assign**, change
+  the **Priority** or **Status**, or **Delete** them in one step. A change applies to all of them
+  or, if one of them can't be changed, to none.
+
+The **board** view shows one lane per status, filtered like the list. Each card shows the key, the
+assignee's initials and how many days ago the bug was reported. It shows at most 200 bugs, the
+newest first; filter to see the rest.
+
+### Bug report template
+
+Under **Project Settings → Bug Reports** a project Admin can set a template: text for the
+description and the steps to reproduce, and a default environment. A new bug report starts with it
+in whatever fields are still empty, so a bug reported from a failed result keeps the result's
+environment. Editing a bug never applies the template again. Bugs filed by AI agents get it too.
 
 **My Bug Reports** in the account menu lists everything assigned to you across all projects.
 

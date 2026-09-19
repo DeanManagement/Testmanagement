@@ -395,6 +395,23 @@
           ]
         },
         {
+          "heading": "Triaging bug reports",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Every bug has a key such as SPI-BUG-12. New bugs start as New; Open means someone confirmed it. Closing a bug asks for a reason and a resolution, such as Fixed, Duplicate or Won't fix, and a duplicate names the bug it repeats."
+            },
+            {
+              "type": "p",
+              "text": "In the Bug Reports list, search by key or text and filter by status, priority and assignee. Tick bugs to assign them, change their priority or status, or delete them in one step. The filters are in the URL, so a view can be bookmarked."
+            },
+            {
+              "type": "note",
+              "text": "Dragging a card on the board to another lane asks for the reason first. Cancel, and the card stays where it was."
+            }
+          ]
+        },
+        {
           "heading": "Burn-down",
           "blocks": [
             {
@@ -485,7 +502,7 @@
             {
               "type": "ul",
               "items": [
-                "Bug reports — switches the built-in bug tracker on.",
+                "Bug reports — switches the built-in bug tracker on. Once it is on, the bug report template sets the text and default environment new bug reports start with.",
                 "Test case review — cases become Approved only after another member reviews them. Choose whether only project admins or testers too may approve.",
                 "Manage environments — the list runs and bug reports pick from. Renaming keeps the history; archive an environment instead of deleting it.",
                 "Manage custom fields — extra typed fields on test cases, runs and bug reports: text, number, date, or one or several options."

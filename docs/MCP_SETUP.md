@@ -148,15 +148,16 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `move_test_cases_to_folder`, `create_requirement`, `link_test_cases_to_requirement`,
 `create_test_run`, `record_test_result`, `record_test_results`, `record_step_result`,
 `complete_test_run`, `update_test_run`, `clone_test_run`, `add_comment`, `create_bug_report`,
-`change_bug_report_status`, `update_test_suite`, `add_test_cases_to_suite`,
+`change_bug_report_status`, `assign_bug_reports`, `update_test_suite`, `add_test_cases_to_suite`,
 `remove_test_cases_from_suite`, `update_test_plan`, `update_requirement`,
 `unlink_test_case_from_requirement`, `rename_test_case_folder`, `move_test_case_folder`, `change_test_case_status_bulk`,
 `create_parameter_set`, `update_parameter_set`, `trigger_pipeline`, `refresh_pipeline_run`,
 `link_issue`, `create_linked_issue`.
 
 Every `update_*` tool is partial: only the arguments you pass change, and an empty string `""`
-clears a text field. There are no delete tools, and nothing assigns work to a person — both stay
-human actions in the UI.
+clears a text field. There are no delete tools. Assigning work stays a human decision too, with one
+exception: `assign_bug_reports` assigns bugs to a member (by email) or unassigns them, and its
+description tells the agent to use it only when a human asked.
 
 **Custom fields** (`customFields` on `get_test_case`, `create_test_case`, `update_test_case` and as
 a filter on `search_test_cases`) are keyed by field **name**, not id. Call `list_custom_fields`
@@ -305,7 +306,11 @@ action in the UI, and re-testing means a new run rather than editing a signed-of
 - **Executing a run costs one write per test case.** A 50-case run is 52 writes against a budget of
   120 a minute. If you run larger suites through an agent, raise `MCP_MAX_WRITES_PER_MINUTE` — a run
   refused half-way leaves a half-recorded run.
-- **A bug title matching an already-open bug is refused**, with that bug's id, so a nightly agent
+- **Bugs are named by key** (`PROJ-BUG-12`) in every bug tool; UUIDs still work.
+  `list_bug_reports` takes a `query`, `status`, `priority` and `assignee` (an email, `none` or `me`).
+  New bugs start as `NEW` with the project's bug template in empty fields. Closing with
+  `change_bug_report_status` needs a `resolution`, and `DUPLICATE` needs `duplicateOf`.
+- **A bug title matching an already-open bug is refused**, with that bug's key, so a nightly agent
   does not file the same defect every night. The same title is allowed again once the earlier bug is
   closed, because that is a regression and worth knowing about. `allowDuplicateTitle: true`
   overrides.

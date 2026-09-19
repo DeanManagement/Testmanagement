@@ -395,6 +395,23 @@
           ]
         },
         {
+          "heading": "Fehlermeldungen sichten",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Jeder Fehler hat einen Schlüssel wie SPI-BUG-12. Neue Fehler beginnen als Neu; Offen heisst, jemand hat ihn bestätigt. Beim Schliessen fragt die App nach einem Grund und einer Lösung, etwa Behoben, Duplikat oder Wird nicht behoben, und ein Duplikat nennt den Fehler, den es wiederholt."
+            },
+            {
+              "type": "p",
+              "text": "In der Liste der Fehlermeldungen suchst du nach Schlüssel oder Text und filterst nach Status, Priorität und zugewiesener Person. Hake Fehler an, um sie in einem Schritt zuzuweisen, ihre Priorität oder ihren Status zu ändern oder sie zu löschen. Die Filter stehen in der URL, du kannst eine Ansicht also als Lesezeichen speichern."
+            },
+            {
+              "type": "note",
+              "text": "Ziehst du eine Karte auf dem Board in eine andere Spalte, fragt die App zuerst nach dem Grund. Brichst du ab, bleibt die Karte, wo sie war."
+            }
+          ]
+        },
+        {
           "heading": "Burn-down",
           "blocks": [
             {
@@ -485,7 +502,7 @@
             {
               "type": "ul",
               "items": [
-                "Fehlermeldungen — schaltet den eingebauten Fehler-Tracker ein.",
+                "Fehlermeldungen — schaltet den eingebauten Fehler-Tracker ein. Ist er an, legt die Vorlage für Fehlermeldungen fest, mit welchem Text und welcher Standard-Umgebung neue Fehlermeldungen beginnen.",
                 "Prüfung von Testfällen — Fälle werden erst nach der Prüfung durch ein anderes Mitglied freigegeben. Du wählst, ob nur Projektadmins oder auch Tester freigeben dürfen.",
                 "Umgebungen verwalten — die Liste, aus der Läufe und Fehlerberichte wählen. Umbenennen behält die Historie; archiviere eine Umgebung, statt sie zu löschen.",
                 "Benutzerdefinierte Felder verwalten — zusätzliche typisierte Felder auf Testfällen, Läufen und Fehlerberichten: Text, Zahl, Datum oder eine bzw. mehrere Optionen."

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-19 |
 | **Priority** | P2 — the bug module works for five bugs and breaks down at fifty; seven of the test team's reports are about exactly that |
@@ -228,3 +228,31 @@ resolutions, the template. MCP_SETUP: the new tool and parameters.
 - [ ] A project admin can set a template that pre-fills new bug reports from the UI and MCP.
 - [ ] MCP `assign_bug_reports` exists; list/get/status tools know keys, filters and resolutions.
 - [ ] Backend, migration and frontend tests pass; en/de translations and USER_MANUAL updated.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **Migrations:** V66 has the schema, the backfill and the WONTFIX move. A Postgres-only V67 rebuilds
+  the generated `search_vector` of `bug_reports` with `bug_key` in it, so the global search (PRD-007)
+  finds bugs by key too, like cases and runs. The H2 LIKE fallback matches the key as well.
+- **The environment template is a default environment name**, not free text. Since PRD-032 a bug's
+  environment is a registered environment, and an unknown name registers a new one, so a text block
+  there would create junk environments. The settings field uses the same environment picker as the
+  form.
+- **Where the template applies:** the form fills empty fields on create, and `create_bug_report`
+  over MCP applies it on the server. A REST create does not re-apply it, so a person who clears a
+  template field in the form gets what they sent.
+- **The template endpoint is `PUT /api/projects/{p}/settings/bug-template`**, next to the other
+  project settings, not `/bug-template`.
+- **`assign_bug_reports` takes the member's email** (or `none`), and `list_bug_reports` takes an email,
+  `none` or `me` for `assignee`: MCP has no member list, so an agent has no way to learn user ids.
+- **Sorting by key sorts by creation time.** Keys are numbered in creation order, and as strings
+  BUG-10 would sort before BUG-2. Unknown sort columns are a 400, not a 500.
+- **The board loads the newest 200 bugs of the filter** (the API's largest page) and says so when
+  there are more. Lane counts are the bugs shown, not "12 of 30".
+- **Bug status badges** got colours for all five statuses; they previously had none.
+- **The paged list** has the `{content, page: {…}}` shape of the other paged endpoints.
+
+Not verified against PostgreSQL (V66's backfill runs on H2 in `BugTriageMigrationTest`, which also
+accepts `-Dmigration-test.url=` for an empty Postgres database) or in a browser.
