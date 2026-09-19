@@ -286,6 +286,11 @@ class SharedStepApiTest {
                     .filter(tc -> tc.getProject().getId().equals(project.getId())).findFirst().orElseThrow().getId();
 
             assertThatThrownBy(() -> insertStep(caseId, block, null)).isInstanceOf(DataIntegrityViolationException.class);
+        }
+
+        /** Its own test: on PostgreSQL a refused insert aborts the test's transaction. */
+        @Test
+        void aStepMustHaveAnOwner() {
             assertThatThrownBy(() -> insertStep(null, null, null)).isInstanceOf(DataIntegrityViolationException.class);
         }
 
