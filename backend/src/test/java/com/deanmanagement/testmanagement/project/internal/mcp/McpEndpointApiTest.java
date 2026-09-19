@@ -209,6 +209,43 @@ class McpEndpointApiTest {
     }
 
     /**
+     * The MCP spec requires structuredContent to be an object. Three list tools returned a bare
+     * List, so their schema was an array and strict clients rejected every result (bug reports
+     * 7a792e91, 878a8997). The surface tests call the Java methods and cannot see this; only the
+     * advertised schema can, so every tool is checked here, including ones added later.
+     */
+    @Test
+    void everyAdvertisedOutputSchemaIsAnObject() throws Exception {
+        JsonNode tools = MAPPER.readTree(post(TOOLS_LIST, "X-API-Key", rawKey).body())
+                .path("result").path("tools");
+
+        List<String> notObjects = new ArrayList<>();
+        tools.forEach(tool -> {
+            JsonNode schema = tool.path("outputSchema");
+            if (!schema.isMissingNode() && !"object".equals(schema.path("type").asText())) {
+                notObjects.add(tool.path("name").asText());
+            }
+        });
+
+        assertThat(tools.size()).isPositive();
+        assertThat(notObjects).as("tools whose structuredContent would not be an object").isEmpty();
+    }
+
+    @Test
+    void aListToolReturnsAnObjectAsStructuredContent() throws Exception {
+        String call = """
+                {"jsonrpc":"2.0","id":4,"method":"tools/call",
+                 "params":{"name":"list_test_plans","arguments":{}}}
+                """;
+
+        JsonNode structured = MAPPER.readTree(post(call, "X-API-Key", rawKey).body())
+                .path("result").path("structuredContent");
+
+        assertThat(structured.isObject()).isTrue();
+        assertThat(structured.path("testPlans").isArray()).isTrue();
+    }
+
+    /**
      * A refusal must read as an instruction, not as a broken tool.
      *
      * <p>Spring AI prefixes every failed invocation with "Error invoking method: &lt;tool&gt;",

@@ -85,6 +85,16 @@ final class McpDtos {
         }
     }
 
+    /*
+     * The MCP spec requires structuredContent to be an object, so a list result is wrapped in a
+     * record rather than returned bare; strict clients reject a top-level array.
+     */
+    record FolderList(List<Folder> folders) {}
+
+    record PlanList(List<PlanSummary> testPlans) {}
+
+    record CustomFieldList(List<CustomField> customFields) {}
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record SharedStepItem(UUID id, String title, @Nullable String description, int stepCount, long usedByCount) {}
 

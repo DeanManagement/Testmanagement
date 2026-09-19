@@ -121,14 +121,14 @@ public class TestPlanningTools {
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
-    public List<McpDtos.PlanSummary> listTestPlans(
+    public McpDtos.PlanList listTestPlans(
             @McpToolParam(description = "Only plans in this status", required = false) TestPlanStatus status) {
         var caller = callerContext.require();
-        return testPlanService.findByProject(caller.projectId()).stream()
+        return new McpDtos.PlanList(testPlanService.findByProject(caller.projectId()).stream()
                 .filter(p -> status == null || p.status() == status)
                 .map(p -> new McpDtos.PlanSummary(p.id(), p.name(), p.description(), p.status(),
                         p.targetDate(), p.testRunCount()))
-                .toList();
+                .toList());
     }
 
     @McpTool(

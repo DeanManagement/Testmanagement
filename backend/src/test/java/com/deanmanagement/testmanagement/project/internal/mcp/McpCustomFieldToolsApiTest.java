@@ -46,7 +46,7 @@ class McpCustomFieldToolsApiTest extends McpToolApiTestSupport {
     void listCustomFieldsShowsOnlyTheKeysProject() {
         authenticateAs(project, ProjectRole.VIEWER);
 
-        assertThat(discoveryTools.listCustomFields(null))
+        assertThat(discoveryTools.listCustomFields(null).customFields())
                 .extracting(McpDtos.CustomField::name).containsExactly("Component", "Owner");
     }
 

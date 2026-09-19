@@ -83,14 +83,14 @@ public class ProjectDiscoveryTools {
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
-    public List<McpDtos.CustomField> listCustomFields(
+    public McpDtos.CustomFieldList listCustomFields(
             @McpToolParam(description = "Only fields of TEST_CASE, TEST_RUN or BUG_REPORT; omit for all",
                     required = false) CustomFieldEntityType entityType) {
         var caller = callerContext.require();
-        return customFieldService.list(caller.projectId(), entityType).stream()
+        return new McpDtos.CustomFieldList(customFieldService.list(caller.projectId(), entityType).stream()
                 .map(f -> new McpDtos.CustomField(f.name(), f.entityType(), f.fieldType(),
                         f.options().isEmpty() ? null : f.options(), f.required(), f.archived()))
-                .toList();
+                .toList());
     }
 
     @McpTool(
@@ -102,11 +102,11 @@ public class ProjectDiscoveryTools {
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
-    public List<McpDtos.Folder> listTestCaseFolders() {
+    public McpDtos.FolderList listTestCaseFolders() {
         var caller = callerContext.require();
-        return folderService.getTree(caller.projectId()).stream()
+        return new McpDtos.FolderList(folderService.getTree(caller.projectId()).stream()
                 .map(ProjectDiscoveryTools::toFolder)
-                .toList();
+                .toList());
     }
 
     @McpTool(

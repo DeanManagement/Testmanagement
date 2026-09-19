@@ -402,7 +402,7 @@ class McpToolSurfaceApiTest {
         assertThat(suite.testCaseCount()).isEqualTo(1);
         assertThat(planningTools.getTestSuite(suite.id()).testCases())
                 .extracting(McpDtos.TestCaseRef::id).containsExactly(testCase.id());
-        assertThat(planningTools.listTestPlans(null)).extracting(McpDtos.PlanSummary::id)
+        assertThat(planningTools.listTestPlans(null).testPlans()).extracting(McpDtos.PlanSummary::id)
                 .contains(plan.id());
         assertThat(planningTools.getTestPlan(plan.id()).targetDate())
                 .isEqualTo(LocalDate.of(2026, 9, 1));
@@ -425,7 +425,7 @@ class McpToolSurfaceApiTest {
         assertThat(moved.moved()).isEqualTo(2);
         assertThat(child.parentId()).isEqualTo(parent.id());
         assertThat(testCaseTools.getTestCase(one.key()).folderId()).isEqualTo(child.id());
-        assertThat(discoveryTools.listTestCaseFolders())
+        assertThat(discoveryTools.listTestCaseFolders().folders())
                 .singleElement()
                 .satisfies(root -> {
                     assertThat(root.name()).isEqualTo("Navigation");
