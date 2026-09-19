@@ -1,3 +1,7 @@
+import { MatMenuModule } from '@angular/material/menu';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
+import { OPTIONAL_RUN_COLUMNS, OptionalRunColumn, readRunColumns, resultSegments, runColumns, writeRunColumns } from './run-list-view';
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -34,6 +38,9 @@ import { MatTooltipModule } from '@angular/material/tooltip';
   selector: 'app-test-run-list',
   standalone: true,
   imports: [
+    MatMenuModule,
+    MatCheckboxModule,
+    LocalizedDatePipe,
     MatTooltipModule,
     CustomFieldFiltersComponent,
     AsyncPipe,
@@ -70,7 +77,11 @@ export class TestRunListComponent implements OnInit {
   loading$ = this.store.select(selectTestRunsLoading);
   error$ = this.store.select(selectTestRunsError);
   page$ = this.store.select(selectTestRunPage);
-  displayedColumns = ['key', 'name', 'environment', 'status', 'results', 'actions'];
+  readonly optionalColumns = OPTIONAL_RUN_COLUMNS;
+  /** PRD-049: switched on by the user, remembered in this browser. */
+  shownColumns: Set<OptionalRunColumn> = readRunColumns(globalThis.localStorage);
+  displayedColumns = runColumns(this.shownColumns);
+  readonly resultSegments = resultSegments;
   searchTerm = '';
   statusFilter: TestRunStatus | '' = '';
   environmentFilter = '';
@@ -117,6 +128,16 @@ export class TestRunListComponent implements OnInit {
     this.searchChange$
       .pipe(debounceTime(300), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyFilters());
+  }
+
+  toggleColumn(column: OptionalRunColumn): void {
+    const next = new Set(this.shownColumns);
+    if (!next.delete(column)) {
+      next.add(column);
+    }
+    this.shownColumns = next;
+    this.displayedColumns = runColumns(next);
+    writeRunColumns(globalThis.localStorage, next);
   }
 
   applyFilters(): void {

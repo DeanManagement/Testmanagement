@@ -53,6 +53,9 @@ export interface TestSuiteReport {
   blocked: number;
   skipped: number;
   untested: number;
-  passRate: number;
+  /** PRD-049: passed of the cases with an executed latest result. */
+  passRate: number | null;
   results: TestCaseLatestResult[];
+  /** PRD-049: tested cases of all cases in the suite. */
+  progress: number | null;
 }

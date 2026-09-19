@@ -411,7 +411,16 @@
     "abortReason": "Abbruchgrund",
     "resultsColumn": "Ergebnisse",
     "startedLabel": "Gestartet",
-    "endedLabel": "Beendet"
+    "endedLabel": "Beendet",
+    "columns": {
+      "toggle": "Spalten",
+      "plan": "Plan",
+      "executor": "Ausführende Person",
+      "started": "Gestartet",
+      "ended": "Beendet",
+      "results": "Ergebnisse",
+      "mixTooltip": "{{passed}} bestanden, {{failed}} fehlgeschlagen, {{blocked}} blockiert, {{skipped}} übersprungen, {{pending}} ausstehend"
+    }
   },
   "testPlan": {
     "list": {
@@ -661,7 +670,7 @@
     "testCasesByPriority": "Testfälle nach Priorität",
     "latestResults": "Ergebnisse des letzten Laufs",
     "overallPassRate": "Aktuelle Erfolgsrate",
-    "overallPassRateHint": "Jeder Testfall zählt einmal, mit seinem letzten Ergebnis aus einem abgeschlossenen Lauf",
+    "overallPassRateHint": "Bestanden von den ausgeführten Testfällen, jeder einmal gezählt mit seinem letzten Ergebnis in einem abgeschlossenen Lauf. Nie ausgeführte Fälle zählen nicht.",
     "noCompletedRuns": "Noch keine abgeschlossenen Läufe",
     "passRateTrend": "Erfolgsraten-Trend",
     "trendInsufficient": "Noch nicht genügend abgeschlossene Läufe für einen Trend.",
@@ -674,7 +683,11 @@
       "trend": "Gemeldet und gelöst pro Woche",
       "created": "Gemeldet",
       "resolved": "Gelöst"
-    }
+    },
+    "lastCompletedRun": "Letzter abgeschlossener Lauf: {{name}}",
+    "resultsLegend": "Bestanden / Fehlgeschlagen / Gesamt",
+    "coverage": "Anforderungsabdeckung",
+    "coverageBreakdown": "{{passing}} bestanden · {{failing}} fehlgeschlagen · {{untested}} ungetestet · {{uncovered}} nicht abgedeckt"
   },
   "bulk": {
     "selected": "{{count}} ausgewählt",
@@ -1425,18 +1438,18 @@
       "NOT_APPLICABLE": "Nicht anwendbar"
     },
     "name": {
-      "PASS_RATE": "Effektive Erfolgsquote",
+      "PASS_RATE": "Bestanden von den Tests im Umfang",
       "BLOCKER_BUGS": "Offene kritische Fehler",
       "COVERAGE": "Anforderungsabdeckung",
       "FLAKY_TESTS": "Instabile Tests"
     },
-    "effectiveHint": "Das jeweils letzte Ergebnis jedes Testfalls über die Läufe dieses Plans: Ein Fehlschlag, der erneut getestet und bestanden wurde, zählt einmal, als bestanden. Ausstehende zählen als nicht bestanden. Die Erfolgsquote des Plans oben zählt jedes Ergebnis, daher können beide abweichen. Lief ein Fall in mehreren Umgebungen, gilt der letzte Lauf.",
+    "effectiveHint": "Das jeweils letzte Ergebnis jedes Testfalls über die Läufe dieses Plans: Ein Fehlschlag, der erneut getestet und bestanden wurde, zählt einmal, als bestanden. Anders als bei der Erfolgsquote zählt ein noch nicht ausgeführter Fall als nicht bestanden: Ein ungetesteter Fall ist kein Beleg für ein Release. Lief ein Fall in mehreren Umgebungen, gilt der letzte Lauf.",
     "noCriteria": "Dieser Plan hat kein Release-Gate. Bearbeiten Sie den Plan, um Schwellen festzulegen.",
     "counts": "Letzte Ergebnisse: {{passed}} bestanden, {{failed}} fehlgeschlagen, {{blocked}} blockiert, {{skipped}} übersprungen, {{pending}} ausstehend, von {{considered}}.",
     "gate": {
       "title": "Release-Gate",
       "hint": "Optional. Die Bereitschaft des Plans ist GO, wenn jede gesetzte Schwelle erfüllt ist; ein leeres Feld wird nicht verwendet. CI kann sie über die API prüfen.",
-      "minPassRate": "Minimale effektive Erfolgsquote",
+      "minPassRate": "Minimum bestanden von den Tests im Umfang",
       "maxBlockerBugs": "Maximal offene kritische Fehler",
       "minCoverage": "Minimale Anforderungsabdeckung",
       "maxFlaky": "Maximal instabile Tests",
@@ -1508,5 +1521,12 @@
     "tooLarge": "Die Datei ist grösser als 10 MB.",
     "uploadFailed": "Die Datei konnte nicht hochgeladen werden.",
     "count": "{{count}} Anhang/Anhänge"
+  },
+  "metrics": {
+    "passRateHint": "Bestanden von den ausgeführten Ergebnissen. Ausstehende zählen nicht, übersprungene schon.",
+    "progressHint": "Ausgeführt von allen Ergebnissen: wie viel der Arbeit erledigt ist.",
+    "progress": "Fortschritt {{executed}} / {{total}} ({{rate}})",
+    "nothingExecuted": "Noch nichts ausgeführt",
+    "progressLabel": "Fortschritt"
   }
 }

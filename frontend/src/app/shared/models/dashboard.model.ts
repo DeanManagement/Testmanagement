@@ -3,7 +3,8 @@ export interface ProjectDashboard {
   testCasesByStatus: Record<string, number>;
   testCasesByPriority: Record<string, number>;
   latestResultsByStatus: Record<string, number>;
-  overallPassRate: number;
+  /** PRD-049: passed of executed, per case; null when nothing has been executed. */
+  overallPassRate: number | null;
   recentTestRuns: RecentTestRun[];
   passRateTrend: PassRateTrendEntry[];
 }
@@ -31,7 +32,8 @@ export interface PassRateTrendEntry {
   testRunId: string;
   name: string;
   completedAt: string;
-  passRate: number;
+  /** PRD-049: null when the run executed nothing; charts leave a gap. */
+  passRate: number | null;
 }
 
 /** A test case that keeps changing outcome across recent runs (PRD-016). */

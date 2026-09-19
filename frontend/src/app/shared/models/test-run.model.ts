@@ -168,7 +168,10 @@ export interface TestRunReport {
   blocked: number;
   skipped: number;
   pending: number;
-  passRate: number;
+  /** PRD-049: passed of executed; null when nothing was executed. */
+  passRate: number | null;
+  /** PRD-049: executed of all results. */
+  progress: number | null;
   results: TestResult[];
   /** PRD-033: results executed against wording that was never approved; empty without review. */
   unapprovedResultIds: string[];

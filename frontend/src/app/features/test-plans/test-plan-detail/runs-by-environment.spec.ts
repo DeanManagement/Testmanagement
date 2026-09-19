@@ -2,15 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { TestPlanRunSummary } from '../../../shared/models/test-plan.model';
 import { runsByEnvironment } from './runs-by-environment';
 
-function run(environment: string | null, total: number, passed: number, failed = 0): TestPlanRunSummary {
-  return { id: crypto.randomUUID(), name: 'r', environment: environment as string, status: 'COMPLETED', total, passed, failed, endTime: null };
+function run(environment: string | null, total: number, passed: number, failed = 0, executed = total): TestPlanRunSummary {
+  return { id: crypto.randomUUID(), name: 'r', environment: environment as string, status: 'COMPLETED', total, passed, failed,
+    endTime: null, key: 'P-Run-1', executed, passRate: null };
 }
 
 describe('runsByEnvironment', () => {
   it('should add up runs of the same environment and compute the pass rate', () => {
     const [staging] = runsByEnvironment([run('staging', 10, 9, 1), run('staging', 10, 6, 4)]);
 
-    expect(staging).toEqual({ environment: 'staging', runs: 2, total: 20, passed: 15, failed: 5, passRate: 75 });
+    expect(staging).toEqual({ environment: 'staging', runs: 2, total: 20, passed: 15, failed: 5, executed: 20, passRate: 75 });
   });
 
   it('should keep environments apart and put runs without one last', () => {
@@ -21,5 +22,15 @@ describe('runsByEnvironment', () => {
 
   it('should report no pass rate when nothing was recorded', () => {
     expect(runsByEnvironment([run('prod', 0, 0)])[0].passRate).toBeNull();
+  });
+
+  it('should leave pending results out of the pass rate (PRD-049)', () => {
+    const [prod] = runsByEnvironment([run('prod', 105, 11, 0, 11)]);
+
+    expect(prod.passRate).toBe(100);
+  });
+
+  it('should report no pass rate when every result is still pending', () => {
+    expect(runsByEnvironment([run('prod', 5, 0, 0, 0)])[0].passRate).toBeNull();
   });
 });

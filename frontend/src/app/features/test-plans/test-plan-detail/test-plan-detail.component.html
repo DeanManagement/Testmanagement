@@ -61,9 +61,12 @@
           <span class="stat-value">{{ summary.completedRuns }}</span>
           <span class="stat-label">{{ 'testPlan.detail.completedRuns' | translate }}</span>
         </div>
-        <div class="stat-card tm-card">
-          <span class="stat-value">{{ summary.passRate | number: '1.1-1' }}%</span>
+        <div class="stat-card tm-card" [matTooltip]="'metrics.passRateHint' | translate" data-test-id="plan-pass-rate">
+          <span class="stat-value">{{ summary.passRate | rate }}</span>
           <span class="stat-label">{{ 'testPlan.detail.passRate' | translate }}</span>
+          <span class="stat-label" [matTooltip]="'metrics.progressHint' | translate" data-test-id="plan-progress">
+            {{ 'metrics.progress' | translate: { executed: summary.executed, total: summary.totalResults, rate: (summary.progress | rate) } }}
+          </span>
         </div>
         <div class="stat-card tm-card">
           <span class="stat-value stat-value--passed">{{ summary.passed }}</span>
@@ -172,7 +175,7 @@
               </ng-container>
               <ng-container matColumnDef="passRate">
                 <th mat-header-cell *matHeaderCellDef>{{ 'environment.passRate' | translate }}</th>
-                <td mat-cell *matCellDef="let row">{{ row.passRate === null ? '-' : row.passRate + '%' }}</td>
+                <td mat-cell *matCellDef="let row">{{ row.passRate | rate }}</td>
               </ng-container>
               <tr mat-header-row *matHeaderRowDef="environmentColumns"></tr>
               <tr mat-row *matRowDef="let row; columns: environmentColumns"></tr>

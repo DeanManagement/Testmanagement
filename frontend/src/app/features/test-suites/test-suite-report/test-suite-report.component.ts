@@ -1,8 +1,10 @@
+import { RatePipe } from '../../../shared/pipes/rate.pipe';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { take } from 'rxjs/operators';
-import { LowerCasePipe, DecimalPipe } from '@angular/common';
+import { LowerCasePipe } from '@angular/common';
 import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
@@ -21,9 +23,10 @@ Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
   selector: 'app-test-suite-report',
   standalone: true,
   imports: [
+    RatePipe,
+    MatTooltipModule,
     LocalizedDatePipe,
     LowerCasePipe,
-    DecimalPipe,
     RouterLink,
     MatCardModule,
     MatButtonModule,

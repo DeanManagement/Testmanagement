@@ -70,9 +70,13 @@
             <span class="stat-label">{{ 'report.pending' | translate }}</span>
             <span class="stat-value">{{ report.pending }}</span>
           </div>
-          <div class="stat-card stat-card--rate">
+          <div class="stat-card stat-card--rate" [matTooltip]="'metrics.passRateHint' | translate" data-test-id="report-pass-rate">
             <span class="stat-label">{{ 'report.passRate' | translate }}</span>
-            <span class="stat-value">{{ report.passRate | number:'1.1-1' }}%</span>
+            <span class="stat-value">{{ report.passRate | rate }}</span>
+          </div>
+          <div class="stat-card" [matTooltip]="'metrics.progressHint' | translate" data-test-id="report-progress">
+            <span class="stat-label">{{ 'metrics.progressLabel' | translate }}</span>
+            <span class="stat-value">{{ report.progress | rate }}</span>
           </div>
         </div>
 

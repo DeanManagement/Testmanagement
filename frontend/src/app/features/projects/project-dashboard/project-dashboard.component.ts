@@ -1,9 +1,13 @@
+import { RequirementApiService } from '../../../core/services/requirement-api.service';
+import { CoverageSummary } from '../../../shared/models/requirement.model';
+import { RatePipe } from '../../../shared/pipes/rate.pipe';
+import { priorityBars, trendDataset } from './dashboard-metrics';
 import { DefectDashboardComponent } from './defect-dashboard/defect-dashboard.component';
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit, ViewChild, ElementRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { take } from 'rxjs/operators';
-import { DecimalPipe, KeyValuePipe, LowerCasePipe } from '@angular/common';
+import { KeyValuePipe, LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -43,8 +47,8 @@ Chart.register(
   selector: 'app-project-dashboard',
   standalone: true,
   imports: [
+    RatePipe,
     DefectDashboardComponent,
-    DecimalPipe,
     KeyValuePipe,
     LowerCasePipe,
     RouterLink,
@@ -62,6 +66,7 @@ Chart.register(
 export class ProjectDashboardComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly projectApi = inject(ProjectApiService);
+  private readonly requirementApi = inject(RequirementApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
@@ -78,6 +83,8 @@ export class ProjectDashboardComponent implements OnInit {
   flakyTests: FlakyTest[] = [];
   loading = true;
   recentRunColumns = ['name', 'environment', 'status', 'results'];
+  /** PRD-049: shown when the project has requirements; the dashboard does without it otherwise. */
+  coverage: CoverageSummary | null = null;
 
   private statusChart: Chart | null = null;
   private priorityChart: Chart | null = null;
@@ -113,6 +120,16 @@ export class ProjectDashboardComponent implements OnInit {
         });
     }
 
+    if (this.projectId) {
+      this.requirementApi.getCoverage(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+        next: (coverage) => {
+          this.coverage = coverage.totalRequirements > 0 ? coverage : null;
+          this.cdr.detectChanges();
+        },
+        error: () => undefined,
+      });
+    }
+
     this.translate.onLangChange.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.dashboard) {
         this.renderCharts();
@@ -123,6 +140,11 @@ export class ProjectDashboardComponent implements OnInit {
         this.renderCharts();
       }
     });
+  }
+
+  /** The latest completed run's name, for the results tile; the trend lists runs oldest first. */
+  get lastCompletedRunName(): string {
+    return this.dashboard?.passRateTrend.at(-1)?.name ?? '';
   }
 
   private renderCharts(): void {
@@ -166,7 +188,7 @@ export class ProjectDashboardComponent implements OnInit {
     if (!this.priorityChartCanvas || !this.dashboard) return;
     this.priorityChart?.destroy();
 
-    const data = this.dashboard.testCasesByPriority;
+    const bars = priorityBars(this.dashboard.testCasesByPriority);
     const priorityColors: Record<string, string> = {
       LOW: '#4caf50',
       MEDIUM: '#2196f3',
@@ -177,10 +199,10 @@ export class ProjectDashboardComponent implements OnInit {
     this.priorityChart = new Chart(this.priorityChartCanvas.nativeElement, {
       type: 'bar',
       data: {
-        labels: Object.keys(data).map(k => this.translate.instant('priority.' + k)),
+        labels: bars.map(bar => this.translate.instant('priority.' + bar.priority)),
         datasets: [{
-          data: Object.values(data),
-          backgroundColor: Object.keys(data).map(k => priorityColors[k] || '#9e9e9e'),
+          data: bars.map(bar => bar.count),
+          backgroundColor: bars.map(bar => priorityColors[bar.priority]),
         }],
       },
       options: {
@@ -239,14 +261,7 @@ export class ProjectDashboardComponent implements OnInit {
       type: 'line',
       data: {
         labels: trend.map(t => t.name),
-        datasets: [{
-          label: this.translate.instant('report.passRate'),
-          data: trend.map(t => t.passRate),
-          borderColor: '#4caf50',
-          backgroundColor: 'rgba(76, 175, 80, 0.1)',
-          fill: true,
-          tension: 0.3,
-        }],
+        datasets: [trendDataset(trend, this.translate.instant('report.passRate'))],
       },
       options: {
         responsive: true,

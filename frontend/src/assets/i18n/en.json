@@ -411,7 +411,16 @@
     "abortReason": "Abort reason",
     "resultsColumn": "Results",
     "startedLabel": "Started",
-    "endedLabel": "Ended"
+    "endedLabel": "Ended",
+    "columns": {
+      "toggle": "Columns",
+      "plan": "Plan",
+      "executor": "Executor",
+      "started": "Started",
+      "ended": "Ended",
+      "results": "Results",
+      "mixTooltip": "{{passed}} passed, {{failed}} failed, {{blocked}} blocked, {{skipped}} skipped, {{pending}} pending"
+    }
   },
   "testPlan": {
     "list": {
@@ -661,7 +670,7 @@
     "testCasesByPriority": "Test Cases by Priority",
     "latestResults": "Latest Run Results",
     "overallPassRate": "Current Pass Rate",
-    "overallPassRateHint": "Each test case counted once, by its latest result in a completed run",
+    "overallPassRateHint": "Passed of the executed test cases, each counted once by its latest result in a completed run. Cases never executed are not counted.",
     "noCompletedRuns": "No completed runs yet",
     "passRateTrend": "Pass Rate Trend",
     "trendInsufficient": "Not enough completed runs yet to draw a trend.",
@@ -674,7 +683,11 @@
       "trend": "Reported and resolved per week",
       "created": "Reported",
       "resolved": "Resolved"
-    }
+    },
+    "lastCompletedRun": "Last completed run: {{name}}",
+    "resultsLegend": "Passed / Failed / Total",
+    "coverage": "Requirement coverage",
+    "coverageBreakdown": "{{passing}} passing · {{failing}} failing · {{untested}} untested · {{uncovered}} uncovered"
   },
   "bulk": {
     "selected": "{{count}} selected",
@@ -1425,18 +1438,18 @@
       "NOT_APPLICABLE": "Not applicable"
     },
     "name": {
-      "PASS_RATE": "Effective pass rate",
+      "PASS_RATE": "Passed of in-scope tests",
       "BLOCKER_BUGS": "Open critical bugs",
       "COVERAGE": "Requirement coverage",
       "FLAKY_TESTS": "Flaky tests"
     },
-    "effectiveHint": "Each test case's latest result across this plan's runs, so a failure retested and passed counts once, as a pass. Pending counts as not passed. The plan's pass rate above counts every result, so the two can differ. If a case ran in several environments, the latest run wins.",
+    "effectiveHint": "Each test case's latest result across this plan's runs, so a failure retested and passed counts once, as a pass. Unlike the pass rate, a case not yet executed counts as not passed: an untested case is no evidence for a release. If a case ran in several environments, the latest run wins.",
     "noCriteria": "This plan has no release gate. Edit the plan to set thresholds.",
     "counts": "Latest results: {{passed}} passed, {{failed}} failed, {{blocked}} blocked, {{skipped}} skipped, {{pending}} pending, of {{considered}}.",
     "gate": {
       "title": "Release gate",
       "hint": "Optional. The plan's readiness is GO when every threshold you set is met; leave a field empty to not use it. CI can check it through the API.",
-      "minPassRate": "Minimum effective pass rate",
+      "minPassRate": "Minimum passed of in-scope tests",
       "maxBlockerBugs": "Maximum open critical bugs",
       "minCoverage": "Minimum requirement coverage",
       "maxFlaky": "Maximum flaky tests",
@@ -1508,5 +1521,12 @@
     "tooLarge": "The file is larger than 10 MB.",
     "uploadFailed": "The file could not be uploaded.",
     "count": "{{count}} attachment(s)"
+  },
+  "metrics": {
+    "passRateHint": "Passed of the executed results. Pending results are not counted; skipped ones are.",
+    "progressHint": "Executed of all results: how much of the work is done.",
+    "progress": "Progress {{executed}} / {{total}} ({{rate}})",
+    "nothingExecuted": "Nothing executed yet",
+    "progressLabel": "Progress"
   }
 }

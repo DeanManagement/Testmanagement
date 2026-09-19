@@ -47,6 +47,10 @@ export interface TestPlanRunSummary {
   passed: number;
   failed: number;
   endTime: string | null;
+  /** PRD-049 */
+  key: string;
+  executed: number;
+  passRate: number | null;
 }
 
 export interface TestPlanSummary {
@@ -62,12 +66,16 @@ export interface TestPlanSummary {
   blocked: number;
   skipped: number;
   pending: number;
-  passRate: number;
+  /** PRD-049: passed of executed; null when nothing was executed. */
+  passRate: number | null;
   runs: TestPlanRunSummary[];
   /** PRD-034: exploration for this plan, kept apart from run counts and pass rate. */
   sessions: TestPlanSessions;
   /** PRD-036: over every run except aborted ones. */
   effort: EffortSummary;
+  /** PRD-049: results no longer pending, and that as a share of all results. */
+  executed: number;
+  progress: number | null;
 }
 
 export interface TestPlanSessions {

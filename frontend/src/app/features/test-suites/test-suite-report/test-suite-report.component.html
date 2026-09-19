@@ -44,8 +44,12 @@
             <span class="stat-value">{{ report.untested }}</span>
           </div>
           <div class="stat-card stat-card--rate">
-            <span class="stat-label">{{ 'report.passRate' | translate }}</span>
-            <span class="stat-value">{{ report.passRate | number:'1.1-1' }}%</span>
+            <span class="stat-label" [matTooltip]="'metrics.passRateHint' | translate">{{ 'report.passRate' | translate }}</span>
+            <span class="stat-value" data-test-id="suite-pass-rate">{{ report.passRate | rate }}</span>
+          </div>
+          <div class="stat-card" [matTooltip]="'metrics.progressHint' | translate">
+            <span class="stat-label">{{ 'metrics.progressLabel' | translate }}</span>
+            <span class="stat-value" data-test-id="suite-progress">{{ report.progress | rate }}</span>
           </div>
         </div>
 

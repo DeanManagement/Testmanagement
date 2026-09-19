@@ -1,9 +1,11 @@
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { RatePipe } from '../../../shared/pipes/rate.pipe';
 import { PlanDefectsComponent } from '../plan-defects/plan-defects.component';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
-import { AsyncPipe, DecimalPipe, formatDate, LowerCasePipe } from '@angular/common';
+import { AsyncPipe, formatDate, LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -54,13 +56,14 @@ import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
   selector: 'app-test-plan-detail',
   standalone: true,
   imports: [
+    MatTooltipModule,
+    RatePipe,
     PlanDefectsComponent,
     ReleaseReadinessCardComponent,
     DurationPipe,
     LocalizedDatePipe,
     MatSlideToggleModule,
     AsyncPipe,
-    DecimalPipe,
     LowerCasePipe,
     RouterLink,
     MatCardModule,
@@ -299,6 +302,7 @@ export class TestPlanDetailComponent implements OnInit {
     if (!this.passRateBarCanvas || !this.summary) return;
     this.passRateBarChart?.destroy();
 
+    // A run that executed nothing has no pass rate: no bar, rather than a 0 % that reads as failure.
     const runs = this.summary.runs.filter(r => r.total > 0);
     if (runs.length === 0) return;
 
@@ -308,7 +312,7 @@ export class TestPlanDetailComponent implements OnInit {
         labels: runs.map(r => r.name),
         datasets: [{
           label: this.translate.instant('testPlan.detail.passRate'),
-          data: runs.map(r => Math.round(r.passed * 10000 / r.total) / 100),
+          data: runs.map(r => r.passRate),
           backgroundColor: '#4caf50',
         }],
       },

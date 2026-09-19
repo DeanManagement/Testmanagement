@@ -99,15 +99,64 @@
           </td>
         </ng-container>
 
-        <ng-container matColumnDef="results">
-          <th mat-header-cell *matHeaderCellDef>{{ 'testRun.resultsColumn' | translate }}</th>
+        <ng-container matColumnDef="plan">
+          <th mat-header-cell *matHeaderCellDef>{{ 'testRun.columns.plan' | translate }}</th>
           <td mat-cell *matCellDef="let run">
-            <span class="count-badge" data-test-id="test-run-result-count">{{ run.total ?? run.results?.length ?? 0 }}</span>
+            @if (run.testPlanId) {
+              <a [routerLink]="['/projects', projectId, 'test-plans', run.testPlanId]" class="item-link">{{ run.testPlanName }}</a>
+            } @else {
+              -
+            }
+          </td>
+        </ng-container>
+
+        <ng-container matColumnDef="executor">
+          <th mat-header-cell *matHeaderCellDef>{{ 'testRun.columns.executor' | translate }}</th>
+          <td mat-cell *matCellDef="let run">{{ run.executorName || '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="started">
+          <th mat-header-cell *matHeaderCellDef>{{ 'testRun.columns.started' | translate }}</th>
+          <td mat-cell *matCellDef="let run">{{ run.startTime ? (run.startTime | localizedDate:'short') : '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="ended">
+          <th mat-header-cell *matHeaderCellDef>{{ 'testRun.columns.ended' | translate }}</th>
+          <td mat-cell *matCellDef="let run">{{ run.endTime ? (run.endTime | localizedDate:'short') : '-' }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="results">
+          <th mat-header-cell *matHeaderCellDef>{{ 'testRun.columns.results' | translate }}</th>
+          <td mat-cell *matCellDef="let run">
+            <span class="result-mix" data-test-id="test-run-result-mix"
+                  [matTooltip]="'testRun.columns.mixTooltip' | translate: { passed: run.passed ?? 0, failed: run.failed ?? 0, blocked: run.blocked ?? 0, skipped: run.skipped ?? 0, pending: run.pending ?? 0 }">
+              <span class="mix-bar" aria-hidden="true">
+                @for (segment of resultSegments(run); track segment.status) {
+                  <span class="mix-seg mix-seg--{{ segment.status | lowercase }}" [style.width.%]="segment.percent"></span>
+                }
+              </span>
+              <span class="mix-text" data-test-id="test-run-result-count">{{ run.passed ?? 0 }} / {{ run.total ?? 0 }}</span>
+            </span>
           </td>
         </ng-container>
 
         <ng-container matColumnDef="actions">
-          <th mat-header-cell *matHeaderCellDef></th>
+          <th mat-header-cell *matHeaderCellDef>
+            <button mat-icon-button [matMenuTriggerFor]="columnMenu" [attr.aria-label]="'testRun.columns.toggle' | translate"
+                    [matTooltip]="'testRun.columns.toggle' | translate" data-test-id="test-run-columns-btn">
+              <mat-icon>view_column</mat-icon>
+            </button>
+            <mat-menu #columnMenu="matMenu">
+              @for (column of optionalColumns; track column) {
+                <div mat-menu-item (click)="$event.stopPropagation()">
+                  <mat-checkbox [checked]="shownColumns.has(column)" (change)="toggleColumn(column)"
+                                [attr.data-test-id]="'test-run-column-' + column">
+                    {{ 'testRun.columns.' + column | translate }}
+                  </mat-checkbox>
+                </div>
+              }
+            </mat-menu>
+          </th>
           <td mat-cell *matCellDef="let run" class="actions-cell">
             <a mat-icon-button [routerLink]="[run.id, 'report']" data-test-id="test-run-report-btn" aria-label="View report for {{run.name}}">
               <mat-icon>assessment</mat-icon>
