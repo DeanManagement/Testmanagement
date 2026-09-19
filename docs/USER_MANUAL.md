@@ -286,6 +286,53 @@ Notes:
 - Limits: 50 parameter sets per case, 50 keys per set. Set names must be unique within a case.
 - Results already recorded keep the values they ran with, even if you later change the set.
 
+### Shared steps
+
+A **shared step** is a named block of steps, such as "Log in as admin" or "Reset the basket", kept
+once per project and used by any number of test cases. When the login page changes, you edit the
+shared step once instead of every case that copied its steps.
+
+**Managing them.** Open **Shared steps** from the project page. The list shows each shared step's
+number of steps and how many test cases use it. Creating or editing one works like editing a
+case's steps: action, expected result, test data and an image per step.
+
+**Using one in a test case.** On the case's **Steps** tab, choose **Insert shared step** and pick
+one. It appears as a single row, which you can expand to read its steps; you edit them on the
+shared step's own page. A case can mix its own steps and any number of shared steps.
+
+**Editing a shared step changes every case that uses it.** The editor says how many do and lists
+them. When you save a change to the steps:
+
+- every case that uses it records a [version](#version-history) first, with the wording it had
+  until now, so the history of each case stays complete;
+- in a project that [requires review](#review-and-approval), those cases go back to review, just as
+  if their own steps had been edited;
+- runs created afterwards use the new steps. **A run already created shows the new wording of steps
+  whose text you changed**, the same as when you edit a case's own steps; steps you add or remove do
+  not change existing runs.
+
+Renaming a shared step without touching its steps records no versions.
+
+**How it shows elsewhere.** On the test case page, in run execution and in version history, a
+shared step's steps appear in place, numbered along with the case's own steps, under the shared
+step's title. The parameter editor sees `{placeholders}` inside shared steps too, and fills them
+from the calling case's [parameter sets](#parameter-sets): a shared step with `{user}` works for a
+case whose sets define `user`.
+
+**Converting to local steps.** On the test case page, **Convert to local steps** next to a shared
+step's title replaces it with a copy of its steps, images included, and records a version. The
+case no longer follows the shared step.
+
+**Deleting.** A shared step can only be deleted while no case uses it. Convert or remove it in
+those cases first; the editor lists them.
+
+Notes:
+
+- A shared step cannot contain another shared step.
+- A shared step with no steps adds nothing when run; the case form says so.
+- **Edit as Gherkin** is unavailable while a case uses a shared step, because Gherkin has no
+  shared steps and applying would turn them into local ones.
+
 ---
 
 ## 5. Folders, labels and search
@@ -381,12 +428,18 @@ failure.
 
 CSV cannot carry per-step test data. Use JSON if you need it.
 
+**Shared steps** travel in JSON by title: a step `{"sharedStepTitle": "Log in as admin"}` uses the
+project's shared step of that title, so export from one project and import into another that has
+the same shared steps. A title the project does not have fails that row, which the dry run shows.
+Create the shared steps first.
+
 ### Exporting
 
 **Export** offers four formats:
 
 - **JSON** — round-trips everything, including step test data and custom fields
-- **CSV** — for spreadsheets and diffing
+- **CSV** — for spreadsheets and diffing. [Shared steps](#shared-steps) are written out as their
+  steps, so importing the file again gives the case local copies
 - **CSV (Excel)** — same, with a byte-order mark so Excel opens UTF-8 correctly
 - **Gherkin (.feature)** — the selected folder, or the whole project; see below
 
@@ -466,6 +519,9 @@ has details the tool does not keep:
 - Preconditions that are not steps export as a `# preconditions:` comment, and are removed on re-import.
 - Folders nested deeper than feature → rule are exported into their rule; the file notes this.
 - A label with spaces is written with dashes (`@needs-review`), noted in a comment.
+- A case using [shared steps](#shared-steps) exports with their steps written out. Re-importing the
+  unchanged file leaves the case alone; if the scenario changed, the file's steps replace the shared
+  step with local steps, and the import warns you.
 - Not kept from your files: comments, the feature's own description, tag order, blank-line layout,
   and tags on `Examples:` blocks. The import lists what it dropped as warnings.
 

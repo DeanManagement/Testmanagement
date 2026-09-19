@@ -139,7 +139,7 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`, `list_test_runs`,
 `get_test_run`, `compare_test_runs`, `list_requirements`, `get_traceability_matrix`, `list_bug_reports`,
 `get_bug_report`, `list_comments`, `list_parameter_sets`, `list_test_case_versions`,
-`get_test_case_version`, `get_project_dashboard`, `list_flaky_tests`, `get_release_readiness`,
+`get_test_case_version`, `list_shared_steps`, `get_project_dashboard`, `list_flaky_tests`, `get_release_readiness`,
 `get_test_suite_report`,
 `list_pipeline_workflows`, `list_pipeline_runs`, `get_pipeline_run`, `list_issue_links`.
 
@@ -163,6 +163,13 @@ a filter on `search_test_cases`) are keyed by field **name**, not id. Call `list
 first for the names, types and options; an unknown name is refused with the valid ones listed.
 On update only the names you pass change, and a `null` value clears that field. A field marked
 required never blocks an agent.
+
+**Shared steps** — `get_test_case` returns the steps as a tester executes them: a shared step's
+steps appear in place, each with `sharedStepId` and `sharedStepTitle`. To use a shared step in
+`create_test_case` / `update_test_case`, pass a step with just its `sharedStepId` (from
+`list_shared_steps`) instead of an `action`. Consecutive steps with the same `sharedStepId` count as
+one use of it, so steps read from `get_test_case` can be sent back unchanged. Shared steps
+themselves can only be edited in the UI: one edit changes every case that uses them.
 
 **Time** — `create_test_case` / `update_test_case` take `estimateMinutes` (1-1440; `0` clears it on
 update), and `get_test_case` returns it with `medianActualMs`. An agent that executes tests should

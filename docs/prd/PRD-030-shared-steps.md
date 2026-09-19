@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P2 — the most repetitive daily authoring work |
@@ -217,12 +217,61 @@ Audit: `AuditEntityType.SHARED_STEP` with CREATED/UPDATED/DELETED via `AuditServ
 
 ## 7. Acceptance Criteria
 
-- [ ] Project members with TESTER can create, edit and delete shared step blocks; VIEWER can list and read them.
-- [ ] Test cases can mix local steps and references to blocks from the same project; nesting is rejected.
-- [ ] New runs expand references into ordinary step results in the correct order.
-- [ ] Editing a block updates steps in place and writes a pre-edit version for every referencing case.
-- [ ] Parameter placeholders inside blocks resolve per the calling case's parameter sets.
-- [ ] Deleting a block in use is refused; "convert to local steps" works.
-- [ ] JSON import/export round-trips references; CSV export is expanded and documented as lossy.
-- [ ] MCP `get_test_case` shows expanded steps; `create/update_test_case` accept `sharedStepId`; `list_shared_steps` exists.
-- [ ] Backend, migration and frontend tests pass; en/de translations present.
+- [x] Project members with TESTER can create, edit and delete shared step blocks; VIEWER can list and read them.
+- [x] Test cases can mix local steps and references to blocks from the same project; nesting is rejected.
+- [x] New runs expand references into ordinary step results in the correct order.
+- [x] Editing a block updates steps in place and writes a pre-edit version for every referencing case.
+- [x] Parameter placeholders inside blocks resolve per the calling case's parameter sets.
+- [x] Deleting a block in use is refused; "convert to local steps" works.
+- [x] JSON import/export round-trips references; CSV export is expanded and documented as lossy.
+- [x] MCP `get_test_case` shows expanded steps; `create/update_test_case` accept `sharedStepId`; `list_shared_steps` exists.
+- [x] Backend, migration and frontend tests pass; en/de translations present.
+
+## 8. As Built (2026-09-19)
+
+Built in five commits (schema and library; references in cases and runs; import/export, Gherkin
+and MCP; frontend; docs), as specified except:
+
+- **The `position` backfill is one correlated subquery** that runs on PostgreSQL and H2 alike, so
+  no vendor-specific migration was needed (§3.1 planned a Postgres `UPDATE … FROM` plus an H2
+  variant).
+- **More paths expand references than §3.2 lists.** Every path that matches results to steps goes
+  through one `StepExpansion`: run creation, but also CI ingestion (JUnit/Cucumber step results by
+  index), the external runs API (`stepIndex`) and the review check for a content edit. Without
+  them a CI upload for a case using a shared step would put step results on the wrong steps.
+- **A block edit is a content edit for review (PRD-033)**, not only a version: an approved case
+  whose shared step changed goes back to review, as it would if its own steps had changed. §3.2 did
+  not say. Only a change to the steps counts; a rename writes no versions and just updates the
+  reference rows' fallback title.
+- **JSON references by `sharedStepTitle`**, the field the export already carries on a reference,
+  rather than a separate `{"sharedStep": "<title>"}` shape.
+- **Gherkin (PRD-040)**, which §3.2 predates: export writes the expanded steps; a keyed case is
+  compared against its expanded steps, so re-importing the export is unchanged; a changed scenario
+  replaces the reference with local steps and warns, dry run included. "Edit as Gherkin" is disabled
+  on a case with references.
+- **MCP:** consecutive steps with the same `sharedStepId` become one reference, so the expanded
+  steps `get_test_case` returns can be sent back to `update_test_case` without silently inlining
+  the block. `get_test_case_version` tags steps with their shared step too. The schema no longer
+  marks a step's `action` required; the tool checks "action or sharedStepId" itself.
+- **"Convert to local steps" is on the test case page**, not a row action in the form: it calls
+  the server endpoint, which copies images and writes a version, for a case that is saved.
+- **Duplicate detection** compares titles only, so there was no step comparison to expand.
+- **Nesting** cannot be requested at all: a block's step request has no `sharedStepId`. The check
+  constraint backs that.
+
+Tests: `SharedStepApiTest` (14: roles, scoping, in-place update keeping step ids, removal, unknown
+step id, duplicate title, search, delete in use / unused with audit, both check constraints,
+reference save and inline over HTTP), `SharedStepUsageTest` (15: mixed steps and expansion,
+foreign block 404, run expansion with positions, per-set expansion, pre-V62 ordering fallback, CI
+and external step matching, expanded snapshots, one version per case on a block edit, rename writes
+none, review, inline in place with images copied), `SharedStepImportExportTest` (5, committed:
+JSON round trip into another project, unknown title in the dry run, CSV expanded, Gherkin unchanged
+and changed), `McpSharedStepToolsApiTest` (5), and frontend specs for the step editor, the form's
+picker and save, and the expansion helpers. Migration checked on PostgreSQL 16 with
+`ddl-auto=validate`, plus the backfill against sample rows.
+
+Browser check against a throwaway PostgreSQL: create a shared step, use it in a case through the
+picker, run it (grouped under its title), edit the shared step (a version on the case, the diff
+shows the change, the case follows), parameter pre-fill from inside the shared step, convert to
+local steps, and reopen a saved case in the form. It found only layout issues, fixed before commit.
+
