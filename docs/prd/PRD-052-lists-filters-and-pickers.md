@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-19 |
 | **Priority** | P2 — daily friction in the three most used screens, each fix small |
@@ -173,11 +173,32 @@ in "Test runs" and "Test suites".
 
 ## 7. Acceptance Criteria
 
-- [ ] The test case list filters by labels (all of them), via a multi-select and by clicking a chip; the URL keeps it.
-- [ ] `GET test-cases/labels` returns the project's distinct labels.
-- [ ] Empty lists distinguish "no match", "empty folder" and "empty project".
-- [ ] Start Test Run and the suite editor share one picker with search, folder and label filters, counter and select-all-visible.
-- [ ] The pickers no longer overwrite the case list's store state, and say when not every match is shown.
-- [ ] Step test data spans the card when there is no image.
-- [ ] The plan list and the plan run table sort by every column; the run table has a key column and a creation-order default.
-- [ ] Tests pass; en/de translations present.
+- [x] The test case list filters by labels (all of them), via a multi-select and by clicking a chip; the URL keeps it.
+- [x] `GET test-cases/labels` returns the project's distinct labels.
+- [x] Empty lists distinguish "no match", "empty folder" and "empty project".
+- [x] Start Test Run and the suite editor share one picker with search, folder and label filters, counter and select-all-visible.
+- [x] The pickers no longer overwrite the case list's store state, and say when not every match is shown.
+- [x] Step test data spans the card when there is no image.
+- [x] The plan list and the plan run table sort by every column; the run table has a key column and a creation-order default.
+- [x] Tests pass; en/de translations present.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **`TestPlanRunSummary.key` already existed** (PRD-049), so the plan run table only needed the
+  column. `@OrderBy("createdAt ASC")` on `TestPlan.testRuns` gives the creation order; the table's
+  default sort is the key, compared naturally, so `Run-10` follows `Run-2`.
+- **Client-side sorting is one helper**, `shared/utils/sort-rows.ts`, used by the plan list and the
+  plan run table, instead of a `MatTableDataSource` in each. Empty values sort last in both
+  directions. The plan list keeps the server's order until a header is clicked.
+- **Label chips are plain buttons styled as chips**, not `mat-chip-option`, which is a listbox option
+  and cannot be a button. The tooltip says what a click does.
+- **"No match" counts custom field filters too.** Reset clears search, status, priority, labels and
+  every `cf.*` parameter, and keeps the folder, sort and page size.
+- **The picker's selection is `[(selected)]` of `{ id, key, title }`**, not bare ids, so a suite's
+  existing cases show by name under "Selected" before any search has loaded them. Results are
+  sorted by title. The picker reads the folder tree from the store, which it loads itself; it no
+  longer touches the test case store, and neither form loads it.
+- **"Select all visible" reads "Select all shown"** in the UI.
+- **Not verified in a browser.** No migration.

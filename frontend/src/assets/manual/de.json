@@ -297,6 +297,10 @@
             {
               "type": "note",
               "text": "Verwende bestehende Labels weiter, statt neue zu erfinden. Zwei Schreibweisen desselben Themas teilen die Trefferliste und niemand merkt es."
+            },
+            {
+              "type": "p",
+              "text": "In der Testfallliste zeigt der Filter Labels die Fälle, die alle gewählten Labels tragen, und ein Klick auf ein Label in der Tabelle fügt es hinzu. Eine leere Liste sagt, ob nichts zu den Filtern passt, der Ordner leer ist oder das Projekt noch keine Fälle hat."
             }
           ]
         },
@@ -333,7 +337,7 @@
               "items": [
                 "Im Projekt zu Testläufe wechseln und Testlauf starten wählen.",
                 "Namen und Umgebung angeben — die Umgebung erklärt später, wogegen geprüft wurde.",
-                "Testfälle auswählen, einzeln oder über eine Suite.",
+                "Testfälle auswählen: suchen, auf einen Ordner oder auf Labels eingrenzen, dann anhaken oder Alle angezeigten auswählen wählen. Ausgewählte Fälle bleiben ausgewählt, wenn ein Filter sie ausblendet.",
                 "Starten. Der Lauf wechselt auf In Arbeit und die Ausführungsansicht öffnet sich.",
                 "Je Schritt Status setzen und das tatsächliche Ergebnis festhalten.",
                 "Abschliessen, wenn alles erfasst ist."

@@ -297,6 +297,10 @@
             {
               "type": "note",
               "text": "Reuse existing labels rather than inventing new ones. Two spellings of the same topic split the results and nobody notices."
+            },
+            {
+              "type": "p",
+              "text": "In the test case list, the Labels filter shows the cases that carry all of the chosen labels, and clicking a label in the table adds it. An empty list says whether nothing matches the filters, the folder is empty or the project has no cases yet."
             }
           ]
         },
@@ -333,7 +337,7 @@
               "items": [
                 "In the project, go to Test runs and choose Start Test Run.",
                 "Give a name and an environment — the environment is what later explains what was tested against.",
-                "Select test cases, individually or via a suite.",
+                "Select test cases: search, narrow to a folder or to labels, then tick them or choose Select all shown. Selected cases stay selected when a filter hides them.",
                 "Start. The run moves to In progress and the execution view opens.",
                 "Set a status per step and record the actual result.",
                 "Complete it once everything is recorded."

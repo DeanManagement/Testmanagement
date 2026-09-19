@@ -299,6 +299,8 @@ action in the UI, and re-testing means a new run rather than editing a signed-of
 - **Duplicate titles are refused.** A create whose title matches an existing case — ignoring case,
   punctuation and extra spaces — comes back with the existing case's key and a suggestion to update
   it instead. Pass `allowDuplicateTitle: true` to override when two cases really do share a title.
+- **`search_test_cases` with several `labels` returns the cases carrying all of them**, as its
+  description says. Before this version it returned cases with any of them.
 - **Bulk creates are per-item.** Read the per-item `CREATED` / `SKIPPED` / `ERROR` outcomes; a
   partial result is normal, not a failure. `dryRun: true` shows what would happen.
 - **Replacing a case's steps discards screenshots** attached to steps that no longer exist. Omit

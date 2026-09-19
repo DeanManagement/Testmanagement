@@ -384,8 +384,15 @@ Folders are a filing system, not a permission boundary.
 **Labels** are free-text tags on a case (`smoke`, `regression`, `flaky`). Use them to filter, and
 to pick out a themed set of cases when starting a run.
 
-**Filtering** — the list has a search box plus Status and Priority filters. The row-density
-toggle switches between comfortable and compact rows.
+**Filtering** — the list has a search box plus Status, Priority and **Labels** filters. Choosing
+several labels shows the cases that carry **all** of them: `req-aca-027` and `negativ` shows the
+negative tests of that requirement. Clicking a label in the table adds it to the filter. Labels
+match exactly as written, so `Smoke` and `smoke` are two labels. Every filter is kept in the URL.
+The row-density toggle switches between comfortable and compact rows.
+
+An empty list says why: **no test cases match the filters** (with **Reset filters**, which clears
+search and filters but keeps the folder), **this folder is empty**, or the project has no test
+cases yet.
 
 **Bulk actions** — tick the checkboxes to select cases, then set a status on all of them, add them to a suite, or
 delete them. **Bulk delete refuses cases that already have results** — retire those by setting
@@ -577,8 +584,9 @@ line and what was expected. Text in another language needs its `# language:` lin
 A suite is a named, reusable set of test cases — "Smoke", "Checkout regression", "Release
 candidate".
 
-Create one under **Test Suites**, give it a name and description, and pick its cases. A case can
-belong to any number of suites, and adding it to a suite does not move or copy it.
+Create one under **Test Suites**, give it a name and description, and pick its cases with the
+[case picker](#picking-test-cases). A case can belong to any number of suites, and adding it to a
+suite does not move or copy it.
 
 Each suite has a **report** showing the latest known result for every case in it, and that report
 downloads as PDF.
@@ -602,10 +610,13 @@ when starting a run, pick the plan in the **Test Plan** field to attach it.
 | **Completed** | Finished |
 | **Cancelled** | Abandoned; kept for the record |
 
-The plan detail page rolls up everything attached to it: total runs, completed runs, pass rate and
+The plan list sorts by any column: click a header. The plan detail page rolls up everything attached to it: total runs, completed runs, pass rate and
 progress (see [How the numbers are calculated](#how-the-numbers-are-calculated)), result
 distribution, runs by status, and pass rate per run. It is the screen to project on
 the wall during a release.
+
+Its run table lists the runs by key, which is the order they were created in; click any header to
+sort by that column instead.
 
 It also answers "will we finish by the target date?": the remaining estimated effort across the
 plan's runs (aborted runs excluded), and a **burn-down** of remaining effort per day against a
@@ -687,9 +698,18 @@ intentions rather than evidence is worse than no number at all.
 | Environment | Pick one from the project's list, or type a new name to add it (see [Environments](#environments)) |
 | Test Plan | Optional; attaches this run to a milestone |
 | Executor | Who is expected to run it; can be left unassigned |
-| Test cases | Pick them individually, filter by folder, or search |
+| Test cases | Pick them with the [case picker](#picking-test-cases) |
 
 Cases with parameter sets expand to one result per set.
+
+#### Picking test cases
+
+Start Test Run and the suite form share one picker. **Search** by title or key, narrow to a
+**folder** (its subfolders included) and to **labels** (all of them, as in the list), then tick
+cases or choose **Select all shown**. The count of selected cases stays above the list, and
+**Clear selection** empties it. A selected case the filters hide is listed under *Selected,
+hidden by the filters*, so narrowing the list never drops it from the run. The picker shows up to
+200 matches and says so when there are more: narrow the filters to reach the rest.
 
 **Run on multiple environments** swaps the environment field for a multi-select and creates one
 run per environment (up to 20) in one go: same cases, plan and executor, each named
