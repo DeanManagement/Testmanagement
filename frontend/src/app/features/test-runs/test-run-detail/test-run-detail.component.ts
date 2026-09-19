@@ -37,7 +37,8 @@ import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { BugReportApiService } from '../../../core/services/bug-report-api.service';
 import { BugReport } from '../../../shared/models/bug-report.model';
 import { LinkBugDialogComponent, LinkBugDialogData } from '../../bug-reports/link-bug-dialog/link-bug-dialog.component';
-import { hasFailure, inStatus, isFailureStatus, stepSeenAt } from './result-defects';
+import { cascadableSteps, hasFailure, inStatus, isFailureStatus, stepSeenAt } from './result-defects';
+import { CaseContextComponent } from './case-context.component';
 import { selectLinkedBugReportsFor } from '../../../store/bug-report/bug-report.selectors';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { Comment } from '../../../shared/models/comment.model';
@@ -68,6 +69,7 @@ import { sharedStepHeadingAt } from '../../../shared/utils/shared-step-groups';
   selector: 'app-test-run-detail',
   standalone: true,
   imports: [
+    CaseContextComponent,
     DurationPipe,
     CustomFieldsDisplayComponent,
     AsyncPipe,
@@ -366,6 +368,28 @@ export class TestRunDetailComponent implements OnInit {
     );
   }
 
+  /** PRD-048: after a pass or skip, the offer to carry it down to the steps still pending. */
+  cascadeOffer: { resultId: string; status: TestResultStatus; count: number } | null = null;
+
+  /** A status picked by the tester; a pass or skip then offers to cascade to pending steps. */
+  chooseResultStatus(result: TestResult, status: TestResultStatus): void {
+    this.onResultStatusChange(result.id, status);
+    const count = cascadableSteps(result, status);
+    this.cascadeOffer = count > 0 ? { resultId: result.id, status, count } : null;
+  }
+
+  acceptCascade(): void {
+    const offer = this.cascadeOffer;
+    this.cascadeOffer = null;
+    if (!offer) return;
+    this.store.dispatch(TestRunActions.updateTestResult({
+      projectId: this.projectId,
+      runId: this.runId,
+      resultId: offer.resultId,
+      request: { status: offer.status, cascadeSteps: true },
+    }));
+  }
+
   onResultStatusChange(resultId: string, status: TestResultStatus): void {
     const result = this.currentRun?.results?.find(r => r.id === resultId);
     // Only the result open in the panel is timed; bulk and list changes record no duration rather than a fake one.
@@ -525,7 +549,7 @@ export class TestRunDetailComponent implements OnInit {
     const results = this.byStatusFilter(run.results ?? []);
     if (!this.executionSearchTerm) return results;
     const term = this.executionSearchTerm.toLowerCase();
-    return results.filter(r => r.testCaseTitle.toLowerCase().includes(term));
+    return results.filter(r => r.testCaseTitle.toLowerCase().includes(term) || r.testCaseKey?.toLowerCase().includes(term));
   }
 
   private byStatusFilter(results: TestResult[]): TestResult[] {
@@ -554,6 +578,7 @@ export class TestRunDetailComponent implements OnInit {
 
   setActiveResult(resultId: string): void {
     this.activeResultId = resultId;
+    this.cascadeOffer = null;
     if (this.currentRun?.status === 'IN_PROGRESS') {
       this.timer.open(resultId);
     }

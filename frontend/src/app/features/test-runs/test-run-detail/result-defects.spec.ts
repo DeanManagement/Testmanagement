@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { hasFailure, inStatus, stepSeenAt } from './result-defects';
+import { cascadableSteps, hasFailure, inStatus, stepSeenAt } from './result-defects';
 import { StepResult, TestResult } from '../../../shared/models/test-run.model';
 import { BugReport } from '../../../shared/models/bug-report.model';
 
@@ -29,5 +29,14 @@ describe('result defects', () => {
 
     expect(inStatus(results, 'FAILED')).toEqual([results[0]]);
     expect(inStatus(results, null)).toEqual(results);
+  });
+
+  it('offers to cascade a pass or skip only to the steps still pending (PRD-048)', () => {
+    const r = result('PENDING', 'PENDING', 'FAILED', 'PENDING');
+
+    expect(cascadableSteps(r, 'PASSED')).toBe(2);
+    expect(cascadableSteps(r, 'SKIPPED')).toBe(2);
+    expect(cascadableSteps(r, 'FAILED')).toBe(0);
+    expect(cascadableSteps(result('PENDING', 'PASSED'), 'PASSED')).toBe(0);
   });
 });

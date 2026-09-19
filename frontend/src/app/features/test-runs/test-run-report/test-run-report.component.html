@@ -6,6 +6,12 @@
         {{ 'common.back' | translate }}
       </a>
       <h1>{{ 'report.title' | translate }}: {{ report.name }}</h1>
+      <div class="report-options" data-test-id="report-options">
+        <mat-checkbox [(ngModel)]="showSteps" data-test-id="report-show-steps">{{ 'report.options.steps' | translate }}</mat-checkbox>
+        <mat-checkbox [(ngModel)]="showScreenshots" [disabled]="!showSteps" data-test-id="report-show-screenshots">
+          {{ 'report.options.screenshots' | translate }}
+        </mat-checkbox>
+      </div>
       <button mat-stroked-button (click)="downloadPdf()" [disabled]="downloading" class="download-pdf-btn" data-test-id="download-pdf-btn">
         <mat-icon>picture_as_pdf</mat-icon>
         {{ 'report.downloadPdf' | translate }}
@@ -23,6 +29,11 @@
         }
       </div>
       <div class="run-meta">
+        @if (report.testPlanId) {
+          <span class="meta-item" data-test-id="report-plan">{{ 'report.plan' | translate }}:
+            <a [routerLink]="['/projects', projectId, 'test-plans', report.testPlanId]">{{ report.testPlanName }}</a>
+          </span>
+        }
         @if (report.startTime) {
           <span class="meta-item">{{ 'testRun.startedLabel' | translate }}: {{ report.startTime | localizedDate:'medium' }}</span>
         }
@@ -86,6 +97,11 @@
         <h3>{{ 'stepResult.results' | translate }} ({{ report.total }})</h3>
         <div class="table-scroll">
           <table mat-table [dataSource]="resultsWorstFirst" class="data-table">
+            <ng-container matColumnDef="key">
+              <th mat-header-cell *matHeaderCellDef>{{ 'report.key' | translate }}</th>
+              <td mat-cell *matCellDef="let result" class="case-key">{{ result.testCaseKey }}</td>
+            </ng-container>
+
             <ng-container matColumnDef="testCase">
               <th mat-header-cell *matHeaderCellDef>{{ 'report.testCase' | translate }}</th>
               <td mat-cell *matCellDef="let result">
@@ -97,6 +113,23 @@
                     {{ 'review.unapprovedWording' | translate: { version: result.executedVersion } }}
                   </span>
                 }
+                @if (showSteps && result.stepResults.length) {
+                  <ol class="report-steps" [attr.data-test-id]="'report-steps-' + result.id">
+                    @for (step of sortedSteps(result); track step.id) {
+                      <li>
+                        <span class="badge badge--{{ step.status | lowercase }} badge--small">{{ 'resultStatus.' + step.status | translate }}</span>
+                        {{ step.action }}
+                        @if (step.actualResult) {
+                          <span class="step-actual">→ {{ step.actualResult }}</span>
+                        }
+                        @if (showScreenshots && step.screenshotId) {
+                          <img class="step-shot" [src]="screenshotUrl(step.screenshotId) | authImage" loading="lazy"
+                               [alt]="'stepResult.screenshot' | translate" />
+                        }
+                      </li>
+                    }
+                  </ol>
+                }
               </td>
             </ng-container>
 
@@ -107,13 +140,41 @@
               </td>
             </ng-container>
 
+            <ng-container matColumnDef="executedBy">
+              <th mat-header-cell *matHeaderCellDef>{{ 'report.executedBy' | translate }}</th>
+              <td mat-cell *matCellDef="let result">
+                {{ result.executedByName ?? (result.executedBy ? ('report.unknownUser' | translate) : '–') }}
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="executedAt">
+              <th mat-header-cell *matHeaderCellDef>{{ 'report.executedAt' | translate }}</th>
+              <td mat-cell *matCellDef="let result">{{ result.executedAt ? (result.executedAt | localizedDate:'short') : '–' }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="version">
+              <th mat-header-cell *matHeaderCellDef>{{ 'report.version' | translate }}</th>
+              <td mat-cell *matCellDef="let result">{{ result.executedVersion ? 'v' + result.executedVersion : '–' }}</td>
+            </ng-container>
+
             <ng-container matColumnDef="comment">
               <th mat-header-cell *matHeaderCellDef>{{ 'report.comment' | translate }}</th>
               <td mat-cell *matCellDef="let result" class="comment-cell">{{ evidence(result) }}</td>
             </ng-container>
 
-            <tr mat-header-row *matHeaderRowDef="['testCase', 'status', 'comment']"></tr>
-            <tr mat-row *matRowDef="let row; columns: ['testCase', 'status', 'comment']"></tr>
+            <ng-container matColumnDef="defectLink">
+              <th mat-header-cell *matHeaderCellDef>{{ 'testRun.execution.defectLink' | translate }}</th>
+              <td mat-cell *matCellDef="let result">
+                @if (result.defectLink) {
+                  <a [href]="result.defectLink" target="_blank" rel="noopener noreferrer">{{ result.defectLink }}</a>
+                } @else {
+                  –
+                }
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="columns"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns"></tr>
           </table>
         </div>
       </div>

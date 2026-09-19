@@ -188,7 +188,7 @@
                   @if (bulkMode) {
                     <mat-icon class="result-select-icon">{{ isResultSelected(result.id) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                   }
-                  <span class="result-item-title">{{ result.testCaseTitle }}</span>
+                  <span class="result-item-title"><span class="case-key">{{ result.testCaseKey }}</span> {{ result.testCaseTitle }}</span>
                   <span class="badge badge--{{ result.status | lowercase }} badge--small">{{ 'resultStatus.' + result.status | translate }}</span>
                 </div>
               }
@@ -200,7 +200,7 @@
               <div class="case-header">
                 <h3 class="case-title">
                   <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link" data-test-id="execution-tc-link">
-                    {{ result.testCaseTitle }}
+                    <span class="case-key">{{ result.testCaseKey }}</span> {{ result.testCaseTitle }}
                   </a>
                 </h3>
                 <div class="case-controls">
@@ -217,7 +217,7 @@
                     }
                   </mat-form-field>
                   <mat-form-field appearance="outline" class="status-select">
-                    <mat-select [value]="result.status" (selectionChange)="onResultStatusChange(result.id, $event.value)" [attr.data-test-id]="'execution-result-status-' + result.id">
+                    <mat-select [value]="result.status" (selectionChange)="chooseResultStatus(result, $event.value)" [attr.data-test-id]="'execution-result-status-' + result.id">
                       @for (s of resultStatuses; track s) {
                         <mat-option [value]="s">{{ 'resultStatus.' + s | translate }}</mat-option>
                       }
@@ -230,6 +230,16 @@
                   {{ 'testCase.detail.estimate' | translate }}: {{ result.estimateMinutes | duration }}
                 </p>
               }
+              @if (cascadeOffer?.resultId === result.id) {
+                <p class="step-actual-readonly" role="status" data-test-id="cascade-offer">
+                  {{ 'testRun.execution.cascadeOffer' | translate: { count: cascadeOffer!.count, status: ('resultStatus.' + cascadeOffer!.status | translate) } }}
+                  <span>
+                    <button mat-button (click)="acceptCascade()" data-test-id="cascade-yes">{{ 'common.yes' | translate }}</button>
+                    <button mat-button (click)="cascadeOffer = null" data-test-id="cascade-no">{{ 'common.no' | translate }}</button>
+                  </span>
+                </p>
+              }
+              <app-case-context [result]="result" [projectId]="projectId" />
 
               <app-attachments [projectId]="projectId" [testCaseId]="result.testCaseId" [execution]="true" />
 
@@ -440,7 +450,7 @@
                 <mat-expansion-panel-header>
                   <mat-panel-title class="panel-title">
                     <a [routerLink]="['/projects', projectId, 'test-cases', result.testCaseId]" class="item-link" (click)="$event.stopPropagation()" data-test-id="test-result-tc-link">
-                      {{ result.testCaseTitle }}
+                      <span class="case-key">{{ result.testCaseKey }}</span> {{ result.testCaseTitle }}
                     </a>
                   </mat-panel-title>
                   <mat-panel-description class="panel-description">

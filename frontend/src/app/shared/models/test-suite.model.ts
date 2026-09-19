@@ -1,5 +1,6 @@
 export interface TestCaseSummary {
   id: string;
+  key: string;
   title: string;
 }
 

@@ -378,7 +378,10 @@
       "next": "Weiter",
       "noSelection": "Wählen Sie einen Testfall aus der Seitenleiste aus.",
       "defectLink": "Fehler-Link",
-      "onlyStatus": "Nur {{status}}"
+      "onlyStatus": "Nur {{status}}",
+      "caseContext": "Vorbedingungen und Beschreibung",
+      "caseChanged": "Der Fall wurde geändert, seit dies erfasst wurde (v{{executed}}, jetzt v{{current}}).",
+      "cascadeOffer": "Die {{count}} offenen Schritte auch auf {{status}} setzen?"
     },
     "allureReport": {
       "view": "Allure-Bericht",
@@ -467,7 +470,8 @@
     "expected": "Erwartetes Ergebnis",
     "actualResult": "Tatsächliches Ergebnis",
     "addScreenshot": "Screenshot hinzufügen",
-    "noSteps": "Keine Schritte für diesen Testfall definiert."
+    "noSteps": "Keine Schritte für diesen Testfall definiert.",
+    "screenshot": "Screenshot"
   },
   "resultStatus": {
     "PENDING": "Ausstehend",
@@ -708,7 +712,17 @@
     "resultDate": "Datum",
     "chart": "Statusverteilung",
     "downloadPdf": "PDF herunterladen",
-    "comment": "Kommentar"
+    "comment": "Kommentar",
+    "key": "Schlüssel",
+    "executedBy": "Ausgeführt von",
+    "executedAt": "Ausgeführt am",
+    "version": "Version",
+    "unknownUser": "Unbekannte Person",
+    "plan": "Testplan",
+    "options": {
+      "steps": "Schritte",
+      "screenshots": "Screenshots"
+    }
   },
   "comment": {
     "title": "Kommentare",
@@ -878,7 +892,9 @@
     "ok": "OK",
     "saving": "Wird gespeichert…",
     "irreversibleWarning": "Diese Aktion kann nicht rückgängig gemacht werden.",
-    "moreActions": "Weitere Aktionen"
+    "moreActions": "Weitere Aktionen",
+    "yes": "Ja",
+    "no": "Nein"
   },
   "a11y": {
     "deselectAll": "Auswahl aufheben",

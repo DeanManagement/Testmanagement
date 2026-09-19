@@ -21,3 +21,12 @@ export function stepSeenAt(bug: BugReport, resultId: string): number | null {
 export function inStatus(results: TestResult[], status: TestResultStatus | null): TestResult[] {
   return status ? results.filter((result) => result.status === status) : results;
 }
+
+/**
+ * How many pending steps a status would carry down to (PRD-048): only PASSED and SKIPPED cascade,
+ * since a failure belongs to the step that failed. Zero means there is nothing to offer.
+ */
+export function cascadableSteps(result: TestResult, status: TestResultStatus): number {
+  if (status !== 'PASSED' && status !== 'SKIPPED') return 0;
+  return result.stepResults.filter((step) => step.status === 'PENDING').length;
+}

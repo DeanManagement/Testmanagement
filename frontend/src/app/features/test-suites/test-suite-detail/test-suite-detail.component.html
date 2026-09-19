@@ -39,7 +39,7 @@
             <mat-list-item>
               <mat-icon matListItemIcon>check_circle_outline</mat-icon>
               <a matListItemTitle [routerLink]="['/projects', projectId, 'test-cases', tc.id]" class="item-link" data-test-id="test-suite-tc-link">
-                {{ tc.title }}
+                <span class="case-key">{{ tc.key }}</span> {{ tc.title }}
               </a>
             </mat-list-item>
           }

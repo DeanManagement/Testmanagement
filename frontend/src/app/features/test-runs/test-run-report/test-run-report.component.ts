@@ -10,7 +10,10 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { Chart, DoughnutController, ArcElement, Tooltip, Legend } from 'chart.js';
-import { TestResult, TestRunReport } from '../../../shared/models/test-run.model';
+import { StepResult, TestResult, TestRunReport } from '../../../shared/models/test-run.model';
+import { FormsModule } from '@angular/forms';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
 import { worstFirst } from '../../../shared/utils/test-result-triage';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
@@ -24,6 +27,9 @@ Chart.register(DoughnutController, ArcElement, Tooltip, Legend);
   selector: 'app-test-run-report',
   standalone: true,
   imports: [
+    AuthImagePipe,
+    FormsModule,
+    MatCheckboxModule,
     DurationPipe,
     LocalizedDatePipe,
     LowerCasePipe,
@@ -53,6 +59,10 @@ export class TestRunReportComponent implements OnInit {
   runId = '';
   report: TestRunReport | null = null;
   downloading = false;
+  /** PRD-048: show each result's steps, and their screenshots; the PDF follows the same choice. */
+  showSteps = false;
+  showScreenshots = false;
+  readonly columns = ['key', 'testCase', 'status', 'executedBy', 'executedAt', 'version', 'comment', 'defectLink'];
 
   get resultsWorstFirst(): TestResult[] {
     return worstFirst(this.report?.results);
@@ -84,7 +94,8 @@ export class TestRunReportComponent implements OnInit {
 
   downloadPdf(): void {
     this.downloading = true;
-    this.testRunApi.downloadReportPdf(this.projectId, this.runId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+    this.testRunApi.downloadReportPdf(this.projectId, this.runId,
+      { steps: this.showSteps, screenshots: this.showSteps && this.showScreenshots }).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (blob) => {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -99,6 +110,14 @@ export class TestRunReportComponent implements OnInit {
         this.downloading = false;
       },
     });
+  }
+
+  sortedSteps(result: TestResult): StepResult[] {
+    return [...result.stepResults].sort((a, b) => a.orderIndex - b.orderIndex);
+  }
+
+  screenshotUrl(screenshotId: string): string {
+    return this.testRunApi.getScreenshotUrl(screenshotId);
   }
 
   private renderChart(): void {

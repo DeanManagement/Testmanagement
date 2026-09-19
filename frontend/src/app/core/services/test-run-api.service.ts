@@ -137,8 +137,10 @@ export class TestRunApiService {
     return this.http.delete<void>(`/api/screenshots/${screenshotId}`);
   }
 
-  downloadReportPdf(projectId: string, id: string): Observable<Blob> {
-    return this.http.get(`${this.baseUrl(projectId)}/${id}/report/pdf`, { responseType: 'blob' }).pipe(retryWithBackoff());
+  /** PRD-048: with each result's steps, and their screenshots embedded. */
+  downloadReportPdf(projectId: string, id: string, options: { steps: boolean; screenshots: boolean }): Observable<Blob> {
+    const params = { steps: String(options.steps), screenshots: String(options.screenshots) };
+    return this.http.get(`${this.baseUrl(projectId)}/${id}/report/pdf`, { params, responseType: 'blob' }).pipe(retryWithBackoff());
   }
 
   getScreenshotUrl(screenshotId: string): string {

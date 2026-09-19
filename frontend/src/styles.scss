@@ -263,6 +263,14 @@ a {
   &--closed    { background: #2b3441; color: #b6c2d1; }
 }
 
+// A test case key before its title (PRD-048): readable at a glance, quieter than the title.
+.case-key {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.9em;
+  color: var(--tm-text-secondary);
+  white-space: nowrap;
+}
+
 // -- Card styling --
 .tm-card {
   background: var(--tm-surface);

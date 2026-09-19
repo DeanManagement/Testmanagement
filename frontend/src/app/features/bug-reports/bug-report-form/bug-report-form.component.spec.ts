@@ -26,7 +26,7 @@ describe('BugReportFormComponent – template', () => {
         provideMockStore({ initialState: { bugReports: initialBugReportState } }),
         { provide: ProjectApiService, useValue: { getById: () => of(project) } },
         { provide: ProjectMemberApiService, useValue: { getByProject: () => of([]) } },
-        { provide: EnvironmentApiService, useValue: { getAll: () => of([]), invalidate: () => undefined } },
+        { provide: EnvironmentApiService, useValue: { getAll: () => of([]), getActive: () => of([]), invalidate: () => undefined } },
         { provide: CustomFieldApiService, useValue: { getActive: () => of([]) } },
         {
           provide: ActivatedRoute,

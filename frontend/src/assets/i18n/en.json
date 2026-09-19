@@ -378,7 +378,10 @@
       "next": "Next",
       "noSelection": "Select a test case from the sidebar to begin.",
       "defectLink": "Defect link",
-      "onlyStatus": "Only {{status}}"
+      "onlyStatus": "Only {{status}}",
+      "caseContext": "Preconditions and description",
+      "caseChanged": "The case changed since this was recorded (v{{executed}}, now v{{current}}).",
+      "cascadeOffer": "Also mark the {{count}} pending steps as {{status}}?"
     },
     "allureReport": {
       "view": "Allure Report",
@@ -467,7 +470,8 @@
     "expected": "Expected Result",
     "actualResult": "Actual Result",
     "addScreenshot": "Add Screenshot",
-    "noSteps": "No steps defined for this test case."
+    "noSteps": "No steps defined for this test case.",
+    "screenshot": "Screenshot"
   },
   "resultStatus": {
     "PENDING": "Pending",
@@ -708,7 +712,17 @@
     "resultDate": "Date",
     "chart": "Status Distribution",
     "downloadPdf": "Download PDF",
-    "comment": "Comment"
+    "comment": "Comment",
+    "key": "Key",
+    "executedBy": "Executed by",
+    "executedAt": "Executed at",
+    "version": "Version",
+    "unknownUser": "Unknown user",
+    "plan": "Test plan",
+    "options": {
+      "steps": "Steps",
+      "screenshots": "Screenshots"
+    }
   },
   "comment": {
     "title": "Comments",
@@ -878,7 +892,9 @@
     "ok": "OK",
     "saving": "Saving…",
     "irreversibleWarning": "This action cannot be undone.",
-    "moreActions": "More actions"
+    "moreActions": "More actions",
+    "yes": "Yes",
+    "no": "No"
   },
   "a11y": {
     "deselectAll": "Deselect all",

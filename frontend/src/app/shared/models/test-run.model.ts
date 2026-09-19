@@ -22,7 +22,12 @@ export interface StepResult {
 export interface TestResult {
   id: string;
   testCaseId: string;
+  /** PRD-048: the case's key, its live texts and current version. */
+  testCaseKey: string;
   testCaseTitle: string;
+  testCasePreconditions: string | null;
+  testCaseDescription: string | null;
+  testCaseVersion: number | null;
   status: TestResultStatus;
   comment: string;
   defectLink: string | null;
@@ -33,6 +38,9 @@ export interface TestResult {
   stepResults: StepResult[];
   /** PRD-036: when it left PENDING, and the measured effort; null when unknown. */
   executedAt: string | null;
+  /** PRD-048: who executed it; the name is null for a deleted user. */
+  executedBy: string | null;
+  executedByName: string | null;
   durationMs: number | null;
   /** PRD-036: the case's live estimate. */
   estimateMinutes: number | null;
@@ -138,6 +146,8 @@ export interface UpdateTestResultRequest {
   defectLink?: string;
   /** PRD-036: omitted leaves the recorded duration alone. */
   durationMs?: number;
+  /** PRD-048: with PASSED or SKIPPED, the steps still pending take the same status. */
+  cascadeSteps?: boolean;
 }
 
 export interface UpdateStepResultRequest {
@@ -164,4 +174,7 @@ export interface TestRunReport {
   unapprovedResultIds: string[];
   /** PRD-036 */
   effort: EffortSummary;
+  /** PRD-048: the plan the run belongs to. */
+  testPlanId: string | null;
+  testPlanName: string | null;
 }
