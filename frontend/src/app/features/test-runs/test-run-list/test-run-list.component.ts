@@ -28,11 +28,13 @@ import { EnvironmentApiService } from '../../../core/services/environment-api.se
 import { ProjectEnvironment } from '../../../shared/models/environment.model';
 import { CustomFieldFiltersComponent } from '../../../shared/components/custom-fields/custom-field-filters.component';
 import { readCustomFieldParams } from '../../../shared/components/custom-fields/custom-field-filter-params';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @Component({
   selector: 'app-test-run-list',
   standalone: true,
   imports: [
+    MatTooltipModule,
     CustomFieldFiltersComponent,
     AsyncPipe,
     LowerCasePipe,

@@ -36,6 +36,11 @@
             {{ 'testRun.reopen.confirm' | translate }}
           </button>
         }
+        <a mat-stroked-button [routerLink]="['/projects', projectId, 'test-runs', 'compare']" [queryParams]="{ head: run.id }"
+           data-test-id="test-run-compare-btn">
+          <mat-icon>compare_arrows</mat-icon>
+          {{ 'compare.action' | translate }}
+        </a>
         <a mat-stroked-button [routerLink]="['/projects', projectId, 'test-runs', run.id, 'report']" class="report-btn" data-test-id="test-run-report-btn">
           <mat-icon>assessment</mat-icon>
           {{ 'report.title' | translate }}
@@ -375,7 +380,7 @@
             @for (result of resultsWorstFirst(run); track result.id) {
               <!-- Failures open on arrival; passes stay shut. Nobody opens a finished run to read
                    what worked. -->
-              <mat-expansion-panel class="result-panel" [expanded]="isFailure(result)"
+              <mat-expansion-panel class="result-panel" [expanded]="isFailure(result) || result.id === linkedResultId"
                                    [attr.data-test-id]="'test-result-panel-' + result.id">
                 <mat-expansion-panel-header>
                   <mat-panel-title class="panel-title">

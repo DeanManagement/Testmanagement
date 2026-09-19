@@ -1,0 +1,135 @@
+<div class="compare-container">
+  <div class="page-header">
+    <a mat-button [routerLink]="['/projects', projectId, 'test-runs', headId]" class="back-link" data-test-id="compare-back">
+      <mat-icon>arrow_back</mat-icon>
+      {{ 'common.back' | translate }}
+    </a>
+    <h1>{{ 'compare.title' | translate }}</h1>
+  </div>
+
+  <div class="tm-card base-picker">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="base-select">
+      <mat-label>{{ 'compare.base' | translate }}</mat-label>
+      <mat-select [value]="comparison?.base?.id ?? baseId" (selectionChange)="chooseBase($event.value)"
+                  data-test-id="compare-base-select">
+        @for (run of baseCandidates(); track run.id) {
+          <mat-option [value]="run.id">{{ run.key }} · {{ run.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (comparison?.baseAutoSelected) {
+      <span class="auto-hint" data-test-id="compare-auto-base">{{ 'compare.autoBase' | translate }}</span>
+    }
+    <mat-slide-toggle [checked]="includeUnchanged" (change)="setIncludeUnchanged($event.checked)"
+                      data-test-id="compare-unchanged-toggle">
+      {{ 'compare.showUnchanged' | translate }}
+    </mat-slide-toggle>
+  </div>
+
+  @if (loading && !comparison) {
+    <div class="spinner-container"><mat-spinner diameter="40"></mat-spinner></div>
+  } @else if (error) {
+    <p class="tm-card error" role="alert" data-test-id="compare-error">{{ error }}</p>
+  } @else if (comparison; as c) {
+    <div class="runs">
+      @for (side of [{ label: 'compare.baseRun', run: c.base }, { label: 'compare.headRun', run: c.head }]; track side.label) {
+        <a class="tm-card run-card" [routerLink]="['/projects', projectId, 'test-runs', side.run.id]"
+           [attr.data-test-id]="side.label === 'compare.baseRun' ? 'compare-base-run' : 'compare-head-run'">
+          <span class="run-role">{{ side.label | translate }}</span>
+          <span class="run-key">{{ side.run.key }}</span>
+          <span class="run-name">{{ side.run.name }}</span>
+          <span class="run-meta">
+            @if (side.run.environment) {
+              {{ side.run.environment }} ·
+            }
+            {{ side.run.happenedAt | localizedDate: 'medium' }}
+          </span>
+        </a>
+      }
+    </div>
+
+    @if (baseNewer) {
+      <p class="tm-card warning" data-test-id="compare-base-newer">
+        <mat-icon aria-hidden="true">swap_horiz</mat-icon>
+        {{ 'compare.baseNewer' | translate }}
+        <button mat-stroked-button (click)="swap()" data-test-id="compare-swap">{{ 'compare.swap' | translate }}</button>
+      </p>
+    }
+
+    <div class="counts" data-test-id="compare-counts">
+      @for (group of groups; track group.category) {
+        <span class="count count--{{ group.category | lowercase }}">
+          {{ 'compare.category.' + group.category | translate }}: <strong>{{ group.count }}</strong>
+        </span>
+      }
+    </div>
+
+    @if (!differences) {
+      <p class="tm-card empty" data-test-id="compare-no-differences">{{ 'compare.noDifferences' | translate }}</p>
+    }
+
+    <mat-accordion multi>
+      @for (group of groups; track group.category) {
+        @if (group.rows.length > 0) {
+          <mat-expansion-panel [expanded]="group.category === 'NEWLY_FAILING'"
+                               [attr.data-test-id]="'compare-group-' + group.category">
+            <mat-expansion-panel-header>
+              <mat-panel-title>{{ 'compare.category.' + group.category | translate }} ({{ group.count }})</mat-panel-title>
+            </mat-expansion-panel-header>
+            <table class="rows">
+              <thead>
+                <tr>
+                  <th scope="col">{{ 'compare.testCase' | translate }}</th>
+                  <th scope="col">{{ 'compare.baseRun' | translate }}</th>
+                  <th scope="col">{{ 'compare.headRun' | translate }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (row of group.rows; track row.testCaseId + (row.parameterSetName ?? '')) {
+                  <tr [attr.data-test-id]="'compare-row-' + row.testCaseKey">
+                    <th scope="row">
+                      <a class="case-link" [routerLink]="['/projects', projectId, 'test-cases', row.testCaseId]">
+                        {{ row.testCaseKey }} {{ row.title }}
+                      </a>
+                      @if (row.parameterSetName) {
+                        <span class="set">[{{ row.parameterSetName }}]</span>
+                      }
+                      @if (row.versionChanged) {
+                        <span class="marker" [matTooltip]="'compare.versionChangedHint' | translate">
+                          {{ 'compare.versionChanged' | translate }}
+                        </span>
+                      }
+                      @if (row.duplicates > 0) {
+                        <span class="marker" [matTooltip]="'compare.duplicatesHint' | translate">
+                          {{ 'compare.duplicates' | translate: { count: row.duplicates } }}
+                        </span>
+                      }
+                    </th>
+                    <td>
+                      @if (row.baseStatus && row.baseResultId) {
+                        <a class="badge badge--{{ row.baseStatus | lowercase }}"
+                           [routerLink]="['/projects', projectId, 'test-runs', c.base.id]"
+                           [queryParams]="{ result: row.baseResultId }">{{ 'resultStatus.' + row.baseStatus | translate }}</a>
+                      } @else {
+                        <span class="absent">—</span>
+                      }
+                    </td>
+                    <td>
+                      @if (row.headStatus && row.headResultId) {
+                        <a class="badge badge--{{ row.headStatus | lowercase }}"
+                           [routerLink]="['/projects', projectId, 'test-runs', c.head.id]"
+                           [queryParams]="{ result: row.headResultId }">{{ 'resultStatus.' + row.headStatus | translate }}</a>
+                      } @else {
+                        <span class="absent">—</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </mat-expansion-panel>
+        }
+      }
+    </mat-accordion>
+  }
+</div>

@@ -1274,5 +1274,32 @@
       "percentRange": "Zwischen 0 und 100",
       "notNegative": "Darf nicht negativ sein"
     }
+  },
+  "compare": {
+    "title": "Läufe vergleichen",
+    "action": "Vergleichen mit…",
+    "withPrevious": "Mit vorherigem Lauf vergleichen",
+    "base": "Vergleichen mit",
+    "autoBase": "Automatisch gewählt: der vorherige Lauf mit demselben Namen oder aus demselben Plan und derselben Umgebung.",
+    "showUnchanged": "Unveränderte anzeigen",
+    "baseRun": "Basis",
+    "headRun": "Aktuell",
+    "testCase": "Testfall",
+    "baseNewer": "Die Basis lief nach dem aktuellen Lauf, daher sind \"Neu fehlgeschlagen\" und \"Behoben\" vertauscht.",
+    "swap": "Tauschen",
+    "noDifferences": "Keine Unterschiede: Jedes Ergebnis ist in beiden Läufen gleich.",
+    "versionChanged": "Testfall geändert",
+    "versionChangedHint": "Der Wortlaut des Testfalls hat sich zwischen den beiden Ausführungen geändert.",
+    "duplicates": "+{{count}} doppelt",
+    "duplicatesHint": "Ein Lauf hat diesen Testfall mehrfach erfasst; das schlechteste Ergebnis wird angezeigt.",
+    "category": {
+      "NEWLY_FAILING": "Neu fehlgeschlagen",
+      "FIXED": "Behoben",
+      "STILL_FAILING": "Weiterhin fehlgeschlagen",
+      "ADDED": "Hinzugekommen",
+      "REMOVED": "Entfallen",
+      "OTHER_CHANGE": "Andere Änderung",
+      "UNCHANGED": "Unverändert"
+    }
   }
 }

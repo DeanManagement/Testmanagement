@@ -112,6 +112,11 @@
             <a mat-icon-button [routerLink]="[run.id, 'report']" data-test-id="test-run-report-btn" aria-label="View report for {{run.name}}">
               <mat-icon>assessment</mat-icon>
             </a>
+            <a mat-icon-button [routerLink]="['compare']" [queryParams]="{ head: run.id }"
+               [matTooltip]="'compare.withPrevious' | translate" [attr.aria-label]="'compare.withPrevious' | translate"
+               data-test-id="test-run-compare-btn">
+              <mat-icon>compare_arrows</mat-icon>
+            </a>
             <button mat-icon-button (click)="cloneTestRun(run)" data-test-id="test-run-clone-btn" [attr.aria-label]="'Clone ' + run.name">
               <mat-icon>content_copy</mat-icon>
             </button>

@@ -132,6 +132,10 @@ export class TestRunDetailComponent implements OnInit {
 
   activeResultId: string | null = null;
 
+  /** A result named in the URL (?result=), opened and scrolled to once the run has loaded. */
+  linkedResultId: string | null = null;
+  private linkedResultShown = false;
+
   /** PRD-036: times each result from when it is opened; see ExecutionTimer for what gets sent. */
   private readonly timer = new ExecutionTimer();
   /** A duration the tester typed for the active result, in minutes; null means "use the timer". */
@@ -168,6 +172,7 @@ export class TestRunDetailComponent implements OnInit {
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
     this.runId = this.route.snapshot.paramMap.get('runId') ?? '';
+    this.linkedResultId = this.route.snapshot.queryParamMap.get('result');
     interval(TIMER_TICK_MS).pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       if (this.currentRun?.status === 'IN_PROGRESS') {
         this.now.set(Date.now());
@@ -189,11 +194,14 @@ export class TestRunDetailComponent implements OnInit {
           this.runKey = run.key;
         }
         if (run?.status === 'IN_PROGRESS' && !this.activeResultId && run.results?.length) {
-          // Resume on the first unfinished case if there is one; otherwise the first.
+          // A linked result (?result=, e.g. from a run comparison) first; else resume on the first
+          // unfinished case; else the first.
+          const linked = run.results.find(r => r.id === this.linkedResultId);
           const firstPending = run.results.find(r => r.status === 'PENDING');
-          const target = firstPending ?? run.results[0];
+          const target = linked ?? firstPending ?? run.results[0];
           this.setActiveResult(target.id);
         }
+        this.scrollToLinkedResult(run);
         this.cdr.detectChanges();
       });
     }
@@ -491,6 +499,17 @@ export class TestRunDetailComponent implements OnInit {
     if (!this.executionSearchTerm) return results;
     const term = this.executionSearchTerm.toLowerCase();
     return results.filter(r => r.testCaseTitle.toLowerCase().includes(term));
+  }
+
+  /** Once per visit: a finished run's linked panel is expanded by the template; bring it into view. */
+  private scrollToLinkedResult(run: TestRun | undefined): void {
+    if (!this.linkedResultId || this.linkedResultShown || !run?.results?.some(r => r.id === this.linkedResultId)) {
+      return;
+    }
+    this.linkedResultShown = true;
+    const testId = run.status === 'IN_PROGRESS' ? 'execution-main' : 'test-result-panel-' + this.linkedResultId;
+    // After this change-detection pass has rendered the panel.
+    setTimeout(() => document.querySelector(`[data-test-id="${testId}"]`)?.scrollIntoView({ block: 'center' }));
   }
 
   activeResult(run: TestRun): TestResult | undefined {

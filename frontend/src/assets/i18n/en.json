@@ -1274,5 +1274,32 @@
       "percentRange": "Between 0 and 100",
       "notNegative": "Must not be negative"
     }
+  },
+  "compare": {
+    "title": "Compare runs",
+    "action": "Compare with…",
+    "withPrevious": "Compare with previous run",
+    "base": "Compare against",
+    "autoBase": "Picked automatically: the previous run with the same name, or of the same plan and environment.",
+    "showUnchanged": "Show unchanged",
+    "baseRun": "Base",
+    "headRun": "Head",
+    "testCase": "Test case",
+    "baseNewer": "The base ran after the head, so \"newly failing\" and \"fixed\" read backwards.",
+    "swap": "Swap",
+    "noDifferences": "No differences: every result is the same in both runs.",
+    "versionChanged": "case edited",
+    "versionChangedHint": "The test case's wording changed between the two executions.",
+    "duplicates": "+{{count}} duplicate",
+    "duplicatesHint": "A run recorded this case more than once; the worst result is shown.",
+    "category": {
+      "NEWLY_FAILING": "Newly failing",
+      "FIXED": "Fixed",
+      "STILL_FAILING": "Still failing",
+      "ADDED": "Added",
+      "REMOVED": "Removed",
+      "OTHER_CHANGE": "Other change",
+      "UNCHANGED": "Unchanged"
+    }
   }
 }

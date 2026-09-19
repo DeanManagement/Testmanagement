@@ -17,6 +17,7 @@ import {
 } from '../../shared/models/test-run.model';
 import { Page } from '../../shared/models/page.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
+import { RunComparison } from '../../shared/models/run-comparison.model';
 
 @Injectable({ providedIn: 'root' })
 export class TestRunApiService {
@@ -49,6 +50,14 @@ export class TestRunApiService {
       return this.http.get<TestRun[]>(`/api/test-runs/assigned-to-me?${params}`).pipe(retryWithBackoff());
     }
     return this.http.get<TestRun[]>('/api/test-runs/assigned-to-me').pipe(retryWithBackoff());
+  }
+
+  /** How results moved from base to head (PRD-038); without a base the server picks the previous run. */
+  compare(projectId: string, head: string, base: string | null, includeUnchanged: boolean): Observable<RunComparison> {
+    let params = new HttpParams().set('head', head);
+    if (base) params = params.set('base', base);
+    if (includeUnchanged) params = params.set('includeUnchanged', 'true');
+    return this.http.get<RunComparison>(`${this.baseUrl(projectId)}/compare`, { params });
   }
 
   getById(projectId: string, id: string): Observable<TestRun> {
