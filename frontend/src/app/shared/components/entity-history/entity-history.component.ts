@@ -4,8 +4,9 @@ import { take } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ActivityApiService } from '../../../core/services/activity-api.service';
+import { activitySentence } from '../../utils/activity-sentence';
 import { AuditEntry } from '../../models/activity.model';
 import { LocalizedDatePipe } from '../../pipes/localized-date.pipe';
 
@@ -25,6 +26,7 @@ import { LocalizedDatePipe } from '../../pipes/localized-date.pipe';
 export class EntityHistoryComponent implements OnChanges {
   private readonly activityApi = inject(ActivityApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
   @Input({ required: true }) projectId!: string;
@@ -60,6 +62,15 @@ export class EntityHistoryComponent implements OnChanges {
         this.loading = false;
         this.cdr.detectChanges();
       },
+    });
+  }
+
+  sentence(entry: AuditEntry): string {
+    return activitySentence(this.translate, {
+      actor: entry.userDisplayName || this.translate.instant('activity.system'),
+      action: entry.action,
+      entityType: entry.entityType,
+      entityName: entry.entityName,
     });
   }
 

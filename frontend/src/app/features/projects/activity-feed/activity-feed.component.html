@@ -25,12 +25,7 @@
           </div>
           <div class="activity-content">
             <div class="activity-summary">
-              <span class="activity-user">{{ entry.userDisplayName || ('activity.system' | translate) }}</span>
-              <span class="activity-action">{{ 'activity.actions.' + entry.action | translate }}</span>
-              <span class="activity-entity-type">{{ 'activity.entityTypes.' + entry.entityType | translate }}</span>
-              @if (entry.entityName) {
-                <span class="activity-entity-name">"{{ entry.entityName }}"</span>
-              }
+              {{ sentence(entry) }}
             </div>
             @if (entry.details) {
               <p class="activity-details">{{ entry.details }}</p>

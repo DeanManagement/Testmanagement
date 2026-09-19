@@ -16,7 +16,7 @@
     </div>
     @for (action of actions; track action) {
       <div class="prefs-row" data-test-id="pref-row">
-        <span class="prefs-event">{{ 'notification.action.' + action | translate }}</span>
+        <span class="prefs-event">{{ 'notification.prefs.events.' + action | translate }}</span>
         <mat-slide-toggle [(ngModel)]="prefs[action].inApp" data-test-id="pref-inapp"></mat-slide-toggle>
         <mat-slide-toggle [(ngModel)]="prefs[action].email" data-test-id="pref-email"></mat-slide-toggle>
       </div>

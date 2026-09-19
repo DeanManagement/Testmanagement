@@ -1,5 +1,6 @@
-export type AuditAction = 'CREATED' | 'UPDATED' | 'DELETED' | 'STATUS_CHANGED' | 'COMPLETED' | 'REOPENED' | 'CLONED';
-export type AuditEntityType = 'PROJECT' | 'TEST_CASE' | 'TEST_SUITE' | 'TEST_RUN' | 'TEST_RESULT';
+export type AuditAction = 'CREATED' | 'UPDATED' | 'DELETED' | 'STATUS_CHANGED' | 'COMPLETED' | 'REOPENED' | 'CLONED' | 'MOVED';
+export type AuditEntityType = 'PROJECT' | 'TEST_CASE' | 'TEST_SUITE' | 'TEST_RUN' | 'TEST_RESULT' | 'COMMENT' | 'TEST_PLAN'
+  | 'BUG_REPORT' | 'TEST_CASE_FOLDER' | 'REQUIREMENT' | 'ENVIRONMENT' | 'EXPLORATORY_SESSION' | 'SHARED_STEP';
 
 export interface AuditEntry {
   id: string;

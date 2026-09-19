@@ -49,6 +49,15 @@ export class MyWatchedComponent implements OnInit {
     }
   }
 
+  /** Each kind of item has its own status names; the raw enum value is not for display. */
+  statusKey(item: WatchedItem): string {
+    switch (item.entityType) {
+      case 'TEST_PLAN': return 'testPlan.status.' + item.status;
+      case 'TEST_RUN': return 'testRun.status.' + item.status;
+      case 'BUG_REPORT': return 'bugReport.status.' + item.status;
+    }
+  }
+
   getEntityIcon(entityType: string): string {
     switch (entityType) {
       case 'TEST_PLAN': return 'assignment';

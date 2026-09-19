@@ -6,8 +6,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { ActivityApiService } from '../../../core/services/activity-api.service';
+import { activitySentence } from '../../../shared/utils/activity-sentence';
 import { AuditEntry } from '../../../shared/models/activity.model';
 import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 
@@ -30,6 +31,7 @@ export class ActivityFeedComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly activityApi = inject(ActivityApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
@@ -61,6 +63,15 @@ export class ActivityFeedComponent implements OnInit {
         this.loading = false;
         this.cdr.detectChanges();
       },
+    });
+  }
+
+  sentence(entry: AuditEntry): string {
+    return activitySentence(this.translate, {
+      actor: entry.userDisplayName || this.translate.instant('activity.system'),
+      action: entry.action,
+      entityType: entry.entityType,
+      entityName: entry.entityName,
     });
   }
 

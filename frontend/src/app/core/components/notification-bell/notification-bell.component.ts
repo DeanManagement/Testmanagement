@@ -7,7 +7,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { activitySentence } from '../../../shared/utils/activity-sentence';
 import { interval } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { NotificationApiService } from '../../services/notification-api.service';
@@ -33,7 +34,17 @@ export class NotificationBellComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly zone = inject(NgZone);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
+
+  sentence(n: AppNotification): string {
+    return activitySentence(this.translate, {
+      actor: n.actorName || this.translate.instant('notification.someone'),
+      action: n.action,
+      entityType: n.entityType,
+      entityName: n.entityName,
+    });
+  }
 
   unreadCount = 0;
   notifications: AppNotification[] = [];

@@ -11,12 +11,7 @@
         </div>
         <div class="history-content">
           <div class="history-summary">
-            <span class="history-user">{{ entry.userDisplayName || ('activity.system' | translate) }}</span>
-            <span class="history-action">{{ 'activity.actions.' + entry.action | translate }}</span>
-            <span class="history-entity-type">{{ 'activity.entityTypes.' + entry.entityType | translate }}</span>
-            @if (entry.entityName) {
-              <span class="history-entity-name">"{{ entry.entityName }}"</span>
-            }
+              {{ sentence(entry) }}
           </div>
           @if (entry.details) {
             <p class="history-details">{{ entry.details }}</p>

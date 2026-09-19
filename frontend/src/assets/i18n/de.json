@@ -11,28 +11,23 @@
     "markAllRead": "Alle als gelesen markieren",
     "empty": "Noch keine Benachrichtigungen.",
     "someone": "Jemand",
-    "action": {
-      "CREATED": "erstellte",
-      "UPDATED": "aktualisierte",
-      "DELETED": "löschte",
-      "STATUS_CHANGED": "änderte den Status von",
-      "COMPLETED": "schloss ab",
-      "REOPENED": "öffnete erneut",
-      "CLONED": "klonte",
-      "MOVED": "verschob"
-    },
-    "type": {
-      "TEST_RUN": "Testlauf",
-      "TEST_PLAN": "Testplan",
-      "BUG_REPORT": "Fehlerbericht"
-    },
     "prefs": {
       "title": "Benachrichtigungseinstellungen",
       "hint": "Lege fest, wie du über Aktivitäten zu beobachteten Elementen benachrichtigt wirst.",
       "event": "Ereignis",
       "inApp": "In-App",
       "email": "E-Mail",
-      "saved": "Benachrichtigungseinstellungen gespeichert."
+      "saved": "Benachrichtigungseinstellungen gespeichert.",
+      "events": {
+        "CREATED": "Erstellt",
+        "UPDATED": "Geändert",
+        "DELETED": "Gelöscht",
+        "STATUS_CHANGED": "Status geändert",
+        "COMPLETED": "Abgeschlossen",
+        "REOPENED": "Wiedereröffnet",
+        "CLONED": "Geklont",
+        "MOVED": "Verschoben"
+      }
     }
   },
   "import": {
@@ -203,10 +198,10 @@
     "noResults": "Keine Treffer gefunden.",
     "searching": "Suche läuft…",
     "searchError": "Suchanfrage fehlgeschlagen. Es werden nur bereits geladene Treffer angezeigt.",
-    "hint": "Tippen, um Projekte, Testfälle, Durchläufe und Bugs zu durchsuchen. Esc zum Schließen.",
+    "hint": "Tippen, um Projekte, Testfälle, Durchläufe und Bugs zu durchsuchen. Esc zum Schliessen.",
     "navigate": "navigieren",
     "open": "öffnen",
-    "close": "schließen",
+    "close": "schliessen",
     "types": {
       "project": "Projekt",
       "testCase": "Testfall",
@@ -323,7 +318,7 @@
   "testRun": {
     "key": "Schlüssel",
     "start": "Starten",
-    "completeAction": "Abschließen",
+    "completeAction": "Abschliessen",
     "abort": "Abbrechen",
     "deleteConfirm": "Testlauf \"{{name}}\" löschen?",
     "list": {
@@ -356,10 +351,10 @@
     "completedBy": "Abgeschlossen von",
     "reopenReason": "Grund für Wiedereröffnung",
     "complete": {
-      "title": "Testlauf abschließen",
+      "title": "Testlauf abschliessen",
       "warning": "Nicht alles bestanden: {{failed}} fehlgeschlagen, {{blocked}} blockiert, {{skipped}} übersprungen, {{pending}} nicht ausgeführt. Der Testlauf wird als Abgeschlossen markiert; öffnen Sie ihn erneut, falls Ergebnisse noch geändert werden müssen.",
       "allPassed": "Alle Tests bestanden!",
-      "confirm": "Abschließen",
+      "confirm": "Abschliessen",
       "cancel": "Abbrechen"
     },
     "reopen": {
@@ -408,7 +403,10 @@
       "confirm": "Lauf abbrechen",
       "cancel": "Abbrechen"
     },
-    "abortReason": "Abbruchgrund"
+    "abortReason": "Abbruchgrund",
+    "resultsColumn": "Ergebnisse",
+    "startedLabel": "Gestartet",
+    "endedLabel": "Beendet"
   },
   "testPlan": {
     "list": {
@@ -551,16 +549,6 @@
     "empty": "Noch keine Aktivitäten.",
     "loadMore": "Mehr laden",
     "system": "System",
-    "actions": {
-      "CREATED": "hat erstellt",
-      "UPDATED": "hat aktualisiert",
-      "DELETED": "hat gelöscht",
-      "STATUS_CHANGED": "hat den Status geändert von",
-      "COMPLETED": "hat abgeschlossen",
-      "REOPENED": "hat wiedereröffnet",
-      "CLONED": "hat geklont",
-      "MOVED": "hat verschoben"
-    },
     "entityTypes": {
       "PROJECT": "Projekt",
       "TEST_CASE": "Testfall",
@@ -571,8 +559,37 @@
       "TEST_PLAN": "Testplan",
       "BUG_REPORT": "Fehlermeldung",
       "TEST_CASE_FOLDER": "Testfall-Ordner",
-      "REQUIREMENT": "Anforderung"
-    }
+      "REQUIREMENT": "Anforderung",
+      "ENVIRONMENT": "Umgebung",
+      "EXPLORATORY_SESSION": "Explorative Sitzung",
+      "SHARED_STEP": "Gemeinsamer Schritt"
+    },
+    "objects": {
+      "PROJECT": "das Projekt",
+      "TEST_CASE": "den Testfall",
+      "TEST_SUITE": "die Testsuite",
+      "TEST_RUN": "den Testlauf",
+      "TEST_RESULT": "das Testergebnis",
+      "COMMENT": "einen Kommentar",
+      "TEST_PLAN": "den Testplan",
+      "BUG_REPORT": "die Fehlermeldung",
+      "TEST_CASE_FOLDER": "den Testfall-Ordner",
+      "REQUIREMENT": "die Anforderung",
+      "ENVIRONMENT": "die Umgebung",
+      "EXPLORATORY_SESSION": "die explorative Sitzung",
+      "SHARED_STEP": "den gemeinsamen Schritt"
+    },
+    "sentences": {
+      "CREATED": "{{user}} hat {{object}} erstellt",
+      "UPDATED": "{{user}} hat {{object}} aktualisiert",
+      "DELETED": "{{user}} hat {{object}} gelöscht",
+      "STATUS_CHANGED": "{{user}} hat den Status geändert: {{bare}}",
+      "COMPLETED": "{{user}} hat {{object}} abgeschlossen",
+      "REOPENED": "{{user}} hat {{object}} wiedereröffnet",
+      "CLONED": "{{user}} hat {{object}} geklont",
+      "MOVED": "{{user}} hat {{object}} verschoben"
+    },
+    "named": "{{type}} «{{name}}»"
   },
   "projectDashboard": {
     "title": "Dashboard",
@@ -746,7 +763,7 @@
     "noResults": "Keine Ergebnisse gefunden.",
     "savedSuccessfully": "Erfolgreich gespeichert",
     "deletedSuccessfully": "Erfolgreich gelöscht",
-    "close": "Schließen",
+    "close": "Schliessen",
     "unsavedChangesWarning": "Sie haben ungespeicherte Änderungen. Möchten Sie die Seite wirklich verlassen?",
     "loadError": "Daten konnten nicht geladen werden. Bitte versuchen Sie es erneut.",
     "retry": "Erneut versuchen",
@@ -991,7 +1008,7 @@
     "localLoginHint": "Wenn deaktiviert, ist nur Single Sign-on möglich. Systemadministratoren können sich weiterhin mit Passwort anmelden, damit ein defekter Anbieter niemanden aussperrt.",
     "localLoginNeedsProvider": "Erst einen Anbieter hinzufügen und aktivieren, bevor die Passwort-Anmeldung deaktiviert wird.",
     "localLoginEnabled": "Passwort-Anmeldung aktiviert.",
-    "localLoginDisabled": "Passwort-Anmeldung für alle außer Systemadministratoren deaktiviert.",
+    "localLoginDisabled": "Passwort-Anmeldung für alle ausser Systemadministratoren deaktiviert.",
     "completingSignIn": "Anmeldung wird abgeschlossen…"
   },
   "flaky": {

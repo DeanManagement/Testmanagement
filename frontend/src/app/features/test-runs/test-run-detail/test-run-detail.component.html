@@ -111,10 +111,10 @@
       }
       <div class="run-meta">
         @if (run.startTime) {
-          <span class="meta-item" data-test-id="test-run-start-time">Started: {{ run.startTime | localizedDate:'medium' }}</span>
+          <span class="meta-item" data-test-id="test-run-start-time">{{ 'testRun.startedLabel' | translate }}: {{ run.startTime | localizedDate:'medium' }}</span>
         }
         @if (run.endTime) {
-          <span class="meta-item" data-test-id="test-run-end-time">Ended: {{ run.endTime | localizedDate:'medium' }}</span>
+          <span class="meta-item" data-test-id="test-run-end-time">{{ 'testRun.endedLabel' | translate }}: {{ run.endTime | localizedDate:'medium' }}</span>
         }
         @if (run.executorName) {
           <span class="meta-item" data-test-id="test-run-executor">

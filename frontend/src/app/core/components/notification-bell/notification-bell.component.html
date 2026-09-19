@@ -29,10 +29,7 @@
       <button mat-menu-item class="notification-item" [class.unread]="!n.read"
               (click)="open(n)" data-test-id="notification-item">
         <span class="notification-text">
-          <strong>{{ n.actorName || ('notification.someone' | translate) }}</strong>
-          {{ 'notification.action.' + n.action | translate }}
-          {{ 'notification.type.' + n.entityType | translate }}
-          @if (n.entityName) { <em>{{ n.entityName }}</em> }
+          {{ sentence(n) }}
         </span>
         <span class="notification-time">{{ n.createdAt | date: 'short' }}</span>
       </button>

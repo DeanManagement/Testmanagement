@@ -100,7 +100,7 @@
         </ng-container>
 
         <ng-container matColumnDef="results">
-          <th mat-header-cell *matHeaderCellDef>Results</th>
+          <th mat-header-cell *matHeaderCellDef>{{ 'testRun.resultsColumn' | translate }}</th>
           <td mat-cell *matCellDef="let run">
             <span class="count-badge" data-test-id="test-run-result-count">{{ run.total ?? run.results?.length ?? 0 }}</span>
           </td>

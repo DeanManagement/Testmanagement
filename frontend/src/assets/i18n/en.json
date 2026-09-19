@@ -11,28 +11,23 @@
     "markAllRead": "Mark all read",
     "empty": "No notifications yet.",
     "someone": "Someone",
-    "action": {
-      "CREATED": "created",
-      "UPDATED": "updated",
-      "DELETED": "deleted",
-      "STATUS_CHANGED": "changed the status of",
-      "COMPLETED": "completed",
-      "REOPENED": "reopened",
-      "CLONED": "cloned",
-      "MOVED": "moved"
-    },
-    "type": {
-      "TEST_RUN": "test run",
-      "TEST_PLAN": "test plan",
-      "BUG_REPORT": "bug report"
-    },
     "prefs": {
       "title": "Notification settings",
       "hint": "Choose how you're notified about activity on items you watch.",
       "event": "Event",
       "inApp": "In-app",
       "email": "Email",
-      "saved": "Notification preferences saved."
+      "saved": "Notification preferences saved.",
+      "events": {
+        "CREATED": "Created",
+        "UPDATED": "Updated",
+        "DELETED": "Deleted",
+        "STATUS_CHANGED": "Status changed",
+        "COMPLETED": "Completed",
+        "REOPENED": "Reopened",
+        "CLONED": "Cloned",
+        "MOVED": "Moved"
+      }
     }
   },
   "import": {
@@ -408,7 +403,10 @@
       "confirm": "Abort run",
       "cancel": "Cancel"
     },
-    "abortReason": "Abort reason"
+    "abortReason": "Abort reason",
+    "resultsColumn": "Results",
+    "startedLabel": "Started",
+    "endedLabel": "Ended"
   },
   "testPlan": {
     "list": {
@@ -551,16 +549,6 @@
     "empty": "No activity yet.",
     "loadMore": "Load More",
     "system": "System",
-    "actions": {
-      "CREATED": "created",
-      "UPDATED": "updated",
-      "DELETED": "deleted",
-      "STATUS_CHANGED": "changed status of",
-      "COMPLETED": "completed",
-      "REOPENED": "reopened",
-      "CLONED": "cloned",
-      "MOVED": "moved"
-    },
     "entityTypes": {
       "PROJECT": "project",
       "TEST_CASE": "test case",
@@ -571,8 +559,37 @@
       "TEST_PLAN": "test plan",
       "BUG_REPORT": "bug report",
       "TEST_CASE_FOLDER": "test case folder",
-      "REQUIREMENT": "requirement"
-    }
+      "REQUIREMENT": "requirement",
+      "ENVIRONMENT": "environment",
+      "EXPLORATORY_SESSION": "exploratory session",
+      "SHARED_STEP": "shared step"
+    },
+    "objects": {
+      "PROJECT": "project",
+      "TEST_CASE": "test case",
+      "TEST_SUITE": "test suite",
+      "TEST_RUN": "test run",
+      "TEST_RESULT": "test result",
+      "COMMENT": "comment",
+      "TEST_PLAN": "test plan",
+      "BUG_REPORT": "bug report",
+      "TEST_CASE_FOLDER": "test case folder",
+      "REQUIREMENT": "requirement",
+      "ENVIRONMENT": "environment",
+      "EXPLORATORY_SESSION": "exploratory session",
+      "SHARED_STEP": "shared step"
+    },
+    "sentences": {
+      "CREATED": "{{user}} created {{object}}",
+      "UPDATED": "{{user}} updated {{object}}",
+      "DELETED": "{{user}} deleted {{object}}",
+      "STATUS_CHANGED": "{{user}} changed the status of {{bare}}",
+      "COMPLETED": "{{user}} completed {{object}}",
+      "REOPENED": "{{user}} reopened {{object}}",
+      "CLONED": "{{user}} cloned {{object}}",
+      "MOVED": "{{user}} moved {{object}}"
+    },
+    "named": "{{type}} \"{{name}}\""
   },
   "projectDashboard": {
     "title": "Dashboard",
