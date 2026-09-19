@@ -214,6 +214,23 @@
           ]
         },
         {
+          "heading": "Anhänge",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Dateien, die man zum Durchführen des Falls braucht, etwa eine Beispieldatei zum Hochladen oder eine Spezifikation als PDF, gehören in die Karte Anhänge auf der Testfallseite. Wähl Datei anhängen oder zieh eine Datei auf die Karte. Erlaubt sind Bilder, PDF, ZIP, Office-Dokumente und Textdateien bis 10 MB, und der Inhalt muss zum Dateityp passen."
+            },
+            {
+              "type": "p",
+              "text": "Beim Durchführen eines Laufs stehen die Anhänge des Falls zugeklappt über den Schritten."
+            },
+            {
+              "type": "note",
+              "text": "Anhänge gehören nicht zur Versionsgeschichte. Hinzufügen oder Entfernen siehst du stattdessen in der Projektaktivität."
+            }
+          ]
+        },
+        {
           "heading": "Prüfung und Freigabe",
           "blocks": [
             {

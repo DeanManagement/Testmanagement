@@ -214,6 +214,23 @@
           ]
         },
         {
+          "heading": "Attachments",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Files a tester needs to carry out the case, such as a sample file to upload or a spec PDF, go in the Attachments card on the test case page. Choose Attach file or drop a file onto the card. Images, PDF, ZIP, Office documents and text files up to 10 MB are accepted, and the content has to match the file type."
+            },
+            {
+              "type": "p",
+              "text": "While executing a run, the case's attachments are listed above the steps, collapsed."
+            },
+            {
+              "type": "note",
+              "text": "Attachments are not part of the version history. Adding or removing one shows in the project activity instead."
+            }
+          ]
+        },
+        {
           "heading": "Review and approval",
           "blocks": [
             {

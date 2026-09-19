@@ -144,7 +144,7 @@ Gaps against comparable test-management tools, each grounded in the current code
 | [041](PRD-041-totp-two-factor.md) | TOTP Two-Factor Authentication | P3 | M | ⏸ Backlog |
 | [042](PRD-042-ai-case-generation.md) | AI-Assisted Case Generation | P3 | S (A) | ⏸ Backlog |
 | [043](PRD-043-scheduled-reports.md) | Scheduled Report Emails | P3 | M | ⏸ Backlog |
-| [044](PRD-044-test-case-attachments.md) | Test Case Attachments | P2 | M | 📝 Draft |
+| [044](PRD-044-test-case-attachments.md) | Test Case Attachments | P2 | M | ✅ Implemented |
 
 **Suggested order:** 029 → 031 → 039 Phase A → 038 → 037 → 044 → 030 → 032. Everything P3 waits for
 its driver. 041, 042 and 043 were postponed to the backlog on 2026-09-19: kept as drafts, not planned
@@ -184,6 +184,6 @@ matches *any* label while MCP `search_test_cases` documents *all* (052); the das
 report `7a792e91`); `step_images` and `screenshots` allow duplicate rows per owner (bug report `bd5b0f76`).
 
 ## Status legend
-Every PRD up to 028 except 026 is **Implemented**; 029–040 are implemented except where noted; 044 and 045–052 are drafts; 041–043 are drafts
+Every PRD up to 028 except 026 is **Implemented**; 029–040 and 044 are implemented except where noted; 045–052 are drafts; 041–043 are drafts
 postponed to the backlog (⏸). New work should get a new PRD rather than
 extending a shipped one.

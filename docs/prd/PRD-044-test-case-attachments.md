@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P2 — common gap for manual testing |
@@ -269,3 +269,28 @@ download tool (see Non-Goals).
 - [ ] Download header logic is shared by screenshots, step images and attachments, with existing
       tests green.
 - [ ] Tests above pass. `en.json` / `de.json` and `USER_MANUAL.md` updated.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **Table `attachments`** (V65), not `test_case_attachments`: PRD-051 adds bug reports as a second
+  owner of the same table. `created_by` / `updated_by` are `UUID`, like every other `BaseEntity`
+  table. The audit type is `AuditEntityType.ATTACHMENT`.
+- **Every non-image downloads as `application/octet-stream`**, not only unknown types: that is what
+  the shared `ImageResponses` helper already does for anything outside the image allowlist. It is
+  stricter than §3.2's `text/plain` for text types, and the browser saves under the stored file
+  name either way.
+- **The ETag comes from `updatedAt`**, like the other media endpoints. Attachments are never
+  updated, so it changes exactly when the sha256 would.
+- **The header-helper refactor** had already landed as `8ab341c` (`ImageResponses`, shared by
+  screenshots, step images and session images), so the feature commit only reuses it.
+- **The list's paperclip** reads `attachments` from the list response: one batched summary query
+  per page instead of a separate count, and the same field serves the detail page, JSON export and
+  MCP. Write responses (create, update, review) leave it `null`.
+- **The history note** is a sentence in the version-history hint. The test case's own history card
+  keys on the case id, so attachment entries show in the project activity, not there.
+- **No Hibernate-statistics test** that listing skips `data`: the list is a JPQL constructor
+  projection that never names the column, so there is no code path that could load it.
+- **Limits** are also in `application.yml` as `APP_ATTACHMENTS_MAX_PER_CASE` /
+  `APP_ATTACHMENTS_MAX_PROJECT_BYTES`.

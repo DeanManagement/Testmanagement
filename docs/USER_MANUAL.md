@@ -213,6 +213,26 @@ next to the median of the last five measured executions, so you can correct it f
 
 Leaving the editor with unsaved changes prompts you first.
 
+### Attachments
+
+The **Attachments** card on the case page holds the files a tester needs to carry the case out: a
+sample invoice to upload, a CSV to import, a spec PDF, an expected-output image. Testers and admins
+choose **Attach file** or drop a file onto the card; viewers can list and download.
+
+- **Allowed:** PNG, JPEG, GIF and WebP images, PDF, ZIP, Word/Excel/PowerPoint (.docx, .xlsx,
+  .pptx), and text files (.txt, .log, .csv, .json, .xml). The file's content must match its type:
+  an HTML page renamed to `.pdf` is refused. SVG and HTML are never accepted.
+- **Limits:** 10 MB per file, 20 files per case, and 500 MB per project in total. Administrators
+  change the last two with `APP_ATTACHMENTS_MAX_PER_CASE` and `APP_ATTACHMENTS_MAX_PROJECT_BYTES`
+  (`0` = unlimited).
+- Images show as thumbnails; everything else downloads when you click its name.
+- Uploading a file identical to one already attached works, but the card points it out.
+
+While executing a run, the case's attachments appear, collapsed, above the steps.
+
+Attachments are **not versioned**: adding or deleting one doesn't create a new version of the case.
+The project's activity log records who attached or removed which file, and when.
+
 ### Status meanings
 
 | Status | Use it when |
@@ -442,6 +462,10 @@ Create the shared steps first.
   steps, so importing the file again gives the case local copies
 - **CSV (Excel)** — same, with a byte-order mark so Excel opens UTF-8 correctly
 - **Gherkin (.feature)** — the selected folder, or the whole project; see below
+
+JSON lists each case's attachments by name, type, size and checksum, but not their content, so the
+file stays readable. Importing such a file skips the attachments and the preview says so for each
+case. CSV has no attachment column.
 
 CSV has one `cf:<Field name>` column per test case custom field, archived ones included, so
 exporting and importing again loses nothing.
@@ -1433,6 +1457,8 @@ Optional, with defaults:
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` — the UI is same-origin with the API now, so this only matters for a separate dev server |
 | `JWT_EXPIRATION_MS` | `43200000` (12 hours) |
 | `SEARCH_FULL_TEXT` | `true` — Postgres full-text search; set `false` on other databases |
+| `APP_ATTACHMENTS_MAX_PER_CASE` | `20` files per test case |
+| `APP_ATTACHMENTS_MAX_PROJECT_BYTES` | `524288000` (500 MB) of attachments per project; `0` = unlimited |
 | `MAIL_ENABLED` / `MAIL_FROM` | `false` / `no-reply@testmanagement.local` |
 | `SSO_CALLBACK_URL` | `/login/callback` — set to your public frontend URL if the UI is not served from the API's origin |
 | `SSO_ALLOW_PRIVATE_ISSUERS` | `false` |
@@ -1455,7 +1481,9 @@ schedule.
 
 ### Backups
 
-Everything lives in PostgreSQL, including uploaded screenshots, step images and Allure reports. The
+Everything lives in PostgreSQL, including uploaded screenshots, step images, test case attachments
+and Allure reports. Attachments are usually what makes a dump large; the per-project quota (see
+[Attachments](#attachments)) keeps them bounded. The
 application container holds no state and can be recreated freely, so a database dump is a complete
 backup. Two scripts in the repository take and restore one; run them from the checkout, next to
 `docker-compose.yml` and your `.env`. Neither needs PostgreSQL installed on the host.
