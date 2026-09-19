@@ -7,6 +7,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.Exploratory
 import com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.CreateTestPlanRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testplan.ReleaseGate;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanRunSummary;
@@ -177,6 +178,7 @@ public class TestPlanService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
 
         TestPlan plan = testPlanMapper.toEntity(request);
+        applyGate(plan, request.gate());
         plan.setProject(project);
         plan.setStatus(TestPlanStatus.OPEN);
 
@@ -199,6 +201,7 @@ public class TestPlanService {
         plan.setName(request.name());
         plan.setDescription(request.description());
         plan.setTargetDate(request.targetDate());
+        applyGate(plan, request.gate());
         if (request.status() != null) {
             plan.setStatus(request.status());
         }
@@ -211,6 +214,17 @@ public class TestPlanService {
         auditService.log(projectId, userId, AuditAction.UPDATED,
                 AuditEntityType.TEST_PLAN, plan.getId(), plan.getName(), null);
         return testPlanMapper.toResponse(plan);
+    }
+
+    /** Null leaves the gate alone, so a caller that only renames a plan can't switch it off (PRD-037). */
+    private static void applyGate(TestPlan plan, ReleaseGate gate) {
+        if (gate == null) {
+            return;
+        }
+        plan.setGateMinPassRate(gate.minPassRate());
+        plan.setGateMaxBlockerBugs(gate.maxBlockerBugs());
+        plan.setGateMinCoverage(gate.minCoverage());
+        plan.setGateMaxFlaky(gate.maxFlaky());
     }
 
     public List<TestPlanResponse> findByAssignee(UUID assigneeId) {

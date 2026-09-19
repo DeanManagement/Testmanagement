@@ -18,6 +18,8 @@ public record TestPlanResponse(
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,
-        UUID updatedBy
+        UUID updatedBy,
+        /* PRD-037: never null; all-null thresholds mean no criteria. */
+        ReleaseGate gate
 ) {
 }

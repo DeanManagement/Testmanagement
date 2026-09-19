@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -49,4 +50,17 @@ public class TestPlan extends BaseEntity {
 
     @OneToMany(mappedBy = "testPlan")
     private List<TestRun> testRuns = new ArrayList<>();
+
+    // PRD-037 release gate. Null means that criterion is not used; see ReleaseGate.
+    @Column(name = "gate_min_pass_rate", precision = 5, scale = 2)
+    private BigDecimal gateMinPassRate;
+
+    @Column(name = "gate_max_blocker_bugs")
+    private Integer gateMaxBlockerBugs;
+
+    @Column(name = "gate_min_coverage", precision = 5, scale = 2)
+    private BigDecimal gateMinCoverage;
+
+    @Column(name = "gate_max_flaky")
+    private Integer gateMaxFlaky;
 }

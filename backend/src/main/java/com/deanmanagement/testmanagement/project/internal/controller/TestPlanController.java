@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 import com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.readiness.ReadinessResponse;
+import com.deanmanagement.testmanagement.project.internal.service.ReleaseReadinessService;
 import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 
@@ -33,6 +35,7 @@ import java.util.UUID;
 public class TestPlanController {
 
     private final TestPlanService testPlanService;
+    private final ReleaseReadinessService readinessService;
 
     @GetMapping
     @RequireProjectRole
@@ -44,6 +47,13 @@ public class TestPlanController {
     @RequireProjectRole
     public TestPlanResponse findById(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testPlanService.findById(projectId, id);
+    }
+
+    /** GO / NO_GO against the plan's release gate, with each criterion's value (PRD-037). */
+    @GetMapping("/{id}/readiness")
+    @RequireProjectRole
+    public ReadinessResponse getReadiness(@PathVariable UUID projectId, @PathVariable UUID id) {
+        return readinessService.readiness(projectId, id);
     }
 
     /** Remaining estimated effort per day (PRD-036). */

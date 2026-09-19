@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.dto.readiness.ReadinessResponse;
+import com.deanmanagement.testmanagement.project.internal.service.ReleaseReadinessService;
 import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.dashboard.DashboardResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuiteReportResponse;
@@ -30,6 +32,7 @@ public class ReportingTools {
     private static final int MAX_FLAKY_LIMIT = 50;
 
     private final McpCallerContext callerContext;
+    private final ReleaseReadinessService readinessService;
     private final DashboardService dashboardService;
     private final FlakyTestService flakyTestService;
     private final TestSuiteService testSuiteService;
@@ -64,6 +67,27 @@ public class ReportingTools {
                 dashboard.totals().totalTestRuns(), dashboard.totals().completedTestRuns(),
                 dashboard.testCasesByStatus(), dashboard.testCasesByPriority(),
                 dashboard.latestResultsByStatus(), dashboard.overallPassRate(), trend);
+    }
+
+    @McpTool(
+            name = "get_release_readiness",
+            description = """
+                    Is this release ready? A test plan's verdict against its release gate: GO,
+                    NO_GO or NO_CRITERIA (nobody set a gate on the plan). Each configured criterion
+                    lists its actual value, threshold and outcome (PASS | FAIL | NOT_APPLICABLE), so
+                    a NO_GO says why. Criteria: PASS_RATE (percent, using each test case's latest
+                    result in the plan, pending counting as not passed), BLOCKER_BUGS (open or
+                    in-progress CRITICAL bugs in the project), COVERAGE (requirement coverage
+                    percent; NOT_APPLICABLE without requirements), FLAKY_TESTS (flaky cases the plan
+                    executes). A value equal to its threshold passes. Find plan ids with
+                    list_test_plans.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
+    @Transactional(readOnly = true)
+    public ReadinessResponse getReleaseReadiness(@McpToolParam(description = "Test plan UUID") UUID planId) {
+        var caller = callerContext.require();
+        return readinessService.readiness(caller.projectId(), planId);
     }
 
     @McpTool(

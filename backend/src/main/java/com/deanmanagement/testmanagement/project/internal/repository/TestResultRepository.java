@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.repository;
 import com.deanmanagement.testmanagement.project.internal.dto.environment.EnvironmentResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.analytics.FlakyResultRow;
 import com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownRow;
+import com.deanmanagement.testmanagement.project.internal.dto.readiness.ReadinessResultRow;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.RunStatusCount;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -97,6 +98,18 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
            ORDER BY tc.id ASC, COALESCE(run.endTime, run.startTime, run.createdAt) DESC
            """)
     List<FlakyResultRow> findTerminalResultsForFlakiness(@Param("projectId") UUID projectId);
+
+    /** Release-gate input (PRD-037): every result of the plan's non-aborted runs, with when its run happened. */
+    @Query("""
+           SELECT new com.deanmanagement.testmanagement.project.internal.dto.readiness.ReadinessResultRow(
+               r.testCase.id, r.parameterSetName, r.status,
+               COALESCE(run.endTime, run.startTime, run.createdAt), r.updatedAt)
+           FROM TestResult r
+           JOIN r.testRun run
+           WHERE run.testPlan.id = :planId
+             AND run.status <> 'ABORTED'
+           """)
+    List<ReadinessResultRow> findReadinessRows(@Param("planId") UUID planId);
 
     /** Burn-down input (PRD-036): aborted runs are excluded, as in the plan's effort summary. */
     @Query("""

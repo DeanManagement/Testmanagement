@@ -1,11 +1,13 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.CreateTestPlanRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testplan.ReleaseGate;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanSummaryResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.UpdateTestPlanRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.project.internal.service.ReleaseReadinessService;
 import com.deanmanagement.testmanagement.project.internal.service.TestPlanService;
 import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,9 @@ class TestPlanControllerTest {
     @MockitoBean
     private TestPlanService testPlanService;
 
+    @MockitoBean
+    private ReleaseReadinessService readinessService;
+
     private static final UUID PROJECT_ID = UUID.randomUUID();
     private static final UUID PLAN_ID = UUID.randomUUID();
     private static final String MOCK_USER_ID = "00000000-0000-0000-0000-000000000001";
@@ -55,7 +60,7 @@ class TestPlanControllerTest {
         return new TestPlanResponse(
                 PLAN_ID, "Release 2.3", "Description",
                 TestPlanStatus.OPEN, LocalDate.of(2026, 3, 15),
-                2, null, null, NOW, NOW, null, null
+                2, null, null, NOW, NOW, null, null, ReleaseGate.NONE
         );
     }
 

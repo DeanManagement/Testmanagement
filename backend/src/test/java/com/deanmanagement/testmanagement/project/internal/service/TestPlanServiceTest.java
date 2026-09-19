@@ -4,6 +4,7 @@ import java.time.Clock;
 import com.deanmanagement.testmanagement.project.internal.repository.ExploratorySessionRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.CreateTestPlanRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanMapper;
+import com.deanmanagement.testmanagement.project.internal.dto.testplan.ReleaseGate;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanSummaryResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.UpdateTestPlanRequest;
@@ -90,7 +91,7 @@ class TestPlanServiceTest {
         return new TestPlanResponse(
                 PLAN_ID, "Release 2.3", "All tests for v2.3",
                 TestPlanStatus.OPEN, LocalDate.of(2026, 3, 15),
-                0, null, null, NOW, NOW, null, null
+                0, null, null, NOW, NOW, null, null, ReleaseGate.NONE
         );
     }
 

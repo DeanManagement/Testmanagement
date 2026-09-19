@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.dto.testplan;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
@@ -10,6 +11,11 @@ public record CreateTestPlanRequest(
         @NotBlank @Size(max = 255) String name,
         String description,
         LocalDate targetDate,
-        UUID assigneeId
+        UUID assigneeId,
+        /* PRD-037: optional; null means no criteria. */
+        @Valid ReleaseGate gate
 ) {
+    public CreateTestPlanRequest(String name, String description, LocalDate targetDate, UUID assigneeId) {
+        this(name, description, targetDate, assigneeId, null);
+    }
 }

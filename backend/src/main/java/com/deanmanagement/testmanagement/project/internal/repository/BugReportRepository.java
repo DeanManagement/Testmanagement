@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.repository;
 
 import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
+import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -14,6 +15,9 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface BugReportRepository extends JpaRepository<BugReport, UUID> {
+
+    /** Release-gate blockers (PRD-037): the project's bugs at a priority, in any of these statuses. */
+    long countByProjectIdAndPriorityAndStatusIn(UUID projectId, Priority priority, Collection<BugReportStatus> statuses);
 
     @Query("SELECT b FROM BugReport b " +
             "LEFT JOIN FETCH b.assignee " +
