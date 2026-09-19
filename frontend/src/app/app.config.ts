@@ -1,5 +1,6 @@
 import { ApplicationConfig, inject, provideAppInitializer, provideZonelessChangeDetection, isDevMode } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, RouteReuseStrategy } from '@angular/router';
+import { ParamAwareReuseStrategy } from './core/routing/param-aware-reuse-strategy';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import { registerLocaleData } from '@angular/common';
 import { provideAnimationsAsync } from '@angular/platform-browser/animations/async';
@@ -46,6 +47,8 @@ export const appConfig: ApplicationConfig = {
     // Apply the stored theme before the first render so there is no light-mode flash.
     provideAppInitializer(() => inject(ThemeService).init()),
     provideRouter(routes),
+    // A detail page must be rebuilt when its id changes (A → B), not reused showing A.
+    { provide: RouteReuseStrategy, useClass: ParamAwareReuseStrategy },
     provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     provideAnimationsAsync(),
     provideStore({
