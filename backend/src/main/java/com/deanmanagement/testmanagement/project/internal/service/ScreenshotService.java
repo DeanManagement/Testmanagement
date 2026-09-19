@@ -31,6 +31,10 @@ public class ScreenshotService {
         // Replace existing screenshot if any
         screenshotRepository.findByStepResultId(stepResultId)
                 .ifPresent(screenshotRepository::delete);
+        // Flushed now: Hibernate orders INSERTs before DELETEs, and the replacement would otherwise
+        // collide with the old row on the one-per-owner constraint (V63). A concurrent upload that
+        // loses the race gets a constraint violation (409) instead of a second row.
+        screenshotRepository.flush();
 
         Screenshot screenshot = new Screenshot();
         screenshot.setStepResult(stepResult);

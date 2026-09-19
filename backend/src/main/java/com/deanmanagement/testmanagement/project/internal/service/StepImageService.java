@@ -30,6 +30,10 @@ public class StepImageService {
 
         stepImageRepository.findByTestStepId(testStepId)
                 .ifPresent(stepImageRepository::delete);
+        // Flushed now: Hibernate orders INSERTs before DELETEs, and the replacement would otherwise
+        // collide with the old row on the one-per-owner constraint (V63). A concurrent upload that
+        // loses the race gets a constraint violation (409) instead of a second row.
+        stepImageRepository.flush();
 
         StepImage image = new StepImage();
         image.setTestStep(testStep);

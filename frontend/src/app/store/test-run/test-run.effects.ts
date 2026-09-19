@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { catchError, map, mergeMap, tap, withLatestFrom } from 'rxjs/operators';
+import { catchError, concatMap, map, mergeMap, tap, withLatestFrom } from 'rxjs/operators';
 import { TestRunApiService } from '../../core/services/test-run-api.service';
 import { TestRunActions } from './test-run.actions';
 import { selectTestRunProjectId } from './test-run.selectors';
@@ -167,7 +167,8 @@ export class TestRunEffects {
   uploadScreenshot$ = createEffect(() =>
     this.actions$.pipe(
       ofType(TestRunActions.uploadScreenshot),
-      mergeMap(({ runId, resultId, stepResultId, file }) =>
+      // One at a time: parallel uploads for the same step used to race into duplicate rows.
+      concatMap(({ runId, resultId, stepResultId, file }) =>
         this.testRunApi.uploadScreenshot(stepResultId, file).pipe(
           map(({ id }) => TestRunActions.uploadScreenshotSuccess({ runId, resultId, stepResultId, screenshotId: id })),
           catchError((error) =>
