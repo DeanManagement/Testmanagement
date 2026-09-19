@@ -197,6 +197,7 @@ public class TestPlanService {
         TestPlan plan = testPlanRepository.findById(id)
                 .filter(p -> p.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestPlan", id));
+        FieldChanges.Snapshot before = snapshot(plan);
 
         plan.setName(request.name());
         plan.setDescription(request.description());
@@ -211,9 +212,23 @@ public class TestPlanService {
                 ? null : requireProjectMember(projectId, request.assigneeId()));
 
         plan = testPlanRepository.save(plan);
-        auditService.log(projectId, userId, AuditAction.UPDATED,
-                AuditEntityType.TEST_PLAN, plan.getId(), plan.getName(), null);
+        auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_PLAN, plan.getId(),
+                plan.getName(), null, FieldChanges.between(before, snapshot(plan)));
         return testPlanMapper.toResponse(plan);
+    }
+
+    /** The fields the audit trail compares before and after an update (PRD-046). */
+    private static FieldChanges.Snapshot snapshot(TestPlan plan) {
+        return new FieldChanges.Snapshot()
+                .with("name", plan.getName())
+                .with("description", plan.getDescription())
+                .with("status", plan.getStatus())
+                .with("targetDate", plan.getTargetDate())
+                .with("assignee", plan.getAssignee())
+                .with("gateMinPassRate", plan.getGateMinPassRate())
+                .with("gateMaxBlockerBugs", plan.getGateMaxBlockerBugs())
+                .with("gateMinCoverage", plan.getGateMinCoverage())
+                .with("gateMaxFlaky", plan.getGateMaxFlaky());
     }
 
     /** Null leaves the gate alone, so a caller that only renames a plan can't switch it off (PRD-037). */

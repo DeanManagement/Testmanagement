@@ -33,6 +33,9 @@ public record BugReportResponse(
         String assigneeName,
         UUID createdBy,
         String reporterName,
+        /* PRD-046: who last changed it. */
+        UUID updatedBy,
+        String updatedByName,
         Instant createdAt,
         Instant updatedAt,
         String projectKey,

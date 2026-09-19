@@ -383,11 +383,21 @@ public class TestRunService {
         return response;
     }
 
+    /** The fields the audit trail compares before and after an update (PRD-046). */
+    private static FieldChanges.Snapshot snapshot(TestRun run) {
+        return new FieldChanges.Snapshot()
+                .with("name", run.getName())
+                .with("status", run.getStatus())
+                .with("environment", run.getEnvironment())
+                .with("testPlan", run.getTestPlan() == null ? null : run.getTestPlan().getName());
+    }
+
     @Transactional
     public TestRunResponse update(UUID projectId, UUID id, UpdateTestRunRequest request, UUID currentUserId) {
         TestRun run = testRunRepository.findById(id)
                 .filter(r -> r.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestRun", id));
+        FieldChanges.Snapshot before = snapshot(run);
 
         // Null-guarded so a caller that only means to change the status does not write back the
         // name and environment it read a moment earlier, silently reverting a human's concurrent
@@ -466,8 +476,8 @@ public class TestRunService {
         }
 
         run = testRunRepository.save(run);
-        auditService.log(projectId, currentUserId, auditAction,
-                AuditEntityType.TEST_RUN, run.getId(), run.getName(), auditDetails);
+        auditService.log(projectId, currentUserId, auditAction, AuditEntityType.TEST_RUN, run.getId(), run.getName(),
+                auditDetails, FieldChanges.between(before, snapshot(run)));
 
         if (request.status() != null && request.status() != oldStatus) {
             if (request.status() == TestRunStatus.IN_PROGRESS && oldStatus == TestRunStatus.PLANNED) {

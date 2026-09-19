@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.shared.CsvCells;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
@@ -105,13 +106,13 @@ public class TestCaseImportExportService {
             for (TestCaseResponse tc : testCaseRepository.findByProjectIdWithSteps(projectId).stream()
                     .map(testCaseMapper::toResponse).toList()) {
                 List<Object> cells = new ArrayList<>(Arrays.<Object>asList(
-                        csvSafe(tc.title()),
-                        csvSafe(tc.description()),
-                        csvSafe(tc.preconditions()),
+                        CsvCells.safe(tc.title()),
+                        CsvCells.safe(tc.description()),
+                        CsvCells.safe(tc.preconditions()),
                         tc.priority(),
                         tc.status(),
-                        csvSafe(tc.labels() == null ? "" : String.join(LABEL_SEPARATOR, tc.labels())),
-                        csvSafe(encodeSteps(tc)),
+                        CsvCells.safe(tc.labels() == null ? "" : String.join(LABEL_SEPARATOR, tc.labels())),
+                        CsvCells.safe(encodeSteps(tc)),
                         tc.estimateMinutes()));
                 fieldNames.forEach(name -> cells.add(customFieldCell(tc.customFields().get(name))));
                 printer.printRecord(cells);
@@ -120,23 +121,6 @@ public class TestCaseImportExportService {
             throw new UncheckedIOException(e);
         }
         return sw.toString().getBytes(StandardCharsets.UTF_8);
-    }
-
-    /**
-     * Neutralizes spreadsheet formula injection (PRD-021): cells starting with {@code = + - @}
-     * or a tab/CR execute as formulas when the CSV is opened in Excel/LibreOffice. Prefixing
-     * with a single quote makes them render as text. Import keeps values verbatim, so a
-     * round-trip adds a visible leading apostrophe to such cells — the standard, safe trade-off.
-     */
-    private static String csvSafe(String value) {
-        if (value == null || value.isEmpty()) {
-            return value;
-        }
-        char c = value.charAt(0);
-        if (c == '=' || c == '+' || c == '-' || c == '@' || c == '\t' || c == '\r') {
-            return "'" + value;
-        }
-        return value;
     }
 
     /** Multi-select options joined by ';'. Numbers skip csvSafe: a negative one is not a formula. */
@@ -148,10 +132,10 @@ public class TestCaseImportExportService {
             return number.toPlainString();
         }
         if (value instanceof List<?> options) {
-            return csvSafe(options.stream().map(Object::toString)
+            return CsvCells.safe(options.stream().map(Object::toString)
                     .collect(Collectors.joining(CustomFieldValueWriter.MULTI_SELECT_SEPARATOR)));
         }
-        return csvSafe(value.toString());
+        return CsvCells.safe(value.toString());
     }
 
     /** Shared steps expanded: a CSV cell has no room for a reference (PRD-030), so this is lossy. */

@@ -121,7 +121,8 @@ public class AttachmentService {
     /** "Which file was attached when" lives in the audit log; attachments are not versioned (§3.5). */
     private void audit(UUID projectId, UUID userId, AuditAction action, Attachment attachment, TestCase testCase) {
         auditService.log(projectId, userId, action, AuditEntityType.ATTACHMENT, attachment.getId(),
-                attachment.getFileName(), testCase.getKey() + " · sha256 " + attachment.getSha256());
+                attachment.getFileName(), testCase.getKey() + " · sha256 " + attachment.getSha256(),
+                FieldChanges.none(), new AuditParent(AuditEntityType.TEST_CASE, testCase.getId()));
     }
 
     /**

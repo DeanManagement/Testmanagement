@@ -54,8 +54,7 @@ public class CommentService {
         comment.setProjectId(projectId);
         comment = commentRepository.save(comment);
 
-        auditService.log(projectId, userId, AuditAction.CREATED,
-                AuditEntityType.COMMENT, comment.getId(), null, null);
+        audit(projectId, userId, AuditAction.CREATED, comment);
 
         return toResponse(comment);
     }
@@ -73,8 +72,7 @@ public class CommentService {
         comment.setContent(request.content());
         comment = commentRepository.save(comment);
 
-        auditService.log(projectId, userId, AuditAction.UPDATED,
-                AuditEntityType.COMMENT, comment.getId(), null, null);
+        audit(projectId, userId, AuditAction.UPDATED, comment);
 
         return toResponse(comment);
     }
@@ -89,8 +87,7 @@ public class CommentService {
             throw new IllegalStateException("Not authorized to delete this comment");
         }
 
-        auditService.log(projectId, userId, AuditAction.DELETED,
-                AuditEntityType.COMMENT, comment.getId(), null, null);
+        audit(projectId, userId, AuditAction.DELETED, comment);
 
         commentRepository.delete(comment);
     }
@@ -113,23 +110,39 @@ public class CommentService {
         );
     }
 
+    /** Where a comment is, for the audit trail (PRD-046): the case, or for a result its run. */
+    private record CommentPlace(AuditParent parent, String name) {
+    }
+
     private void validateEntityBelongsToProject(UUID projectId, CommentEntityType entityType, UUID entityId) {
-        switch (entityType) {
+        placeOf(projectId, entityType, entityId);
+    }
+
+    /** Resolves what the comment is on, within the project; anything else is a 404. */
+    private CommentPlace placeOf(UUID projectId, CommentEntityType entityType, UUID entityId) {
+        return switch (entityType) {
             case TEST_CASE -> {
                 var testCase = testCaseRepository.findById(entityId)
+                        .filter(tc -> tc.getProject().getId().equals(projectId))
                         .orElseThrow(() -> new ResourceNotFoundException("TestCase", entityId));
-                if (!testCase.getProject().getId().equals(projectId)) {
-                    throw new ResourceNotFoundException("TestCase", entityId);
-                }
+                yield new CommentPlace(new AuditParent(AuditEntityType.TEST_CASE, testCase.getId()),
+                        testCase.getKey() + " " + testCase.getTitle());
             }
             case TEST_RESULT -> {
                 var testResult = testResultRepository.findById(entityId)
+                        .filter(tr -> tr.getTestRun().getProject().getId().equals(projectId))
                         .orElseThrow(() -> new ResourceNotFoundException("TestResult", entityId));
-                if (!testResult.getTestRun().getProject().getId().equals(projectId)) {
-                    throw new ResourceNotFoundException("TestResult", entityId);
-                }
+                var run = testResult.getTestRun();
+                yield new CommentPlace(new AuditParent(AuditEntityType.TEST_RUN, run.getId()),
+                        run.getName() + " · " + testResult.getTestCase().getTitle());
             }
-        }
+        };
+    }
+
+    private void audit(UUID projectId, UUID userId, AuditAction action, Comment comment) {
+        CommentPlace place = placeOf(projectId, comment.getEntityType(), comment.getEntityId());
+        auditService.log(projectId, userId, action, AuditEntityType.COMMENT, comment.getId(), place.name(), null,
+                FieldChanges.none(), place.parent());
     }
 
     private boolean canDelete(UUID userId, Comment comment) {

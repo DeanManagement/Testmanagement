@@ -49,6 +49,18 @@ public class AuditEntry {
     @Column(columnDefinition = "TEXT")
     private String details;
 
+    /** PRD-046: JSON array of {field, from, to}; null when the entry records no field changes. */
+    @Column(columnDefinition = "TEXT")
+    private String changes;
+
+    /** PRD-046: the object this one belongs to, e.g. the test case of a comment. */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "parent_entity_type", length = 50)
+    private AuditEntityType parentEntityType;
+
+    @Column(name = "parent_entity_id")
+    private UUID parentEntityId;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 }

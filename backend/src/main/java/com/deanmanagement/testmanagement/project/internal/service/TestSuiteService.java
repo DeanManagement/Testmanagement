@@ -79,6 +79,7 @@ public class TestSuiteService {
                 .filter(s -> s.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestSuite", id));
 
+        FieldChanges.Snapshot before = snapshot(suite);
         suite.setName(request.name());
         suite.setDescription(request.description());
         if (request.testCaseIds() != null) {
@@ -86,8 +87,8 @@ public class TestSuiteService {
         }
 
         suite = testSuiteRepository.save(suite);
-        auditService.log(projectId, userId, AuditAction.UPDATED,
-                AuditEntityType.TEST_SUITE, suite.getId(), suite.getName(), null);
+        auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_SUITE, suite.getId(),
+                suite.getName(), null, FieldChanges.between(before, snapshot(suite)));
         return testSuiteMapper.toResponse(suite);
     }
 
@@ -159,12 +160,12 @@ public class TestSuiteService {
                 .orElseThrow(() -> new ResourceNotFoundException("TestSuite", suiteId));
 
         Set<TestCase> toAdd = resolveTestCases(projectId, testCaseIds);
+        FieldChanges.Snapshot before = snapshot(suite);
         suite.getTestCases().addAll(toAdd);
         testSuiteRepository.save(suite);
 
-        auditService.log(projectId, userId, AuditAction.UPDATED,
-                AuditEntityType.TEST_SUITE, suite.getId(), suite.getName(),
-                "Added " + toAdd.size() + " test cases");
+        auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_SUITE, suite.getId(),
+                suite.getName(), "Added " + toAdd.size() + " test cases", FieldChanges.between(before, snapshot(suite)));
     }
 
     @Transactional
@@ -173,12 +174,25 @@ public class TestSuiteService {
                 .filter(s -> s.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestSuite", suiteId));
 
+        FieldChanges.Snapshot before = snapshot(suite);
         suite.getTestCases().removeIf(tc -> testCaseIds.contains(tc.getId()));
         testSuiteRepository.save(suite);
 
-        auditService.log(projectId, userId, AuditAction.UPDATED,
-                AuditEntityType.TEST_SUITE, suite.getId(), suite.getName(),
-                "Removed " + testCaseIds.size() + " test cases");
+        auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_SUITE, suite.getId(),
+                suite.getName(), "Removed " + testCaseIds.size() + " test cases",
+                FieldChanges.between(before, snapshot(suite)));
+    }
+
+    /**
+     * The fields the audit trail compares (PRD-046). Membership is the case count: the keys would be
+     * a list of up to hundreds, cut off at 200 characters, and the version history already exists
+     * for the cases themselves.
+     */
+    private static FieldChanges.Snapshot snapshot(TestSuite suite) {
+        return new FieldChanges.Snapshot()
+                .with("name", suite.getName())
+                .with("description", suite.getDescription())
+                .with("testCases", suite.getTestCases().size());
     }
 
     /**

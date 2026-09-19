@@ -248,9 +248,10 @@ class BugReportTriageApiTest {
             assertThat(auditEntryRepository.findAll().stream()
                     .filter(e -> e.getEntityType() == AuditEntityType.BUG_REPORT
                             && e.getAction() == AuditAction.STATUS_CHANGED)
-                    .map(e -> e.getDetails()))
+                    .map(e -> e.getDetails() + " " + e.getChanges()))
                     .hasSize(2)
-                    .allSatisfy(details -> assertThat(details).isEqualTo("NEW -> OPEN: triaged"));
+                    .allSatisfy(entry -> assertThat(entry).startsWith("triaged ")
+                            .contains("\"field\":\"status\",\"from\":\"NEW\",\"to\":\"OPEN\""));
         }
 
         @Test

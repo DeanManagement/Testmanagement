@@ -19,15 +19,12 @@ public class SecurityAuditorAware implements AuditorAware<UUID> {
             return Optional.empty();
         }
 
-        Object principal = authentication.getPrincipal();
-        if (principal instanceof String userId) {
-            try {
-                return Optional.of(UUID.fromString(userId));
-            } catch (IllegalArgumentException e) {
-                return Optional.empty();
-            }
+        // The name, as every controller reads it: the principal is a String for a JWT or an API key,
+        // but a UserDetails for other authentication types, which used to leave createdBy empty.
+        try {
+            return Optional.of(UUID.fromString(authentication.getName()));
+        } catch (IllegalArgumentException notAUserId) {
+            return Optional.empty();
         }
-
-        return Optional.empty();
     }
 }

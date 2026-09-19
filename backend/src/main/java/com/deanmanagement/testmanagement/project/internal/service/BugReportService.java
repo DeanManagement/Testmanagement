@@ -44,6 +44,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 @RequiredArgsConstructor
@@ -155,6 +156,7 @@ public class BugReportService {
     public BugReportResponse update(UUID projectId, UUID id, UpdateBugReportRequest request, UUID userId) {
         requireBugReportsEnabled(projectId);
         BugReport bugReport = require(projectId, id.toString());
+        FieldChanges.Snapshot before = snapshot(bugReport);
 
         bugReport.setTitle(request.title());
         bugReport.setDescription(request.description());
@@ -175,9 +177,10 @@ public class BugReportService {
                 ? null : requireProjectMember(projectId, request.assigneeId()));
         customFieldWriter.write(bugReport, request.customFields(), CustomFieldWriteMode.INTERACTIVE);
 
-        bugReport = bugReportRepository.save(bugReport);
-        auditService.log(projectId, userId, AuditAction.UPDATED,
-                AuditEntityType.BUG_REPORT, bugReport.getId(), label(bugReport), null);
+        // Flushed so JPA auditing stamps updatedBy before the response is built from it.
+        bugReport = bugReportRepository.saveAndFlush(bugReport);
+        auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.BUG_REPORT, bugReport.getId(),
+                label(bugReport), null, FieldChanges.between(before, snapshot(bugReport)));
         return toResponseWithReporter(bugReport);
     }
 
@@ -186,7 +189,7 @@ public class BugReportService {
         requireBugReportsEnabled(projectId);
         BugReport bugReport = require(projectId, id.toString());
         applyStatus(projectId, bugReport, request, userId);
-        return toResponseWithReporter(bugReportRepository.save(bugReport));
+        return toResponseWithReporter(bugReportRepository.saveAndFlush(bugReport));
     }
 
     /**
@@ -205,16 +208,15 @@ public class BugReportService {
         }
         BugReport duplicateOf = resolveDuplicateTarget(projectId, bugReport, resolution, request.duplicateOfId());
 
-        BugReportStatus oldStatus = bugReport.getStatus();
+        FieldChanges.Snapshot before = snapshot(bugReport);
         bugReport.setStatus(request.status());
         bugReport.setResolution(resolution);
         bugReport.setDuplicateOf(duplicateOf);
 
-        String outcome = resolution == null ? "" : " (" + resolution
-                + (duplicateOf != null ? " of " + duplicateOf.getKey() : "") + ")";
+        // The fields carry "A -> B" (PRD-046); the reason is what only the person can say.
         auditService.log(projectId, userId, AuditAction.STATUS_CHANGED, AuditEntityType.BUG_REPORT,
-                bugReport.getId(), label(bugReport),
-                oldStatus + " -> " + request.status() + outcome + ": " + request.reason());
+                bugReport.getId(), label(bugReport), request.reason(),
+                FieldChanges.between(before, snapshot(bugReport)));
     }
 
     private BugReport resolveDuplicateTarget(UUID projectId, BugReport bugReport, BugResolution resolution,
@@ -273,6 +275,22 @@ public class BugReportService {
 
     private static boolean isBlank(String value) {
         return value == null || value.isBlank();
+    }
+
+    /** The fields the audit trail compares before and after a change (PRD-046). */
+    static FieldChanges.Snapshot snapshot(BugReport bug) {
+        return new FieldChanges.Snapshot()
+                .with("title", bug.getTitle())
+                .with("description", bug.getDescription())
+                .with("stepsToReproduce", bug.getStepsToReproduce())
+                .with("expectedBehavior", bug.getExpectedBehavior())
+                .with("actualBehavior", bug.getActualBehavior())
+                .with("priority", bug.getPriority())
+                .with("status", bug.getStatus())
+                .with("resolution", bug.getResolution())
+                .with("duplicateOf", bug.getDuplicateOf() == null ? null : bug.getDuplicateOf().getKey())
+                .with("assignee", bug.getAssignee())
+                .with("environment", bug.getEnvironment());
     }
 
     /** How activity and notifications name a bug: its key, then its title. */
@@ -371,14 +389,19 @@ public class BugReportService {
                 .toList();
     }
 
-    private BugReportResponse toResponse(BugReport bugReport, Map<UUID, String> reporterNames) {
-        UUID reporter = bugReport.getCreatedBy();
-        return bugReportMapper.toResponse(bugReport, reporter == null ? null : reporterNames.get(reporter));
+    private BugReportResponse toResponse(BugReport bugReport, Map<UUID, String> userNames) {
+        return bugReportMapper.toResponse(bugReport, nameOf(userNames, bugReport.getCreatedBy()),
+                nameOf(userNames, bugReport.getUpdatedBy()));
     }
 
+    private static String nameOf(Map<UUID, String> userNames, UUID userId) {
+        return userId == null ? null : userNames.get(userId);
+    }
+
+    /** Display names of everyone who created or last updated one of these bugs. */
     private Map<UUID, String> reporterNames(List<BugReport> bugReports) {
         Set<UUID> ids = bugReports.stream()
-                .map(BugReport::getCreatedBy)
+                .flatMap(bug -> Stream.of(bug.getCreatedBy(), bug.getUpdatedBy()))
                 .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         return ids.isEmpty() ? Map.of() : userService.findDisplayNamesByIds(ids);

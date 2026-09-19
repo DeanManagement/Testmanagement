@@ -148,6 +148,7 @@ public class TestCaseService {
 
         TestCaseStatus statusBefore = tc.getStatus();
         int versionBefore = tc.getCurrentVersion();
+        FieldChanges.Snapshot before = snapshot(tc);
         boolean contentChanged = TestCaseReviewService.isContentEdit(tc, request);
         reviewService.checkStatusWrite(tc.getProject(), statusBefore, request.status(), userId);
 
@@ -202,9 +203,25 @@ public class TestCaseService {
         reviewService.afterEdit(tc, statusBefore, versionBefore, contentChanged);
 
         tc = testCaseRepository.save(tc);
-        auditService.log(projectId, userId, AuditAction.UPDATED,
-                AuditEntityType.TEST_CASE, tc.getId(), tc.getTitle(), null);
+        auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_CASE, tc.getId(),
+                tc.getTitle(), null, FieldChanges.between(before, snapshot(tc)));
         return testCaseMapper.toResponse(tc);
+    }
+
+    /**
+     * The fields the audit trail compares (PRD-046). Steps appear as the version they moved the case
+     * to: their full text is already in the version history (PRD-011).
+     */
+    private static FieldChanges.Snapshot snapshot(TestCase tc) {
+        return new FieldChanges.Snapshot()
+                .with("title", tc.getTitle())
+                .with("description", tc.getDescription())
+                .with("preconditions", tc.getPreconditions())
+                .with("priority", tc.getPriority())
+                .with("status", tc.getStatus())
+                .with("labels", tc.getLabels())
+                .with("estimateMinutes", tc.getEstimateMinutes())
+                .with("version", "v" + tc.getCurrentVersion());
     }
 
     @Transactional

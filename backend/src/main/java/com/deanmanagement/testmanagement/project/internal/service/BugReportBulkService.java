@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class BugReportBulkService {
 
+    private static final String BULK_CHANGE = "Bulk change";
+
     private final BugReportService bugReportService;
     private final BugReportRepository bugReportRepository;
     private final ProjectMemberRepository projectMemberRepository;
@@ -46,15 +48,17 @@ public class BugReportBulkService {
             if (statusChange != null) {
                 bugReportService.applyStatus(projectId, bug, statusChange, userId);
             }
+            FieldChanges.Snapshot before = BugReportService.snapshot(bug);
             if (assignee != null || Boolean.TRUE.equals(request.clearAssignee())) {
                 bug.setAssignee(assignee);
             }
             if (request.priority() != null) {
                 bug.setPriority(request.priority());
             }
-            if (assignee != null || Boolean.TRUE.equals(request.clearAssignee()) || request.priority() != null) {
+            FieldChanges changes = FieldChanges.between(before, BugReportService.snapshot(bug));
+            if (!changes.isEmpty()) {
                 auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.BUG_REPORT, bug.getId(),
-                        BugReportService.label(bug), describe(request, assignee));
+                        BugReportService.label(bug), BULK_CHANGE, changes);
             }
         }
         bugReportRepository.saveAll(bugs);
@@ -111,16 +115,4 @@ public class BugReportBulkService {
         return reason;
     }
 
-    private static String describe(BulkUpdateBugReportsRequest request, User assignee) {
-        StringBuilder details = new StringBuilder("Bulk change:");
-        if (assignee != null) {
-            details.append(" assigned to ").append(assignee.getDisplayName()).append(';');
-        } else if (Boolean.TRUE.equals(request.clearAssignee())) {
-            details.append(" unassigned;");
-        }
-        if (request.priority() != null) {
-            details.append(" priority ").append(request.priority()).append(';');
-        }
-        return details.substring(0, details.length() - 1);
-    }
 }
