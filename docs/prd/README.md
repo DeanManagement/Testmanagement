@@ -170,7 +170,7 @@ on 2026-09-19 (`01d7da0` to `a71a07b`) and need a deploy to reach the test insta
 | [048](PRD-048-execution-and-report-evidence.md) | Execution and Report Evidence | P2 | M | ✅ Implemented |
 | [049](PRD-049-metrics-consistency-and-dashboard.md) | Metrics Consistency and Dashboard | P2 | S-M | ✅ Implemented |
 | [050](PRD-050-test-case-context.md) | Test Case Context | P2 | S-M | ✅ Implemented |
-| [051](PRD-051-bug-report-attachments-and-image-viewer.md) | Bug Report Attachments and Image Viewer (with PRD-044) | P2 | M | 📝 Draft |
+| [051](PRD-051-bug-report-attachments-and-image-viewer.md) | Bug Report Attachments and Image Viewer (with PRD-044) | P2 | M | ✅ Implemented |
 | [052](PRD-052-lists-filters-and-pickers.md) | Lists, Filters and Pickers | P2 | S-M | 📝 Draft |
 
 **Suggested order:** 049 (small, and every later screen shows its numbers) → 045 → 046 → 047 → 048 →
@@ -184,6 +184,6 @@ matches *any* label while MCP `search_test_cases` documents *all* (052); the das
 report `7a792e91`); `step_images` and `screenshots` allow duplicate rows per owner (bug report `bd5b0f76`).
 
 ## Status legend
-Every PRD up to 028 except 026 is **Implemented**; 029–040 and 044–050 are implemented except where noted; 051 and 052 are drafts; 041–043 are drafts
+Every PRD up to 028 except 026 is **Implemented**; 029–040 and 044–051 are implemented except where noted; 052 is a draft; 041–043 are drafts
 postponed to the backlog (⏸). New work should get a new PRD rather than
 extending a shipped one.

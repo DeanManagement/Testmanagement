@@ -217,15 +217,18 @@ Leaving the editor with unsaved changes prompts you first.
 
 The **Attachments** card on the case page holds the files a tester needs to carry the case out: a
 sample invoice to upload, a CSV to import, a spec PDF, an expected-output image. Testers and admins
-choose **Attach file** or drop a file onto the card; viewers can list and download.
+choose **Attach file**, drop files onto the card, or paste a screenshot anywhere on the page; viewers
+can list and download. Bug reports have the same card ([Attachments on bug reports](#attachments-on-bug-reports)).
 
 - **Allowed:** PNG, JPEG, GIF and WebP images, PDF, ZIP, Word/Excel/PowerPoint (.docx, .xlsx,
   .pptx), and text files (.txt, .log, .csv, .json, .xml). The file's content must match its type:
   an HTML page renamed to `.pdf` is refused. SVG and HTML are never accepted.
-- **Limits:** 10 MB per file, 20 files per case, and 500 MB per project in total. Administrators
-  change the last two with `APP_ATTACHMENTS_MAX_PER_CASE` and `APP_ATTACHMENTS_MAX_PROJECT_BYTES`
-  (`0` = unlimited).
-- Images show as thumbnails; everything else downloads when you click its name.
+- **Limits:** 10 MB per file, 20 files per case or bug, and 500 MB per project in total, counting
+  case and bug attachments together. Administrators change the last two with
+  `APP_ATTACHMENTS_MAX_PER_OWNER` and `APP_ATTACHMENTS_MAX_PROJECT_BYTES` (`0` = unlimited). The
+  older name `APP_ATTACHMENTS_MAX_PER_CASE` still works.
+- Images show as thumbnails ([click to enlarge](#enlarging-images)); everything else downloads when
+  you click its name.
 - Uploading a file identical to one already attached works, but the card points it out.
 
 While executing a run, the case's attachments appear, collapsed, above the steps.
@@ -1017,6 +1020,29 @@ and bugs reported and resolved per week over the last 12 weeks. A bug counts as 
 moment it moves to Resolved or Closed; reopening it takes it back out. For bugs resolved before this
 version, the time of their last change stands in.
 
+### Attachments on bug reports
+
+A screenshot says more than a paragraph. Every bug has an **Attachments** card, on its page and in
+the Report Bug form: choose **Attach file**, drop files onto the card, or paste a screenshot
+(Ctrl+V / Cmd+V) anywhere on the page. Pasting text into a field still pastes text. In the form the
+files are listed as *attached when saved* and upload once you save the bug; if one of them is
+refused (wrong type, limit reached) the bug is saved anyway and a message names the file.
+
+**Reporting from a failed result** attaches that result's step screenshots to the new bug, named
+`step-<n>-<file name>`, and the form says so beforehand. They are copies: replacing a screenshot in
+the run later leaves the bug's evidence as it was filed.
+
+The allowed types and limits are those of [test case attachments](#attachments). Testers and admins
+attach and delete; viewers see and download. Deleting a bug deletes its attachments.
+
+### Enlarging images
+
+Click any image thumbnail (a step's reference image, a screenshot in a run or its report, an
+exploratory session note, an attachment) to see it full size. **100 %** shows it at its real size
+with scrolling, **Fit to window** scales it back down, the download button saves it under its file
+name, and Esc or a click beside it closes the view. Thumbnails can be reached with Tab and opened
+with Enter.
+
 ### Triage
 
 The **Bug Reports** list is built for going through many bugs at once:
@@ -1584,7 +1610,7 @@ Optional, with defaults:
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:4200` — the UI is same-origin with the API now, so this only matters for a separate dev server |
 | `JWT_EXPIRATION_MS` | `43200000` (12 hours) |
 | `SEARCH_FULL_TEXT` | `true` — Postgres full-text search; set `false` on other databases |
-| `APP_ATTACHMENTS_MAX_PER_CASE` | `20` files per test case |
+| `APP_ATTACHMENTS_MAX_PER_OWNER` | `20` files per test case or bug report (`APP_ATTACHMENTS_MAX_PER_CASE` is still read) |
 | `APP_ATTACHMENTS_MAX_PROJECT_BYTES` | `524288000` (500 MB) of attachments per project; `0` = unlimited |
 | `MAIL_ENABLED` / `MAIL_FROM` | `false` / `no-reply@testmanagement.local` |
 | `SSO_CALLBACK_URL` | `/login/callback` — set to your public frontend URL if the UI is not served from the API's origin |

@@ -48,8 +48,8 @@ a run.
   enough at this tool's scale (§6 covers growth).
 - In-browser preview of PDFs or office documents, and virus scanning. Operators who need scanning
   put it at the reverse proxy.
-- Attachments on bug reports, requirements or plans. Same mechanism, separate decision, only on
-  demand.
+- Attachments on requirements or plans. Same mechanism, separate decision, only on demand. (Bug
+  reports got them in PRD-051, on the same table.)
 - Versioned attachment bytes (§3.5).
 - Uploading attachments over MCP or the external API. Base64 blobs through tool calls are a poor fit
   and nobody has asked.
@@ -293,4 +293,5 @@ Built as specified, with these differences:
 - **No Hibernate-statistics test** that listing skips `data`: the list is a JPQL constructor
   projection that never names the column, so there is no code path that could load it.
 - **Limits** are also in `application.yml` as `APP_ATTACHMENTS_MAX_PER_CASE` /
-  `APP_ATTACHMENTS_MAX_PROJECT_BYTES`.
+  `APP_ATTACHMENTS_MAX_PROJECT_BYTES`. PRD-051 renamed the first to `app.attachments.max-per-owner`
+  (`APP_ATTACHMENTS_MAX_PER_OWNER`); the old variable is still read.

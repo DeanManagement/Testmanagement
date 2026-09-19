@@ -423,6 +423,10 @@
               "text": "In the Bug Reports list, search by key or text and filter by status, priority and assignee. Tick bugs to assign them, change their priority or status, or delete them in one step. The filters are in the URL, so a view can be bookmarked."
             },
             {
+              "type": "p",
+              "text": "A bug can carry screenshots and files: attach them in the Report Bug form or on the bug's page by picking, dropping or pasting (Ctrl+V / Cmd+V) them. A bug reported from a failed result brings that result's step screenshots along as copies. Click any image thumbnail in the app to see it full size and download it."
+            },
+            {
               "type": "note",
               "text": "Dragging a card on the board to another lane asks for the reason first. Cancel, and the card stays where it was."
             }

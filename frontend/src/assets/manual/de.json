@@ -423,6 +423,10 @@
               "text": "In der Liste der Fehlermeldungen suchst du nach Schlüssel oder Text und filterst nach Status, Priorität und zugewiesener Person. Hake Fehler an, um sie in einem Schritt zuzuweisen, ihre Priorität oder ihren Status zu ändern oder sie zu löschen. Die Filter stehen in der URL, du kannst eine Ansicht also als Lesezeichen speichern."
             },
             {
+              "type": "p",
+              "text": "Ein Fehler kann Screenshots und Dateien tragen: Hänge sie im Formular Fehler melden oder auf der Seite des Fehlers an, indem du sie auswählst, hineinziehst oder einfügst (Ctrl+V / Cmd+V). Ein Fehler, der aus einem fehlgeschlagenen Ergebnis gemeldet wird, übernimmt dessen Schritt-Screenshots als Kopien. Ein Klick auf ein Vorschaubild zeigt das Bild in voller Grösse und lässt es herunterladen."
+            },
+            {
               "type": "note",
               "text": "Ziehst du eine Karte auf dem Board in eine andere Spalte, fragt die App zuerst nach dem Grund. Brichst du ab, bleibt die Karte, wo sie war."
             }

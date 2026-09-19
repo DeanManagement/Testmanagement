@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-19 |
 | **Priority** | P2 — a UI defect without a screenshot has to be reproduced from prose |
@@ -206,11 +206,49 @@ USER_MANUAL gets "Attachments on bug reports" and "Enlarging images". MCP_SETUP 
 
 ## 7. Acceptance Criteria
 
-- [ ] One `attachments` table serves test cases and bug reports, with a one-owner check.
-- [ ] Bug reports accept attachments by picker, drag and drop and paste, in the form and on the detail page.
-- [ ] Reporting from a failed result copies its step screenshots onto the bug.
-- [ ] Every image thumbnail opens a shared full-size viewer with download.
-- [ ] Downloads carry the `ImageResponses` headers; non-images download, never render inline.
-- [ ] `add_bug_report_attachment` works for TESTER keys within the 2 MB cap; `get_bug_report` lists attachments.
-- [ ] PRD-044's non-goal line and table name are updated to match.
-- [ ] Backend, MCP and frontend tests pass; en/de translations and manual sections present.
+- [x] One `attachments` table serves test cases and bug reports, with a one-owner check.
+- [x] Bug reports accept attachments by picker, drag and drop and paste, in the form and on the detail page.
+- [x] Reporting from a failed result copies its step screenshots onto the bug.
+- [x] Every image thumbnail opens a shared full-size viewer with download.
+- [x] Downloads carry the `ImageResponses` headers; non-images download, never render inline.
+- [x] `add_bug_report_attachment` works for TESTER keys within the 2 MB cap; `get_bug_report` lists attachments.
+- [x] PRD-044's non-goal line and table name are updated to match.
+- [x] Backend, MCP and frontend tests pass; en/de translations and manual sections present.
+
+## 8. As Built (2026-09-19)
+
+PRD-044 was already built, on a table named `attachments` from the start, so this PRD added the
+second owner to it. Built as specified, with these differences:
+
+- **Migration V71** makes `test_case_id` nullable, adds `bug_report_id` (cascading delete) with its
+  index, and adds `ck_attachments_one_owner`. `AttachmentSummary` carries both owner ids, one of them
+  null. The project quota query counts both owners.
+- **`max-per-owner`** replaces `max-per-case` (`APP_ATTACHMENTS_MAX_PER_OWNER`); the PRD-044
+  variable is still read as its default, so existing deployments keep their setting.
+- **Bug attachment endpoints take the bug's id or key**, like every other bug endpoint, and refuse
+  (403) while bug reports are off for the project. `BugReportAttachmentService` resolves the bug
+  through `BugReportService`; the storage stays in `AttachmentService`.
+- **No `attachmentCount` on `BugReportResponse`.** Nothing shows it yet: the bug list has no
+  paperclip column, and the detail page loads the files themselves. Add it with the column.
+- **No warning in the create response when screenshots are left out.** A new bug starts empty, so
+  the per-bug limit only bites for a result with more than 20 step screenshots, or when the project
+  quota runs out; either way the bug is saved, the copies stop, and the server logs how many were
+  left out. A screenshot of a legacy type outside the allowlist is skipped, and the rest still copy.
+- **The viewer opens from an `appEnlarge` directive** on each thumbnail `<img>` (role `button`,
+  focusable, Enter/Space, "Enlarge image" label), instead of wrapping every thumbnail in a
+  `<button>`. Besides the five places listed, the run report screen's screenshots open it too; the
+  PDF is unchanged.
+- **Paste listens on the whole page.** A pasted image attaches wherever the focus is; pasted text is
+  left alone, and the panel ignores pastes in the run execution view and for viewers. The panel also
+  takes several files at once (picker, drop or paste) and uploads them one after another; a refused
+  file keeps its message while the rest upload.
+- **Queued files upload in the create effect**, after the bug is saved and before the app navigates
+  to it, so the detail page lists them. A refused file does not undo the bug: the snackbar names
+  it. Edit mode uploads straight to the bug.
+- **The form's note** ("The 3 step screenshots of this result will be attached") takes the count from
+  the run page, which passes it along with the result.
+- **MCP:** `McpDtos.Attachment` gained an `id`, so `get_test_case` returns it too. Line breaks in
+  `contentBase64` are tolerated; any other character outside the alphabet is refused rather than
+  skipped. The length is checked before decoding and the exact 2 MB after, since base64 groups
+  round up. The MCP audit links a successful call to the attachment it created.
+- **Not verified on PostgreSQL or in a browser.** V71 has run on H2 only.

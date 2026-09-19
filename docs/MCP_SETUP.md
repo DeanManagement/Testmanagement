@@ -148,7 +148,7 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `move_test_cases_to_folder`, `create_requirement`, `link_test_cases_to_requirement`,
 `create_test_run`, `record_test_result`, `record_test_results`, `record_step_result`,
 `complete_test_run`, `update_test_run`, `clone_test_run`, `add_comment`, `create_bug_report`,
-`change_bug_report_status`, `assign_bug_reports`, `link_bug_report`, `update_test_suite`, `add_test_cases_to_suite`,
+`change_bug_report_status`, `assign_bug_reports`, `link_bug_report`, `add_bug_report_attachment`, `update_test_suite`, `add_test_cases_to_suite`,
 `remove_test_cases_from_suite`, `update_test_plan`, `update_requirement`,
 `unlink_test_case_from_requirement`, `rename_test_case_folder`, `move_test_case_folder`, `change_test_case_status_bulk`,
 `create_parameter_set`, `update_parameter_set`, `trigger_pipeline`, `refresh_pipeline_run`,
@@ -310,6 +310,11 @@ action in the UI, and re-testing means a new run rather than editing a signed-of
   and optionally the step (`stepNumber`, from 1 as `get_test_run` numbers them), where it showed up;
   the bug keeps the result it was found in. `create_bug_report` takes a `stepNumber` too, and
   `get_bug_report` lists the bug's `occurrences`.
+- **Screenshots go on the bug.** `add_bug_report_attachment` takes the file as `contentBase64`, at
+  most 2 MB decoded, with its `fileName` and `contentType`; the bytes must match the type, and SVG
+  and HTML are refused. A bug filed with a `testResultId` already carries that result's step
+  screenshots, so do not attach them again. `get_bug_report` lists `attachments` (id, name, type,
+  size); there is no download tool.
 - **Pass rates are passed of executed results** in `get_project_dashboard`, `get_test_plan` and
   `get_test_suite_report`: pending results are not counted, and a
   pass rate is absent (null) when nothing was executed, which is not 0 %. `get_test_plan` also
