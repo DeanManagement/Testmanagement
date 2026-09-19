@@ -1,10 +1,15 @@
 import { Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { TranslateModule } from '@ngx-translate/core';
+
+/** Which run status change the reason is for. */
+export interface ReasonDialogData {
+  action: 'reopen' | 'abort';
+}
 
 @Component({
   selector: 'app-reopen-test-run-dialog',
@@ -18,20 +23,20 @@ import { TranslateModule } from '@ngx-translate/core';
     TranslateModule,
   ],
   template: `
-    <h2 mat-dialog-title>{{ 'testRun.reopen.title' | translate }}</h2>
+    <h2 mat-dialog-title>{{ keys + '.title' | translate }}</h2>
     <mat-dialog-content>
       <mat-form-field appearance="outline" class="full-width">
-        <mat-label>{{ 'testRun.reopen.reason' | translate }}</mat-label>
+        <mat-label>{{ keys + '.reason' | translate }}</mat-label>
         <textarea matInput [(ngModel)]="reason" required rows="3"></textarea>
         @if (!reason.trim()) {
-          <mat-hint>{{ 'testRun.reopen.reasonRequired' | translate }}</mat-hint>
+          <mat-hint>{{ keys + '.reasonRequired' | translate }}</mat-hint>
         }
       </mat-form-field>
     </mat-dialog-content>
     <mat-dialog-actions align="end">
-      <button mat-button (click)="onCancel()">{{ 'testRun.reopen.cancel' | translate }}</button>
+      <button mat-button (click)="onCancel()">{{ keys + '.cancel' | translate }}</button>
       <button mat-flat-button color="primary" [disabled]="!reason.trim()" (click)="onConfirm()">
-        {{ 'testRun.reopen.confirm' | translate }}
+        {{ keys + '.confirm' | translate }}
       </button>
     </mat-dialog-actions>
   `,
@@ -42,6 +47,10 @@ import { TranslateModule } from '@ngx-translate/core';
 })
 export class ReopenTestRunDialogComponent {
   private readonly dialogRef = inject(MatDialogRef<ReopenTestRunDialogComponent>);
+  private readonly data = inject<ReasonDialogData | null>(MAT_DIALOG_DATA, { optional: true });
+
+  /** The same prompt serves reopening (default) and aborting; both need a reason. */
+  readonly keys = this.data?.action === 'abort' ? 'testRun.abortDialog' : 'testRun.reopen';
 
   reason = '';
 

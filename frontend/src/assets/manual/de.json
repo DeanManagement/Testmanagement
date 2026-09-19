@@ -220,7 +220,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Ein abgeschlossener Lauf lässt sich mit Begründung wieder öffnen. Die Begründung erscheint im Lauf, damit später nachvollziehbar bleibt, warum nachträglich geändert wurde."
+              "text": "Ein abgeschlossener oder abgebrochener Lauf lässt sich mit Begründung wieder öffnen. Die Begründung erscheint im Lauf, damit später nachvollziehbar bleibt, warum nachträglich geändert wurde. Auch das Abbrechen verlangt eine Begründung."
             }
           ]
         },

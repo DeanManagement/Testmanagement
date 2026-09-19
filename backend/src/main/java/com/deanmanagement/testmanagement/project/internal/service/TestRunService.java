@@ -295,6 +295,27 @@ public class TestRunService {
                 .toList();
     }
 
+    private static boolean isClosed(TestRunStatus status) {
+        return status == TestRunStatus.COMPLETED || status == TestRunStatus.ABORTED;
+    }
+
+    /**
+     * The run lifecycle (bug report efb94f3f): PLANNED → IN_PROGRESS → COMPLETED or ABORTED, either
+     * of which can be reopened to IN_PROGRESS. A run never goes back to PLANNED, and a closed run
+     * is not switched between COMPLETED and ABORTED directly: that would rewrite how it ended.
+     */
+    private static void requireAllowedTransition(TestRunStatus from, TestRunStatus to) {
+        boolean allowed = switch (to) {
+            case PLANNED -> false;
+            case IN_PROGRESS -> true;
+            case COMPLETED, ABORTED -> !isClosed(from);
+        };
+        if (!allowed) {
+            throw new IllegalArgumentException("A " + from.name().toLowerCase() + " test run cannot be set to "
+                    + to.name().toLowerCase() + (isClosed(from) ? "; reopen it first" : ""));
+        }
+    }
+
     private static String runNameFor(String name, ProjectEnvironment environment) {
         String combined = name + " · " + environment.getName();
         return combined.length() > MAX_RUN_NAME_LENGTH ? combined.substring(0, MAX_RUN_NAME_LENGTH) : combined;
@@ -393,18 +414,25 @@ public class TestRunService {
         customFieldWriter.write(run, request.customFields(), CustomFieldWriteMode.INTERACTIVE);
 
         TestRunStatus oldStatus = run.getStatus();
-        if (request.status() != null) {
+        boolean statusChanges = request.status() != null && request.status() != oldStatus;
+        boolean reopening = statusChanges && request.status() == TestRunStatus.IN_PROGRESS && isClosed(oldStatus);
+        String auditDetails = null;
+        if (statusChanges) {
+            requireAllowedTransition(oldStatus, request.status());
             run.setStatus(request.status());
 
             if (request.status() == TestRunStatus.IN_PROGRESS && oldStatus == TestRunStatus.PLANNED) {
                 run.setStartTime(Instant.now());
-            } else if (request.status() == TestRunStatus.IN_PROGRESS && oldStatus == TestRunStatus.COMPLETED) {
-                // Reopen
+            } else if (reopening) {
+                // A completed or an aborted run is reopened the same way: with a reason.
                 if (request.reopenReason() == null || request.reopenReason().isBlank()) {
-                    throw new IllegalArgumentException("Reopen reason is required when reopening a completed test run");
+                    throw new IllegalArgumentException("Reopen reason is required when reopening a "
+                            + oldStatus.name().toLowerCase() + " test run");
                 }
                 run.setReopenReason(request.reopenReason());
+                run.setAbortReason(null);
                 run.setEndTime(null);
+                auditDetails = request.reopenReason();
                 if (currentUserId != null) {
                     User user = userService.findEntityById(currentUserId).orElse(null);
                     run.setCompletedBy(user);
@@ -417,15 +445,20 @@ public class TestRunService {
                     run.setCompletedBy(user);
                 }
             } else if (request.status() == TestRunStatus.ABORTED) {
+                if (request.abortReason() == null || request.abortReason().isBlank()) {
+                    throw new IllegalArgumentException("Abort reason is required when aborting a test run");
+                }
+                run.setAbortReason(request.abortReason().trim());
                 run.setEndTime(Instant.now());
+                auditDetails = run.getAbortReason();
             }
         }
 
         AuditAction auditAction = AuditAction.UPDATED;
-        if (request.status() != null) {
+        if (statusChanges) {
             if (request.status() == TestRunStatus.COMPLETED) {
                 auditAction = AuditAction.COMPLETED;
-            } else if (request.status() == TestRunStatus.IN_PROGRESS && oldStatus == TestRunStatus.COMPLETED) {
+            } else if (reopening) {
                 auditAction = AuditAction.REOPENED;
             } else {
                 auditAction = AuditAction.STATUS_CHANGED;
@@ -434,7 +467,7 @@ public class TestRunService {
 
         run = testRunRepository.save(run);
         auditService.log(projectId, currentUserId, auditAction,
-                AuditEntityType.TEST_RUN, run.getId(), run.getName(), null);
+                AuditEntityType.TEST_RUN, run.getId(), run.getName(), auditDetails);
 
         if (request.status() != null && request.status() != oldStatus) {
             if (request.status() == TestRunStatus.IN_PROGRESS && oldStatus == TestRunStatus.PLANNED) {

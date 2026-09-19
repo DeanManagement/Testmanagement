@@ -30,7 +30,7 @@ class McpRunReportEvidenceApiTest extends McpToolApiTestSupport {
                 null, "Cart opened");
         stepRecordingTools.recordStepResult(run.key(), 2, TestResultStatus.FAILED, checkout.id(),
                 null, "Order button returns HTTP 500");
-        testRunWriteTools.completeTestRun(run.key(), null);
+        testRunWriteTools.completeTestRun(run.key(), null, null);
 
         byte[] pdf = pdfReportService.generateTestRunReport(project.getId(), run.id());
 

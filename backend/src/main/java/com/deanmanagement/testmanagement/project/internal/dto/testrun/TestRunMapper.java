@@ -57,6 +57,7 @@ public abstract class TestRunMapper {
     @Mapping(target = "executor", ignore = true)
     @Mapping(target = "completedBy", ignore = true)
     @Mapping(target = "reopenReason", ignore = true)
+    @Mapping(target = "abortReason", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "startTime", ignore = true)
     @Mapping(target = "endTime", ignore = true)

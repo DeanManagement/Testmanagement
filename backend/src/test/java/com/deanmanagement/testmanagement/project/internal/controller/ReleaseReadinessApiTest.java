@@ -181,7 +181,7 @@ class ReleaseReadinessApiTest {
             run(planId, List.of(a), TestResultStatus.PASSED);
             TestRunResponse aborted = run(planId, List.of(a), TestResultStatus.FAILED);
             testRunService.update(project.getId(), aborted.id(),
-                    new UpdateTestRunRequest(null, null, TestRunStatus.ABORTED, null, null), null);
+                    new UpdateTestRunRequest(null, null, TestRunStatus.ABORTED, null, null, null, null, "Environment down"), null);
             entityManager.flush();
 
             readiness(planId, viewer).andExpect(jsonPath("$.verdict").value("GO"));

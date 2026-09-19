@@ -220,7 +220,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "A completed run can be reopened with a reason. The reason is shown on the run, so it stays clear later why something was changed after the fact."
+              "text": "A completed or aborted run can be reopened with a reason. The reason is shown on the run, so it stays clear later why something was changed after the fact. Aborting asks for a reason too."
             }
           ]
         },

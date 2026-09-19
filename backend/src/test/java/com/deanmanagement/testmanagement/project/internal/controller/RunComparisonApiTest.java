@@ -133,7 +133,7 @@ class RunComparisonApiTest {
 
     private void abort(UUID runId) {
         testRunService.update(project.getId(), runId, new UpdateTestRunRequest(null, null, TestRunStatus.ABORTED, null,
-                null), null);
+                null, null, null, "Environment down"), null);
         entityManager.flush();
     }
 

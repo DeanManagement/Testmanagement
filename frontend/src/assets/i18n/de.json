@@ -400,7 +400,15 @@
       "allStepsPassed": "Alle Schritte als Bestanden markieren (auch das Ergebnis)",
       "focusComment": "Kommentarfeld fokussieren",
       "showHelp": "Diese Hilfe anzeigen"
-    }
+    },
+    "abortDialog": {
+      "title": "Testlauf abbrechen",
+      "reason": "Warum wird der Lauf abgebrochen?",
+      "reasonRequired": "Zum Abbrechen ist eine Begründung nötig",
+      "confirm": "Lauf abbrechen",
+      "cancel": "Abbrechen"
+    },
+    "abortReason": "Abbruchgrund"
   },
   "testPlan": {
     "list": {

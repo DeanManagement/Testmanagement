@@ -18,7 +18,7 @@
             <mat-icon>check</mat-icon>
             {{ 'testRun.completeAction' | translate }}
           </button>
-          <button mat-stroked-button (click)="updateStatus(run, 'ABORTED')" class="abort-btn" data-test-id="test-run-abort-btn">
+          <button mat-stroked-button (click)="abortRun(run)" class="abort-btn" data-test-id="test-run-abort-btn">
             <mat-icon>stop</mat-icon>
             {{ 'testRun.abort' | translate }}
           </button>
@@ -30,7 +30,7 @@
             <mat-icon>keyboard</mat-icon>
           </button>
         }
-        @if (run.status === 'COMPLETED') {
+        @if (run.status === 'COMPLETED' || run.status === 'ABORTED') {
           <button mat-stroked-button (click)="reopenRun(run)" class="reopen-btn" data-test-id="test-run-reopen-btn">
             <mat-icon>replay</mat-icon>
             {{ 'testRun.reopen.confirm' | translate }}
@@ -129,6 +129,12 @@
           </span>
         }
       </div>
+      @if (run.status === 'ABORTED' && run.abortReason) {
+        <div class="reopen-reason" data-test-id="test-run-abort-reason">
+          <mat-icon class="meta-icon">stop_circle</mat-icon>
+          <span><strong>{{ 'testRun.abortReason' | translate }}:</strong> {{ run.abortReason }}</span>
+        </div>
+      }
       @if (run.reopenReason) {
         <div class="reopen-reason" data-test-id="test-run-reopen-reason">
           <mat-icon class="meta-icon">info</mat-icon>

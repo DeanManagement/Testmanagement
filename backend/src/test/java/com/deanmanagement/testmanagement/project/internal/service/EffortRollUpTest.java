@@ -112,7 +112,7 @@ class EffortRollUpTest {
             planRun("Kept", thirtyMinuteCase, unestimatedCase);
             TestRunResponse aborted = planRun("Aborted", thirtyMinuteCase);
             testRunService.update(projectId, aborted.id(),
-                    new UpdateTestRunRequest(null, null, TestRunStatus.ABORTED, null, null), null);
+                    new UpdateTestRunRequest(null, null, TestRunStatus.ABORTED, null, null, null, null, "Environment down"), null);
             entityManager.flush();
             entityManager.clear();
 
@@ -144,7 +144,7 @@ class EffortRollUpTest {
         void leavesOutAbortedRuns() {
             TestRunResponse aborted = planRun("Aborted", thirtyMinuteCase);
             testRunService.update(projectId, aborted.id(),
-                    new UpdateTestRunRequest(null, null, TestRunStatus.ABORTED, null, null), null);
+                    new UpdateTestRunRequest(null, null, TestRunStatus.ABORTED, null, null, null, null, "Environment down"), null);
             entityManager.flush();
             entityManager.clear();
 

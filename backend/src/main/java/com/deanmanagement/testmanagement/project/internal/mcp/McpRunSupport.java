@@ -42,8 +42,14 @@ class McpRunSupport {
      */
     TestRunResponse transition(McpCallerContext.Caller caller, TestRunResponse run,
                                        TestRunStatus target) {
+        return transition(caller, run, target, null);
+    }
+
+    /** {@code abortReason} is required when {@code target} is ABORTED. */
+    TestRunResponse transition(McpCallerContext.Caller caller, TestRunResponse run,
+                               TestRunStatus target, String abortReason) {
         return testRunService.update(caller.projectId(), run.id(),
-                new UpdateTestRunRequest(null, null, target, null, null), caller.userId());
+                new UpdateTestRunRequest(null, null, target, null, null, null, null, abortReason), caller.userId());
     }
 
     /**

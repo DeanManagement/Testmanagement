@@ -67,6 +67,10 @@ public class TestRun extends BaseEntity {
 
     private String reopenReason;
 
+    /** Why the run was aborted; cleared when it is reopened. */
+    @Column(columnDefinition = "TEXT")
+    private String abortReason;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_plan_id")
     private TestPlan testPlan;

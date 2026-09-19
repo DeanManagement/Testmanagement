@@ -29,7 +29,7 @@ import { AuthService } from '../../../core/services/auth.service';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-test-run-dialog/clone-test-run-dialog.component';
 import { CompleteTestRunDialogComponent } from '../complete-test-run-dialog/complete-test-run-dialog.component';
-import { ReopenTestRunDialogComponent } from '../reopen-test-run-dialog/reopen-test-run-dialog.component';
+import { ReasonDialogData, ReopenTestRunDialogComponent } from '../reopen-test-run-dialog/reopen-test-run-dialog.component';
 import { CommentActions } from '../../../store/comment/comment.actions';
 import { selectCommentsForEntity, selectCommentsLoading } from '../../../store/comment/comment.selectors';
 import { selectAuthUser, selectIsSystemAdmin } from '../../../store/auth/auth.selectors';
@@ -330,7 +330,22 @@ export class TestRunDetailComponent implements OnInit {
     this.dialog.open(KeyboardShortcutsDialogComponent, { width: '420px' });
   }
 
-  updateStatus(run: TestRun, status: 'IN_PROGRESS' | 'COMPLETED' | 'ABORTED'): void {
+  /** Aborting ends the run, so it asks first and records why (bug report efb94f3f). */
+  abortRun(run: TestRun): void {
+    this.dialog.open(ReopenTestRunDialogComponent, { data: { action: 'abort' } as ReasonDialogData })
+      .afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((reason: string | undefined) => {
+        if (reason) {
+          this.store.dispatch(TestRunActions.updateTestRun({
+            projectId: this.projectId,
+            id: run.id,
+            request: { name: run.name, environment: run.environment, status: 'ABORTED', abortReason: reason },
+          }));
+        }
+      });
+  }
+
+  updateStatus(run: TestRun, status: 'IN_PROGRESS' | 'COMPLETED'): void {
     this.store.dispatch(
       TestRunActions.updateTestRun({
         projectId: this.projectId,

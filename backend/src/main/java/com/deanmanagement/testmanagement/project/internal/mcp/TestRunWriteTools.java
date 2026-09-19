@@ -103,7 +103,7 @@ public class TestRunWriteTools {
                     Close a test run and return its final counts.
                     status: COMPLETED (default) when you executed what you set out to, or ABORTED
                     when something blocked you part-way — an aborted run is a more honest record
-                    than one left open forever.
+                    than one left open forever. ABORTED needs a reason saying what blocked you.
                     Results still PENDING are reported back rather than refused. A completed run
                     cannot be reopened from here; run again in a new run instead.
                     """,
@@ -113,7 +113,9 @@ public class TestRunWriteTools {
     public McpDtos.CompletedTestRun completeTestRun(
             @McpToolParam(description = "Test run UUID or key, e.g. PROJ-Run-7") String runIdOrKey,
             @McpToolParam(description = "COMPLETED (default) or ABORTED", required = false)
-            TestRunStatus status) {
+            TestRunStatus status,
+            @McpToolParam(description = "Why the run is aborted; required with ABORTED", required = false)
+            String reason) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
@@ -122,6 +124,9 @@ public class TestRunWriteTools {
         if (target != TestRunStatus.COMPLETED && target != TestRunStatus.ABORTED) {
             throw new McpToolException("status must be COMPLETED or ABORTED. To start a run, "
                     + "record a result on it.");
+        }
+        if (target == TestRunStatus.ABORTED && (reason == null || reason.isBlank())) {
+            throw new McpToolException("Aborting needs a reason: say what blocked the run.");
         }
 
         UUID runId = McpRunReferences.resolve(testRunRepository, caller.projectId(), runIdOrKey);
@@ -145,7 +150,7 @@ public class TestRunWriteTools {
         if (run.status() == TestRunStatus.PLANNED) {
             run = runSupport.transition(caller, run, TestRunStatus.IN_PROGRESS);
         }
-        return McpRunSupport.counts(runSupport.transition(caller, run, target));
+        return McpRunSupport.counts(runSupport.transition(caller, run, target, reason));
     }
 
 }

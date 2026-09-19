@@ -712,10 +712,12 @@ comment stays an `f`.
 **Complete** closes the run. If any results failed or were blocked, you are told how many and
 what the resulting run status will be before you confirm. A run with everything passing says so.
 
-**Abort** stops a run early — use it when the environment collapsed, not when tests failed.
+**Abort** stops a run early — use it when the environment collapsed, not when tests failed. It
+asks for a reason, which is shown on the run and kept in its history.
 
-**Reopen** on a completed run requires a written reason, which is recorded against the run. This
-is intentional friction: reopening changes history, so the record says why.
+**Reopen** on a completed or aborted run requires a written reason, which is recorded against the
+run. This is intentional friction: reopening changes history, so the record says why. A run never
+goes back to *Planned*, and a closed run is reopened before it can be closed the other way.
 
 **Clone** copies a run's case selection into a fresh run with a new name and environment, without
 copying results. This is how you re-test the same set next release. The dialog starts with the

@@ -105,7 +105,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login", "Open page");
         McpDtos.CreatedTestRun run = runOf(login);
-        testRunWriteTools.completeTestRun(run.key(), null);
+        testRunWriteTools.completeTestRun(run.key(), null, null);
 
         assertThatThrownBy(() -> stepRecordingTools.recordStepResult(run.key(), 1,
                 TestResultStatus.PASSED, login.id(), null, null))
@@ -182,7 +182,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun source = runOf(first, second);
         resultRecordingTools.recordTestResult(source.key(), TestResultStatus.FAILED, first.id(), null,
                 "broken", null, null);
-        testRunWriteTools.completeTestRun(source.key(), null);
+        testRunWriteTools.completeTestRun(source.key(), null, null);
 
         McpDtos.CreatedTestRun clone = maintenanceTools.cloneTestRun(source.key(), "Re-test", null);
 

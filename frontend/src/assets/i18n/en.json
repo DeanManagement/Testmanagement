@@ -400,7 +400,15 @@
       "allStepsPassed": "Mark every step Passed (and the result)",
       "focusComment": "Focus the comment field",
       "showHelp": "Show this help"
-    }
+    },
+    "abortDialog": {
+      "title": "Abort Test Run",
+      "reason": "Why is the run aborted?",
+      "reasonRequired": "A reason is required to abort",
+      "confirm": "Abort run",
+      "cancel": "Cancel"
+    },
+    "abortReason": "Abort reason"
   },
   "testPlan": {
     "list": {

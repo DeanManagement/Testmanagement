@@ -20,8 +20,15 @@ public record UpdateTestRunRequest(
         UUID testPlanId,
         UUID environmentId,
         /* PRD-035: keyed by field name; see CustomFieldValueWriter for null and clearing rules. */
-        Map<String, Object> customFields
+        Map<String, Object> customFields,
+        /* Required when status is ABORTED (bug report efb94f3f). */
+        String abortReason
 ) {
+    public UpdateTestRunRequest(String name, String environment, TestRunStatus status, String reopenReason,
+                                UUID testPlanId, UUID environmentId, Map<String, Object> customFields) {
+        this(name, environment, status, reopenReason, testPlanId, environmentId, customFields, null);
+    }
+
     public UpdateTestRunRequest(String name, String environment, TestRunStatus status, String reopenReason,
                                 UUID testPlanId) {
         this(name, environment, status, reopenReason, testPlanId, null, null);

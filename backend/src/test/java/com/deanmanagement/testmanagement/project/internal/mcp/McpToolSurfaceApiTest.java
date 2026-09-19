@@ -739,7 +739,7 @@ class McpToolSurfaceApiTest {
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.FAILED, second.id(), null,
                 "Schaltfläche reagiert nicht", null, null);
 
-        McpDtos.CompletedTestRun done = testRunWriteTools.completeTestRun(run.id().toString(), null);
+        McpDtos.CompletedTestRun done = testRunWriteTools.completeTestRun(run.id().toString(), null, null);
         assertThat(done.status()).isEqualTo(TestRunStatus.COMPLETED);
         assertThat(done.total()).isEqualTo(2);
         assertThat(done.passed()).isEqualTo(1);
@@ -827,12 +827,23 @@ class McpToolSurfaceApiTest {
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.CreatedTestRun run =
                 testRunWriteTools.createTestRun("Lauf", null, null, null, null);
-        testRunWriteTools.completeTestRun(run.id().toString(), null);
+        testRunWriteTools.completeTestRun(run.id().toString(), null, null);
 
         assertThatThrownBy(() ->
-                testRunWriteTools.completeTestRun(run.id().toString(), TestRunStatus.ABORTED))
+                testRunWriteTools.completeTestRun(run.id().toString(), TestRunStatus.ABORTED, "Environment down"))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("already COMPLETED");
+    }
+
+    /** An aborted run says why (bug report efb94f3f); an agent has to say what blocked it. */
+    @Test
+    void abortingNeedsAReason() {
+        authenticateAs(project, ProjectRole.TESTER, "agent");
+        McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Lauf", null, null, null, null);
+
+        assertThatThrownBy(() -> testRunWriteTools.completeTestRun(run.id().toString(), TestRunStatus.ABORTED, " "))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("reason");
     }
 
     /**
@@ -850,7 +861,7 @@ class McpToolSurfaceApiTest {
                 new UpdateTestRunRequest("Vom Menschen umbenannt", "produktion", null, null, null),
                 null);
 
-        testRunWriteTools.completeTestRun(run.id().toString(), null);
+        testRunWriteTools.completeTestRun(run.id().toString(), null, null);
 
         McpDtos.TestRunDetail after = testRunReadTools.getTestRun(run.id().toString(), null);
         assertThat(after.name()).isEqualTo("Vom Menschen umbenannt");
@@ -864,7 +875,7 @@ class McpToolSurfaceApiTest {
         McpDtos.CreatedTestRun run =
                 testRunWriteTools.createTestRun("Nie begonnen", null, null, null, null);
 
-        testRunWriteTools.completeTestRun(run.id().toString(), null);
+        testRunWriteTools.completeTestRun(run.id().toString(), null, null);
 
         McpDtos.TestRunDetail after = testRunReadTools.getTestRun(run.id().toString(), null);
         assertThat(after.startTime()).isNotNull();
@@ -886,7 +897,7 @@ class McpToolSurfaceApiTest {
         assertThat(testRunReadTools.getTestRun(run.key(), null).id()).isEqualTo(run.id());
         assertThat(resultRecordingTools.recordTestResult(run.key(), TestResultStatus.PASSED,
                 testCase.id(), null, null, null, null).added()).isFalse();
-        assertThat(testRunWriteTools.completeTestRun(run.key(), null).status())
+        assertThat(testRunWriteTools.completeTestRun(run.key(), null, null).status())
                 .isEqualTo(TestRunStatus.COMPLETED);
     }
 
@@ -1029,7 +1040,7 @@ class McpToolSurfaceApiTest {
                 Set.of(testCase.id()), null, null);
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.PASSED, testCase.id(), null,
                 null, null, null);
-        testRunWriteTools.completeTestRun(run.id().toString(), null);
+        testRunWriteTools.completeTestRun(run.id().toString(), null, null);
 
         assertThatThrownBy(() -> resultRecordingTools.recordTestResult(run.id().toString(),
                 TestResultStatus.FAILED, testCase.id(), null, "zu spät", null, null))
@@ -1044,8 +1055,8 @@ class McpToolSurfaceApiTest {
         McpDtos.CreatedTestRun run =
                 testRunWriteTools.createTestRun("Leerlauf", null, null, null, null);
 
-        testRunWriteTools.completeTestRun(run.id().toString(), null);
-        McpDtos.CompletedTestRun again = testRunWriteTools.completeTestRun(run.id().toString(), null);
+        testRunWriteTools.completeTestRun(run.id().toString(), null, null);
+        McpDtos.CompletedTestRun again = testRunWriteTools.completeTestRun(run.id().toString(), null, null);
 
         assertThat(again.status()).isEqualTo(TestRunStatus.COMPLETED);
     }
@@ -1061,7 +1072,7 @@ class McpToolSurfaceApiTest {
                 null, null, null);
 
         McpDtos.CompletedTestRun aborted =
-                testRunWriteTools.completeTestRun(run.id().toString(), TestRunStatus.ABORTED);
+                testRunWriteTools.completeTestRun(run.id().toString(), TestRunStatus.ABORTED, "Environment down");
 
         assertThat(aborted.status()).isEqualTo(TestRunStatus.ABORTED);
         assertThat(aborted.pending()).isEqualTo(1);

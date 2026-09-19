@@ -53,6 +53,8 @@ export interface TestRun {
   executorName: string | null;
   completedByName: string | null;
   reopenReason: string | null;
+  /** Why the run was aborted; set only while it is ABORTED. */
+  abortReason?: string | null;
   testPlanId: string | null;
   testPlanName: string | null;
   allureReportId: string | null;
@@ -109,6 +111,8 @@ export interface UpdateTestRunRequest {
   environment?: string;
   status?: TestRunStatus;
   reopenReason?: string;
+  /** Required when status is ABORTED. */
+  abortReason?: string;
 }
 
 export interface CompletionInfo {

@@ -76,7 +76,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun run = runOf(login);
         resultRecordingTools.recordTestResult(run.key(), TestResultStatus.PASSED, login.id(), null,
                 null, null, null);
-        testRunWriteTools.completeTestRun(run.key(), null);
+        testRunWriteTools.completeTestRun(run.key(), null, null);
 
         McpDtos.Dashboard dashboard = reportingTools.getProjectDashboard();
 
@@ -153,7 +153,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
                              Map<McpDtos.CreatedTestCase, TestResultStatus> outcomes) {
         outcomes.forEach((testCase, status) -> resultRecordingTools.recordTestResult(run.key(),
                 status, testCase.id(), null, null, null, null));
-        testRunWriteTools.completeTestRun(run.key(), null);
+        testRunWriteTools.completeTestRun(run.key(), null, null);
     }
 
     // --- flaky -----------------------------------------------------------------------------
@@ -177,7 +177,7 @@ class McpInsightToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun run = runOf(login);
         resultRecordingTools.recordTestResult(run.key(), TestResultStatus.FAILED, login.id(), null,
                 "broken", null, null);
-        testRunWriteTools.completeTestRun(run.key(), null);
+        testRunWriteTools.completeTestRun(run.key(), null, null);
 
         McpDtos.SuiteReport report = reportingTools.getTestSuiteReport(suiteId);
 
