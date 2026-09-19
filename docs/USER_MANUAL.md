@@ -883,6 +883,26 @@ conservative, because under-reporting beats calling a team's tests flaky on thin
 A project Admin can sync a `flaky` label onto the offending cases. This is off by default,
 because labels are user-owned.
 
+### Activity and history
+
+Everything that changes in a project is recorded: who did it, when, and to what. The project's
+**Activity** page lists it all; the **History** card on a test case, run, plan, suite or bug report
+shows that object's part, comments on it included.
+
+An edit lists each field it changed as *Field: old → new*, so *Priority: Medium → High* or *Status:
+New → Closed*. A reason given for a status change is shown with it. Long texts are cut after 200
+characters; the version history of a test case keeps its full wording. A comment names the test
+case or run it was written on.
+
+An entry links to its object as long as the object exists. After a delete, the entry keeps the
+name but no longer links.
+
+On the Activity page, filter by date range, person, kind of object and action, and show the newest
+or the oldest first. The filters are in the URL, so a view can be bookmarked. **Export CSV** saves
+the filtered entries, at most 10,000 rows.
+
+Entries recorded before this version show what happened but not which fields changed.
+
 ---
 
 ## 12. Bug reports

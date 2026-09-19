@@ -121,6 +121,19 @@
           ]
         },
         {
+          "heading": "Activity and history",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "The project's Activity page lists every change: who made it, when, and to what. An edit shows each changed field as old → new, and the entry links to the object while it exists. The History card on a test case, run, plan, suite or bug report shows that object's part, comments included."
+            },
+            {
+              "type": "p",
+              "text": "Filter the Activity page by date range, person, kind of object and action, sort it newest or oldest first, and export what you see as CSV."
+            }
+          ]
+        },
+        {
           "heading": "Comparing two runs",
           "blocks": [
             {

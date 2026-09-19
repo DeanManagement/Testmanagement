@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-19 |
 | **Priority** | P2 — the history says *that* something changed, never *what*; three reports ask for the same missing data |
@@ -182,3 +182,37 @@ version have no field details.
 - [ ] Activity can be filtered by date range, user, object type and action, sorted either way, and exported as CSV.
 - [ ] Activity and history sentences are grammatical in German and English (whole-sentence templates).
 - [ ] Backend, migration and frontend tests pass; en/de translations and USER_MANUAL updated.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **Whole-sentence activity text** had already shipped in `a71a07b` (report `cd1412a5`); this PRD's
+  views use it unchanged.
+- **Migration V68**, not V63: PRD-045 took V66 and V67.
+- **`link` instead of `entityExists`.** Each entry carries `link: {type, id}`, or null. The server
+  resolves the target (the parent for a comment or attachment, otherwise the object) and checks it
+  still exists, with one query per object type per page. The UI only maps the type to a route.
+- **Comments on a result** have the run as their parent, since a result has no page of its own, and
+  are named "run · case". **Attachments** (PRD-044) get their test case as parent too.
+- **An object's history includes what lives inside it**: `?entityId=` matches the entry's object or
+  its parent, so a case's history shows the comments on it.
+- **A bug's status reason** is now the whole `details`; the transition is in `changes`. Entries
+  written before keep their old "OLD -> NEW: reason" text.
+- **What each update records:** bugs: every text field, priority, status, resolution, duplicate,
+  assignee and environment. Runs: name, status, environment and plan (an update does not change the
+  executor). Plans: name, description, status, target date, assignee and the four gate values.
+  Suites: name, description, and membership as the case count. Cases: title, description,
+  preconditions, priority, status, labels, estimate, and `version vN → vN+1` for everything the
+  version history holds. Custom fields are not tracked.
+- **Activity filters:** `entityType`, `userId` and `action` can be repeated; `from`/`to` are ISO
+  instants, and the SPA sends local midnights so "to" covers its whole day; `sort=asc|desc`.
+- **Two bugs found and fixed on the way:** "Load more" on the Activity page and the History cards
+  never went away, because the SPA read a top-level `last` the paged response doesn't have. And
+  `SecurityAuditorAware` only read the principal when it was a plain String, so `createdBy` /
+  `updatedBy` stayed empty for any other authentication type. It now reads the authentication's
+  name, like the controllers do.
+- **Bug saves are flushed** before the response is built, so `updatedByName` is already the person
+  who just saved.
+
+Not tested: the 10,000-row export cap, and PostgreSQL.

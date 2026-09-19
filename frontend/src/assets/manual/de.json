@@ -121,6 +121,19 @@
           ]
         },
         {
+          "heading": "Aktivität und Verlauf",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Die Seite Aktivität des Projekts zeigt jede Änderung: wer sie gemacht hat, wann und woran. Bei einer Änderung steht jedes geänderte Feld als alt → neu, und der Eintrag verlinkt auf das Objekt, solange es existiert. Die Karte Verlauf auf einem Testfall, Lauf, Plan, einer Suite oder einer Fehlermeldung zeigt den Teil dieses Objekts, Kommentare eingeschlossen."
+            },
+            {
+              "type": "p",
+              "text": "Filtere die Aktivität nach Zeitraum, Person, Art des Objekts und Aktion, sortiere die neuesten oder ältesten zuerst und exportiere, was du siehst, als CSV."
+            }
+          ]
+        },
+        {
           "heading": "Zwei Läufe vergleichen",
           "blocks": [
             {
