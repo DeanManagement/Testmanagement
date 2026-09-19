@@ -7,32 +7,66 @@
       </a>
       <h1>{{ 'activity.title' | translate }}</h1>
     </div>
+    <button mat-stroked-button (click)="exportCsv()" data-test-id="activity-export">
+      <mat-icon>download</mat-icon>
+      {{ 'activity.export' | translate }}
+    </button>
+  </div>
+
+  <div class="filters" data-test-id="activity-filters">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'activity.filter.from' | translate }}</mat-label>
+      <input matInput type="date" [(ngModel)]="fromDate" (change)="applyFilters()" data-test-id="activity-from" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'activity.filter.to' | translate }}</mat-label>
+      <input matInput type="date" [(ngModel)]="toDate" (change)="applyFilters()" data-test-id="activity-to" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'activity.filter.user' | translate }}</mat-label>
+      <mat-select multiple [(ngModel)]="userFilter" (selectionChange)="applyFilters()" data-test-id="activity-user">
+        @for (member of members; track member.userId) {
+          <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'activity.filter.type' | translate }}</mat-label>
+      <mat-select multiple [(ngModel)]="typeFilter" (selectionChange)="applyFilters()" data-test-id="activity-type">
+        @for (type of entityTypes; track type) {
+          <mat-option [value]="type">{{ 'activity.entityTypes.' + type | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'activity.filter.action' | translate }}</mat-label>
+      <mat-select multiple [(ngModel)]="actionFilter" (selectionChange)="applyFilters()" data-test-id="activity-action">
+        @for (action of actions; track action) {
+          <mat-option [value]="action">{{ 'activity.actions.' + action | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-button-toggle-group [(ngModel)]="sort" (change)="applyFilters()" hideSingleSelectionIndicator
+                             [attr.aria-label]="'activity.filter.order' | translate" data-test-id="activity-sort">
+      <mat-button-toggle value="desc">{{ 'activity.filter.newest' | translate }}</mat-button-toggle>
+      <mat-button-toggle value="asc">{{ 'activity.filter.oldest' | translate }}</mat-button-toggle>
+    </mat-button-toggle-group>
+    @if (hasFilters) {
+      <button mat-button (click)="clearFilters()" data-test-id="activity-clear">{{ 'activity.filter.clear' | translate }}</button>
+    }
   </div>
 
   @if (entries.length === 0 && !loading) {
     <div class="empty-state">
       <mat-icon>history</mat-icon>
-      <p>{{ 'activity.empty' | translate }}</p>
+      <p>{{ (hasFilters ? 'activity.noMatches' : 'activity.empty') | translate }}</p>
     </div>
   }
 
   @if (entries.length > 0) {
     <div class="activity-list">
       @for (entry of entries; track entry.id) {
-        <div class="activity-item tm-card">
-          <div class="activity-icon">
-            <mat-icon>{{ actionIcon(entry.action) }}</mat-icon>
-          </div>
-          <div class="activity-content">
-            <div class="activity-summary">
-              {{ sentence(entry) }}
-            </div>
-            @if (entry.details) {
-              <p class="activity-details">{{ entry.details }}</p>
-            }
-            <span class="activity-time">{{ entry.createdAt | localizedDate:'medium' }}</span>
-          </div>
-        </div>
+        <app-activity-entry class="activity-item tm-card" [entry]="entry" [projectId]="projectId" />
       }
     </div>
   }

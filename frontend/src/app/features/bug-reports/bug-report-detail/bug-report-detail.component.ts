@@ -19,12 +19,14 @@ import { ALL_BUG_STATUSES, BugReport, BugReportStatus, ChangeBugStatusRequest } 
 import { ChangeBugStatusDialogComponent, ChangeBugStatusDialogData } from '../change-bug-status-dialog/change-bug-status-dialog.component';
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
+import { EntityHistoryComponent } from '../../../shared/components/entity-history/entity-history.component';
 
 @Component({
   selector: 'app-bug-report-detail',
   standalone: true,
   imports: [
     CustomFieldsDisplayComponent,
+    EntityHistoryComponent,
     AsyncPipe,
     LocalizedDatePipe,
     LowerCasePipe,

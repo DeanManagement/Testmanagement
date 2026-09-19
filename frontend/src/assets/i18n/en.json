@@ -591,7 +591,55 @@
       "CLONED": "{{user}} cloned {{object}}",
       "MOVED": "{{user}} moved {{object}}"
     },
-    "named": "{{type}} \"{{name}}\""
+    "named": "{{type}} \"{{name}}\"",
+    "export": "Export CSV",
+    "noMatches": "No activity matches these filters.",
+    "filter": {
+      "from": "From",
+      "to": "To",
+      "user": "User",
+      "type": "Object",
+      "action": "Action",
+      "order": "Order",
+      "newest": "Newest first",
+      "oldest": "Oldest first",
+      "clear": "Clear filters"
+    },
+    "actions": {
+      "CREATED": "Created",
+      "UPDATED": "Updated",
+      "DELETED": "Deleted",
+      "STATUS_CHANGED": "Status changed",
+      "COMPLETED": "Completed",
+      "REOPENED": "Reopened",
+      "CLONED": "Cloned",
+      "MOVED": "Moved"
+    },
+    "fields": {
+      "title": "Title",
+      "name": "Name",
+      "description": "Description",
+      "preconditions": "Preconditions",
+      "stepsToReproduce": "Steps to Reproduce",
+      "expectedBehavior": "Expected Behavior",
+      "actualBehavior": "Actual Behavior",
+      "priority": "Priority",
+      "status": "Status",
+      "resolution": "Resolution",
+      "duplicateOf": "Duplicate of",
+      "assignee": "Assignee",
+      "environment": "Environment",
+      "testPlan": "Test plan",
+      "targetDate": "Target date",
+      "gateMinPassRate": "Gate: minimum pass rate",
+      "gateMaxBlockerBugs": "Gate: maximum blocker bugs",
+      "gateMinCoverage": "Gate: minimum coverage",
+      "gateMaxFlaky": "Gate: maximum flaky tests",
+      "testCases": "Test cases",
+      "labels": "Labels",
+      "estimateMinutes": "Estimate (minutes)",
+      "version": "Version"
+    }
   },
   "projectDashboard": {
     "title": "Dashboard",
@@ -703,7 +751,8 @@
       "reportedBy": "Reported by",
       "linkedItems": "Linked Items",
       "testCase": "Test Case",
-      "testRun": "Test Run"
+      "testRun": "Test Run",
+      "updated": "Updated by {{name}}, {{date}}"
     },
     "statusChange": {
       "title": "Change Status",

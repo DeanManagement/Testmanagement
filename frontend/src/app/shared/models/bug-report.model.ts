@@ -42,6 +42,9 @@ export interface BugReport {
   assigneeName: string | null;
   createdBy: string;
   reporterName: string | null;
+  /** PRD-046: who last changed it. */
+  updatedBy: string | null;
+  updatedByName: string | null;
   createdAt: string;
   updatedAt: string;
   projectKey: string | null;

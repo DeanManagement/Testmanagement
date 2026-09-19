@@ -591,7 +591,55 @@
       "CLONED": "{{user}} hat {{object}} geklont",
       "MOVED": "{{user}} hat {{object}} verschoben"
     },
-    "named": "{{type}} «{{name}}»"
+    "named": "{{type}} «{{name}}»",
+    "export": "Als CSV exportieren",
+    "noMatches": "Keine Aktivität passt zu diesen Filtern.",
+    "filter": {
+      "from": "Von",
+      "to": "Bis",
+      "user": "Person",
+      "type": "Objekt",
+      "action": "Aktion",
+      "order": "Reihenfolge",
+      "newest": "Neueste zuerst",
+      "oldest": "Älteste zuerst",
+      "clear": "Filter zurücksetzen"
+    },
+    "actions": {
+      "CREATED": "Erstellt",
+      "UPDATED": "Geändert",
+      "DELETED": "Gelöscht",
+      "STATUS_CHANGED": "Status geändert",
+      "COMPLETED": "Abgeschlossen",
+      "REOPENED": "Wieder geöffnet",
+      "CLONED": "Kopiert",
+      "MOVED": "Verschoben"
+    },
+    "fields": {
+      "title": "Titel",
+      "name": "Name",
+      "description": "Beschreibung",
+      "preconditions": "Vorbedingungen",
+      "stepsToReproduce": "Schritte zur Reproduktion",
+      "expectedBehavior": "Erwartetes Verhalten",
+      "actualBehavior": "Tatsächliches Verhalten",
+      "priority": "Priorität",
+      "status": "Status",
+      "resolution": "Lösung",
+      "duplicateOf": "Duplikat von",
+      "assignee": "Zugewiesen an",
+      "environment": "Umgebung",
+      "testPlan": "Testplan",
+      "targetDate": "Zieldatum",
+      "gateMinPassRate": "Gate: minimale Erfolgsquote",
+      "gateMaxBlockerBugs": "Gate: maximale Blocker-Fehler",
+      "gateMinCoverage": "Gate: minimale Abdeckung",
+      "gateMaxFlaky": "Gate: maximale instabile Tests",
+      "testCases": "Testfälle",
+      "labels": "Labels",
+      "estimateMinutes": "Schätzung (Minuten)",
+      "version": "Version"
+    }
   },
   "projectDashboard": {
     "title": "Dashboard",
@@ -703,7 +751,8 @@
       "reportedBy": "Gemeldet von",
       "linkedItems": "Verknüpfte Elemente",
       "testCase": "Testfall",
-      "testRun": "Testlauf"
+      "testRun": "Testlauf",
+      "updated": "Geändert von {{name}}, {{date}}"
     },
     "statusChange": {
       "title": "Status ändern",

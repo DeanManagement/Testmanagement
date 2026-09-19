@@ -1,0 +1,30 @@
+<div class="entry">
+  <div class="entry-icon">
+    <mat-icon aria-hidden="true">{{ icon }}</mat-icon>
+  </div>
+  <div class="entry-content">
+    <div class="entry-summary" data-test-id="activity-sentence">
+      @if (route; as target) {
+        <a [routerLink]="target" class="entry-link" data-test-id="activity-link">{{ sentence }}</a>
+      } @else {
+        {{ sentence }}
+      }
+    </div>
+    @if (entry.details) {
+      <p class="entry-details">{{ entry.details }}</p>
+    }
+    @if (entry.changes.length) {
+      <ul class="entry-changes" data-test-id="activity-changes">
+        @for (change of entry.changes; track change.field) {
+          <li>
+            <span class="change-field">{{ fieldLabel(change) }}:</span>
+            <span class="change-from">{{ valueLabel(change, change.from) }}</span>
+            <span aria-hidden="true">→</span>
+            <span class="change-to">{{ valueLabel(change, change.to) }}</span>
+          </li>
+        }
+      </ul>
+    }
+    <span class="entry-time">{{ entry.createdAt | localizedDate:'medium' }}</span>
+  </div>
+</div>

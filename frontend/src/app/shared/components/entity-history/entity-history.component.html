@@ -5,20 +5,7 @@
 @if (entries.length > 0) {
   <div class="history-list">
     @for (entry of entries; track entry.id) {
-      <div class="history-item">
-        <div class="history-icon">
-          <mat-icon>{{ actionIcon(entry.action) }}</mat-icon>
-        </div>
-        <div class="history-content">
-          <div class="history-summary">
-              {{ sentence(entry) }}
-          </div>
-          @if (entry.details) {
-            <p class="history-details">{{ entry.details }}</p>
-          }
-          <span class="history-time">{{ entry.createdAt | localizedDate:'medium' }}</span>
-        </div>
-      </div>
+      <app-activity-entry class="history-item" [entry]="entry" [projectId]="projectId" [currentEntityId]="entityId" />
     }
   </div>
 }

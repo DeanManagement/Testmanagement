@@ -1,3 +1,25 @@
+.page-header-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+
+  h1 {
+    margin: 0;
+  }
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  mat-form-field {
+    width: 170px;
+  }
+}
+
 .activity-list {
   display: flex;
   flex-direction: column;
@@ -5,61 +27,8 @@
 }
 
 .activity-item {
-  display: flex;
-  gap: 16px;
-  padding: 16px;
-  align-items: flex-start;
-}
-
-.activity-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: var(--tm-subtle-bg);
-  flex-shrink: 0;
-
-  mat-icon {
-    font-size: 20px;
-    width: 20px;
-    height: 20px;
-  }
-}
-
-.activity-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.activity-summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: baseline;
-}
-
-.activity-user {
-  font-weight: 500;
-}
-
-.activity-entity-name {
-  font-weight: 500;
-  color: var(--tm-primary);
-}
-
-.activity-details {
-  margin: 4px 0 0;
-  font-size: 0.875rem;
-  color: var(--tm-text-secondary);
-}
-
-.activity-time {
-  font-size: 0.75rem;
-  color: var(--tm-text-secondary);
-  margin-top: 4px;
   display: block;
+  padding: 16px;
 }
 
 .load-more {

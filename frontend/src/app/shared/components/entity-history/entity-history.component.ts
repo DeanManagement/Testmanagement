@@ -2,41 +2,36 @@ import { ChangeDetectorRef, Component, DestroyRef, inject, Input, OnChanges } fr
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { take } from 'rxjs/operators';
 import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
-import { TranslateModule, TranslateService } from '@ngx-translate/core';
+import { TranslateModule } from '@ngx-translate/core';
 import { ActivityApiService } from '../../../core/services/activity-api.service';
-import { activitySentence } from '../../utils/activity-sentence';
 import { AuditEntry } from '../../models/activity.model';
-import { LocalizedDatePipe } from '../../pipes/localized-date.pipe';
+import { ActivityEntryComponent } from '../activity-entry/activity-entry.component';
 
+const PAGE_SIZE = 10;
+
+/** One object's history, newest first, including comments on it (PRD-046). */
 @Component({
   selector: 'app-entity-history',
   standalone: true,
-  imports: [
-    LocalizedDatePipe,
-    MatButtonModule,
-    MatIconModule,
-    MatProgressSpinnerModule,
-    TranslateModule,
-  ],
+  imports: [ActivityEntryComponent, MatButtonModule, MatProgressSpinnerModule, TranslateModule],
   templateUrl: './entity-history.component.html',
   styleUrl: './entity-history.component.scss',
 })
 export class EntityHistoryComponent implements OnChanges {
   private readonly activityApi = inject(ActivityApiService);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly translate = inject(TranslateService);
   private readonly destroyRef = inject(DestroyRef);
 
   @Input({ required: true }) projectId!: string;
   @Input({ required: true }) entityId!: string;
+  /** When the object last changed: a new value reloads the history, e.g. after a status change. */
+  @Input() changedAt: string | null = null;
 
   entries: AuditEntry[] = [];
   loading = false;
   hasMore = true;
   private page = 0;
-  private readonly pageSize = 10;
 
   ngOnChanges(): void {
     this.entries = [];
@@ -50,40 +45,21 @@ export class EntityHistoryComponent implements OnChanges {
   loadMore(): void {
     if (this.loading || !this.hasMore) return;
     this.loading = true;
-    this.activityApi.getEntityHistory(this.projectId, this.entityId, this.page, this.pageSize).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: (response) => {
-        this.entries = [...this.entries, ...response.content];
-        this.hasMore = !response.last;
-        this.page++;
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-      error: () => {
-        this.loading = false;
-        this.cdr.detectChanges();
-      },
-    });
-  }
-
-  sentence(entry: AuditEntry): string {
-    return activitySentence(this.translate, {
-      actor: entry.userDisplayName || this.translate.instant('activity.system'),
-      action: entry.action,
-      entityType: entry.entityType,
-      entityName: entry.entityName,
-    });
-  }
-
-  actionIcon(action: string): string {
-    switch (action) {
-      case 'CREATED': return 'add_circle';
-      case 'UPDATED': return 'edit';
-      case 'DELETED': return 'delete';
-      case 'STATUS_CHANGED': return 'swap_horiz';
-      case 'COMPLETED': return 'check_circle';
-      case 'REOPENED': return 'replay';
-      case 'CLONED': return 'content_copy';
-      default: return 'info';
-    }
+    this.activityApi.getActivity(this.projectId, { entityId: this.entityId, page: this.page, size: PAGE_SIZE })
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (response) => {
+          this.entries = [...this.entries, ...response.content];
+          // The page metadata, not a top-level "last": the API sends the PagedModel shape.
+          this.hasMore = response.page.number + 1 < response.page.totalPages;
+          this.page++;
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+        error: () => {
+          this.loading = false;
+          this.cdr.detectChanges();
+        },
+      });
   }
 }

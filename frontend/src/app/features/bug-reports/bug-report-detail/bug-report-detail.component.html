@@ -64,6 +64,12 @@
           <mat-icon class="meta-icon">schedule</mat-icon>
           {{ bug.createdAt | localizedDate:'medium' }}
         </span>
+        @if (bug.updatedAt !== bug.createdAt) {
+          <span class="meta-item" data-test-id="bug-report-detail-updated">
+            <mat-icon class="meta-icon">update</mat-icon>
+            {{ 'bugReport.detail.updated' | translate: { name: bug.updatedByName ?? ('activity.system' | translate), date: (bug.updatedAt | localizedDate:'medium') } }}
+          </span>
+        }
       </div>
       <app-custom-fields-display [values]="bug.customFields" />
 
@@ -138,6 +144,11 @@
           }
         </div>
       }
+
+      <div class="detail-section tm-card" data-test-id="bug-report-history">
+        <h3>{{ 'history.title' | translate }}</h3>
+        <app-entity-history [projectId]="projectId" [entityId]="bug.id" [changedAt]="bug.updatedAt" />
+      </div>
     </div>
   </div>
 }
