@@ -67,7 +67,8 @@ public final class GherkinWriter {
         }
         for (RuleBlock rule : feature.rules()) {
             out.blank();
-            out.line(1, dialect.getRuleKeywords().getFirst() + ": " + oneLine(rule.name()));
+            // The last rule keyword: German lists the English "Rule" first, then "Regel".
+            out.line(1, dialect.getRuleKeywords().getLast() + ": " + oneLine(rule.name()));
             String ruleBackground = ruleBackground(rule.cases(), featureBackground, dialect);
             String inherited = join(featureBackground, ruleBackground);
             writeBackground(out, 2, ruleBackground, dialect);
@@ -285,17 +286,36 @@ public final class GherkinWriter {
         out.blank();
         String title = GherkinFileParser.DEFAULT_EXAMPLES_NAME.equals(name) ? "" : " " + oneLine(name);
         out.line(depth, dialect.getExamplesKeywords().getFirst() + ":" + title);
-        out.line(depth + 1, tableRow(new ArrayList<>(header)));
+        List<List<String>> rows = new ArrayList<>();
+        rows.add(new ArrayList<>(header));
         for (SaveParameterSetRequest set : sets) {
             Map<String, String> values = new LinkedHashMap<>(set.values());
-            out.line(depth + 1, tableRow(header.stream().map(k -> values.getOrDefault(k, "")).toList()));
+            rows.add(header.stream().map(k -> values.getOrDefault(k, "")).toList());
         }
+        writeTable(out, depth + 1, rows);
     }
 
-    private static String tableRow(List<String> cells) {
-        return "| " + String.join(" | ", cells.stream()
-                .map(c -> c.replace("\\", "\\\\").replace("|", "\\|").replace("\n", "\\n"))
-                .toList()) + " |";
+    /** Columns padded to a common width, as Cucumber's own formatter writes them: files are diffed. */
+    private static void writeTable(Out out, int depth, List<List<String>> rows) {
+        List<List<String>> escaped = rows.stream()
+                .map(row -> row.stream()
+                        .map(c -> c.replace("\\", "\\\\").replace("|", "\\|").replace("\n", "\\n"))
+                        .toList())
+                .toList();
+        int columns = escaped.getFirst().size();
+        int[] widths = new int[columns];
+        for (List<String> row : escaped) {
+            for (int i = 0; i < columns; i++) {
+                widths[i] = Math.max(widths[i], row.get(i).length());
+            }
+        }
+        for (List<String> row : escaped) {
+            StringBuilder line = new StringBuilder("|");
+            for (int i = 0; i < columns; i++) {
+                line.append(' ').append(row.get(i)).append(" ".repeat(widths[i] - row.get(i).length())).append(" |");
+            }
+            out.line(depth, line.toString());
+        }
     }
 
     /** {@code {x}} → {@code <x>} for the case's parameters; other braces are not placeholders. */

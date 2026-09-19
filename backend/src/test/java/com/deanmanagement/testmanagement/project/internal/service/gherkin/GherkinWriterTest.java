@@ -143,4 +143,32 @@ class GherkinWriterTest {
                     .contains("Scenario: First second");
         }
     }
+
+    @Nested
+    class Layout {
+
+        @Test
+        void examplesColumnsAreAligned() {
+            ExportCase c = new ExportCase("P-1", "Convert", null, null, Priority.MEDIUM, Set.of(),
+                    List.of(step("When I convert {amount}")),
+                    List.of(new SaveParameterSetRequest("Example #1", Map.of("amount", "1"), 0),
+                            new SaveParameterSetRequest("Example #2", Map.of("amount", "100000"), 1)));
+
+            assertThat(write(c)).contains("""
+                          | amount |
+                          | 1      |
+                          | 100000 |
+                    """);
+        }
+
+        @Test
+        void aGermanRuleUsesTheGermanKeyword() {
+            ExportCase c = exportCase("P-1", "S", List.of(step("Angenommen ein Benutzer")));
+
+            String feature = GherkinWriter.write(new FeatureDoc("Anmeldung", List.of(),
+                    List.of(new RuleBlock("Sperre", List.of(c))), List.of()));
+
+            assertThat(feature).contains("  Regel: Sperre\n");
+        }
+    }
 }
