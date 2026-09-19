@@ -1,11 +1,14 @@
 -- PRD-045: bug keys, the NEW intake status, resolutions, and a per-project form template.
 
 -- A per-project, never-reused key like SPI-BUG-12, backfilled in creation order (the V24 pattern).
+-- Bugs created at the same instant are ordered by id: counting only created_at <= would give both
+-- the same number, and the unique index below would fail the migration.
 ALTER TABLE projects ADD COLUMN next_bug_number INT NOT NULL DEFAULT 1;
 ALTER TABLE bug_reports ADD COLUMN bug_key VARCHAR(40);
 UPDATE bug_reports b SET bug_key = (
     SELECT p.project_key || '-BUG-' || CAST(
-        (SELECT COUNT(*) FROM bug_reports b2 WHERE b2.project_id = b.project_id AND b2.created_at <= b.created_at) AS VARCHAR
+        (SELECT COUNT(*) FROM bug_reports b2 WHERE b2.project_id = b.project_id
+            AND (b2.created_at < b.created_at OR (b2.created_at = b.created_at AND b2.id <= b.id))) AS VARCHAR
     ) FROM projects p WHERE p.id = b.project_id
 );
 UPDATE projects p SET next_bug_number = (SELECT COUNT(*) + 1 FROM bug_reports b WHERE b.project_id = p.id);
