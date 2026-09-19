@@ -84,7 +84,7 @@
             },
             {
               "type": "p",
-              "text": "Der Status sagt, wie belastbar der Fall ist: Entwurf (noch in Arbeit), Aktiv (wird verwendet), Veraltet (nicht mehr gültig, aber als Historie erhalten)."
+              "text": "Der Status zeigt, welches Gewicht der Fall hat: Entwurf (noch in Arbeit), In Prüfung (wartet auf die Freigabe durch ein anderes Mitglied, in Projekten mit Review), Aktiv (in Gebrauch), Veraltet (nicht mehr gültig, bleibt zur Nachvollziehbarkeit erhalten)."
             }
           ]
         },
@@ -117,6 +117,19 @@
             {
               "type": "p",
               "text": "Jeder Lauf hat einen Bericht mit Kennzahlen, einem Diagramm und der vollständigen Ergebnisliste. Über die Schaltfläche PDF erzeugst du eine Fassung zum Weitergeben."
+            }
+          ]
+        },
+        {
+          "heading": "Zwei Läufe vergleichen",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Vergleichen mit… auf einem Lauf zeigt, was sich gegenüber einem früheren Lauf geändert hat: neu fehlgeschlagen, behoben, weiterhin fehlgeschlagen, hinzugekommene und weggefallene Testfälle. Der frühere Lauf wird für dich gewählt — der vorherige Lauf mit gleichem Namen oder aus demselben Plan und derselben Umgebung —, du kannst aber einen anderen wählen."
+            },
+            {
+              "type": "note",
+              "text": "Ein Fall mit dem Vermerk «Testfall geändert» lief in den beiden Läufen mit unterschiedlichem Wortlaut; die Änderung kann also vom Test statt vom Produkt kommen."
             }
           ]
         }
@@ -160,6 +173,72 @@
               "text": "Ersetzt du die Schrittliste, gehen Screenshots verloren, die an nicht mehr vorhandenen Schritten hingen."
             }
           ]
+        },
+        {
+          "heading": "Gemeinsame Schritte",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Schritte, die du immer wieder zwischen Fällen kopierst, etwa «Als Admin anmelden», gehören in einen gemeinsamen Schritt. Du legst ihn unter Gemeinsame Schritte auf der Projektseite an. In einem Testfall wählst du im Tab Schritte Gemeinsamen Schritt einfügen: Er erscheint als eine Zeile, die sich aufklappen lässt."
+            },
+            {
+              "type": "p",
+              "text": "Änderst du einen gemeinsamen Schritt, ändern sich alle Fälle, die ihn verwenden, und alle danach gestarteten Läufe. Der Editor sagt, wie viele Fälle das sind; jeder behält eine Version mit dem bisherigen Wortlaut. Auf der Testfallseite ersetzt In lokale Schritte umwandeln den gemeinsamen Schritt durch eine Kopie, die dem Fall gehört."
+            },
+            {
+              "type": "note",
+              "text": "Ein gemeinsamer Schritt lässt sich nur löschen, solange kein Fall ihn verwendet."
+            }
+          ]
+        },
+        {
+          "heading": "Datengetriebene Fälle",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Schreib Platzhalter in geschweiften Klammern in die Schritte, etwa «Als {user} anmelden», und leg dann auf der Testfallseite unter Parameter Parametersätze an, einen pro Datenkombination. Ein Lauf enthält dann ein Ergebnis pro Satz, mit eingesetzten Werten."
+            },
+            {
+              "type": "note",
+              "text": "Ein Platzhalter ohne Wert in einem Satz bleibt sichtbar stehen, und der Editor weist dich darauf hin."
+            }
+          ]
+        },
+        {
+          "heading": "Schätzungen",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Die Schätzung im Tab Details gibt an, wie viele Minuten eine Ausführung dauert. Läufe und Pläne zählen die Schätzungen zusammen und zeigen so den verbleibenden Aufwand; die Testfallseite zeigt den Median der tatsächlichen Dauer der letzten fünf Ausführungen."
+            }
+          ]
+        },
+        {
+          "heading": "Prüfung und Freigabe",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "In einem Projekt mit Review wird ein Fall erst Aktiv, wenn ein anderes Mitglied ihn freigibt: Stell ihn als Entwurf fertig, wähl Zur Prüfung einreichen, und eine prüfende Person gibt ihn frei oder fordert Änderungen an. Änderst du den Wortlaut eines freigegebenen Falls, geht er zurück in die Prüfung; Labels, Priorität und Ordner nicht."
+            }
+          ]
+        },
+        {
+          "heading": "Benutzerdefinierte Felder",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Ein Projekt kann eigene Felder hinzufügen, etwa Komponente oder Sprint. Sie erscheinen im Tab Details und lassen sich als Filter verwenden. Ein Pflichtfeld musst du vor dem Speichern ausfüllen."
+            }
+          ]
+        },
+        {
+          "heading": "Als Gherkin bearbeiten",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Als Gherkin bearbeiten im Tab Schritte zeigt den Fall als ein Szenario im Klartext, mit Given-, When- und Then-Schritten. Bearbeite es und wähl In Schritte übernehmen. Solange ein Fall einen gemeinsamen Schritt verwendet, ist das nicht möglich, weil Gherkin keine kennt."
+            }
+          ]
         }
       ]
     },
@@ -184,6 +263,23 @@
             {
               "type": "note",
               "text": "Verwende bestehende Labels weiter, statt neue zu erfinden. Zwei Schreibweisen desselben Themas teilen die Trefferliste und niemand merkt es."
+            }
+          ]
+        },
+        {
+          "heading": "Import und Export",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Importieren in der Testfallliste übernimmt CSV-, JSON- oder Gherkin-.feature-Dateien oder ein ZIP mit .feature-Dateien in einen Ordner deiner Wahl. Nutze immer zuerst Vorschau (Probelauf): Sie zeigt, was erstellt, aktualisiert oder übersprungen würde, und speichert nichts."
+            },
+            {
+              "type": "p",
+              "text": "Exportieren schreibt JSON, CSV, CSV für Excel oder Gherkin: den gewählten Ordner oder das ganze Projekt."
+            },
+            {
+              "type": "note",
+              "text": "Ein Gherkin-Szenario mit dem Tag @tm: und einem Fallschlüssel, etwa @tm:SPI-17, aktualisiert diesen Fall, statt einen neuen anzulegen. Exportiere einmal, um die Tags zu erhalten, bewahre diese Dateien auf und importiere sie nach Änderungen erneut."
             }
           ]
         }
@@ -216,6 +312,37 @@
           ]
         },
         {
+          "heading": "Umgebungen",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Beim Starten eines Laufs wählst du seine Umgebung aus der Liste des Projekts, etwa Staging. Auf mehreren Umgebungen ausführen startet einen Lauf pro Umgebung. Die Testfallseite und Pläne zeigen dann das jeweils letzte Ergebnis pro Umgebung."
+            }
+          ]
+        },
+        {
+          "heading": "Zeit",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Solange ein Ergebnis in der Ausführungsansicht offen ist, läuft ein Timer; seine Zeit wird mit dem Ergebnis gespeichert, sobald du das Resultat erfasst. Die Dauer kannst du von Hand korrigieren, etwa wenn du abseits des Bildschirms getestet hast."
+            }
+          ]
+        },
+        {
+          "heading": "Explorative Sessions",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Für Tests ohne vorgegebene Schritte startest du eine explorative Session: eine Charter, was erkundet werden soll, ein Zeitrahmen und ein laufendes Notizprotokoll — Beobachtungen, Fehler, Fragen, Ideen. Abschliessen beendet sie mit einer Nachbesprechung, was du abgedeckt und gefunden hast."
+            },
+            {
+              "type": "note",
+              "text": "Einen während der Session notierten Fehler kannst du direkt aus der Notiz melden."
+            }
+          ]
+        },
+        {
           "heading": "Wiedereröffnen",
           "blocks": [
             {
@@ -230,6 +357,45 @@
             {
               "type": "p",
               "text": "Zu jedem Schritt lässt sich ein Screenshot hinzufügen. Steht das Ergebnis eines Falls auf Fehlgeschlagen oder Blockiert, kannst du daraus einen Fehlerbericht erfassen, sofern das Projekt Fehlerberichte eingeschaltet hat. Ist ein Issue-Tracker eingerichtet, kannst du auch direkt ein Ticket anlegen und verknüpfen. Ein einzelner fehlgeschlagener Schritt reicht dafür nicht: Setze das Ergebnis des Falls."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planen",
+      "title": "Einen Release planen",
+      "summary": "Testpläne, ihr Fortschritt und ob ein Release bereit ist.",
+      "audiences": ["EVERYONE"],
+      "sections": [
+        {
+          "heading": "Testpläne",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Ein Testplan fasst die Läufe für einen Meilenstein zusammen, etwa einen Release, mit einem Zieldatum. Seine Seite zeigt den Fortschritt, die Erfolgsrate, die Ergebnisse pro Umgebung und die Läufe selbst."
+            }
+          ]
+        },
+        {
+          "heading": "Burn-down",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Haben die Testfälle des Plans Schätzungen, zeigt der Plan ein Burn-down: den verbleibenden Aufwand pro Tag gegenüber einer idealen Linie bis zum Zieldatum."
+            }
+          ]
+        },
+        {
+          "heading": "Release-Gate",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Beim Bearbeiten eines Plans kannst du ein Release-Gate festlegen: eine minimale effektive Erfolgsrate, eine maximale Zahl offener kritischer Fehler, eine minimale Anforderungsabdeckung und eine maximale Zahl instabiler Tests. Die Release-Bereitschaft auf dem Plan sagt dann GO oder NO GO, Kriterium für Kriterium."
+            },
+            {
+              "type": "note",
+              "text": "Lass einen Schwellenwert leer, wenn du ihn nicht verwenden willst. Eine CI-Pipeline kann dasselbe Urteil vor dem Deployment über die API abfragen."
             }
           ]
         }
@@ -291,6 +457,33 @@
               "text": "Achte auf den Status «ungetestet»: eine Anforderung mit verknüpftem Testfall, der nie ausgeführt wurde. Auf dem Papier abgedeckt, tatsächlich unbelegt."
             }
           ]
+        },
+        {
+          "heading": "Projekteinstellungen",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "In den Projekteinstellungen auf der Projektseite legst du fest, wie ein Projekt arbeitet:"
+            },
+            {
+              "type": "ul",
+              "items": [
+                "Fehlermeldungen — schaltet den eingebauten Fehler-Tracker ein.",
+                "Prüfung von Testfällen — Fälle werden erst nach der Prüfung durch ein anderes Mitglied freigegeben. Du wählst, ob nur Projektadmins oder auch Tester freigeben dürfen.",
+                "Umgebungen verwalten — die Liste, aus der Läufe und Fehlerberichte wählen. Umbenennen behält die Historie; archiviere eine Umgebung, statt sie zu löschen.",
+                "Benutzerdefinierte Felder verwalten — zusätzliche typisierte Felder auf Testfällen, Läufen und Fehlerberichten: Text, Zahl, Datum oder eine bzw. mehrere Optionen."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Integrationen",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Webhooks senden Ereignisse an andere Systeme, mit fertigen Formaten für Slack, Microsoft Teams und Mattermost. Ein Issue-Tracker — GitLab, GitHub, Jira, Forgejo oder Linear — lässt Tester direkt aus einem fehlgeschlagenen Ergebnis ein Ticket anlegen und verknüpfen."
+            }
+          ]
         }
       ]
     },
@@ -339,7 +532,28 @@
             },
             {
               "type": "p",
+              "text": "Cucumber-Ergebnisse landen auf dem Testfall, dessen @tm:-Tag das Szenario trägt, auch wenn das Szenario inzwischen umbenannt wurde; Szenarien ohne Tag werden über den Namen zugeordnet."
+            },
+            {
+              "type": "p",
               "text": "Zusätzlich lässt sich ein MCP-Server aktivieren, über den ein KI-Agent Testfälle, Suites und Pläne anlegen kann. Er ist standardmässig ausgeschaltet; jeder Aufruf wird protokolliert und ist unter MCP-Aktivität einsehbar."
+            }
+          ]
+        },
+        {
+          "heading": "Datensicherung",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Die Datenbank enthält alles, Anhänge und Screenshots eingeschlossen. Auf dem Server schreibt ./scripts/backup.sh eine Sicherung, und ./scripts/restore.sh stellt eine in eine leere Datenbank wieder her; Einzelheiten stehen im Kapitel «Installation and operations» von docs/USER_MANUAL.md."
+            },
+            {
+              "type": "code",
+              "text": "./scripts/backup.sh\n./scripts/restore.sh backups/testmanagement-<timestamp>-V64.dump"
+            },
+            {
+              "type": "note",
+              "text": "Sichere die .env-Datei separat und ebenso sorgfältig. Ohne APP_ENCRYPTION_KEY müssen gespeicherte Issue-Tracker- und Build-Server-Tokens sowie SSO-Geheimnisse neu erfasst werden."
             }
           ]
         }

@@ -84,7 +84,7 @@
             },
             {
               "type": "p",
-              "text": "The status says how much weight it carries: Draft (still being written), Active (in use), Deprecated (no longer valid, kept for history)."
+              "text": "The status says how much weight it carries: Draft (still being written), In review (waiting for another member's approval, in projects that require review), Active (in use), Deprecated (no longer valid, kept for history)."
             }
           ]
         },
@@ -117,6 +117,19 @@
             {
               "type": "p",
               "text": "Every run has a report with figures, a chart and the full result list. The PDF button produces a version you can pass on."
+            }
+          ]
+        },
+        {
+          "heading": "Comparing two runs",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Compare with… on a run lists what changed against an earlier one: newly failing, fixed, still failing, added and removed test cases. The earlier run is picked for you — the previous run with the same name, or of the same plan and environment — and you can choose another."
+            },
+            {
+              "type": "note",
+              "text": "A case marked \"case edited\" ran against different wording in the two runs, so its change may come from the test, not the product."
             }
           ]
         }
@@ -160,6 +173,72 @@
               "text": "Replacing the step list discards screenshots attached to steps that no longer exist."
             }
           ]
+        },
+        {
+          "heading": "Shared steps",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Steps you keep copying between cases, such as \"Log in as admin\", belong in a shared step. Create it under Shared steps on the project page. In a test case, on the Steps tab, choose Insert shared step: it appears as one row you can expand."
+            },
+            {
+              "type": "p",
+              "text": "Editing a shared step changes every case that uses it, and runs started afterwards. The editor says how many cases that is; each keeps a version with its previous wording. On the test case page, Convert to local steps replaces the shared step with a copy the case owns."
+            },
+            {
+              "type": "note",
+              "text": "A shared step can only be deleted while no case uses it."
+            }
+          ]
+        },
+        {
+          "heading": "Data-driven cases",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Write placeholders in braces into the steps, such as \"Log in as {user}\", then add parameter sets under Parameters on the test case page, one per data combination. A run holds one result per set, with the values filled in."
+            },
+            {
+              "type": "note",
+              "text": "A placeholder with no value in a set stays visible as written, and the editor warns you about it."
+            }
+          ]
+        },
+        {
+          "heading": "Estimates",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "The Estimate on the Details tab is how many minutes one execution takes. Runs and plans add the estimates up to show the remaining effort, and the test case page shows the median actual time of its last five executions."
+            }
+          ]
+        },
+        {
+          "heading": "Review and approval",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "In a project that requires review, a case becomes Active only after another member approves it: finish it as a draft, choose Submit for review, and a reviewer approves it or requests changes. Changing the wording of an approved case sends it back to review; labels, priority and folder do not."
+            }
+          ]
+        },
+        {
+          "heading": "Custom fields",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "A project can add its own fields, such as Component or Sprint. They appear on the Details tab and can be used as filters. A field marked required has to be filled in before you save."
+            }
+          ]
+        },
+        {
+          "heading": "Editing as Gherkin",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Edit as Gherkin on the Steps tab shows the case as one scenario in plain text, with Given, When and Then steps. Edit it and choose Apply to steps. It is not available while a case uses a shared step, because Gherkin has none."
+            }
+          ]
         }
       ]
     },
@@ -184,6 +263,23 @@
             {
               "type": "note",
               "text": "Reuse existing labels rather than inventing new ones. Two spellings of the same topic split the results and nobody notices."
+            }
+          ]
+        },
+        {
+          "heading": "Import and export",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Import on the test case list takes CSV, JSON or Gherkin .feature files, or a ZIP of .feature files, into a folder you choose. Always use Preview (dry run) first: it shows what would be created, updated or skipped, and saves nothing."
+            },
+            {
+              "type": "p",
+              "text": "Export writes JSON, CSV, CSV for Excel, or Gherkin: the selected folder, or the whole project."
+            },
+            {
+              "type": "note",
+              "text": "A Gherkin scenario tagged @tm: with a case key, such as @tm:SPI-17, updates that case instead of creating a new one. Export once to get the tags, keep those files, and import them again after changes."
             }
           ]
         }
@@ -216,6 +312,37 @@
           ]
         },
         {
+          "heading": "Environments",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "When starting a run you pick its environment from the project's list, such as Staging. Run on multiple environments starts one run per environment. The test case page and plans then show the latest result per environment."
+            }
+          ]
+        },
+        {
+          "heading": "Time",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "While a result is open in the execution view, a timer runs, and its time is saved with the result when you record the outcome. You can correct the duration by hand, for instance when you tested away from the screen."
+            }
+          ]
+        },
+        {
+          "heading": "Exploratory sessions",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "For testing without scripted steps, start an exploratory session: a charter saying what to explore, a time box, and a log of notes as you go — observations, bugs, questions, ideas. Complete ends it with a debrief of what you covered and found."
+            },
+            {
+              "type": "note",
+              "text": "A bug noted during a session can be reported directly from the note."
+            }
+          ]
+        },
+        {
           "heading": "Reopening",
           "blocks": [
             {
@@ -230,6 +357,45 @@
             {
               "type": "p",
               "text": "A screenshot can be attached to any step. When a case's result is Failed or Blocked, you can report a bug from it, provided bug reports are switched on for the project. With an issue tracker configured, you can also create and link an issue there directly. A single failed step is not enough: set the case's result."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "planen",
+      "title": "Planning a release",
+      "summary": "Test plans, their progress, and whether a release is ready.",
+      "audiences": ["EVERYONE"],
+      "sections": [
+        {
+          "heading": "Test plans",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "A test plan gathers the runs for a milestone, such as a release, with a target date. Its page shows progress, the pass rate, results per environment and the runs themselves."
+            }
+          ]
+        },
+        {
+          "heading": "Burn-down",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "When the plan's test cases have estimates, the plan shows a burn-down: the remaining effort per day against an ideal line to the target date."
+            }
+          ]
+        },
+        {
+          "heading": "Release gate",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Editing a plan lets you set a release gate: a minimum effective pass rate, a maximum of open critical bugs, a minimum requirement coverage and a maximum of flaky tests. Release readiness on the plan then says GO or NO GO, criterion by criterion."
+            },
+            {
+              "type": "note",
+              "text": "Leave a threshold empty to not use it. A CI pipeline can ask for the same verdict through the API before it deploys."
             }
           ]
         }
@@ -291,6 +457,33 @@
               "text": "Watch for the \"untested\" status: a requirement with a linked case that has never run. Covered on paper, demonstrated by nothing."
             }
           ]
+        },
+        {
+          "heading": "Project settings",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "The project page's Project Settings are where a project is shaped:"
+            },
+            {
+              "type": "ul",
+              "items": [
+                "Bug reports — switches the built-in bug tracker on.",
+                "Test case review — cases become Approved only after another member reviews them. Choose whether only project admins or testers too may approve.",
+                "Manage environments — the list runs and bug reports pick from. Renaming keeps the history; archive an environment instead of deleting it.",
+                "Manage custom fields — extra typed fields on test cases, runs and bug reports: text, number, date, or one or several options."
+              ]
+            }
+          ]
+        },
+        {
+          "heading": "Integrations",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "Webhooks send events to other systems, with ready-made formats for Slack, Microsoft Teams and Mattermost. An issue tracker — GitLab, GitHub, Jira, Forgejo or Linear — lets testers create and link an issue straight from a failed result."
+            }
+          ]
         }
       ]
     },
@@ -339,7 +532,28 @@
             },
             {
               "type": "p",
+              "text": "Cucumber results land on the test case whose @tm: tag the scenario carries, even after the scenario was renamed; untagged scenarios are matched by name."
+            },
+            {
+              "type": "p",
               "text": "An MCP server can also be switched on, letting an AI agent create test cases, suites and plans. It is off by default; every call is recorded and visible under MCP activity."
+            }
+          ]
+        },
+        {
+          "heading": "Backups",
+          "blocks": [
+            {
+              "type": "p",
+              "text": "The database holds everything, attachments and screenshots included. On the server, ./scripts/backup.sh writes a dump, and ./scripts/restore.sh restores one into an empty database; the chapter \"Installation and operations\" in docs/USER_MANUAL.md has the details."
+            },
+            {
+              "type": "code",
+              "text": "./scripts/backup.sh\n./scripts/restore.sh backups/testmanagement-<timestamp>-V64.dump"
+            },
+            {
+              "type": "note",
+              "text": "Back up the .env file separately and just as carefully. Without APP_ENCRYPTION_KEY, stored issue-tracker and build-server tokens and SSO secrets have to be entered again."
             }
           ]
         }

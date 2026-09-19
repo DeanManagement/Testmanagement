@@ -561,7 +561,7 @@
       "TEST_CASE_FOLDER": "Testfall-Ordner",
       "REQUIREMENT": "Anforderung",
       "ENVIRONMENT": "Umgebung",
-      "EXPLORATORY_SESSION": "Explorative Sitzung",
+      "EXPLORATORY_SESSION": "Explorative Session",
       "SHARED_STEP": "Gemeinsamer Schritt"
     },
     "objects": {
@@ -576,7 +576,7 @@
       "TEST_CASE_FOLDER": "den Testfall-Ordner",
       "REQUIREMENT": "die Anforderung",
       "ENVIRONMENT": "die Umgebung",
-      "EXPLORATORY_SESSION": "die explorative Sitzung",
+      "EXPLORATORY_SESSION": "die explorative Session",
       "SHARED_STEP": "den gemeinsamen Schritt"
     },
     "sentences": {
