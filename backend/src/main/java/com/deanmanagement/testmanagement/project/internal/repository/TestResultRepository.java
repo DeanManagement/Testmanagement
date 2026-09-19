@@ -7,6 +7,8 @@ import com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownRow
 import com.deanmanagement.testmanagement.project.internal.dto.readiness.ReadinessResultRow;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.RunStatusCount;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -141,4 +143,16 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
            "r.testRun.id, r.status, COUNT(r)) " +
            "FROM TestResult r WHERE r.testRun.id IN :runIds GROUP BY r.testRun.id, r.status")
     List<RunStatusCount> countStatusByRunIds(@Param("runIds") Collection<UUID> runIds);
+
+    /**
+     * PRD-050: every result of a case, newest run first; one row per parameter set. The count query
+     * carries no fetch join, which paging requires.
+     */
+    @Query(value = "SELECT r FROM TestResult r JOIN FETCH r.testRun run "
+            + "WHERE r.testCase.id = :testCaseId AND run.project.id = :projectId "
+            + "ORDER BY run.createdAt DESC, r.parameterSetName ASC",
+            countQuery = "SELECT COUNT(r) FROM TestResult r "
+                    + "WHERE r.testCase.id = :testCaseId AND r.testRun.project.id = :projectId")
+    Page<TestResult> findHistory(@Param("projectId") UUID projectId, @Param("testCaseId") UUID testCaseId,
+                                 Pageable pageable);
 }

@@ -1,5 +1,8 @@
 package com.deanmanagement.testmanagement.project.internal.controller;
 
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseContextResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseExecutionResponse;
+import com.deanmanagement.testmanagement.project.internal.service.TestCaseContextService;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseReviewService;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.ReviewCapabilitiesResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.RequestChangesRequest;
@@ -56,6 +59,7 @@ public class TestCaseController {
     private final ProjectEnvironmentService environmentService;
     private final TestCaseReviewService reviewService;
     private final CustomFieldFilterParser customFieldFilterParser;
+    private final TestCaseContextService contextService;
 
     @GetMapping
     @RequireProjectRole
@@ -122,6 +126,22 @@ public class TestCaseController {
     }
 
     /** The case's latest executed result in each environment (PRD-032). */
+    /** PRD-050: who made the case, its folder path and the suites that include it. */
+    @GetMapping("/{id}/context")
+    @RequireProjectRole
+    public TestCaseContextResponse getContext(@PathVariable UUID projectId, @PathVariable UUID id) {
+        return contextService.context(projectId, id);
+    }
+
+    /** PRD-050: everywhere the case ran or is scheduled to run, newest run first. */
+    @GetMapping("/{id}/executions")
+    @RequireProjectRole
+    public Page<TestCaseExecutionResponse> getExecutions(@PathVariable UUID projectId, @PathVariable UUID id,
+                                                         @RequestParam(defaultValue = "0") int page,
+                                                         @RequestParam(defaultValue = "20") int size) {
+        return contextService.executions(projectId, id, page, size);
+    }
+
     @GetMapping("/{id}/results/by-environment")
     @RequireProjectRole
     public List<EnvironmentResultResponse> latestResultsByEnvironment(@PathVariable UUID projectId,
