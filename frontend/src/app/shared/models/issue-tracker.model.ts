@@ -1,4 +1,4 @@
-export type IssueTrackerProviderType = 'GITLAB' | 'FORGEJO' | 'GITHUB' | 'JIRA' | 'LINEAR';
+export type IssueTrackerProviderType = 'GITLAB' | 'FORGEJO' | 'GITHUB' | 'JIRA' | 'LINEAR' | 'AZURE_DEVOPS';
 
 export type IssueState = 'OPEN' | 'CLOSED' | 'UNKNOWN';
 
@@ -15,6 +15,10 @@ export interface IssueTrackerConfig {
   updatedAt: string;
   /** Jira Cloud only (PRD-029): the account the token belongs to. Not a secret, so it is returned. */
   authUsername: string | null;
+  /** Azure DevOps only (PRD-026): null means 7.1. */
+  apiVersion: string | null;
+  /** Azure DevOps only: the work item type bugs are filed as; null means Bug. */
+  workItemType: string | null;
 }
 
 export interface SaveIssueTrackerConfigRequest {
@@ -26,6 +30,8 @@ export interface SaveIssueTrackerConfigRequest {
   active?: boolean;
   /** Required by the server for Jira Cloud, ignored for everything else. */
   authUsername?: string;
+  apiVersion?: string | null;
+  workItemType?: string | null;
 }
 
 export interface IssueTrackerStatus {
@@ -65,4 +71,5 @@ export const PROJECT_REF_HINT: Record<IssueTrackerProviderType, string> = {
   GITHUB: 'owner/repository',
   JIRA: 'project key, optionally KEY:IssueType (default issue type: Bug)',
   LINEAR: 'team key',
+  AZURE_DEVOPS: 'Azure DevOps project, e.g. Payments',
 };

@@ -971,7 +971,7 @@
       "FORGEJO_ACTIONS": "Instance root, e.g. https://codeberg.org.",
       "WOODPECKER": "Instance root, e.g. https://ci.example.com.",
       "JENKINS": "Instance root, e.g. https://jenkins.example.com.",
-      "AZURE_DEVOPS": "Organization URL."
+      "AZURE_DEVOPS": "Include the organization: https://dev.azure.com/{organization}, or https://{server}/{collection} for Azure DevOps Server."
     },
     "token": "API token",
     "tokenReplace": "Replace API token",
@@ -981,7 +981,7 @@
       "FORGEJO_ACTIONS": "Access token with repository scope. Stored encrypted, never returned.",
       "WOODPECKER": "Personal token from your Woodpecker user settings. Stored encrypted, never returned.",
       "JENKINS": "Enter as user:apiToken. Stored encrypted, never returned.",
-      "AZURE_DEVOPS": "Personal access token. Stored encrypted, never returned."
+      "AZURE_DEVOPS": "Organization-scoped personal access token with \"Build: Read & execute\" (and \"Test Management: Read\" to pull test results). Stored encrypted, never returned."
     },
     "active": "Active",
     "inactive": "Inactive",
@@ -1010,7 +1010,12 @@
     "saveAssignments": "Save assignments",
     "assignmentsSaved": "Project assignments saved.",
     "deleteWorkflowTitle": "Delete workflow?",
-    "deleteWorkflowMessage": "\"{{name}}\" will be removed from all projects. Past pipeline runs keep their history."
+    "deleteWorkflowMessage": "\"{{name}}\" will be removed from all projects. Past pipeline runs keep their history.",
+    "apiVersion": "API version",
+    "apiVersionHint": "Empty means 7.1 (Azure DevOps Services and Server 2022). Use 6.0 for Server 2020, 5.0 for Server 2019.",
+    "workflowRefHintAzure": "The numeric pipeline id; use discovery to pick it. The repository field holds the Azure DevOps project.",
+    "pullTestResults": "Pull test results after the run finishes",
+    "pullTestResultsHint": "For pipelines that publish their results (PublishTestResults@2): they become a test run here without the pipeline reporting back. Results the pipeline pushes itself take precedence."
   },
   "automation": {
     "title": "Automation",
@@ -1059,7 +1064,8 @@
       "FORGEJO": "Forgejo / Gitea",
       "GITHUB": "GitHub",
       "JIRA": "Jira",
-      "LINEAR": "Linear"
+      "LINEAR": "Linear",
+      "AZURE_DEVOPS": "Azure DevOps"
     },
     "baseUrl": "Instance URL",
     "baseUrlHint": "Must use https. Private and loopback addresses are rejected.",
@@ -1075,7 +1081,8 @@
       "FORGEJO": "Forgejo / Gitea: an access token with read and write permission on issues.",
       "GITHUB": "GitHub: a fine-grained personal access token with \"Issues: Read and write\" on this repository, or a classic token with the \"repo\" scope.",
       "JIRA": "Jira Cloud: an API token from id.atlassian.com, plus the account email. Jira Data Center: a personal access token from your profile. If the project requires extra fields when creating an issue, file it in Jira and link it here.",
-      "LINEAR": "Linear: a personal API key."
+      "LINEAR": "Linear: a personal API key.",
+      "AZURE_DEVOPS": "Azure DevOps: an organization-scoped personal access token with \"Work Items: Read & write\"."
     },
     "active": "Active",
     "activeHint": "When inactive, no calls are made to the tracker and linking is unavailable.",
@@ -1104,7 +1111,12 @@
       "OPEN": "Open",
       "CLOSED": "Closed",
       "UNKNOWN": "Unknown"
-    }
+    },
+    "baseUrlHintAzure": "Include the organization: https://dev.azure.com/{organization}, or https://{server}/{collection} for Azure DevOps Server. The project goes in the field below.",
+    "workItemType": "Work item type",
+    "workItemTypeHint": "What bugs are filed as. Empty means Bug; use e.g. Issue or Product Backlog Item if your process has no Bug.",
+    "apiVersion": "API version",
+    "apiVersionHint": "Empty means 7.1 (Azure DevOps Services and Server 2022). Use 6.0 for Server 2020, 5.0 for Server 2019."
   },
   "sso": {
     "title": "Single sign-on",

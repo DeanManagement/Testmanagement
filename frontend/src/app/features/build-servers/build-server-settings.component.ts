@@ -82,6 +82,8 @@ export class BuildServerSettingsComponent implements OnInit {
   sBaseUrl = '';
   sToken = '';
   sActive = true;
+  /** PRD-026: Azure DevOps only. */
+  sApiVersion = '';
   savingServer = false;
   testingServerId: string | null = null;
 
@@ -94,6 +96,7 @@ export class BuildServerSettingsComponent implements OnInit {
   wDefaultRef = '';
   wParamsText = '';
   wActive = true;
+  wPullTestResults = false;
   savingWorkflow = false;
 
   // Discovery
@@ -135,10 +138,17 @@ export class BuildServerSettingsComponent implements OnInit {
   }
 
   get repoRefHint(): string {
-    const server = this.workflowFormServerId
-      ? this.servers.find((s) => s.id === this.workflowFormServerId)
-      : null;
+    const server = this.workflowFormServer;
     return server ? REPO_REF_HINT[server.provider] : '';
+  }
+
+  /** Azure DevOps keeps test results of its own, which a workflow can pull (PRD-026 §3.4). */
+  get workflowServerIsAzure(): boolean {
+    return this.workflowFormServer?.provider === 'AZURE_DEVOPS';
+  }
+
+  private get workflowFormServer(): BuildServerConfig | undefined {
+    return this.workflowFormServerId ? this.servers.find((s) => s.id === this.workflowFormServerId) : undefined;
   }
 
   // ---- Servers ----------------------------------------------------------
@@ -168,6 +178,7 @@ export class BuildServerSettingsComponent implements OnInit {
     this.sBaseUrl = server?.baseUrl ?? '';
     this.sToken = '';
     this.sActive = server?.active ?? true;
+    this.sApiVersion = server?.apiVersion ?? '';
   }
 
   closeServerForm(): void {
@@ -182,6 +193,7 @@ export class BuildServerSettingsComponent implements OnInit {
       baseUrl: this.sBaseUrl.trim(),
       apiToken: this.sToken || undefined,
       active: this.sActive,
+      apiVersion: this.sProvider === 'AZURE_DEVOPS' ? this.sApiVersion.trim() || null : null,
     };
     this.savingServer = true;
     const call = this.editingServer
@@ -286,6 +298,7 @@ export class BuildServerSettingsComponent implements OnInit {
       .map(([key, value]) => `${key}=${value}`)
       .join('\n');
     this.wActive = workflow?.active ?? true;
+    this.wPullTestResults = workflow?.pullTestResults ?? false;
     this.discovered = [];
     this.discoverySupported = null;
   }
@@ -345,6 +358,7 @@ export class BuildServerSettingsComponent implements OnInit {
       defaultRef: this.wDefaultRef.trim() || null,
       defaultParameters: this.parseParams(this.wParamsText),
       active: this.wActive,
+      pullTestResults: this.workflowServerIsAzure && this.wPullTestResults,
     };
     this.savingWorkflow = true;
     const call = this.editingWorkflow

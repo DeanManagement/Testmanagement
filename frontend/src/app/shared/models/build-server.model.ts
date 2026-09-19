@@ -27,7 +27,7 @@ export const REPO_REF_HINT: Record<BuildServerProviderType, string> = {
   FORGEJO_ACTIONS: 'owner/repo',
   WOODPECKER: 'numeric repository id (use discovery)',
   JENKINS: 'folder/subfolder/jobname',
-  AZURE_DEVOPS: 'organization/project',
+  AZURE_DEVOPS: 'Azure DevOps project, e.g. Payments',
 };
 
 export interface BuildServerConfig {
@@ -40,6 +40,8 @@ export interface BuildServerConfig {
   lastError: string | null;
   lastErrorAt: string | null;
   updatedAt: string;
+  /** PRD-026: Azure DevOps only; null means 7.1. */
+  apiVersion: string | null;
 }
 
 export interface SaveBuildServerConfigRequest {
@@ -48,6 +50,7 @@ export interface SaveBuildServerConfigRequest {
   baseUrl: string;
   apiToken?: string;
   active?: boolean;
+  apiVersion?: string | null;
 }
 
 export interface BuildWorkflow {
@@ -61,6 +64,8 @@ export interface BuildWorkflow {
   active: boolean;
   projectIds: string[];
   updatedAt: string;
+  /** PRD-026: pull the results the build server collected once a run finishes. */
+  pullTestResults: boolean;
 }
 
 export interface SaveBuildWorkflowRequest {
@@ -70,6 +75,7 @@ export interface SaveBuildWorkflowRequest {
   defaultRef?: string | null;
   defaultParameters?: Record<string, string>;
   active?: boolean;
+  pullTestResults?: boolean;
 }
 
 export interface DiscoveredWorkflow {

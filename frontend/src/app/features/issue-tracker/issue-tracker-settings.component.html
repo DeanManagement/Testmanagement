@@ -44,7 +44,7 @@
       <mat-form-field appearance="outline" class="full-width">
         <mat-label>{{ 'issueTracker.baseUrl' | translate }}</mat-label>
         <input matInput [(ngModel)]="formBaseUrl" [placeholder]="baseUrlPlaceholder" data-test-id="issue-tracker-base-url-input">
-        <mat-hint>{{ 'issueTracker.baseUrlHint' | translate }}</mat-hint>
+        <mat-hint>{{ (isAzureDevOps ? 'issueTracker.baseUrlHintAzure' : 'issueTracker.baseUrlHint') | translate }}</mat-hint>
       </mat-form-field>
 
       <mat-form-field appearance="outline" class="full-width">
@@ -60,6 +60,19 @@
           <input matInput type="email" autocomplete="off" [(ngModel)]="formAuthUsername" required
                  data-test-id="issue-tracker-account-email-input">
           <mat-hint>{{ 'issueTracker.accountEmailHint' | translate }}</mat-hint>
+        </mat-form-field>
+      }
+
+      @if (isAzureDevOps) {
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'issueTracker.workItemType' | translate }}</mat-label>
+          <input matInput [(ngModel)]="formWorkItemType" placeholder="Bug" data-test-id="issue-tracker-work-item-type-input">
+          <mat-hint>{{ 'issueTracker.workItemTypeHint' | translate }}</mat-hint>
+        </mat-form-field>
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>{{ 'issueTracker.apiVersion' | translate }}</mat-label>
+          <input matInput [(ngModel)]="formApiVersion" placeholder="7.1" data-test-id="issue-tracker-api-version-input">
+          <mat-hint>{{ 'issueTracker.apiVersionHint' | translate }}</mat-hint>
         </mat-form-field>
       }
 

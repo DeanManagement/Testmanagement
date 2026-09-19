@@ -77,6 +77,9 @@ export class IssueTrackerSettingsComponent implements OnInit {
   formToken = '';
   formAuthUsername = '';
   formActive = true;
+  /** PRD-026: Azure DevOps only. */
+  formApiVersion = '';
+  formWorkItemType = '';
 
   ngOnInit(): void {
     this.projectId = this.route.snapshot.paramMap.get('id') ?? '';
@@ -114,6 +117,8 @@ export class IssueTrackerSettingsComponent implements OnInit {
             this.formProjectRef = this.config.projectRef;
             this.formActive = this.config.active;
             this.formAuthUsername = this.config.authUsername ?? '';
+            this.formApiVersion = this.config.apiVersion ?? '';
+            this.formWorkItemType = this.config.workItemType ?? '';
           }
           // Never prefill: the API does not return the token, and a placeholder here would be
           // saved back verbatim.
@@ -156,6 +161,10 @@ export class IssueTrackerSettingsComponent implements OnInit {
     return this.config !== null || this.formToken.trim().length > 0;
   }
 
+  get isAzureDevOps(): boolean {
+    return this.formProvider === 'AZURE_DEVOPS';
+  }
+
   save(): void {
     if (!this.canSave || this.saving) {
       return;
@@ -173,6 +182,10 @@ export class IssueTrackerSettingsComponent implements OnInit {
     }
     if (this.showAccountEmail) {
       request.authUsername = this.formAuthUsername.trim();
+    }
+    if (this.isAzureDevOps) {
+      request.apiVersion = this.formApiVersion.trim() || null;
+      request.workItemType = this.formWorkItemType.trim() || null;
     }
 
     this.api.saveConfig(this.projectId, request)

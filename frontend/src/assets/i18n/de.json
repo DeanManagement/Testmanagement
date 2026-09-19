@@ -971,7 +971,7 @@
       "FORGEJO_ACTIONS": "Instanz-Root, z. B. https://codeberg.org.",
       "WOODPECKER": "Instanz-Root, z. B. https://ci.example.com.",
       "JENKINS": "Instanz-Root, z. B. https://jenkins.example.com.",
-      "AZURE_DEVOPS": "Organisations-URL."
+      "AZURE_DEVOPS": "Mit Organisation: https://dev.azure.com/{Organisation}, bzw. https://{Server}/{Collection} für Azure DevOps Server."
     },
     "token": "API-Token",
     "tokenReplace": "API-Token ersetzen",
@@ -981,7 +981,7 @@
       "FORGEJO_ACTIONS": "Access Token mit Repository-Scope. Verschlüsselt gespeichert, wird nie zurückgegeben.",
       "WOODPECKER": "Persönliches Token aus den Woodpecker-Benutzereinstellungen. Verschlüsselt gespeichert, wird nie zurückgegeben.",
       "JENKINS": "Als user:apiToken eingeben. Verschlüsselt gespeichert, wird nie zurückgegeben.",
-      "AZURE_DEVOPS": "Personal Access Token. Verschlüsselt gespeichert, wird nie zurückgegeben."
+      "AZURE_DEVOPS": "Auf die Organisation beschränktes persönliches Zugriffstoken mit „Build: Read & execute“ (und „Test Management: Read“, um Testergebnisse abzuholen). Verschlüsselt gespeichert, wird nie zurückgegeben."
     },
     "active": "Aktiv",
     "inactive": "Inaktiv",
@@ -1010,7 +1010,12 @@
     "saveAssignments": "Zuweisungen speichern",
     "assignmentsSaved": "Projektzuweisungen gespeichert.",
     "deleteWorkflowTitle": "Workflow löschen?",
-    "deleteWorkflowMessage": "\"{{name}}\" wird aus allen Projekten entfernt. Vergangene Pipeline-Läufe bleiben in der Historie."
+    "deleteWorkflowMessage": "\"{{name}}\" wird aus allen Projekten entfernt. Vergangene Pipeline-Läufe bleiben in der Historie.",
+    "apiVersion": "API-Version",
+    "apiVersionHint": "Leer heisst 7.1 (Azure DevOps Services und Server 2022). 6.0 für Server 2020, 5.0 für Server 2019.",
+    "workflowRefHintAzure": "Die numerische Pipeline-ID; per Suche auswählen. Das Repository-Feld enthält das Azure-DevOps-Projekt.",
+    "pullTestResults": "Testergebnisse nach dem Lauf abholen",
+    "pullTestResultsHint": "Für Pipelines, die ihre Ergebnisse veröffentlichen (PublishTestResults@2): Sie werden hier zu einem Testlauf, ohne dass die Pipeline zurückmeldet. Ergebnisse, die die Pipeline selbst meldet, haben Vorrang."
   },
   "automation": {
     "title": "Automatisierung",
@@ -1059,7 +1064,8 @@
       "FORGEJO": "Forgejo / Gitea",
       "GITHUB": "GitHub",
       "JIRA": "Jira",
-      "LINEAR": "Linear"
+      "LINEAR": "Linear",
+      "AZURE_DEVOPS": "Azure DevOps"
     },
     "baseUrl": "Instanz-URL",
     "baseUrlHint": "Muss https verwenden. Private und Loopback-Adressen werden abgelehnt.",
@@ -1075,7 +1081,8 @@
       "FORGEJO": "Forgejo / Gitea: ein Zugriffstoken mit Lese- und Schreibrecht auf Issues.",
       "GITHUB": "GitHub: ein fein abgestuftes persönliches Zugriffstoken mit „Issues: Read and write“ für dieses Repository oder ein klassisches Token mit dem Scope „repo“.",
       "JIRA": "Jira Cloud: ein API-Token von id.atlassian.com sowie die Konto-E-Mail. Jira Data Center: ein persönliches Zugriffstoken aus Ihrem Profil. Verlangt das Projekt beim Anlegen zusätzliche Pflichtfelder, legen Sie das Issue in Jira an und verknüpfen Sie es hier.",
-      "LINEAR": "Linear: ein persönlicher API-Schlüssel."
+      "LINEAR": "Linear: ein persönlicher API-Schlüssel.",
+      "AZURE_DEVOPS": "Azure DevOps: ein auf die Organisation beschränktes persönliches Zugriffstoken mit „Work Items: Read & write“."
     },
     "active": "Aktiv",
     "activeHint": "Bei Inaktivität werden keine Aufrufe an den Tracker gesendet und das Verknüpfen ist nicht verfügbar.",
@@ -1104,7 +1111,12 @@
       "OPEN": "Offen",
       "CLOSED": "Geschlossen",
       "UNKNOWN": "Unbekannt"
-    }
+    },
+    "baseUrlHintAzure": "Mit Organisation: https://dev.azure.com/{Organisation}, bzw. https://{Server}/{Collection} für Azure DevOps Server. Das Projekt gehört ins Feld darunter.",
+    "workItemType": "Work-Item-Typ",
+    "workItemTypeHint": "Als was Fehler angelegt werden. Leer heisst Bug; z. B. Issue oder Product Backlog Item, wenn Ihr Prozess keinen Bug kennt.",
+    "apiVersion": "API-Version",
+    "apiVersionHint": "Leer heisst 7.1 (Azure DevOps Services und Server 2022). 6.0 für Server 2020, 5.0 für Server 2019."
   },
   "sso": {
     "title": "Single Sign-on",

@@ -9,6 +9,8 @@ export const BASE_URL_EXAMPLE: Record<IssueTrackerProviderType, string> = {
   GITHUB: 'https://github.com',
   JIRA: 'https://your-site.atlassian.net',
   LINEAR: 'https://linear.app',
+  // The organization (or, on Server, the collection) belongs in the URL, not in the project field.
+  AZURE_DEVOPS: 'https://dev.azure.com/your-organization',
 };
 
 /**
