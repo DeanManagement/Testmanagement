@@ -540,7 +540,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Webhooks senden Ereignisse an andere Systeme, mit fertigen Formaten für Slack, Microsoft Teams und Mattermost. Ein Issue-Tracker — GitLab, GitHub, Jira, Forgejo oder Linear — lässt Tester direkt aus einem fehlgeschlagenen Ergebnis ein Ticket anlegen und verknüpfen."
+              "text": "Webhooks senden Ereignisse an andere Systeme, mit fertigen Formaten für Slack, Microsoft Teams und Mattermost. Ein Issue-Tracker — GitLab, GitHub, Jira, Forgejo oder Azure DevOps — lässt Tester direkt aus einem fehlgeschlagenen Ergebnis ein Ticket anlegen und verknüpfen."
             }
           ]
         }
@@ -596,6 +596,10 @@
             {
               "type": "p",
               "text": "Zusätzlich lässt sich ein MCP-Server aktivieren, über den ein KI-Agent Testfälle, Suites und Pläne anlegen kann. Er ist standardmässig ausgeschaltet; jeder Aufruf wird protokolliert und ist unter MCP-Aktivität einsehbar."
+            },
+            {
+              "type": "p",
+              "text": "Build-Server werden einmal unter Einstellungen registriert: GitLab CI, GitHub und Forgejo Actions, Woodpecker, Jenkins und Azure Pipelines. Bei Azure Pipelines enthält die Server-URL die Organisation, und ein Workflow kann die Testergebnisse abholen, die die Pipeline veröffentlicht hat, statt dass die Pipeline sie zurückmeldet."
             }
           ]
         },

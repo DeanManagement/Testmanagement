@@ -83,7 +83,7 @@ test case ids from any project.
 
 | PRD | Title | Priority | Size | Status |
 |---|---|---|---|---|
-| [026](PRD-026-azure-devops-integration.md) | Azure DevOps Integration (Pipelines, Work Items, results, Entra ID) | P2 | L | 📝 Draft |
+| [026](PRD-026-azure-devops-integration.md) | Azure DevOps Integration (Pipelines, Work Items, results, Entra ID) | P2 | L | ✅ Implemented (stub-tested; live check open) |
 | [027](PRD-027-mcp-execution-tools.md) | MCP Execution & Defect Tools (agent-run test execution) | P2 | M | ✅ Implemented |
 | [028](PRD-028-mcp-stdio-bridge.md) | MCP stdio Bridge (clients without HTTP transport) | P3 | S | ✅ Implemented |
 
@@ -184,6 +184,6 @@ matches *any* label while MCP `search_test_cases` documents *all* (052); the das
 report `7a792e91`); `step_images` and `screenshots` allow duplicate rows per owner (bug report `bd5b0f76`).
 
 ## Status legend
-Every PRD up to 028 except 026 is **Implemented**; 029–040 and 044–052 are implemented except where noted; 041–043 are drafts
+Every PRD up to 028 is **Implemented** (026 still awaits a check against a live Azure DevOps); 029–040 and 044–052 are implemented except where noted; 041–043 are drafts
 postponed to the backlog (⏸). New work should get a new PRD rather than
 extending a shipped one.

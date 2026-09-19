@@ -1199,6 +1199,27 @@ verified is deliberately ignored — anyone can type any address into their publ
 honouring it would let a stranger have an account created under someone else's address. A user
 with no verified email cannot sign in; they must verify one on GitHub first.
 
+#### Setting up Microsoft Entra ID
+
+Entra ID (formerly Azure AD) is an ordinary **OpenID Connect** provider; nothing Azure-specific is
+needed in the tool, but four settings are easy to get wrong:
+
+1. In the Azure portal: **App registrations → New registration**, platform **Web**, redirect URI as
+   shown on the provider form. Create a client secret under **Certificates & secrets**.
+2. **Issuer URL:** `https://login.microsoftonline.com/<tenant-id>/v2.0`, with your tenant's GUID.
+   `common` or `organizations` would let accounts from any tenant sign in.
+3. **Email claim.** Entra ID does not always put `email` in the token; work and school accounts
+   often carry only `preferred_username`. Either add `email` as an optional claim under **Token
+   configuration**, or set the email claim to `preferred_username`. Be aware that
+   `preferred_username` is not a verified address, so linking an existing local account by it is
+   a weaker check than the setting's name suggests.
+4. **Admin claim.** Use an **app role** (claim `roles`, value your role's name). The `groups` claim
+   works too, but its values are group object ids (GUIDs), not names, and for users in more than
+   about 200 groups Entra ID leaves the groups out of the token altogether — which silently removes
+   admin rights from exactly the people most likely to have them.
+
+Scopes stay `openid,profile,email`.
+
 The display name falls back to the GitHub login when the account has no name set.
 
 #### Setting up GitLab or Forgejo
@@ -1295,7 +1316,7 @@ as sensitive.
 ### Issue tracker
 
 **Issue Tracker** on a project (project Admin) connects it to **GitLab**, **Forgejo/Gitea**,
-**GitHub** or **Jira**.
+**GitHub**, **Jira** or **Azure DevOps** (Boards).
 
 Provide the instance URL (HTTPS; private addresses rejected by default), the project reference,
 and an API token. The token is stored encrypted and requires `APP_ENCRYPTION_KEY` on the server —
@@ -1309,6 +1330,7 @@ verifies it before you save.
 | GitHub | `https://github.com`, or your Enterprise Server's root | `owner/repository` | fine-grained token with *Issues: Read and write* on the repository, or a classic token with `repo` |
 | Jira Cloud | `https://your-site.atlassian.net` | project key, e.g. `WEB` | API token from id.atlassian.com **plus the account email** it belongs to |
 | Jira Data Center | your instance root | project key, e.g. `WEB` | personal access token from your profile (8.14+) |
+| Azure DevOps | **with the organization**: `https://dev.azure.com/contoso`, or `https://tfs.example.com/tfs/DefaultCollection` for Server | the Azure DevOps project, e.g. `Payments` | organization-scoped personal access token with *Work Items: Read & write* |
 
 Notes on the newer two:
 
@@ -1325,6 +1347,20 @@ Notes on the newer two:
   Done is closed), so it is right whatever your workflow calls its statuses.
 - **Jira — account email.** The form asks for it only when the URL is an `atlassian.net` site. It
   is not a secret and is shown again when you reopen the settings.
+- **Azure DevOps — URL.** The organization (or on Server, the collection) belongs in the URL, the
+  project in the project field. `https://dev.azure.com` with the organization in the project field
+  fails with "not found", which looks like a permission problem but is not.
+- **Azure DevOps — work item type.** New work items are **Bug**s, with the failure text in *Repro
+  Steps*. If your process has no Bug, set the **work item type** (e.g. `Issue` or `Product Backlog
+  Item`); a type without Repro Steps gets the text in *Description*. Searching finds Bugs, Issues
+  and the configured type by title, or one work item by its number.
+- **Azure DevOps — status.** Open/Closed follows the state's *category*: Completed and Removed are
+  closed, everything else open. It is right with custom processes and renamed states.
+- **Azure DevOps — API version.** Leave it empty for Azure DevOps Services and Server 2022. Server
+  2020 needs `6.0`, Server 2019 `5.0`; **Test connection** says so when the version is wrong.
+- **Azure DevOps — a rejected token** is answered with a sign-in page rather than an error; the tool
+  reports it as a rejected token. Personal access tokens that span all organizations are being
+  retired by Microsoft; use one scoped to the organization.
 
 Once connected, a tester working through a failed result can:
 
@@ -1339,7 +1375,8 @@ Disconnecting the tracker keeps issues already linked to results; they stay clic
 
 **Settings → Build servers** (system administrators) registers CI servers **once, globally** —
 the credential lives in one place, and projects never see it. Supported providers: **GitLab CI**,
-**GitHub Actions**, **Forgejo/Gitea Actions**, **Woodpecker CI** and **Jenkins**.
+**GitHub Actions**, **Forgejo/Gitea Actions**, **Woodpecker CI**, **Jenkins** and **Azure
+Pipelines** (Azure DevOps Services and Server).
 
 For each server provide a display name, the server URL (HTTPS; private addresses rejected by
 default — see `BUILDSERVER_ALLOW_PRIVATE_TARGETS`), and an API token. Tokens are stored encrypted
@@ -1355,6 +1392,7 @@ Provider notes:
 | Forgejo / Gitea | Instance root, e.g. `https://codeberg.org` | Access token with repository scope | `owner/repo` |
 | Woodpecker | Instance root | Personal token from user settings | Numeric repo id (use discovery) |
 | Jenkins | Instance root | **`user:apiToken`** — both halves, colon-separated | Job path, e.g. `folder/jobname` |
+| Azure Pipelines | **With the organization**: `https://dev.azure.com/contoso`, or `https://tfs.example.com/tfs/DefaultCollection` for Server | Organization-scoped personal access token: *Build: Read & execute*, plus *Test Management: Read* to pull results | The Azure DevOps project, e.g. `Payments`; the workflow is the numeric **pipeline id** (use discovery) |
 
 **Workflows.** On each server the admin defines what can be triggered: a display name testers
 will see, the repository/job reference, for GitHub/Forgejo the workflow file (e.g. `tests.yml`),
@@ -1368,6 +1406,22 @@ authorization: a project's members see and trigger **only** the workflows assign
 project, and the project-side API never exposes the server URL, the repository reference or any
 credential. Unassigning a workflow (or deleting a server) leaves past pipeline runs readable in
 the projects' history.
+
+**Azure Pipelines.** Only YAML pipelines are supported, not classic releases. For Azure DevOps
+Server 2019 or 2020 set the server's **API version** to `5.0` or `6.0`; Services and Server 2022
+need nothing. A workflow's parameters are passed as the pipeline's template **parameters**, which
+the YAML must declare, and the `TM_*` values as queue-time **variables**, which must be settable
+at queue time. If the pipeline refuses either, the trigger is retried once without them: the run
+starts, but cannot report back by itself. For that case, and for pipelines you cannot change,
+switch on **Pull test results after the run finishes** on the workflow: once the run has finished,
+the results the pipeline published with `PublishTestResults@2` become a test run here, linked to
+the pipeline run. Results the pipeline reports back itself take precedence, runs that finished
+more than a day before pulling was switched on are not imported, and at most 5,000 results are
+pulled per run. What went wrong while pulling is shown on the pipeline run.
+
+On-premises Azure DevOps Server usually has a private address, which is rejected unless
+`BUILDSERVER_ALLOW_PRIVATE_TARGETS` is set. That is a deliberate decision to let this server call
+into your network, not a checkbox to tick.
 
 For what the triggered pipeline must do to report its results back, see
 [CI/CD integration](#15-cicd-integration).
@@ -1468,7 +1522,7 @@ The run must belong to the project named in the URL.
 When a tester triggers a workflow from the Automation panel (see
 [Build servers](#build-servers)), the trigger injects these non-secret variables into the
 pipeline — as CI variables on GitLab/Woodpecker/Jenkins, as `workflow_dispatch` inputs on
-GitHub/Forgejo:
+GitHub/Forgejo, as queue-time variables on Azure Pipelines:
 
 | Variable | Content |
 |---|---|
@@ -1515,6 +1569,24 @@ Without this the trigger still works (a dispatch rejected for undeclared inputs 
 without them), but run matching falls back to timing, and the workflow has no way to read its
 `TM_PIPELINE_RUN_ID` — so results arrive unlinked. GitLab, Woodpecker and Jenkins need nothing:
 they accept arbitrary variables and expose them as environment variables.
+
+**Azure Pipelines:** the run id comes back from the trigger, so no matching is needed. For the
+pipeline to read `TM_PIPELINE_RUN_ID`, define the `TM_*` variables in the pipeline's variable
+settings with *Let users override this value when running this pipeline* ticked, and keep the API
+key as a secret variable (`TM_API_KEY`). Then report back after the tests:
+
+```yaml
+- script: |
+    curl -sS -f -X POST \
+      "$(TM_BASE_URL)/api/external/projects/$(TM_PROJECT_KEY)/test-runs/junit?pipelineRunId=$(TM_PIPELINE_RUN_ID)" \
+      -H "X-API-Key: $(TM_API_KEY)" -H "Content-Type: application/xml" \
+      --data-binary @test-results.xml
+  condition: succeededOrFailed()
+  displayName: Report results to Testmanagement
+```
+
+If the pipeline already publishes its results with `PublishTestResults@2`, you can skip all of this
+and let the workflow **pull** them instead (see [Build servers](#build-servers)).
 
 ### Checking the release gate
 

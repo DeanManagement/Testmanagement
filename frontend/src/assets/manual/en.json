@@ -540,7 +540,7 @@
           "blocks": [
             {
               "type": "p",
-              "text": "Webhooks send events to other systems, with ready-made formats for Slack, Microsoft Teams and Mattermost. An issue tracker — GitLab, GitHub, Jira, Forgejo or Linear — lets testers create and link an issue straight from a failed result."
+              "text": "Webhooks send events to other systems, with ready-made formats for Slack, Microsoft Teams and Mattermost. An issue tracker — GitLab, GitHub, Jira, Forgejo or Azure DevOps — lets testers create and link an issue straight from a failed result."
             }
           ]
         }
@@ -596,6 +596,10 @@
             {
               "type": "p",
               "text": "An MCP server can also be switched on, letting an AI agent create test cases, suites and plans. It is off by default; every call is recorded and visible under MCP activity."
+            },
+            {
+              "type": "p",
+              "text": "Build servers are registered once, under Settings: GitLab CI, GitHub and Forgejo Actions, Woodpecker, Jenkins and Azure Pipelines. For Azure Pipelines the server URL includes the organization, and a workflow can pull the test results the pipeline published instead of the pipeline reporting them back."
             }
           ]
         },
