@@ -137,7 +137,7 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 **Read** — `get_project`, `search_test_cases`, `get_test_case`, `list_test_case_folders`,
 `list_custom_fields`,
 `list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`, `list_test_runs`,
-`get_test_run`, `list_requirements`, `get_traceability_matrix`, `list_bug_reports`,
+`get_test_run`, `compare_test_runs`, `list_requirements`, `get_traceability_matrix`, `list_bug_reports`,
 `get_bug_report`, `list_comments`, `list_parameter_sets`, `list_test_case_versions`,
 `get_test_case_version`, `get_project_dashboard`, `list_flaky_tests`, `get_release_readiness`,
 `get_test_suite_report`,
@@ -172,6 +172,11 @@ pass `durationMs` to `record_test_result(s)`. `get_test_run` and `get_test_plan`
 **Release readiness** — `get_release_readiness(planId)` answers "is release X ready?": GO, NO_GO or
 NO_CRITERIA, with each configured criterion's actual value, threshold and outcome. Thresholds are
 set by people on the plan form; there is no tool to change them.
+
+**Comparing runs** — `compare_test_runs(head, base?)` says what changed between two runs, named by key
+or UUID: newly failing, fixed, still failing, added, removed and other changes, with unchanged ones
+only counted. Omit `base` to compare with the previous run of the same name, else of the same test
+plan and environment.
 
 ### Executing a run
 

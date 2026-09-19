@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Status** | 📝 Draft |
+| **Status** | ✅ Implemented 2026-09-19 — see §8 |
 | **Author** | Engineering (Claude) |
 | **Created** | 2026-09-17 |
 | **Priority** | P2 — "what changed since last time" is the first question after every run |
@@ -189,11 +189,41 @@ tool an agent needs to say "the build broke these three tests".
 
 ## 7. Acceptance Criteria
 
-- [ ] `GET .../test-runs/compare` classifies results into newly failing, fixed, still failing, added, removed, other change and unchanged.
-- [ ] Matching is by test case id and parameter set name; CI-ingested runs of the same tests match.
-- [ ] Omitting `base` selects the previous non-aborted run with the same name, else the same plan and environment, else 404.
-- [ ] Foreign or cross-project run ids return 404; identical base and head return 400.
-- [ ] Run detail has "Compare with…"; run list rows have "Compare with previous"; the comparison URL is shareable.
-- [ ] `compare_test_runs` MCP tool is read-only and accepts run keys.
-- [ ] en/de translations present; USER_MANUAL documents the feature.
-- [ ] Comparator, service, controller, MCP and frontend tests pass.
+- [x] `GET .../test-runs/compare` classifies results into newly failing, fixed, still failing, added, removed, other change and unchanged.
+- [x] Matching is by test case id and parameter set name; CI-ingested runs of the same tests match.
+- [x] Omitting `base` selects the previous non-aborted run with the same name, else the same plan and environment, else 404.
+- [x] Foreign or cross-project run ids return 404; identical base and head return 400.
+- [x] Run detail has "Compare with…"; run list rows have "Compare with previous"; the comparison URL is shareable.
+- [x] `compare_test_runs` MCP tool is read-only and accepts run keys.
+- [x] en/de translations present; USER_MANUAL documents the feature.
+- [x] Comparator, service, controller, MCP and frontend tests pass.
+
+## 8. As Built (2026-09-19)
+
+Built as specified, with these differences:
+
+- **The same-plan-and-environment fallback needs the head to have a plan.** Otherwise two unrelated
+  ad-hoc runs would be paired because both have *no* plan. A run without an environment matches
+  runs without one; the query compares `COALESCE(environment, '')` with `''` rather than binding a
+  null, which PostgreSQL cannot type.
+- **`duplicates`** counts the results beyond one per run for a key, both runs together.
+- **Rows sort by category, then case key in number order** (PROJ-9 before PROJ-10), then parameter set.
+- **Each run carries `happenedAt`** (end, else start, else creation time) so the page can tell when
+  the base is newer than the head and offer a swap.
+- **Linking to a result:** the run page had no way to open one result, so it now takes
+  `?result=<id>`: selected during execution, otherwise its panel opened and scrolled to.
+- **Run list:** a compare icon beside report, clone and delete, as the list has icon buttons rather
+  than a row menu. "Show unchanged" is a switch on the compare page, bound to `unchanged=true`.
+
+Tests: `RunComparatorTest` (26: every row of the category table, parameter sets, renamed sets, a
+case becoming parameterized, duplicate collapse, version flag, ordering), `RunComparisonApiTest`
+(12: automatic base by name, then plan and environment, skipping aborted and later runs, runs
+without a plan, two CI uploads matching by case, same run twice, access), and
+`McpRunComparisonToolsApiTest` (3: keys, automatic base, foreign key); frontend `comparison-view`
+and `test-run-compare.component` specs. **1142 backend tests, 39 frontend spec files (209 tests).**
+
+Checked against PostgreSQL over HTTP (both automatic-base queries, including a run without an
+environment) and in a browser: every category on a seeded pair, a status badge opening its result on
+the run page, the base-newer hint and swap, the run list's compare icon, and a run with no earlier
+run showing the reason with the picker still usable. **Not clicked through:** the German strings,
+dark mode, and the "Show unchanged" switch.

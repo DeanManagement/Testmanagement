@@ -582,6 +582,28 @@ is intentional friction: reopening changes history, so the record says why.
 copying results. This is how you re-test the same set next release. The dialog starts with the
 source run's environment; clear it for a run with none.
 
+### Comparing runs
+
+"What broke since last time?" **Compare with…** on a run (or the ⇄ icon in the run list) opens
+that run beside an earlier one. The earlier run is picked for you: the previous run with the same
+name (CI runs from one workflow share a name), else the previous run of the same test plan and
+environment. Aborted runs are never picked. Choose another under **Compare against** at any time.
+
+Every test case, and every parameter set of a parameterized case, lands in one group:
+
+| Group | From → to |
+|---|---|
+| **Newly failing** | passed → failed or blocked |
+| **Fixed** | failed or blocked → passed |
+| **Still failing** | failed → failed, or blocked → blocked |
+| **Added** / **Removed** | only in the newer / only in the earlier run |
+| **Other change** | anything else, including blocked → failed (the environment problem went away and a real failure appeared) |
+| **Unchanged** | the same result in both; counted, and listed with **Show unchanged** |
+
+*case edited* marks a result that ran different wording of the test case than the other one did.
+Each status links to that result in its run. The page address includes both runs, so you can share
+a comparison. If the run you compare against is newer, the page says so and offers **Swap**.
+
 ### Environments
 
 Each project keeps a list of environments, such as `Staging`, `Production` or `Chrome · Staging`.
