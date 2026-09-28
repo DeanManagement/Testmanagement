@@ -100,7 +100,7 @@ export class AutomationPanelComponent implements OnInit {
 
   trigger(workflow: ProjectWorkflow): void {
     this.dialog.open(TriggerPipelineDialogComponent, {
-      data: { workflow } satisfies TriggerPipelineDialogData,
+      data: { projectId: this.projectId, workflow } satisfies TriggerPipelineDialogData,
     }).afterClosed()
       .pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe((request) => {

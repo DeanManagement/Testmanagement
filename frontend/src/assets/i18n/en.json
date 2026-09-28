@@ -1050,7 +1050,10 @@
       "refHint": "Leave empty to use the workflow's default.",
       "parameters": "Parameters",
       "parametersHint": "One KEY=value per line.",
-      "run": "Run pipeline"
+      "run": "Run pipeline",
+      "environment": "Environment",
+      "noEnvironment": "None",
+      "environmentHint": "Passed to the pipeline as TM_ENVIRONMENT; the reported-back run gets it."
     }
   },
   "issueTracker": {

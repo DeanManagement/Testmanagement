@@ -103,6 +103,7 @@ export interface ProjectWorkflow {
 export interface TriggerPipelineRequest {
   ref?: string | null;
   parameters?: Record<string, string>;
+  environmentId?: string | null;
 }
 
 export interface PipelineRun {

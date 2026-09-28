@@ -871,7 +871,9 @@ Reports can also be uploaded straight from CI — see [CI/CD integration](#15-ci
 If a system administrator has assigned build-server workflows to your project (see
 [Build servers](#build-servers)), an **Automation** panel appears at the top of the test-runs
 page. Each assigned workflow has a **Run** button; the dialog is pre-filled with the workflow's
-default branch and parameters, both editable per run. Triggering needs the Tester role.
+default branch and parameters, both editable per run, and lets you pick an [environment](#environments)
+for the run — the pipeline receives it as `TM_ENVIRONMENT` and the reported-back test run is filed
+under it. Triggering needs the Tester role.
 
 The panel below the buttons lists recent pipeline runs. While a pipeline is in flight its status
 chip updates live — Triggered → Pending → Running → Success / Failed — without reloading the
@@ -1534,7 +1536,7 @@ GitHub/Forgejo, as queue-time variables on Azure Pipelines:
 | `TM_PIPELINE_RUN_ID` | Correlation id for this specific trigger |
 | `TM_PROJECT_KEY` | The project key, e.g. `TES` |
 | `TM_BASE_URL` | This instance's public URL — only when `PUBLIC_BASE_URL` is configured |
-| `TM_ENVIRONMENT` | The environment the trigger named, if any. A run reported back with `pipelineRunId` and no `environment` parameter gets this environment. Currently set only through the API (`environmentId` in the trigger request body); the Automation panel doesn't offer it yet |
+| `TM_ENVIRONMENT` | The environment the trigger named, if any. A run reported back with `pipelineRunId` and no `environment` parameter gets this environment. Picked in the Automation panel's run dialog, or `environmentId` in the trigger request body |
 
 The API key is **not** sent to the build server. Configure it as a CI-side secret once (e.g.
 `TM_API_KEY`), like any other credential your pipeline uses.

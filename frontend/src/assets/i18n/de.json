@@ -1050,7 +1050,10 @@
       "refHint": "Leer lassen, um den Standard des Workflows zu verwenden.",
       "parameters": "Parameter",
       "parametersHint": "Ein KEY=Wert pro Zeile.",
-      "run": "Pipeline starten"
+      "run": "Pipeline starten",
+      "environment": "Umgebung",
+      "noEnvironment": "Keine",
+      "environmentHint": "Wird der Pipeline als TM_ENVIRONMENT übergeben; der zurückgemeldete Lauf erhält sie."
     }
   },
   "issueTracker": {
