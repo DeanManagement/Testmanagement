@@ -1000,6 +1000,7 @@
     "discoverFailed": "Discovery failed.",
     "discoverProjects": "Discover projects",
     "discoverPipelines": "Discover the project's pipelines",
+    "pipelineId": "ID {{id}}",
     "discoverBranches": "Discover the pipeline's branches",
     "discoveryUnsupportedField": "Nothing to discover here — enter it manually.",
     "workflowName": "Workflow name",

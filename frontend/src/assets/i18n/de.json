@@ -1000,6 +1000,7 @@
     "discoverFailed": "Ermittlung fehlgeschlagen.",
     "discoverProjects": "Projekte ermitteln",
     "discoverPipelines": "Pipelines des Projekts ermitteln",
+    "pipelineId": "ID {{id}}",
     "discoverBranches": "Branches der Pipeline ermitteln",
     "discoveryUnsupportedField": "Hier lässt sich nichts ermitteln – bitte manuell eingeben.",
     "workflowName": "Workflow-Name",

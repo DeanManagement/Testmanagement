@@ -171,7 +171,11 @@
                           <mat-icon>account_tree</mat-icon>
                           {{ candidate.name }}
                           @if (discoveryTarget === 'WORKFLOWS' && candidate.workflowRef) {
-                            <span class="muted">({{ candidate.workflowRef }})</span>
+                            @if (workflowServerIsAzure) {
+                              <span class="muted">· {{ 'buildServers.pipelineId' | translate: { id: candidate.workflowRef } }}</span>
+                            } @else {
+                              <span class="muted">({{ candidate.workflowRef }})</span>
+                            }
                           }
                         </button>
                       }
@@ -283,7 +287,9 @@
                     </span>
                     <span class="server-detail">
                       {{ workflow.repoRef }}
-                      @if (workflow.workflowRef) {<span> · {{ workflow.workflowRef }}</span>}
+                      @if (workflow.workflowRef && server.provider === 'AZURE_DEVOPS') {
+                        <span> · {{ 'buildServers.pipelineId' | translate: { id: workflow.workflowRef } }}</span>
+                      } @else if (workflow.workflowRef) {<span> · {{ workflow.workflowRef }}</span>}
                       @if (workflow.defaultRef) {<span> · {{ workflow.defaultRef }}</span>}
                     </span>
                   </div>
