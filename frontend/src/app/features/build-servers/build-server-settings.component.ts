@@ -1,5 +1,6 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, OnInit } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -24,6 +25,7 @@ import {
   BuildServerProviderType,
   BuildWorkflow,
   DiscoveredWorkflow,
+  DiscoveryTarget,
   REPO_REF_HINT,
   SaveBuildServerConfigRequest,
   SaveBuildWorkflowRequest,
@@ -54,6 +56,7 @@ import { LocalizedDatePipe } from '../../shared/pipes/localized-date.pipe';
     MatSelectModule,
     MatSlideToggleModule,
     MatTooltipModule,
+    NgTemplateOutlet,
     TranslateModule,
   ],
   templateUrl: './build-server-settings.component.html',
@@ -104,6 +107,7 @@ export class BuildServerSettingsComponent implements OnInit {
 
   // Discovery
   discovering = false;
+  discoveryTarget: DiscoveryTarget = 'WORKFLOWS';
   discoverySupported: boolean | null = null;
   discovered: DiscoveredWorkflow[] = [];
 
@@ -327,12 +331,16 @@ export class BuildServerSettingsComponent implements OnInit {
     this.discoverySupported = null;
   }
 
-  discover(): void {
+  discover(target: DiscoveryTarget = 'WORKFLOWS'): void {
     if (!this.workflowFormServerId) {
       return;
     }
     this.discovering = true;
-    this.api.discoverWorkflows(this.workflowFormServerId, this.wRepoRef.trim() || null)
+    this.discoveryTarget = target;
+    this.discovered = [];
+    this.discoverySupported = null;
+    this.api.discoverWorkflows(this.workflowFormServerId, target, this.wRepoRef.trim() || null,
+      this.wWorkflowRef.trim() || null)
       .pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (result) => {
@@ -351,7 +359,27 @@ export class BuildServerSettingsComponent implements OnInit {
       });
   }
 
+  /** Where a discovery result list belongs: under the field it fills. */
+  showsDiscoveryFor(field: DiscoveryTarget): boolean {
+    // Other providers discover workflows from the repository row, with its one Discover button.
+    const target = this.discoveryTarget === 'WORKFLOWS' && !this.workflowServerIsAzure
+      ? 'REPOSITORIES' : this.discoveryTarget;
+    return target === field;
+  }
+
   pickDiscovered(workflow: DiscoveredWorkflow): void {
+    if (this.discoveryTarget === 'REPOSITORIES') {
+      // Another project has other pipelines, so the old pick no longer applies.
+      this.wRepoRef = workflow.repoRef;
+      this.wWorkflowRef = '';
+      this.discovered = [];
+      return;
+    }
+    if (this.discoveryTarget === 'BRANCHES') {
+      this.wDefaultRef = workflow.defaultRef ?? this.wDefaultRef;
+      this.discovered = [];
+      return;
+    }
     if (!this.wName) {
       this.wName = workflow.name;
     }

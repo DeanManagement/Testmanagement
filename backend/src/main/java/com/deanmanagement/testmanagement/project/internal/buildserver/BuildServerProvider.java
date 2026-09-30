@@ -54,6 +54,26 @@ public interface BuildServerProvider {
     }
 
     /**
+     * Lists the repositories (for Azure DevOps: projects) a workflow can live in; each entry fills
+     * {@code repoRef} only.
+     *
+     * @throws UnsupportedOperationException when the provider has nothing useful to list.
+     */
+    default List<DiscoveredWorkflow> discoverRepositories(DecryptedConfig config) {
+        throw new UnsupportedOperationException(type() + " does not support repository discovery");
+    }
+
+    /**
+     * Lists the branches a workflow can be triggered on; each entry carries the branch as
+     * {@code defaultRef}.
+     *
+     * @throws UnsupportedOperationException when the provider has nothing useful to list.
+     */
+    default List<DiscoveredWorkflow> discoverBranches(DecryptedConfig config, String repoRef, String workflowRef) {
+        throw new UnsupportedOperationException(type() + " does not support branch discovery");
+    }
+
+    /**
      * The test results the build server itself collected for a finished run (PRD-026 §3.4), at most
      * {@code limit} of them. Lets results reach the tool without the pipeline reporting back.
      *

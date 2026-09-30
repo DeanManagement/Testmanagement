@@ -157,39 +157,56 @@
 
             @if (workflowFormServerId === server.id) {
               <div class="workflow-form" data-test-id="workflow-form">
+                <ng-template #discoveredList>
+                  @if (discoverySupported === false) {
+                    <p class="muted">
+                      {{ (discoveryTarget === 'WORKFLOWS' ? 'buildServers.discoveryUnsupported'
+                          : 'buildServers.discoveryUnsupportedField') | translate }}
+                    </p>
+                  }
+                  @if (discovered.length > 0) {
+                    <div class="discovered-list" data-test-id="workflow-discovered-list">
+                      @for (candidate of discovered; track $index) {
+                        <button mat-stroked-button class="discovered-item" (click)="pickDiscovered(candidate)">
+                          <mat-icon>account_tree</mat-icon>
+                          {{ candidate.name }}
+                          @if (discoveryTarget === 'WORKFLOWS' && candidate.workflowRef) {
+                            <span class="muted">({{ candidate.workflowRef }})</span>
+                          }
+                        </button>
+                      }
+                    </div>
+                  }
+                </ng-template>
+
                 <div class="discover-row">
                   <mat-form-field appearance="outline" class="grow">
                     <mat-label>{{ 'buildServers.repoRef' | translate }}</mat-label>
                     <input matInput [(ngModel)]="wRepoRef" [placeholder]="repoRefHint"
                            data-test-id="workflow-repo-ref-input">
-                    <mat-hint>{{ repoRefHint }}</mat-hint>
-                  </mat-form-field>
-                  <button mat-stroked-button (click)="discover()" [disabled]="discovering"
-                          data-test-id="workflow-discover-btn">
-                    @if (discovering) {
-                      <mat-spinner diameter="16"></mat-spinner>
-                    } @else {
-                      <mat-icon>travel_explore</mat-icon>
-                    }
-                    {{ 'buildServers.discover' | translate }}
-                  </button>
-                </div>
-
-                @if (discoverySupported === false) {
-                  <p class="muted">{{ 'buildServers.discoveryUnsupported' | translate }}</p>
-                }
-                @if (discovered.length > 0) {
-                  <div class="discovered-list" data-test-id="workflow-discovered-list">
-                    @for (candidate of discovered; track $index) {
-                      <button mat-stroked-button class="discovered-item" (click)="pickDiscovered(candidate)">
-                        <mat-icon>account_tree</mat-icon>
-                        {{ candidate.name }}
-                        @if (candidate.workflowRef) {
-                          <span class="muted">({{ candidate.workflowRef }})</span>
-                        }
+                    @if (workflowServerIsAzure) {
+                      <button mat-icon-button matSuffix type="button" (click)="discover('REPOSITORIES')"
+                              [disabled]="discovering" [matTooltip]="'buildServers.discoverProjects' | translate"
+                              data-test-id="workflow-discover-projects-btn">
+                        <mat-icon>travel_explore</mat-icon>
                       </button>
                     }
-                  </div>
+                    <mat-hint>{{ repoRefHint }}</mat-hint>
+                  </mat-form-field>
+                  @if (!workflowServerIsAzure) {
+                    <button mat-stroked-button (click)="discover()" [disabled]="discovering"
+                            data-test-id="workflow-discover-btn">
+                      @if (discovering) {
+                        <mat-spinner diameter="16"></mat-spinner>
+                      } @else {
+                        <mat-icon>travel_explore</mat-icon>
+                      }
+                      {{ 'buildServers.discover' | translate }}
+                    </button>
+                  }
+                </div>
+                @if (showsDiscoveryFor('REPOSITORIES')) {
+                  <ng-container [ngTemplateOutlet]="discoveredList" />
                 }
 
                 <mat-form-field appearance="outline" class="full-width">
@@ -201,13 +218,35 @@
                   <mat-label>{{ 'buildServers.workflowRef' | translate }}</mat-label>
                   <input matInput [(ngModel)]="wWorkflowRef" [placeholder]="workflowServerIsAzure ? '42' : 'tests.yml'"
                          data-test-id="workflow-ref-input">
+                  @if (workflowServerIsAzure) {
+                    <button mat-icon-button matSuffix type="button" (click)="discover('WORKFLOWS')"
+                            [disabled]="discovering || !wRepoRef.trim()"
+                            [matTooltip]="'buildServers.discoverPipelines' | translate"
+                            data-test-id="workflow-discover-pipelines-btn">
+                      <mat-icon>travel_explore</mat-icon>
+                    </button>
+                  }
                   <mat-hint>{{ (workflowServerIsAzure ? 'buildServers.workflowRefHintAzure' : 'buildServers.workflowRefHint') | translate }}</mat-hint>
                 </mat-form-field>
+                @if (showsDiscoveryFor('WORKFLOWS')) {
+                  <ng-container [ngTemplateOutlet]="discoveredList" />
+                }
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>{{ 'buildServers.defaultRef' | translate }}</mat-label>
                   <input matInput [(ngModel)]="wDefaultRef" placeholder="main"
                          data-test-id="workflow-default-ref-input">
+                  @if (workflowServerIsAzure) {
+                    <button mat-icon-button matSuffix type="button" (click)="discover('BRANCHES')"
+                            [disabled]="discovering || !wRepoRef.trim() || !wWorkflowRef.trim()"
+                            [matTooltip]="'buildServers.discoverBranches' | translate"
+                            data-test-id="workflow-discover-branches-btn">
+                      <mat-icon>travel_explore</mat-icon>
+                    </button>
+                  }
                 </mat-form-field>
+                @if (showsDiscoveryFor('BRANCHES')) {
+                  <ng-container [ngTemplateOutlet]="discoveredList" />
+                }
                 <mat-form-field appearance="outline" class="full-width">
                   <mat-label>{{ 'buildServers.defaultParameters' | translate }}</mat-label>
                   <textarea matInput rows="3" [(ngModel)]="wParamsText"

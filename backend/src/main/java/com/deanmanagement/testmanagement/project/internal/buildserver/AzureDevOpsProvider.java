@@ -13,6 +13,7 @@ import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -35,6 +36,9 @@ public class AzureDevOpsProvider extends HttpBuildProviderSupport implements Bui
     /** Variables the tool injects itself; everything else is a template parameter of the YAML. */
     private static final String CORRELATION_PREFIX = "TM_";
     private static final int DISCOVER_LIMIT = 1000;
+    /** Repository type of a pipeline building from Azure Repos, the only kind whose branches Azure lists. */
+    private static final String AZURE_REPOS = "azureReposGit";
+    private static final String BRANCH_PREFIX = "refs/heads/";
     private static final int RESULT_PAGE_SIZE = 200;
     private static final int HTTP_BAD_REQUEST = 400;
 
@@ -111,6 +115,47 @@ public class AzureDevOpsProvider extends HttpBuildProviderSupport implements Bui
             }
         }
         return discovered;
+    }
+
+    /** The organization's projects: the first field of an Azure workflow. */
+    @Override
+    public List<DiscoveredWorkflow> discoverRepositories(DecryptedConfig config) {
+        JsonNode body = getJson(config, base(config) + "/_apis/projects?$top=" + DISCOVER_LIMIT + version(config, "&"));
+        List<DiscoveredWorkflow> projects = new ArrayList<>();
+        for (JsonNode project : values(body)) {
+            String name = text(project, "name");
+            if (name != null) {
+                projects.add(new DiscoveredWorkflow(name, name, null, null));
+            }
+        }
+        projects.sort(Comparator.comparing(DiscoveredWorkflow::name, String.CASE_INSENSITIVE_ORDER));
+        return projects;
+    }
+
+    /**
+     * The branches of the repository the pipeline builds, as short names ({@code main}); the trigger
+     * turns them back into {@code refs/heads/main}. Needs the PAT's Code (Read) scope, and only Azure
+     * Repos can be asked: a pipeline building from GitHub or Bitbucket keeps its branches there.
+     */
+    @Override
+    public List<DiscoveredWorkflow> discoverBranches(DecryptedConfig config, String repoRef, String workflowRef) {
+        JsonNode repository = getJson(config, pipelineApi(config, repoRef, workflowRef) + version(config, "?"))
+                .at("/configuration/repository");
+        String repositoryId = text(repository, "id");
+        if (!AZURE_REPOS.equalsIgnoreCase(text(repository, "type")) || repositoryId == null) {
+            throw new UnsupportedOperationException("Branches can only be listed for pipelines building from Azure Repos");
+        }
+        JsonNode refs = getJson(config, projectApi(config, repoRef) + "/_apis/git/repositories/"
+                + encodePath(repositoryId) + "/refs?filter=heads/&$top=" + DISCOVER_LIMIT + version(config, "&"));
+        List<DiscoveredWorkflow> branches = new ArrayList<>();
+        for (JsonNode ref : values(refs)) {
+            String name = text(ref, "name");
+            if (name != null && name.startsWith(BRANCH_PREFIX)) {
+                String branch = name.substring(BRANCH_PREFIX.length());
+                branches.add(new DiscoveredWorkflow(branch, repoRef, workflowRef, branch));
+            }
+        }
+        return branches;
     }
 
     /**

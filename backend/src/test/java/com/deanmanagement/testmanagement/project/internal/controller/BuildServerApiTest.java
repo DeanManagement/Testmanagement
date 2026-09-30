@@ -510,4 +510,21 @@ class BuildServerApiTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").value(containsString("https://dev.azure.com/akros.")));
     }
+
+    @Test
+    void discoveringBranchesOnAProviderThatCannot_isUnsupportedNotAnError() throws Exception {
+        String serverJson = mockMvc.perform(post("/api/build-servers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(serverBody())
+                        .with(user(sysAdmin).roles("ADMIN")))
+                .andReturn().getResponse().getContentAsString();
+        String serverId = com.jayway.jsonpath.JsonPath.read(serverJson, "$.id");
+
+        mockMvc.perform(post("/api/build-servers/" + serverId + "/discover")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"repoRef\":\"group/project\",\"target\":\"BRANCHES\"}")
+                        .with(user(sysAdmin).roles("ADMIN")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.supported").value(false));
+    }
 }

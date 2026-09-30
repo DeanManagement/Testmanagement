@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.buildserver.BuildServe
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.BuildServerConfigResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.DiscoverWorkflowsResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.DiscoverWorkflowsResponse.DiscoveredWorkflowResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.buildserver.DiscoveryTarget;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.SaveBuildServerConfigRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.BuildServerConfig;
 import com.deanmanagement.testmanagement.project.internal.entity.BuildServerProviderType;
@@ -154,11 +155,17 @@ public class BuildServerConfigService {
 
     /** Provider discovery for the admin's pick-list; "nothing to list" is a state, not an error. */
     @Transactional
-    public DiscoverWorkflowsResponse discover(UUID id, String repoRef) {
+    public DiscoverWorkflowsResponse discover(UUID id, DiscoveryTarget target, String repoRef, String workflowRef) {
         BuildServerConfig config = require(id);
         BuildServerProvider provider = providerRegistry.require(config.getProvider());
         try {
-            List<DiscoveredWorkflowResponse> workflows = provider.discover(decrypt(config), repoRef)
+            BuildServerProvider.DecryptedConfig decrypted = decrypt(config);
+            List<BuildServerProvider.DiscoveredWorkflow> found = switch (target) {
+                case REPOSITORIES -> provider.discoverRepositories(decrypted);
+                case WORKFLOWS -> provider.discover(decrypted, repoRef);
+                case BRANCHES -> provider.discoverBranches(decrypted, repoRef, workflowRef);
+            };
+            List<DiscoveredWorkflowResponse> workflows = found
                     .stream()
                     .map(w -> new DiscoveredWorkflowResponse(w.name(), w.repoRef(), w.workflowRef(),
                             w.defaultRef()))

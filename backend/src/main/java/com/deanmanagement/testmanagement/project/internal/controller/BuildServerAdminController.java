@@ -5,6 +5,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.buildserver.Assign
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.BuildServerConfigResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.BuildWorkflowResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.DiscoverWorkflowsRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.buildserver.DiscoveryTarget;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.DiscoverWorkflowsResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.SaveBuildServerConfigRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.SaveBuildWorkflowRequest;
@@ -98,7 +99,8 @@ public class BuildServerAdminController {
                                               @Valid @RequestBody DiscoverWorkflowsRequest request,
                                               Authentication authentication) {
         requireAdmin(authentication);
-        return configService.discover(id, request.repoRef());
+        return configService.discover(id, request.target() == null ? DiscoveryTarget.WORKFLOWS : request.target(),
+                request.repoRef(), request.workflowRef());
     }
 
     @GetMapping("/{id}/workflows")

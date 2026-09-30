@@ -6,6 +6,7 @@ import {
   BuildServerProviderType,
   BuildWorkflow,
   DiscoverWorkflowsResponse,
+  DiscoveryTarget,
   PipelineRun,
   ProjectWorkflow,
   SaveBuildServerConfigRequest,
@@ -50,8 +51,10 @@ export class BuildServerApiService {
   }
 
   /** `supported: false` means this provider has no pick-list; fall back to manual entry. */
-  discoverWorkflows(id: string, repoRef: string | null): Observable<DiscoverWorkflowsResponse> {
-    return this.http.post<DiscoverWorkflowsResponse>(`${this.adminUrl}/${id}/discover`, { repoRef });
+  discoverWorkflows(id: string, target: DiscoveryTarget, repoRef: string | null,
+                    workflowRef: string | null = null): Observable<DiscoverWorkflowsResponse> {
+    return this.http.post<DiscoverWorkflowsResponse>(`${this.adminUrl}/${id}/discover`,
+      { target, repoRef, workflowRef });
   }
 
   getWorkflows(serverId: string): Observable<BuildWorkflow[]> {

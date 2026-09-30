@@ -206,4 +206,43 @@ class AzureDevOpsProviderTest {
         assertThat(provider.fetchTestResults(config, query("17"), 100).results()).isEmpty();
         assertThat(server.requests()).hasSize(1);
     }
+
+    // ---- Discovery of every workflow field ---------------------------------
+
+    @Test
+    void discoversTheOrganizationsProjectsByName() {
+        server.respond(Response.json("{\"value\":[{\"name\":\"SYRONA\"},{\"name\":\"Billing\"}]}"));
+
+        var projects = provider.discoverRepositories(config);
+
+        assertThat(server.lastRequest().pathAndQuery()).isEqualTo("/contoso/_apis/projects?$top=1000&api-version=7.1");
+        assertThat(projects).containsExactly(
+                new BuildServerProvider.DiscoveredWorkflow("Billing", "Billing", null, null),
+                new BuildServerProvider.DiscoveredWorkflow("SYRONA", "SYRONA", null, null));
+    }
+
+    @Test
+    void discoversTheBranchesOfTheRepositoryThePipelineBuilds() {
+        server.respond(
+                Response.json("{\"id\":42,\"configuration\":{\"repository\":{\"id\":\"repo-1\",\"type\":\"azureReposGit\"}}}"),
+                Response.json("{\"value\":[{\"name\":\"refs/heads/main\"},{\"name\":\"refs/heads/feature/login\"}]}"));
+
+        var branches = provider.discoverBranches(config, "Payments Team", "42");
+
+        assertThat(server.requests().get(0).pathAndQuery())
+                .isEqualTo("/contoso/Payments%20Team/_apis/pipelines/42?api-version=7.1");
+        assertThat(server.lastRequest().pathAndQuery()).isEqualTo(
+                "/contoso/Payments%20Team/_apis/git/repositories/repo-1/refs?filter=heads/&$top=1000&api-version=7.1");
+        assertThat(branches).extracting(BuildServerProvider.DiscoveredWorkflow::defaultRef)
+                .containsExactly("main", "feature/login");
+    }
+
+    @Test
+    void branchesOfAPipelineBuildingFromGitHub_areNotDiscoverable() {
+        server.respond(Response.json("{\"id\":42,\"configuration\":{\"repository\":{\"id\":\"org/repo\",\"type\":\"gitHub\"}}}"));
+
+        assertThatThrownBy(() -> provider.discoverBranches(config, "Payments Team", "42"))
+                .isInstanceOf(UnsupportedOperationException.class)
+                .hasMessageContaining("Azure Repos");
+    }
 }

@@ -81,6 +81,9 @@ export interface SaveBuildWorkflowRequest {
   pullTestResults?: boolean;
 }
 
+/** Which workflow field discovery fills: the repository (Azure: project), the workflow, or the branch. */
+export type DiscoveryTarget = 'REPOSITORIES' | 'WORKFLOWS' | 'BRANCHES';
+
 export interface DiscoveredWorkflow {
   name: string;
   repoRef: string;

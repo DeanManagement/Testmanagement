@@ -1400,13 +1400,15 @@ Provider notes:
 | Forgejo / Gitea | Instance root, e.g. `https://codeberg.org` | Access token with repository scope | `owner/repo` |
 | Woodpecker | Instance root | Personal token from user settings | Numeric repo id (use discovery) |
 | Jenkins | Instance root | **`user:apiToken`** — both halves, colon-separated | Job path, e.g. `folder/jobname` |
-| Azure Pipelines | **With the organization**: `https://dev.azure.com/contoso`, or `https://tfs.example.com/tfs/DefaultCollection` for Server | Organization-scoped personal access token: *Build: Read & execute*, plus *Test Management: Read* to pull results | The Azure DevOps project, e.g. `Payments`; the workflow is the numeric **pipeline id** (use discovery) |
+| Azure Pipelines | **With the organization**: `https://dev.azure.com/contoso`, or `https://tfs.example.com/tfs/DefaultCollection` for Server | Organization-scoped personal access token: *Build: Read & execute*, plus *Test Management: Read* to pull results and *Code: Read* to discover branches | The Azure DevOps project, e.g. `Payments`; the workflow is the numeric **pipeline id** (use discovery) |
 
 **Workflows.** On each server the admin defines what can be triggered: a display name testers
 will see, the repository/job reference, for GitHub/Forgejo the workflow file (e.g. `tests.yml`),
 a default branch, and default parameters (one `KEY=value` per line). The **Discover** button asks
 the server what exists — workflow files on GitHub/Forgejo, jobs on Jenkins, repositories on
-Woodpecker, branches on GitLab — so most workflows are a pick, not a form. Manual entry always
+Woodpecker, branches on GitLab — so most workflows are a pick, not a form. On Azure Pipelines each
+field has its own discover button: the organization's projects, then the chosen project's
+pipelines, then the branches of the repository that pipeline builds (Azure Repos only). Manual entry always
 works when discovery has nothing to offer.
 
 **Project scope.** A server is available to all projects, or — with **Available to all projects**

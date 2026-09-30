@@ -137,3 +137,78 @@ describe('BuildServerSettingsComponent – project scope', () => {
     expect(component.projectsFor(limited).map((p) => p.id)).toEqual(['p2']);
   });
 });
+
+/** Azure DevOps: every field of the workflow form can be picked from what the server lists. */
+describe('BuildServerSettingsComponent – Azure DevOps discovery', () => {
+  let discoverWorkflows: ReturnType<typeof vi.fn>;
+  const azure: BuildServerConfig = {
+    id: 'azure', name: 'Syrona', provider: 'AZURE_DEVOPS', baseUrl: 'https://dev.azure.com/akros', active: true,
+    tokenSet: true, lastError: null, lastErrorAt: null, updatedAt: '', apiVersion: null, projectIds: null,
+  };
+
+  function openAzureForm(): BuildServerSettingsComponent {
+    discoverWorkflows = vi.fn(() => of({ supported: true, workflows: [] }));
+    TestBed.configureTestingModule({
+      imports: [BuildServerSettingsComponent, TranslateModule.forRoot()],
+      providers: [
+        provideRouter([]),
+        provideNoopAnimations(),
+        {
+          provide: BuildServerApiService,
+          useValue: {
+            getSupportedProviders: () => of(['AZURE_DEVOPS']),
+            getServers: () => of([azure]),
+            getWorkflows: () => of([]),
+            discoverWorkflows,
+          },
+        },
+        { provide: ProjectApiService, useValue: { getAll: () => of([]) } },
+      ],
+    });
+    const fixture = TestBed.createComponent(BuildServerSettingsComponent);
+    fixture.detectChanges();
+    const component = fixture.componentInstance;
+    component.openWorkflowForm('azure', null);
+    return component;
+  }
+
+  it('asks for branches of the chosen project and pipeline', () => {
+    const component = openAzureForm();
+    component.wRepoRef = 'SYRONA';
+    component.wWorkflowRef = '42';
+
+    component.discover('BRANCHES');
+
+    expect(discoverWorkflows).toHaveBeenCalledWith('azure', 'BRANCHES', 'SYRONA', '42');
+  });
+
+  it('picking a project clears the pipeline picked for the previous one', () => {
+    const component = openAzureForm();
+    component.discover('REPOSITORIES');
+    component.wWorkflowRef = '42';
+
+    component.pickDiscovered({ name: 'Billing', repoRef: 'Billing', workflowRef: null, defaultRef: null });
+
+    expect([component.wRepoRef, component.wWorkflowRef, component.wName]).toEqual(['Billing', '', '']);
+  });
+
+  it('picking a branch fills only the branch', () => {
+    const component = openAzureForm();
+    component.wRepoRef = 'SYRONA';
+    component.wWorkflowRef = '42';
+    component.discover('BRANCHES');
+
+    component.pickDiscovered({ name: 'develop', repoRef: 'SYRONA', workflowRef: '42', defaultRef: 'develop' });
+
+    expect([component.wRepoRef, component.wWorkflowRef, component.wDefaultRef]).toEqual(['SYRONA', '42', 'develop']);
+  });
+
+  it('shows the results under the field they fill', () => {
+    const component = openAzureForm();
+
+    component.discover('WORKFLOWS');
+
+    expect(component.showsDiscoveryFor('WORKFLOWS')).toBe(true);
+    expect(component.showsDiscoveryFor('REPOSITORIES')).toBe(false);
+  });
+});
