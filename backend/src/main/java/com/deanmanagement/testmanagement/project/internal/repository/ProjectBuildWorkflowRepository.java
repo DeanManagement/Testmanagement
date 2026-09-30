@@ -11,9 +11,13 @@ import java.util.UUID;
 
 public interface ProjectBuildWorkflowRepository extends JpaRepository<ProjectBuildWorkflow, UUID> {
 
+    /** An assignment only counts while its server is available to the assignment's project. */
+    String IN_SERVER_SCOPE = " AND (c.allProjects = true OR a.projectId MEMBER OF c.projectIds)";
+
     /** Assignments for a project with workflow and server loaded, ready for DTO mapping. */
     @Query("SELECT a FROM ProjectBuildWorkflow a JOIN FETCH a.workflow w "
-            + "JOIN FETCH w.buildServerConfig WHERE a.projectId = :projectId ORDER BY w.name")
+            + "JOIN FETCH w.buildServerConfig c WHERE a.projectId = :projectId" + IN_SERVER_SCOPE
+            + " ORDER BY w.name")
     List<ProjectBuildWorkflow> findByProjectIdWithWorkflow(@Param("projectId") UUID projectId);
 
     Optional<ProjectBuildWorkflow> findByProjectIdAndWorkflowId(UUID projectId, UUID workflowId);
@@ -24,7 +28,8 @@ public interface ProjectBuildWorkflowRepository extends JpaRepository<ProjectBui
      * would fail there with no session to initialize from.
      */
     @Query("SELECT a FROM ProjectBuildWorkflow a JOIN FETCH a.workflow w "
-            + "JOIN FETCH w.buildServerConfig WHERE a.projectId = :projectId AND w.id = :workflowId")
+            + "JOIN FETCH w.buildServerConfig c WHERE a.projectId = :projectId AND w.id = :workflowId"
+            + IN_SERVER_SCOPE)
     Optional<ProjectBuildWorkflow> findForTrigger(@Param("projectId") UUID projectId,
                                                   @Param("workflowId") UUID workflowId);
 

@@ -42,6 +42,8 @@ export interface BuildServerConfig {
   updatedAt: string;
   /** PRD-026: Azure DevOps only; null means 7.1. */
   apiVersion: string | null;
+  /** The projects that may use this server; null means every project. */
+  projectIds: string[] | null;
 }
 
 export interface SaveBuildServerConfigRequest {
@@ -51,6 +53,7 @@ export interface SaveBuildServerConfigRequest {
   apiToken?: string;
   active?: boolean;
   apiVersion?: string | null;
+  projectIds: string[] | null;
 }
 
 export interface BuildWorkflow {

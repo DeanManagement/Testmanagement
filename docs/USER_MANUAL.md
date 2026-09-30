@@ -868,8 +868,9 @@ Reports can also be uploaded straight from CI — see [CI/CD integration](#15-ci
 
 ### Triggering automated suites
 
-If a system administrator has assigned build-server workflows to your project (see
-[Build servers](#build-servers)), an **Automation** panel appears at the top of the test-runs
+If build-server workflows are assigned to your project — by a system administrator, or by a
+project admin under **Project settings → Automation workflows** (see
+[Build servers](#build-servers)) — an **Automation** panel appears at the top of the test-runs
 page. Each assigned workflow has a **Run** button; the dialog is pre-filled with the workflow's
 default branch and parameters, both editable per run, and lets you pick an [environment](#environments)
 for the run — the pipeline receives it as `TM_ENVIRONMENT` and the reported-back test run is filed
@@ -1408,11 +1409,25 @@ the server what exists — workflow files on GitHub/Forgejo, jobs on Jenkins, re
 Woodpecker, branches on GitLab — so most workflows are a pick, not a form. Manual entry always
 works when discovery has nothing to offer.
 
-**Project assignment.** Each workflow has a project multi-select. Assignment is the entire
-authorization: a project's members see and trigger **only** the workflows assigned to that
-project, and the project-side API never exposes the server URL, the repository reference or any
-credential. Unassigning a workflow (or deleting a server) leaves past pipeline runs readable in
-the projects' history.
+**Project scope.** A server is available to all projects, or — with **Available to all projects**
+switched off — only to the projects you pick. Use this when one server's token belongs to one team,
+for example two independent Azure DevOps projects with a PAT each: the other team's projects then
+never see that server's workflows. Narrowing the scope keeps existing assignments to projects left
+outside it, but they stop working until the project is added back. Deleting the last project a
+server is limited to leaves the server available to no project, never to all of them. Servers that
+existed before project scopes were introduced were limited to the projects already using them.
+
+**Project assignment.** A workflow is offered to a project's testers once it is assigned to that
+project, which happens in one of two places:
+
+- here, with each workflow's project multi-select, which lists only projects in the server's scope
+- by a project admin, under **Project settings → Automation workflows**, choosing among the active
+  workflows of every server available to the project
+
+Assignment within the scope is the entire authorization: a project's members see and trigger
+**only** those workflows, and the project-side API never exposes the server URL, the repository
+reference or any credential. Unassigning a workflow (or deleting a server) leaves past pipeline
+runs readable in the projects' history.
 
 **Azure Pipelines.** Only YAML pipelines are supported, not classic releases. For Azure DevOps
 Server 2019 or 2020 set the server's **API version** to `5.0` or `6.0`; Services and Server 2022

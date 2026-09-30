@@ -32,8 +32,9 @@ import { Project } from '../../shared/models/project.model';
 import { LocalizedDatePipe } from '../../shared/pipes/localized-date.pipe';
 
 /**
- * Instance-wide build-server administration (PRD-024 §3.5): register servers, define workflows —
- * via provider discovery where available, manually otherwise — and assign them to projects.
+ * Instance-wide build-server administration (PRD-024 §3.5): register servers, limit them to some
+ * projects if needed, define workflows — via provider discovery where available, manually
+ * otherwise — and assign them to projects the server is open to.
  * Reached from the global settings navigation; the backend rejects non-admins.
  *
  * <p>The stored API token is never returned by the API, so the field always starts empty and an
@@ -84,6 +85,8 @@ export class BuildServerSettingsComponent implements OnInit {
   sActive = true;
   /** PRD-026: Azure DevOps only. */
   sApiVersion = '';
+  sAllProjects = true;
+  sProjectIds: string[] = [];
   savingServer = false;
   testingServerId: string | null = null;
 
@@ -133,6 +136,17 @@ export class BuildServerSettingsComponent implements OnInit {
     this.loadServers();
   }
 
+  /** The projects a server's workflows can be assigned to. */
+  projectsFor(server: BuildServerConfig): Project[] {
+    const scope = server.projectIds;
+    return scope === null ? this.projects : this.projects.filter((p) => scope.includes(p.id));
+  }
+
+  /** Names of the projects a limited server is open to; unknown ids are skipped. */
+  scopeNames(server: BuildServerConfig): string {
+    return this.projectsFor(server).map((p) => p.name).join(', ');
+  }
+
   workflowsFor(serverId: string): BuildWorkflow[] {
     return this.workflowsByServer[serverId] ?? [];
   }
@@ -179,6 +193,8 @@ export class BuildServerSettingsComponent implements OnInit {
     this.sToken = '';
     this.sActive = server?.active ?? true;
     this.sApiVersion = server?.apiVersion ?? '';
+    this.sAllProjects = !server || server.projectIds === null;
+    this.sProjectIds = [...(server?.projectIds ?? [])];
   }
 
   closeServerForm(): void {
@@ -194,6 +210,7 @@ export class BuildServerSettingsComponent implements OnInit {
       apiToken: this.sToken || undefined,
       active: this.sActive,
       apiVersion: this.sProvider === 'AZURE_DEVOPS' ? this.sApiVersion.trim() || null : null,
+      projectIds: this.sAllProjects ? null : this.sProjectIds,
     };
     this.savingServer = true;
     const call = this.editingServer

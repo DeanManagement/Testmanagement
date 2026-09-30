@@ -51,6 +51,20 @@
             <mat-hint>{{ 'buildServers.apiVersionHint' | translate }}</mat-hint>
           </mat-form-field>
         }
+        <mat-slide-toggle [(ngModel)]="sAllProjects" data-test-id="build-server-all-projects-toggle">
+          {{ 'buildServers.allProjects' | translate }}
+        </mat-slide-toggle>
+        @if (!sAllProjects) {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>{{ 'buildServers.scopeProjects' | translate }}</mat-label>
+            <mat-select multiple [(ngModel)]="sProjectIds" data-test-id="build-server-projects-select">
+              @for (project of projects; track project.id) {
+                <mat-option [value]="project.id">{{ project.name }}</mat-option>
+              }
+            </mat-select>
+            <mat-hint>{{ 'buildServers.scopeProjectsHint' | translate }}</mat-hint>
+          </mat-form-field>
+        }
         <mat-slide-toggle [(ngModel)]="sActive" data-test-id="build-server-active-toggle">
           {{ 'buildServers.active' | translate }}
         </mat-slide-toggle>
@@ -83,6 +97,15 @@
             </span>
             <span class="server-detail">
               {{ 'buildServers.providers.' + server.provider | translate }} · {{ server.baseUrl }}
+            </span>
+            <span class="server-detail" [attr.data-test-id]="'build-server-scope-' + server.id">
+              @if (server.projectIds === null) {
+                {{ 'buildServers.scopeAll' | translate }}
+              } @else if (scopeNames(server)) {
+                {{ 'buildServers.scopeLimited' | translate: { projects: scopeNames(server) } }}
+              } @else {
+                {{ 'buildServers.scopeNone' | translate }}
+              }
             </span>
           </div>
           <div class="server-actions" (click)="$event.stopPropagation()">
@@ -241,7 +264,7 @@
                     <mat-label>{{ 'buildServers.assignedProjects' | translate }}</mat-label>
                     <mat-select multiple [(ngModel)]="assignments[workflow.id]"
                                 [attr.data-test-id]="'workflow-projects-select-' + workflow.id">
-                      @for (project of projects; track project.id) {
+                      @for (project of projectsFor(server); track project.id) {
                         <mat-option [value]="project.id">{{ project.name }}</mat-option>
                       }
                     </mat-select>

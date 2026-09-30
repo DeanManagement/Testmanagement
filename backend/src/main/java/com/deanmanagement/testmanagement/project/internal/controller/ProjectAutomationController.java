@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.PipelineRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.ProjectWorkflowResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.buildserver.SetProjectWorkflowsRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.TriggerPipelineRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.service.BuildWorkflowService;
@@ -18,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -29,7 +31,8 @@ import java.util.UUID;
 /**
  * The project-side of PRD-024: the workflows assigned to this project, triggering them, and the
  * resulting pipeline runs. Any member may look; triggering takes TESTER, matching who may execute
- * tests. Server URLs and credentials never appear on these endpoints.
+ * tests; choosing which of the available workflows are offered takes ADMIN. Server URLs and
+ * credentials never appear on these endpoints.
  */
 @RestController
 @RequestMapping("/api/projects/{projectId}")
@@ -44,6 +47,19 @@ public class ProjectAutomationController {
     @RequireProjectRole
     public List<ProjectWorkflowResponse> workflows(@PathVariable UUID projectId) {
         return workflowService.listForProject(projectId);
+    }
+
+    @PutMapping("/workflows")
+    @RequireProjectRole(ProjectRole.ADMIN)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void setWorkflows(@PathVariable UUID projectId, @Valid @RequestBody SetProjectWorkflowsRequest request) {
+        workflowService.setProjectWorkflows(projectId, request.workflowIds());
+    }
+
+    @GetMapping("/workflows/available")
+    @RequireProjectRole(ProjectRole.ADMIN)
+    public List<ProjectWorkflowResponse> availableWorkflows(@PathVariable UUID projectId) {
+        return workflowService.listAvailableForProject(projectId);
     }
 
     @PostMapping("/workflows/{workflowId}/trigger")

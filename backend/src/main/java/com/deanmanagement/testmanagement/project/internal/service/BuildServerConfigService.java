@@ -10,6 +10,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.buildserver.SaveBu
 import com.deanmanagement.testmanagement.project.internal.entity.BuildServerConfig;
 import com.deanmanagement.testmanagement.project.internal.entity.BuildServerProviderType;
 import com.deanmanagement.testmanagement.project.internal.repository.BuildServerConfigRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.shared.crypto.AesGcmCipher;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,6 +40,7 @@ public class BuildServerConfigService {
     private final BuildServerProviderRegistry providerRegistry;
     private final AesGcmCipher secretCipher;
     private final BuildServerUrlValidator urlValidator;
+    private final ProjectRepository projectRepository;
 
     public List<BuildServerConfigResponse> list() {
         return configRepository.findAll().stream()
@@ -75,6 +78,7 @@ public class BuildServerConfigService {
         config.setActive(request.active() == null || request.active());
         config.setApiVersion(request.provider() == BuildServerProviderType.AZURE_DEVOPS
                 ? trimToNull(request.apiVersion()) : null);
+        applyProjectScope(config, request.projectIds());
         if (!isBlank(request.apiToken())) {
             config.setApiTokenEncrypted(secretCipher.encrypt(request.apiToken()));
             // A new token invalidates whatever the old one failed at.
@@ -82,6 +86,24 @@ public class BuildServerConfigService {
             config.setLastErrorAt(null);
         }
         return config;
+    }
+
+    /**
+     * Narrowing the scope keeps assignments to projects left outside it; they stop counting
+     * (assignment queries check the scope) and count again if the project is added back.
+     */
+    private void applyProjectScope(BuildServerConfig config, List<UUID> projectIds) {
+        config.setAllProjects(projectIds == null);
+        config.getProjectIds().clear();
+        if (projectIds == null) {
+            return;
+        }
+        for (UUID projectId : new HashSet<>(projectIds)) {
+            if (!projectRepository.existsById(projectId)) {
+                throw new ResourceNotFoundException("Project", projectId);
+            }
+            config.getProjectIds().add(projectId);
+        }
     }
 
     @Transactional
@@ -167,7 +189,8 @@ public class BuildServerConfigService {
                 config.getLastError(),
                 config.getLastErrorAt(),
                 config.getUpdatedAt(),
-                config.getApiVersion());
+                config.getApiVersion(),
+                config.isAllProjects() ? null : config.getProjectIds().stream().sorted().toList());
     }
 
     private static String trimToNull(String value) {

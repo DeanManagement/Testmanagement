@@ -24,6 +24,7 @@ import { ProjectMember, ProjectRole } from '../../../shared/models/project-membe
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { AddMemberDialogComponent } from './add-member-dialog/add-member-dialog.component';
+import { ProjectWorkflowSettingsComponent } from '../../automation/project-workflow-settings/project-workflow-settings.component';
 import { BugTemplateSettingsComponent } from './bug-template-settings/bug-template-settings.component';
 
 import { eligibleReviewerCount } from '../../test-cases/review/review-status';
@@ -33,6 +34,7 @@ import { eligibleReviewerCount } from '../../test-cases/review/review-status';
   standalone: true,
   imports: [
     BugTemplateSettingsComponent,
+    ProjectWorkflowSettingsComponent,
     AsyncPipe,
     RouterLink,
     FormsModule,

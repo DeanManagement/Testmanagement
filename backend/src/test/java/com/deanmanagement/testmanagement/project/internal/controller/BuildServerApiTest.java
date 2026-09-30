@@ -398,4 +398,105 @@ class BuildServerApiTest {
         assertThat(pipelineRunRepository.findById(foreignRun.getId()).orElseThrow().getTestRun())
                 .isNull();
     }
+
+    // ---- Project scope of a server ----------------------------------------
+
+    private BuildServerConfig saveServerLimitedTo(Project proj) {
+        BuildServerConfig config = saveServer();
+        config.setAllProjects(false);
+        config.getProjectIds().add(proj.getId());
+        return configRepository.save(config);
+    }
+
+    private String projectAdmin() {
+        User admin = saveUser();
+        saveMember(admin, project, ProjectRole.ADMIN);
+        return admin.getId().toString();
+    }
+
+    @Test
+    void serverScope_isStoredAsGiven_andNullMeansEveryProject() throws Exception {
+        mockMvc.perform(post("/api/build-servers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Team A\",\"provider\":\"GITLAB_CI\",\"baseUrl\":\"https://gitlab.example.com\","
+                                + "\"apiToken\":\"t\",\"projectIds\":[\"" + project.getId() + "\"]}")
+                        .with(user(sysAdmin).roles("ADMIN")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.projectIds", hasSize(1)))
+                .andExpect(jsonPath("$.projectIds[0]").value(project.getId().toString()));
+
+        mockMvc.perform(post("/api/build-servers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(serverBody())
+                        .with(user(sysAdmin).roles("ADMIN")))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.projectIds").doesNotExist());
+    }
+
+    @Test
+    void assignmentToAProjectOutsideTheServerScope_isNeitherListedNorTriggerable() throws Exception {
+        BuildWorkflow workflow = saveWorkflow(saveServerLimitedTo(otherProject), "Team B nightly");
+        assign(project, workflow);
+
+        mockMvc.perform(get("/api/projects/" + project.getId() + "/workflows").with(user(tester)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$", hasSize(0)));
+        mockMvc.perform(post("/api/projects/" + project.getId() + "/workflows/" + workflow.getId() + "/trigger")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{}")
+                        .with(user(tester)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void projectAdmin_isOfferedWorkflowsOfServersOpenToTheProjectOnly() throws Exception {
+        saveWorkflow(saveServer(), "Shared suite");
+        saveWorkflow(saveServerLimitedTo(project), "Own suite");
+        saveWorkflow(saveServerLimitedTo(otherProject), "Foreign suite");
+
+        mockMvc.perform(get("/api/projects/" + project.getId() + "/workflows/available").with(user(projectAdmin())))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[*].name").value(org.hamcrest.Matchers.containsInAnyOrder("Shared suite", "Own suite")))
+                .andExpect(content().string(not(containsString("gitlab.example.com"))));
+    }
+
+    @Test
+    void projectAdmin_choosesWhichAvailableWorkflowsTestersAreOffered() throws Exception {
+        BuildServerConfig config = saveServerLimitedTo(project);
+        BuildWorkflow kept = saveWorkflow(config, "Kept");
+        BuildWorkflow dropped = saveWorkflow(config, "Dropped");
+        assign(project, dropped);
+
+        mockMvc.perform(put("/api/projects/" + project.getId() + "/workflows")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"workflowIds\":[\"" + kept.getId() + "\"]}")
+                        .with(user(projectAdmin())))
+                .andExpect(status().isNoContent());
+
+        mockMvc.perform(get("/api/projects/" + project.getId() + "/workflows").with(user(tester)))
+                .andExpect(jsonPath("$", hasSize(1)))
+                .andExpect(jsonPath("$[0].name").value("Kept"));
+    }
+
+    @Test
+    void projectAdmin_cannotEnableAWorkflowOfAServerClosedToTheProject() throws Exception {
+        BuildWorkflow foreign = saveWorkflow(saveServerLimitedTo(otherProject), "Foreign suite");
+
+        mockMvc.perform(put("/api/projects/" + project.getId() + "/workflows")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"workflowIds\":[\"" + foreign.getId() + "\"]}")
+                        .with(user(projectAdmin())))
+                .andExpect(status().isNotFound());
+
+        assertThat(assignmentRepository.findByWorkflowId(foreign.getId())).isEmpty();
+    }
+
+    @Test
+    void tester_cannotChooseTheProjectsWorkflows() throws Exception {
+        mockMvc.perform(put("/api/projects/" + project.getId() + "/workflows")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"workflowIds\":[]}")
+                        .with(user(tester)))
+                .andExpect(status().isForbidden());
+    }
 }

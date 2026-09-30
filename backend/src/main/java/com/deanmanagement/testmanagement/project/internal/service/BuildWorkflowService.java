@@ -17,13 +17,17 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
- * Owns workflow definitions and their project assignments (PRD-024 §3.1). The assignment table is
- * the entire authorization model: a project sees exactly the workflows assigned to it, and the
- * admin-side responses are the only place server internals appear.
+ * Owns workflow definitions and their project assignments (PRD-024 §3.1). An assignment, counted
+ * only while the server is available to the project, is the entire authorization model: a project
+ * sees exactly those workflows, and the admin-side responses are the only place server internals
+ * appear. A system admin assigns per workflow; a project admin picks among what the project may use.
  */
 @Service
 @RequiredArgsConstructor
@@ -115,19 +119,65 @@ public class BuildWorkflowService {
                 .map(ProjectBuildWorkflow::getWorkflow)
                 .filter(BuildWorkflow::isActive)
                 .filter(workflow -> workflow.getBuildServerConfig().isActive())
-                .map(workflow -> new ProjectWorkflowResponse(
-                        workflow.getId(),
-                        workflow.getName(),
-                        workflow.getBuildServerConfig().getName(),
-                        workflow.getBuildServerConfig().getProvider(),
-                        workflow.getDefaultRef(),
-                        parameterCodec.fromJson(workflow.getDefaultParameters())))
+                .map(this::toProjectResponse)
                 .toList();
+    }
+
+    /** What a project admin may offer testers: every active workflow on a server open to the project. */
+    public List<ProjectWorkflowResponse> listAvailableForProject(UUID projectId) {
+        return workflowRepository.findAvailableToProject(projectId).stream()
+                .map(this::toProjectResponse)
+                .toList();
+    }
+
+    /**
+     * A project admin's pick: exactly these of the available workflows are offered to testers.
+     * Assignments outside what is available now (disabled, or on a server no longer open to the
+     * project) are left alone, so re-enabling or re-opening brings them back.
+     */
+    @Transactional
+    public void setProjectWorkflows(UUID projectId, List<UUID> workflowIds) {
+        Map<UUID, BuildWorkflow> available = workflowRepository.findAvailableToProject(projectId).stream()
+                .collect(Collectors.toMap(BuildWorkflow::getId, Function.identity()));
+        Set<UUID> wanted = new HashSet<>(workflowIds);
+        for (UUID workflowId : wanted) {
+            if (!available.containsKey(workflowId)) {
+                throw new ResourceNotFoundException("Workflow", workflowId);
+            }
+        }
+
+        Set<UUID> current = new HashSet<>();
+        for (ProjectBuildWorkflow assignment : assignmentRepository.findByProjectIdWithWorkflow(projectId)) {
+            UUID workflowId = assignment.getWorkflow().getId();
+            if (wanted.contains(workflowId)) {
+                current.add(workflowId);
+            } else if (available.containsKey(workflowId)) {
+                assignmentRepository.delete(assignment);
+            }
+        }
+        for (UUID workflowId : wanted) {
+            if (!current.contains(workflowId)) {
+                ProjectBuildWorkflow assignment = new ProjectBuildWorkflow();
+                assignment.setProjectId(projectId);
+                assignment.setWorkflow(available.get(workflowId));
+                assignmentRepository.save(assignment);
+            }
+        }
     }
 
     public BuildWorkflow require(UUID workflowId) {
         return workflowRepository.findById(workflowId)
                 .orElseThrow(() -> new ResourceNotFoundException("BuildWorkflow", workflowId));
+    }
+
+    private ProjectWorkflowResponse toProjectResponse(BuildWorkflow workflow) {
+        return new ProjectWorkflowResponse(
+                workflow.getId(),
+                workflow.getName(),
+                workflow.getBuildServerConfig().getName(),
+                workflow.getBuildServerConfig().getProvider(),
+                workflow.getDefaultRef(),
+                parameterCodec.fromJson(workflow.getDefaultParameters()));
     }
 
     private BuildWorkflowResponse toResponse(BuildWorkflow workflow) {

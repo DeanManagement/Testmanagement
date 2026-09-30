@@ -1007,6 +1007,12 @@
     "defaultParametersHint": "One KEY=value per line. Testers can override them per run.",
     "assignedProjects": "Assigned projects",
     "assignedProjectsHint": "Only assigned projects can see and trigger this workflow.",
+    "allProjects": "Available to all projects",
+    "scopeProjects": "Available to these projects",
+    "scopeProjectsHint": "Only these projects can have this server's workflows. Their project admins choose which ones testers see.",
+    "scopeAll": "All projects",
+    "scopeLimited": "Projects: {{projects}}",
+    "scopeNone": "No project",
     "saveAssignments": "Save assignments",
     "assignmentsSaved": "Project assignments saved.",
     "deleteWorkflowTitle": "Delete workflow?",
@@ -1019,6 +1025,12 @@
   },
   "automation": {
     "title": "Automation",
+    "projectSettings": {
+      "title": "Automation workflows",
+      "description": "Which build-server workflows testers can run from the test-runs page.",
+      "offered": "Offered to testers",
+      "noneAvailable": "No build server is available to this project yet. A system administrator can make one available under Settings → Build servers."
+    },
     "liveUpdating": "Updating live",
     "run": "Run",
     "triggered": "\"{{name}}\" triggered.",

@@ -1007,6 +1007,12 @@
     "defaultParametersHint": "Ein KEY=Wert pro Zeile. Tester können sie pro Lauf überschreiben.",
     "assignedProjects": "Zugewiesene Projekte",
     "assignedProjectsHint": "Nur zugewiesene Projekte können diesen Workflow sehen und auslösen.",
+    "allProjects": "Für alle Projekte verfügbar",
+    "scopeProjects": "Für diese Projekte verfügbar",
+    "scopeProjectsHint": "Nur diese Projekte können Workflows dieses Servers erhalten. Deren Projekt-Admins wählen, welche Tester sehen.",
+    "scopeAll": "Alle Projekte",
+    "scopeLimited": "Projekte: {{projects}}",
+    "scopeNone": "Kein Projekt",
     "saveAssignments": "Zuweisungen speichern",
     "assignmentsSaved": "Projektzuweisungen gespeichert.",
     "deleteWorkflowTitle": "Workflow löschen?",
@@ -1019,6 +1025,12 @@
   },
   "automation": {
     "title": "Automatisierung",
+    "projectSettings": {
+      "title": "Automatisierungs-Workflows",
+      "description": "Welche Build-Server-Workflows Tester auf der Testlauf-Seite starten können.",
+      "offered": "Für Tester angeboten",
+      "noneAvailable": "Diesem Projekt steht noch kein Build-Server zur Verfügung. Ein Systemadministrator kann einen unter Einstellungen → Build-Server freigeben."
+    },
     "liveUpdating": "Wird live aktualisiert",
     "run": "Ausführen",
     "triggered": "\"{{name}}\" ausgelöst.",

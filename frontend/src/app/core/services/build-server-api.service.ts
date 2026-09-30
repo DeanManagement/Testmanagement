@@ -81,6 +81,16 @@ export class BuildServerApiService {
     return this.http.get<ProjectWorkflow[]>(`/api/projects/${projectId}/workflows`);
   }
 
+  /** Project admin: the workflows this project may offer, assigned or not. */
+  getAvailableWorkflows(projectId: string): Observable<ProjectWorkflow[]> {
+    return this.http.get<ProjectWorkflow[]>(`/api/projects/${projectId}/workflows/available`);
+  }
+
+  /** Project admin: exactly these available workflows are offered to testers. */
+  setProjectWorkflows(projectId: string, workflowIds: string[]): Observable<void> {
+    return this.http.put<void>(`/api/projects/${projectId}/workflows`, { workflowIds });
+  }
+
   trigger(projectId: string, workflowId: string, request: TriggerPipelineRequest): Observable<PipelineRun> {
     return this.http.post<PipelineRun>(
       `/api/projects/${projectId}/workflows/${workflowId}/trigger`, request);
