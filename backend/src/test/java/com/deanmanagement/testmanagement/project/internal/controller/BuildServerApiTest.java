@@ -499,4 +499,15 @@ class BuildServerApiTest {
                         .with(user(tester)))
                 .andExpect(status().isForbidden());
     }
+
+    @Test
+    void azureDevOpsServicesUrlWithAProject_isRejectedNamingTheOrganizationUrl() throws Exception {
+        mockMvc.perform(post("/api/build-servers")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"name\":\"Syrona\",\"provider\":\"AZURE_DEVOPS\","
+                                + "\"baseUrl\":\"https://dev.azure.com/akros/SYRONA\",\"apiToken\":\"pat\"}")
+                        .with(user(sysAdmin).roles("ADMIN")))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value(containsString("https://dev.azure.com/akros.")));
+    }
 }

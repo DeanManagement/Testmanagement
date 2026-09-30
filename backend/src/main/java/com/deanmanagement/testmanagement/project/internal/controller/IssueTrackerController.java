@@ -72,7 +72,7 @@ public class IssueTrackerController {
         return ResponseEntity.noContent().build();
     }
 
-    /** Verifies the stored credentials against the provider. 502 if the tracker rejects us. */
+    /** Verifies the stored credentials against the provider. 424 if the tracker rejects us. */
     @PostMapping("/issue-tracker/test")
     @RequireProjectRole(ProjectRole.ADMIN)
     public ResponseEntity<Void> testConnection(@PathVariable UUID projectId) {

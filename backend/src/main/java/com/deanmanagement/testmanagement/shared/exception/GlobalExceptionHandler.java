@@ -66,7 +66,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(UpstreamServiceException.class)
     public ResponseEntity<ErrorResponse> handleUpstreamService(UpstreamServiceException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+        // Not 502: reverse proxies such as Cloudflare replace an origin's 502 with their own error
+        // page, and the provider's reason — the useful part — never reaches the user.
+        return ResponseEntity.status(HttpStatus.FAILED_DEPENDENCY)
                 .body(ErrorResponse.of("UPSTREAM_UNAVAILABLE", ex.getMessage()));
     }
 

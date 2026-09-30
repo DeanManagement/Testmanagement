@@ -309,7 +309,7 @@ class IssueLinkApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"externalId\":\"group/project#42\"}")
                         .with(user(tester)))
-                .andExpect(status().isBadGateway());
+                .andExpect(status().isFailedDependency());
     }
 
     @Test
@@ -320,7 +320,7 @@ class IssueLinkApiTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"externalId\":\"group/project#42\"}")
                         .with(user(tester)))
-                .andExpect(status().isBadGateway());
+                .andExpect(status().isFailedDependency());
 
         IssueTrackerConfig config = configRepository.findByProjectId(projectId).orElseThrow();
         assertThat(config.getLastError()).contains("rejected the configured access token");

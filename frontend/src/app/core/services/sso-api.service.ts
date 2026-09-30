@@ -36,7 +36,7 @@ export class SsoApiService {
 
   /**
    * Reads the issuer's discovery document, or for a GitHub provider asks its API whether it is
-   * reachable; 502 if it is not, or is not what it claims to be.
+   * reachable; 424 if it is not, or is not what it claims to be.
    */
   testProvider(id: string): Observable<void> {
     return this.http.post<void>(`${this.adminUrl}/providers/${id}/test`, {});

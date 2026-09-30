@@ -84,7 +84,7 @@ public class BuildServerAdminController {
         configService.delete(id);
     }
 
-    /** Verifies the stored credentials against the server. 502 if it rejects us. */
+    /** Verifies the stored credentials against the server. 424 if it rejects us. */
     @PostMapping("/{id}/test")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void testConnection(@PathVariable UUID id, Authentication authentication) {

@@ -15,7 +15,10 @@ import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundExcept
 import com.deanmanagement.testmanagement.shared.exception.UpstreamServiceException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.util.Optional;
@@ -39,6 +42,7 @@ public class IssueTrackerConfigService {
     private final IssueTrackerProviderRegistry providerRegistry;
     private final IssueTrackerTokenCipher tokenCipher;
     private final IssueTrackerUrlValidator urlValidator;
+    private final PlatformTransactionManager transactionManager;
 
     public Optional<IssueTrackerConfigResponse> find(UUID projectId) {
         return configRepository.findByProjectId(projectId).map(IssueTrackerConfigService::toResponse);
@@ -141,13 +145,23 @@ public class IssueTrackerConfigService {
         }
     }
 
-    @Transactional
+    /**
+     * Commits in a transaction of its own: callers record the error and rethrow, and the rollback
+     * that follows must not take the recorded error with it.
+     */
     public void recordError(IssueTrackerConfig config, String message) {
         String trimmed = message == null ? "Unknown error"
                 : message.substring(0, Math.min(message.length(), MAX_ERROR_LENGTH));
+        Instant now = Instant.now();
         config.setLastError(trimmed);
-        config.setLastErrorAt(Instant.now());
-        configRepository.save(config);
+        config.setLastErrorAt(now);
+        TransactionTemplate ownTransaction = new TransactionTemplate(transactionManager);
+        ownTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        ownTransaction.executeWithoutResult(status -> configRepository.findById(config.getId())
+                .ifPresent(stored -> {
+                    stored.setLastError(trimmed);
+                    stored.setLastErrorAt(now);
+                }));
     }
 
     private void clearError(IssueTrackerConfig config) {

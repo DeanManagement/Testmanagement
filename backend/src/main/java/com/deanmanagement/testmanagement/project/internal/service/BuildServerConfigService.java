@@ -15,8 +15,12 @@ import com.deanmanagement.testmanagement.shared.crypto.AesGcmCipher;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
+import java.net.URI;
 import java.time.Instant;
 import java.util.HashSet;
 import java.util.List;
@@ -41,6 +45,7 @@ public class BuildServerConfigService {
     private final AesGcmCipher secretCipher;
     private final BuildServerUrlValidator urlValidator;
     private final ProjectRepository projectRepository;
+    private final PlatformTransactionManager transactionManager;
 
     public List<BuildServerConfigResponse> list() {
         return configRepository.findAll().stream()
@@ -65,6 +70,9 @@ public class BuildServerConfigService {
     private BuildServerConfig apply(BuildServerConfig config, SaveBuildServerConfigRequest request) {
         providerRegistry.require(request.provider());
         urlValidator.validate(request.baseUrl());
+        if (request.provider() == BuildServerProviderType.AZURE_DEVOPS) {
+            requireAzureOrganizationUrl(request.baseUrl().trim());
+        }
         configRepository.findByName(request.name().trim())
                 .filter(existing -> !existing.getId().equals(config.getId()))
                 .ifPresent(existing -> {
@@ -86,6 +94,21 @@ public class BuildServerConfigService {
             config.setLastErrorAt(null);
         }
         return config;
+    }
+
+    /**
+     * On Azure DevOps Services the URL ends at the organization. A project appended to it breaks
+     * every call, and the error Azure returns does not say why; the project belongs in the workflow.
+     * Server URLs ({@code …/tfs/Collection}) have more segments and are left alone.
+     */
+    private static void requireAzureOrganizationUrl(String baseUrl) {
+        URI uri = URI.create(baseUrl);
+        String path = uri.getPath() == null ? "" : uri.getPath().replaceAll("^/+|/+$", "");
+        if ("dev.azure.com".equalsIgnoreCase(uri.getHost()) && path.contains("/")) {
+            String organization = path.substring(0, path.indexOf('/'));
+            throw new IllegalArgumentException("The URL must end at the organization: https://dev.azure.com/"
+                    + organization + ". Enter the project in each workflow's repository reference instead.");
+        }
     }
 
     /**
@@ -160,13 +183,23 @@ public class BuildServerConfigService {
                 secretCipher.decrypt(config.getApiTokenEncrypted()));
     }
 
-    @Transactional
+    /**
+     * Commits in a transaction of its own: callers record the error and rethrow, and the rollback
+     * that follows must not take the recorded error with it.
+     */
     public void recordError(BuildServerConfig config, String message) {
         String trimmed = message == null ? "Unknown error"
                 : message.substring(0, Math.min(message.length(), MAX_ERROR_LENGTH));
+        Instant now = Instant.now();
         config.setLastError(trimmed);
-        config.setLastErrorAt(Instant.now());
-        configRepository.save(config);
+        config.setLastErrorAt(now);
+        TransactionTemplate ownTransaction = new TransactionTemplate(transactionManager);
+        ownTransaction.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+        ownTransaction.executeWithoutResult(status -> configRepository.findById(config.getId())
+                .ifPresent(stored -> {
+                    stored.setLastError(trimmed);
+                    stored.setLastErrorAt(now);
+                }));
     }
 
     @Transactional

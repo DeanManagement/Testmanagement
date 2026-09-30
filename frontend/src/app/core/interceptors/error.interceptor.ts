@@ -6,6 +6,9 @@ import { catchError, throwError } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { AuthService } from '../services/auth.service';
 
+/** The backend's status for a failed external service (424, not 502, which proxies replace). */
+const UPSTREAM_FAILED = 424;
+
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
   // Resolved on error, not when the chain is built. Constructing TranslateService loads the
@@ -15,13 +18,14 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   // with every translation key unresolved.
   const injector = inject(EnvironmentInjector);
 
-  const show = (key: string) => {
+  const showMessage = (message: string) => {
     const translate = injector.get(TranslateService);
-    injector.get(MatSnackBar).open(translate.instant(key), translate.instant('common.ok'), {
+    injector.get(MatSnackBar).open(message, translate.instant('common.ok'), {
       duration: 5000,
       panelClass: 'snackbar-error',
     });
   };
+  const show = (key: string) => showMessage(injector.get(TranslateService).instant(key));
 
   return next(req).pipe(
     catchError((error: HttpErrorResponse) => {
@@ -44,6 +48,15 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         const backendMessage = (error.error?.message ?? '').toLowerCase();
         const key = backendMessage.includes('member') ? 'auth.notProjectMember' : 'auth.forbidden';
         show(key);
+      } else if (error.status === UPSTREAM_FAILED) {
+        // A build server, issue tracker or SSO issuer failed; its reason is what the user needs.
+        // A caller showing its own message replaces this one, since it runs after the interceptor.
+        const message = error.error?.message;
+        if (message) {
+          showMessage(message);
+        } else {
+          show('errors.server');
+        }
       } else if (error.status >= 500) {
         show('errors.server');
       } else if (error.status === 0) {

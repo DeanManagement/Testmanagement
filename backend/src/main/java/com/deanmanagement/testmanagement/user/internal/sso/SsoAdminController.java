@@ -60,7 +60,7 @@ public class SsoAdminController {
         providerService.delete(id);
     }
 
-    /** Reads the issuer's discovery document. 502 if it is unreachable or not an OIDC issuer. */
+    /** Reads the issuer's discovery document. 424 if it is unreachable or not an OIDC issuer. */
     @PostMapping("/providers/{id}/test")
     public ResponseEntity<Void> test(@PathVariable UUID id) {
         providerService.testConnection(id);
