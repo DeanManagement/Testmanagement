@@ -160,7 +160,7 @@
         <dependency>
             <groupId>io.cucumber</groupId>
             <artifactId>messages</artifactId>
-            <version>27.2.0</version>
+            <version>34.2.1</version>
         </dependency>
 
         <!-- Mail (optional watcher email notifications; off by default) -->
