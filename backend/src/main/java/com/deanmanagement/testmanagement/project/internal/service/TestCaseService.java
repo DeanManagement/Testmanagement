@@ -252,7 +252,19 @@ public class TestCaseService {
         refuseDeleteWithResults(Set.of(id));
         auditService.log(projectId, userId, AuditAction.DELETED,
                 AuditEntityType.TEST_CASE, tc.getId(), tc.getTitle(), null);
+        leaveSuites(List.of(tc));
         testCaseRepository.delete(tc);
+    }
+
+    /**
+     * Suites own the membership rows and the FK has no cascade, so a case still in a suite failed to
+     * delete with a bare conflict. Taking it out from the owning side removes the rows first.
+     */
+    private static void leaveSuites(List<TestCase> testCases) {
+        for (TestCase tc : testCases) {
+            tc.getTestSuites().forEach(suite -> suite.getTestCases().remove(tc));
+            tc.getTestSuites().clear();
+        }
     }
 
     /**
@@ -313,6 +325,7 @@ public class TestCaseService {
 
         refuseDeleteWithResults(request.testCaseIds());
 
+        leaveSuites(projectTestCases);
         testCaseRepository.deleteAll(projectTestCases);
 
         auditService.log(projectId, userId, AuditAction.DELETED,
