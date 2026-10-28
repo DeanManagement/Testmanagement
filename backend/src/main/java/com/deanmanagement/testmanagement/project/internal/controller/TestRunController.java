@@ -17,6 +17,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.UpdateStepResultRe
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestResultRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testrun.SetExecutorRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.AssignRunResultsRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestRunListFilter;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
@@ -255,6 +256,15 @@ public class TestRunController {
                                           @Valid @RequestBody ReorderRunResultsRequest request,
                                           Authentication authentication) {
         return runCaseService.reorder(projectId, runId, request.resultIds(), actor(authentication));
+    }
+
+    /** TM23: who executes which results of the run. */
+    @PutMapping("/{runId}/results/assignee")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestRunResponse assignResults(@PathVariable UUID projectId, @PathVariable UUID runId,
+                                         @Valid @RequestBody AssignRunResultsRequest request,
+                                         Authentication authentication) {
+        return runCaseService.assign(projectId, runId, request.resultIds(), request.assigneeId(), actor(authentication));
     }
 
     private static UUID actor(Authentication authentication) {

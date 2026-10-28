@@ -51,6 +51,10 @@ public class TestResult extends BaseEntity {
     @Column(name = "executed_by")
     private UUID executedBy;
 
+    /** TM23: who should execute it; null means the run's executor. FK sets it null when the user goes. */
+    @Column(name = "assignee_id")
+    private UUID assigneeId;
+
     /** Measured effort in milliseconds (PRD-036): the execution timer, a manual edit, or a CI report. */
     @Column(name = "duration_ms")
     private Long durationMs;

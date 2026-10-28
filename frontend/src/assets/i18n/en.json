@@ -190,7 +190,8 @@
     "inProgressRuns": "Test runs in progress",
     "staleBugs": "Bug reports without recent activity",
     "oldDrafts": "Old draft test cases",
-    "awaitingReview": "Awaiting my review"
+    "awaitingReview": "Awaiting my review",
+    "assignedResults": "Cases assigned to me"
   },
   "commandPalette": {
     "placeholder": "Search projects, test cases, runs, bug reports…",
@@ -391,6 +392,12 @@
       "ABORTED": "Aborted"
     },
     "executor": "Executor",
+    "assignee": {
+      "label": "Assignee",
+      "assign": "Assign",
+      "unassign": "Back to the run executor",
+      "mine": "Assigned to me"
+    },
     "completedBy": "Completed by",
     "reopenReason": "Reopen reason",
     "complete": {

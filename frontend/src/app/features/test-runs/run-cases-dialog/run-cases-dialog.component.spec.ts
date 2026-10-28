@@ -56,6 +56,15 @@ describe('RunCasesDialogComponent', () => {
     expect(api['reorderResults']).toHaveBeenCalledWith('p1', 'run1', ['r2', 'r1']);
   });
 
+  it('assigns one result to the chosen member', () => {
+    api['assignResults'] = vi.fn(() => of(run));
+    const component = create();
+
+    component.assign(run.results![0], 'u1');
+
+    expect(api['assignResults']).toHaveBeenCalledWith('p1', 'run1', ['r1'], 'u1');
+  });
+
   it('removes a pending case without asking', () => {
     const component = create();
 

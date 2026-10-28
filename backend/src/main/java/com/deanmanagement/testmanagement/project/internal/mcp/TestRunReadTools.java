@@ -172,6 +172,6 @@ public class TestRunReadTools {
     private static McpDtos.TestResult toResult(TestResultResponse r, int position) {
         return new McpDtos.TestResult(r.id(), r.testCaseId(), r.testCaseKey(), r.testCaseTitle(),
                 r.status(), r.comment(), r.defectLink(), r.parameterSetName(), r.durationMs(),
-                r.executedByName(), r.executedAt(), position);
+                r.executedByName(), r.executedAt(), position, r.assigneeName());
     }
 }

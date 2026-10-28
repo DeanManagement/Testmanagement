@@ -12,6 +12,18 @@ export interface MyQueueResponse {
   oldDraftTestCases: OldDraftTestCaseItem[];
   /** PRD-033: cases in review that I may approve. */
   awaitingReview: ReviewTestCaseItem[];
+  /** TM23: pending results of open runs assigned to me. */
+  assignedResults: AssignedResultItem[];
+}
+
+export interface AssignedResultItem {
+  id: string;
+  runId: string;
+  runKey: string;
+  testCaseKey: string;
+  testCaseTitle: string;
+  projectId: string;
+  projectKey: string;
 }
 
 export interface DueTestPlanItem {

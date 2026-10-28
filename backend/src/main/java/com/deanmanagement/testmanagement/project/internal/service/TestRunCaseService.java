@@ -8,7 +8,10 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
+import com.deanmanagement.testmanagement.project.internal.entity.WatchableEntityType;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
+import com.deanmanagement.testmanagement.user.UserService;
 import com.deanmanagement.testmanagement.shared.exception.ConflictException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -41,6 +44,9 @@ public class TestRunCaseService {
     private final TestRunService testRunService;
     private final TestRunMapper testRunMapper;
     private final AuditService auditService;
+    private final ProjectMemberRepository projectMemberRepository;
+    private final UserService userService;
+    private final WatcherService watcherService;
 
     /**
      * Adds pending results exactly as creating the run would, at the end of the run. Cases already in
@@ -115,6 +121,36 @@ public class TestRunCaseService {
         TestRun saved = testRunRepository.save(run);
         auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_RUN, saved.getId(),
                 saved.getName(), "Reordered the test cases");
+        return testRunMapper.toResponse(saved);
+    }
+
+    /**
+     * TM23: assigns results to a project member, or with a null {@code assigneeId} back to the run's
+     * executor. The assignee starts watching the run, so the audit entry below notifies them (PRD-006).
+     */
+    @Transactional
+    public TestRunResponse assign(UUID projectId, UUID runId, Set<UUID> resultIds, UUID assigneeId, UUID userId) {
+        TestRun run = requireOpenRun(projectId, runId);
+        List<TestResult> results = run.getResults().stream().filter(r -> resultIds.contains(r.getId())).toList();
+        Set<UUID> missing = new HashSet<>(resultIds);
+        results.forEach(r -> missing.remove(r.getId()));
+        if (!missing.isEmpty()) {
+            throw new ResourceNotFoundException("Result(s) not in this run: " + sorted(missing));
+        }
+        String assigneeName = null;
+        if (assigneeId != null) {
+            if (!projectMemberRepository.existsByUserIdAndProjectId(assigneeId, projectId)) {
+                throw new ResourceNotFoundException("User", assigneeId);
+            }
+            assigneeName = userService.findDisplayNamesByIds(Set.of(assigneeId)).get(assigneeId);
+            watcherService.watch(assigneeId, WatchableEntityType.TEST_RUN, runId);
+        }
+        results.forEach(r -> r.setAssigneeId(assigneeId));
+
+        TestRun saved = testRunRepository.save(run);
+        String cases = keys(results.stream().map(TestResult::getTestCase).distinct().toList());
+        auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_RUN, saved.getId(),
+                saved.getName(), assigneeId == null ? "Unassigned " + cases : "Assigned " + cases + " to " + assigneeName);
         return testRunMapper.toResponse(saved);
     }
 

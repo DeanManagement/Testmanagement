@@ -269,7 +269,9 @@ final class McpDtos {
                       /* PRD-048: who executed it and when; absent while pending. */
                       @Nullable String executedBy, @Nullable Instant executedAt,
                       /* TM21: 1-based place in the run's execution order. */
-                      int position) {}
+                      int position,
+                      /* TM23: who should execute it; the run's executor unless one was assigned. */
+                      @Nullable String assignee) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record TestRunDetail(UUID id, String key, String name, @Nullable String environment,

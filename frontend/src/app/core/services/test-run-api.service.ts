@@ -100,6 +100,11 @@ export class TestRunApiService {
       { testCaseIds, discardRecordedResults });
   }
 
+  /** TM23: null hands the results back to the run's executor. */
+  assignResults(projectId: string, runId: string, resultIds: string[], assigneeId: string | null): Observable<TestRun> {
+    return this.http.put<TestRun>(`${this.baseUrl(projectId)}/${runId}/results/assignee`, { resultIds, assigneeId });
+  }
+
   /** TM21: every result id of the run, in the new execution order. */
   reorderResults(projectId: string, runId: string, resultIds: string[]): Observable<TestRun> {
     return this.http.put<TestRun>(`${this.baseUrl(projectId)}/${runId}/results/order`, { resultIds });

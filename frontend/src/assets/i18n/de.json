@@ -190,7 +190,8 @@
     "inProgressRuns": "Laufende Testdurchläufe",
     "staleBugs": "Bug-Meldungen ohne aktuelle Aktivität",
     "oldDrafts": "Alte Testfall-Entwürfe",
-    "awaitingReview": "Wartet auf meine Prüfung"
+    "awaitingReview": "Wartet auf meine Prüfung",
+    "assignedResults": "Mir zugewiesene Testfälle"
   },
   "commandPalette": {
     "placeholder": "Projekte, Testfälle, Durchläufe, Bugs suchen…",
@@ -391,6 +392,12 @@
       "ABORTED": "Abgebrochen"
     },
     "executor": "Ausführender",
+    "assignee": {
+      "label": "Zugewiesen an",
+      "assign": "Zuweisen",
+      "unassign": "Zurück an die ausführende Person des Laufs",
+      "mine": "Mir zugewiesen"
+    },
     "completedBy": "Abgeschlossen von",
     "reopenReason": "Grund für Wiedereröffnung",
     "complete": {

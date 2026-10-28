@@ -157,7 +157,7 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `unlink_bug_report`, `update_comment`, `create_shared_step`, `update_shared_step`,
 `add_test_case_attachment`, `copy_test_case`, `insert_test_step`, `move_test_step`,
 `remove_test_step`, `add_test_cases_to_run`, `remove_test_cases_from_run`, `reorder_test_run_cases`,
-`link_test_cases`, `unlink_test_cases`.
+`link_test_cases`, `unlink_test_cases`, `assign_test_run_cases`.
 
 **Delete** (Tester only, like the UI) — `delete_test_case`, `delete_test_case_folder`,
 `delete_test_suite`, `delete_test_plan`, `delete_test_run`, `delete_requirement`,
@@ -243,6 +243,8 @@ While a run is `PLANNED` or `IN_PROGRESS`, **`add_test_cases_to_run`** and
 **`remove_test_cases_from_run`** change which cases it holds, and **`reorder_test_run_cases`** sets
 the order they are executed in (`get_test_run` lists results in that order, each with its
 `position`). A case with a recorded result is not removed; only a human can discard a result.
+**`assign_test_run_cases`** gives results to a member by email (each result in `get_test_run`
+shows its `assignee`, which is the run's executor unless one was set) — only when a human asked.
 
 To re-test after a fix, **`clone_test_run`** opens a fresh `PLANNED` run with the same cases.
 **`reopen_test_run`** reopens a completed or aborted run instead, with a required reason that lands

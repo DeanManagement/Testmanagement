@@ -175,4 +175,14 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
                     + "WHERE r.testCase.id = :testCaseId AND r.testRun.project.id = :projectId")
     Page<TestResult> findHistory(@Param("projectId") UUID projectId, @Param("testCaseId") UUID testCaseId,
                                  Pageable pageable);
+
+    /**
+     * TM23: results explicitly assigned to the user that still wait for an outcome, in open runs,
+     * most recently touched run first. Fallback assignment (the run's executor) is not listed: that
+     * run already shows under "in progress".
+     */
+    @Query("SELECT r FROM TestResult r JOIN FETCH r.testCase JOIN FETCH r.testRun run JOIN FETCH run.project " +
+           "WHERE r.assigneeId = :userId AND r.status = 'PENDING' " +
+           "AND run.status IN ('PLANNED', 'IN_PROGRESS') ORDER BY run.updatedAt DESC, r.position ASC")
+    List<TestResult> findPendingAssignedTo(@Param("userId") UUID userId, Pageable pageable);
 }

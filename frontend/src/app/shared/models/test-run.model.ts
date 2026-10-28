@@ -50,6 +50,9 @@ export interface TestResult {
   updatedBy?: string;
   /** TM21: place in the run's execution order; the server lists results by it. */
   position?: number;
+  /** TM23: who should execute it; the run's executor unless someone was assigned. */
+  assigneeId?: string | null;
+  assigneeName?: string | null;
 }
 
 export interface TestRun {

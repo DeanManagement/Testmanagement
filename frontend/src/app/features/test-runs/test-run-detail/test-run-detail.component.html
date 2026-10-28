@@ -169,6 +169,11 @@
                 <mat-icon>{{ bulkMode ? 'close' : 'checklist' }}</mat-icon>
                 {{ (bulkMode ? 'common.cancel' : 'bulk.select') | translate }}
               </button>
+              <button mat-button (click)="assignedToMeOnly = !assignedToMeOnly" [attr.aria-pressed]="assignedToMeOnly"
+                      data-test-id="assigned-to-me-filter">
+                <mat-icon>{{ assignedToMeOnly ? 'person' : 'person_outline' }}</mat-icon>
+                {{ 'testRun.assignee.mine' | translate }}
+              </button>
               @if (bulkMode && selectedResultIds.size > 0) {
                 <div class="bulk-result-bar" data-test-id="bulk-result-bar">
                   <span class="bulk-count">{{ 'bulk.selected' | translate: { count: selectedResultIds.size } }}</span>
@@ -180,6 +185,16 @@
                     @for (s of resultStatuses; track s) {
                       <button mat-menu-item (click)="bulkApply(s)">{{ 'resultStatus.' + s | translate }}</button>
                     }
+                  </mat-menu>
+                  <button mat-stroked-button [matMenuTriggerFor]="bulkAssignMenu" data-test-id="bulk-assign">
+                    {{ 'testRun.assignee.assign' | translate }}
+                  </button>
+                  <mat-menu #bulkAssignMenu="matMenu">
+                    @for (m of members; track m.userId) {
+                      <button mat-menu-item (click)="bulkAssign(m.userId)" [attr.data-test-id]="'bulk-assign-' + m.userId">{{ m.displayName }}</button>
+                    }
+                    <mat-divider />
+                    <button mat-menu-item (click)="bulkAssign(null)" data-test-id="bulk-unassign">{{ 'testRun.assignee.unassign' | translate }}</button>
                   </mat-menu>
                 </div>
               }
@@ -195,7 +210,13 @@
                   @if (bulkMode) {
                     <mat-icon class="result-select-icon">{{ isResultSelected(result.id) ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
                   }
-                  <span class="result-item-title"><span class="case-key">{{ result.testCaseKey }}</span> {{ result.testCaseTitle }}</span>
+                  <span class="result-item-title"><span class="case-key">{{ result.testCaseKey }}</span> {{ result.testCaseTitle }}
+                    @if (result.assigneeName) {
+                      <span class="result-assignee" [attr.data-test-id]="'result-assignee-' + result.id">
+                        <mat-icon class="meta-icon">person</mat-icon>{{ result.assigneeName }}
+                      </span>
+                    }
+                  </span>
                   <span class="badge badge--{{ result.status | lowercase }} badge--small">{{ 'resultStatus.' + result.status | translate }}</span>
                 </div>
               }
@@ -462,6 +483,11 @@
                     </a>
                   </mat-panel-title>
                   <mat-panel-description class="panel-description">
+                    @if (result.assigneeName) {
+                      <span class="result-assignee" [attr.data-test-id]="'result-assignee-' + result.id">
+                        <mat-icon class="meta-icon">person</mat-icon>{{ result.assigneeName }}
+                      </span>
+                    }
                     <span class="badge badge--{{ result.status | lowercase }}" data-test-id="test-result-status-badge">{{ 'resultStatus.' + result.status | translate }}</span>
                   </mat-panel-description>
                 </mat-expansion-panel-header>

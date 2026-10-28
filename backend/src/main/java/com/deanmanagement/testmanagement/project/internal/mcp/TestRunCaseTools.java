@@ -2,7 +2,10 @@ package com.deanmanagement.testmanagement.project.internal.mcp;
 
 import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
+import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.service.TestRunCaseService;
 import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import com.deanmanagement.testmanagement.shared.exception.ConflictException;
@@ -27,8 +30,10 @@ import java.util.UUID;
 public class TestRunCaseTools {
 
     private static final int MAX_CASES = 200;
+    private static final String UNASSIGNED = "none";
 
     private final McpCallerContext callerContext;
+    private final ProjectMemberRepository projectMemberRepository;
     private final TestRunRepository testRunRepository;
     private final TestRunService testRunService;
     private final TestRunCaseService runCaseService;
@@ -114,6 +119,54 @@ public class TestRunCaseTools {
         order.addAll(current);
         return refusalsAsToolErrors(() ->
                 runCaseService.reorder(caller.projectId(), runId, List.copyOf(order), caller.userId()), runId);
+    }
+
+    @McpTool(
+            name = "assign_test_run_cases",
+            description = """
+                    Assign results of a PLANNED or IN_PROGRESS run to a project member, or with
+                    assignee "none" hand them back to the run's executor. resultIds are result ids
+                    from get_test_run (not test case ids). assignee: the member's email.
+                    All or nothing: an unknown result or a non-member changes none.
+                    Only assign when a human asked you to: who tests what is their decision.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.TestRunDetail assignTestRunCases(
+            @McpToolParam(description = "Test run UUID or key, e.g. PROJ-Run-7") String runIdOrKey,
+            @McpToolParam(description = "Result ids from get_test_run, at most 200") List<UUID> resultIds,
+            @McpToolParam(description = "Member email, or \"none\" to unassign") String assignee) {
+
+        var caller = callerContext.requireWriter();
+        UUID runId = resolveRun(caller.projectId(), runIdOrKey);
+        if (resultIds == null || resultIds.isEmpty()) {
+            throw new McpToolException("resultIds is required.");
+        }
+        if (resultIds.size() > MAX_CASES) {
+            throw new McpToolException("At most " + MAX_CASES + " results per call.");
+        }
+        if (assignee == null || assignee.isBlank()) {
+            throw new McpToolException("assignee is required: a member's email, or \"none\" to unassign.");
+        }
+        writeThrottle.recordWrite(caller.apiKeyId());
+        UUID assigneeId = UNASSIGNED.equalsIgnoreCase(assignee.trim()) ? null : memberByEmail(caller.projectId(), assignee);
+        try {
+            return refusalsAsToolErrors(() -> runCaseService.assign(caller.projectId(), runId,
+                    new LinkedHashSet<>(resultIds), assigneeId, caller.userId()), runId);
+        } catch (ResourceNotFoundException e) {
+            throw new McpToolException(e.getMessage() + ". Use the result ids from get_test_run, not test case ids.");
+        }
+    }
+
+    private UUID memberByEmail(UUID projectId, String email) {
+        return projectMemberRepository.findByProjectId(projectId).stream()
+                .map(ProjectMember::getUser)
+                .filter(u -> u.getEmail().equalsIgnoreCase(email.trim()))
+                .findFirst()
+                .orElseThrow(() -> new McpToolException("No member of this project has the email " + email
+                        + ". Ask the human who should be assigned."))
+                .getId();
     }
 
     private UUID resolveRun(UUID projectId, String runIdOrKey) {

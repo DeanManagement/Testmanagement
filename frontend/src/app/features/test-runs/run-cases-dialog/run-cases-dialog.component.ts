@@ -14,10 +14,14 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/compo
 import { TestCasePickerComponent } from '../../../shared/components/test-case-picker/test-case-picker.component';
 import { TestResult, TestRun } from '../../../shared/models/test-run.model';
 import { TestCaseSummary } from '../../../shared/models/test-suite.model';
+import { ProjectMember } from '../../../shared/models/project-member.model';
+import { MatSelectModule } from '@angular/material/select';
 
 export interface RunCasesDialogData {
   projectId: string;
   run: TestRun;
+  /** TM23: who results can be assigned to; empty hides the assignee picker. */
+  members?: ProjectMember[];
 }
 
 /**
@@ -28,7 +32,7 @@ export interface RunCasesDialogData {
   selector: 'app-run-cases-dialog',
   standalone: true,
   imports: [CdkDropList, CdkDrag, CdkDragHandle, LowerCasePipe, MatButtonModule, MatDialogModule, MatIconModule,
-    MatTooltipModule, TranslateModule, TestCasePickerComponent],
+    MatTooltipModule, MatSelectModule, TranslateModule, TestCasePickerComponent],
   template: `
     <h2 mat-dialog-title>{{ 'testRun.cases.title' | translate }}</h2>
     <mat-dialog-content>
@@ -42,6 +46,17 @@ export interface RunCasesDialogData {
               @if (result.parameterSetName) { <span class="param">· {{ result.parameterSetName }}</span> }
             </span>
             <span class="badge badge--{{ result.status | lowercase }} badge--small">{{ 'resultStatus.' + result.status | translate }}</span>
+            @if (data.members?.length) {
+              <mat-select class="assignee" [value]="result.assigneeId ?? null" [disabled]="busy()"
+                          [placeholder]="'testRun.assignee.label' | translate"
+                          [attr.aria-label]="'testRun.assignee.label' | translate"
+                          (selectionChange)="assign(result, $event.value)" [attr.data-test-id]="'run-case-assignee-' + result.id">
+                <mat-option [value]="null">{{ 'testRun.assignee.unassign' | translate }}</mat-option>
+                @for (m of data.members; track m.userId) {
+                  <mat-option [value]="m.userId">{{ m.displayName }}</mat-option>
+                }
+              </mat-select>
+            }
             <button mat-icon-button type="button" (click)="remove(result)" [disabled]="busy()"
                     [matTooltip]="'testRun.cases.remove' | translate"
                     [attr.data-test-id]="'run-case-remove-' + result.id">
@@ -70,6 +85,7 @@ export interface RunCasesDialogData {
     .case-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .case-key { font-weight: 600; }
     .param { color: var(--tm-text-secondary); }
+    .assignee { width: 160px; flex: none; font-size: 13px; }
     .cdk-drag-placeholder { opacity: 0.3; }
   `],
 })
@@ -116,6 +132,11 @@ export class RunCasesDialogComponent {
   add(): void {
     const ids = this.toAdd().map((tc) => tc.id);
     this.save(this.api.addTestCases(this.data.projectId, this.run().id, ids), undefined, () => this.toAdd.set([]));
+  }
+
+  /** TM23: null hands the result back to the run's executor. */
+  assign(result: TestResult, assigneeId: string | null): void {
+    this.save(this.api.assignResults(this.data.projectId, this.run().id, [result.id], assigneeId));
   }
 
   close(): void {

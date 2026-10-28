@@ -50,6 +50,25 @@
             </ul>
           </section>
         }
+        @if (queue.assignedResults.length) {
+          <section class="bucket" data-test-id="my-queue-assigned-results">
+            <h3>
+              <mat-icon>assignment_ind</mat-icon>
+              {{ 'myQueue.assignedResults' | translate }}
+            </h3>
+            <ul>
+              @for (item of queue.assignedResults; track item.id) {
+                <li>
+                  <a [routerLink]="['/projects', item.projectId, 'test-runs', item.runId]" [queryParams]="{ result: item.id }">
+                    <span class="project-key">{{ item.testCaseKey }}</span>
+                    <span class="item-title">{{ item.testCaseTitle }}</span>
+                  </a>
+                  <span class="meta">{{ item.runKey }}</span>
+                </li>
+              }
+            </ul>
+          </section>
+        }
         @if (queue.inProgressRuns.length) {
           <section class="bucket" data-test-id="my-queue-in-progress-runs">
             <h3>

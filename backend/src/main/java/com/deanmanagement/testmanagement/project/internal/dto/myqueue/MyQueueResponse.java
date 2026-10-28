@@ -22,8 +22,20 @@ public record MyQueueResponse(
         List<InProgressRunItem> inProgressRuns,
         List<StaleBugReportItem> staleBugReports,
         List<OldDraftTestCaseItem> oldDraftTestCases,
-        List<ReviewTestCaseItem> awaitingReview
+        List<ReviewTestCaseItem> awaitingReview,
+        List<AssignedResultItem> assignedResults
 ) {
+
+    /** TM23: a case of an open run assigned to me that has no outcome yet. */
+    public record AssignedResultItem(
+            UUID id,
+            UUID runId,
+            String runKey,
+            String testCaseKey,
+            String testCaseTitle,
+            UUID projectId,
+            String projectKey
+    ) {}
 
     /** A test plan I am assigned to that is due within the next week (or overdue). */
     public record DueTestPlanItem(

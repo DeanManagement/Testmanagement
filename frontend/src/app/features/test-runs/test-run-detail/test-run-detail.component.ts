@@ -58,6 +58,7 @@ import { IssueLinksComponent } from '../../../shared/components/issue-links/issu
 import { AttachmentsComponent } from '../../../shared/components/attachments/attachments.component';
 import { IssueTrackerApiService } from '../../../core/services/issue-tracker-api.service';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
+import { ProjectMember } from '../../../shared/models/project-member.model';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
 import { StepActualAutosave } from './step-actual-autosave';
 import { ExecutionTimer, LONG_DURATION_MS } from './execution-timer';
@@ -168,6 +169,11 @@ export class TestRunDetailComponent implements OnInit {
   bulkMode = false;
   bulkCascade = false;
   readonly selectedResultIds = new Set<string>();
+
+  /** TM23: project members to assign results to, the signed-in user, and the "assigned to me" filter. */
+  members: ProjectMember[] = [];
+  currentUserId: string | null = null;
+  assignedToMeOnly = false;
 
   /**
    * Result IDs whose comments + linked bug reports have been fetched at least
@@ -489,6 +495,20 @@ export class TestRunDetailComponent implements OnInit {
       });
   }
 
+  /** TM23: null hands the selected results back to the run's executor. */
+  bulkAssign(assigneeId: string | null): void {
+    if (this.selectedResultIds.size === 0) {
+      return;
+    }
+    this.testRunApi.assignResults(this.projectId, this.runId, [...this.selectedResultIds], assigneeId)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((saved) => {
+        this.selectedResultIds.clear();
+        this.bulkMode = false;
+        this.store.dispatch(TestRunActions.loadTestRunSuccess({ testRun: saved }));
+      });
+  }
+
   onStepStatusChange(resultId: string, step: StepResult, status: TestResultStatus): void {
     // Text typed but not saved yet travels with the status; the stored value would overwrite it.
     const actualResult = this.actualAutosave.take(step.id) ?? step.actualResult;
@@ -566,7 +586,8 @@ export class TestRunDetailComponent implements OnInit {
   }
 
   filteredResults(run: TestRun): TestResult[] {
-    const results = this.byStatusFilter(run.results ?? []);
+    const results = this.byStatusFilter(run.results ?? [])
+      .filter(r => !this.assignedToMeOnly || r.assigneeId === this.currentUserId);
     if (!this.executionSearchTerm) return results;
     const term = this.executionSearchTerm.toLowerCase();
     return results.filter(r => r.testCaseTitle.toLowerCase().includes(term) || r.testCaseKey?.toLowerCase().includes(term));
@@ -698,7 +719,7 @@ export class TestRunDetailComponent implements OnInit {
 
   /** TM21/TM22: add, remove and reorder; the dialog saves as it goes, so reload when it closes. */
   openRunCases(run: TestRun): void {
-    const data: RunCasesDialogData = { projectId: this.projectId, run };
+    const data: RunCasesDialogData = { projectId: this.projectId, run, members: this.members };
     this.dialog.open(RunCasesDialogComponent, { data, width: '760px', maxWidth: '95vw' })
       .afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: run.id })));
@@ -706,7 +727,7 @@ export class TestRunDetailComponent implements OnInit {
 
   /** Drag only on the full list: with a search or status filter, a drop position would be ambiguous. */
   get canDragResults(): boolean {
-    return !this.bulkMode && !this.executionSearchTerm && !this.resultStatusFilter;
+    return !this.bulkMode && !this.executionSearchTerm && !this.resultStatusFilter && !this.assignedToMeOnly;
   }
 
   /** TM21: drag and drop in the execution list sets the run's order. */
@@ -915,6 +936,8 @@ export class TestRunDetailComponent implements OnInit {
       .pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: ([members, user]) => {
+          this.members = members;
+          this.currentUserId = user?.id ?? null;
           if (!user) {
             this.canLinkIssues = false;
             return;

@@ -8,6 +8,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.BugReportRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
@@ -52,6 +53,7 @@ public class MyQueueService {
     private final TestRunRepository testRunRepository;
     private final BugReportRepository bugReportRepository;
     private final TestCaseRepository testCaseRepository;
+    private final TestResultRepository testResultRepository;
     private final Clock clock;
 
     public MyQueueResponse buildFor(UUID userId) {
@@ -136,7 +138,20 @@ public class MyQueueService {
                         tc.getUpdatedAt()))
                 .toList();
 
+        List<MyQueueResponse.AssignedResultItem> assignedResults = testResultRepository
+                .findPendingAssignedTo(userId, limit)
+                .stream()
+                .map(r -> new MyQueueResponse.AssignedResultItem(
+                        r.getId(),
+                        r.getTestRun().getId(),
+                        r.getTestRun().getKey(),
+                        r.getTestCase().getKey(),
+                        r.getTestCase().getTitle(),
+                        r.getTestRun().getProject().getId(),
+                        r.getTestRun().getProject().getKey()))
+                .toList();
+
         return new MyQueueResponse(dueTestPlans, inProgressRuns, staleBugReports, oldDraftTestCases,
-                awaitingReview);
+                awaitingReview, assignedResults);
     }
 }

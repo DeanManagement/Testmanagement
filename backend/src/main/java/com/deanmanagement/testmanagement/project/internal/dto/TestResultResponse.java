@@ -37,6 +37,9 @@ public record TestResultResponse(
         UUID createdBy,
         UUID updatedBy,
         /* TM21: where the result sits in its run; results are listed in ascending order. */
-        int position
+        int position,
+        /* TM23: who should execute it, else the run's executor; both null when neither is set. */
+        UUID assigneeId,
+        String assigneeName
 ) {
 }

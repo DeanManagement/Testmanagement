@@ -123,6 +123,15 @@ class TestRunCaseApiTest {
     }
 
     @Test
+    void assigningToSomeoneOutsideTheProjectIsRefused() throws Exception {
+        String body = "{\"resultIds\":[\"" + resultOf(login) + "\"],\"assigneeId\":\"" + UUID.randomUUID() + "\"}";
+
+        mockMvc.perform(put("/api/projects/{p}/test-runs/{r}/results/assignee", project.getId(), run.id())
+                        .contentType(MediaType.APPLICATION_JSON).content(body).with(user(admin)))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     void addingACaseAppendsAPendingResult() throws Exception {
         TestCase signup = testCase("RC-3", "Sign up");
 

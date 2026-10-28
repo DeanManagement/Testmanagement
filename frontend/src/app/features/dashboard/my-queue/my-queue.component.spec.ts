@@ -26,6 +26,7 @@ describe('MyQueueComponent', () => {
     staleBugReports: [],
     oldDraftTestCases: [],
     awaitingReview: [],
+    assignedResults: [],
   };
 
   beforeEach(() => {

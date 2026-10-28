@@ -20,6 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Mapper(componentModel = "spring", imports = {CustomFieldValueMaps.class, EffortSummary.class})
 public abstract class TestRunMapper {
@@ -52,7 +53,18 @@ public abstract class TestRunMapper {
     @Mapping(target = "testCaseVersion", source = "testCase.currentVersion")
     @Mapping(target = "estimateMinutes", source = "testCase.estimateMinutes")
     @Mapping(target = "executedByName", expression = "java(executorNames.nameOf(testResult.getExecutedBy()))")
+    @Mapping(target = "assigneeId", expression = "java(assigneeOf(testResult))")
+    @Mapping(target = "assigneeName", expression = "java(executorNames.nameOf(assigneeOf(testResult)))")
     protected abstract TestResultResponse toResultResponse(TestResult testResult, @Context ExecutorNames executorNames);
+
+    /** TM23: the result's own assignee, else whoever executes the run. */
+    protected static UUID assigneeOf(TestResult testResult) {
+        if (testResult.getAssigneeId() != null) {
+            return testResult.getAssigneeId();
+        }
+        TestRun run = testResult.getTestRun();
+        return run == null || run.getExecutor() == null ? null : run.getExecutor().getId();
+    }
 
     public TestResultResponse toResultResponse(TestResult testResult) {
         return toResultResponse(testResult, executorNames(List.of(testResult)));
@@ -64,9 +76,10 @@ public abstract class TestRunMapper {
         return results.stream().map(result -> toResultResponse(result, names)).toList();
     }
 
-    /** Display names of the results' executors (PRD-048), looked up once per run, not per result. */
+    /** Display names of the results' executors (PRD-048) and assignees (TM23), looked up once per run. */
     private ExecutorNames executorNames(List<TestResult> results) {
-        Set<UUID> ids = results.stream().map(TestResult::getExecutedBy).filter(Objects::nonNull)
+        Set<UUID> ids = results.stream().flatMap(r -> Stream.of(r.getExecutedBy(), assigneeOf(r)))
+                .filter(Objects::nonNull)
                 .collect(Collectors.toSet());
         return new ExecutorNames(ids.isEmpty() ? Map.of() : userService.findDisplayNamesByIds(ids));
     }
