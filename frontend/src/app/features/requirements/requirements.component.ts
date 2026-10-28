@@ -32,6 +32,8 @@ import {
   REQUIREMENT_STATUSES,
   Requirement,
   RequirementStatus,
+  RequirementSyncResult,
+  RequirementSyncStatus,
   SaveRequirementRequest,
   TraceabilityRow,
 } from '../../shared/models/requirement.model';
@@ -91,6 +93,9 @@ export class RequirementsComponent implements OnInit {
   testCases: TestCase[] = [];
   loading = true;
   saving = false;
+  /** TM19: whether requirements are synced from Azure DevOps here, and how the last sync went. */
+  syncStatus: RequirementSyncStatus | null = null;
+  syncing = false;
 
   formOpen = false;
   editingId: string | null = null;
@@ -154,9 +159,74 @@ export class RequirementsComponent implements OnInit {
       ?? '';
     if (this.projectId) {
       this.load();
+      this.loadSyncStatus();
     } else {
       this.loading = false;
     }
+  }
+
+  /** TM19: editing a synced requirement — only its custom fields can change here. */
+  get editingSynced(): boolean {
+    return !!this.editingId && !!this.requirements.find((r) => r.id === this.editingId)?.source;
+  }
+
+  private loadSyncStatus(): void {
+    this.api.getSyncStatus(this.projectId)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (status) => {
+          this.syncStatus = status;
+          this.cdr.markForCheck();
+        },
+        error: () => undefined,
+      });
+  }
+
+  /** Previews the sync as a dry run, and runs it once the counts are confirmed. */
+  syncNow(): void {
+    if (this.syncing) {
+      return;
+    }
+    this.syncing = true;
+    this.api.runSync(this.projectId, true)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (preview) => this.confirmSync(preview),
+        error: () => this.syncFinished(),
+      });
+  }
+
+  private confirmSync(preview: RequirementSyncResult): void {
+    const data: ConfirmDialogData = {
+      titleKey: 'requirementSync.confirmTitle',
+      messageKey: 'requirementSync.preview',
+      messageParams: preview,
+    };
+    this.dialog.open(ConfirmDialogComponent, { data })
+      .afterClosed()
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed) => {
+        if (!confirmed) {
+          this.syncFinished();
+          return;
+        }
+        this.api.runSync(this.projectId, false)
+          .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+          .subscribe({
+            next: (result) => {
+              this.snackBar.open(this.translate.instant('requirementSync.done', result),
+                this.translate.instant('common.close'), { duration: 6000 });
+              this.syncFinished();
+              this.load();
+            },
+            error: () => this.syncFinished(),
+          });
+      });
+  }
+
+  private syncFinished(): void {
+    this.syncing = false;
+    this.loadSyncStatus();
   }
 
   private load(): void {

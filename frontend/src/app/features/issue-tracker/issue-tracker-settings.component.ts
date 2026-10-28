@@ -26,6 +26,7 @@ import {
   PROJECT_REF_HINT,
   SaveIssueTrackerConfigRequest,
 } from '../../shared/models/issue-tracker.model';
+import { RequirementSyncSettingsComponent } from '../requirements/requirement-sync-settings.component';
 import { BASE_URL_EXAMPLE, baseUrlAfterProviderChange, needsAccountEmail } from './issue-tracker-form';
 
 /**
@@ -51,6 +52,7 @@ import { BASE_URL_EXAMPLE, baseUrlAfterProviderChange, needsAccountEmail } from 
     MatSelectModule,
     MatProgressSpinnerModule,
     TranslateModule,
+    RequirementSyncSettingsComponent,
   ],
   templateUrl: './issue-tracker-settings.component.html',
   styleUrl: './issue-tracker-settings.component.scss',

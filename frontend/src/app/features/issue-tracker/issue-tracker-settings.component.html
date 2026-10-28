@@ -108,5 +108,10 @@
         </button>
       </div>
     </div>
+
+    <!-- TM19: requirement sync uses this connection; only Azure DevOps is supported. -->
+    @if (config?.provider === 'AZURE_DEVOPS') {
+      <app-requirement-sync-settings [projectId]="projectId" />
+    }
   }
 </div>

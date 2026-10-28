@@ -1385,6 +1385,31 @@
       "byPlan": "Only the runs of a test plan:"
     }
   },
+  "requirementSync": {
+    "title": "Requirement sync from Azure DevOps",
+    "description": "Pull requirements from Azure DevOps with this connection. Azure DevOps owns the synced fields (ID, title, description, status, priority, parent); custom fields and test case links stay editable here.",
+    "enabled": "Sync enabled",
+    "query": "WIQL query",
+    "queryHint": "A flat query that returns work item ids, e.g. all Epics, Features and User Stories of an area path.",
+    "prefix": "Requirement ID prefix",
+    "prefixHint": "Put in front of the work item id, e.g. AB# gives AB#123. Empty uses the bare id.",
+    "approvedStates": "States that mean Approved",
+    "statesHint": "Comma-separated Azure DevOps state names, ignoring case. Empty uses the default shown.",
+    "obsoleteStates": "States that mean Obsolete",
+    "mappingHint": "Every other state becomes Draft. Azure priority 1-4 becomes Critical, High, Medium, Low.",
+    "scheduled": "Include in the scheduled sync",
+    "scheduledHint": "Runs when the server has a sync schedule configured (REQUIREMENT_SYNC_CRON); off by default.",
+    "dryRun": "Preview",
+    "preview": "The sync would create {{created}}, update {{updated}} and mark {{obsoleted}} as obsolete; {{unchanged}} are up to date.",
+    "saved": "Sync settings saved.",
+    "lastSynced": "Last synced {{date}}.",
+    "syncNow": "Sync now",
+    "syncing": "Syncing…",
+    "confirmTitle": "Sync requirements from Azure DevOps?",
+    "done": "Sync finished: {{created}} created, {{updated}} updated, {{obsoleted}} marked obsolete.",
+    "readOnlyHint": "Synced from Azure DevOps: change its ID, title, description, status, priority and parent there. Custom fields can be edited here.",
+    "openInTracker": "Open in Azure DevOps"
+  },
   "parameter": {
     "title": "Parameters",
     "hint": "Give this case data sets and it runs once per set, with {placeholder} values substituted into the steps.",

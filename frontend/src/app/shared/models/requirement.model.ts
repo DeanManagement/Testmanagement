@@ -27,6 +27,46 @@ export interface Requirement {
   testCases: LinkedTestCase[];
   createdAt: string;
   updatedAt: string;
+  /** TM19: the tracker it is synced from; null for a local requirement. Synced fields are read-only. */
+  source: string | null;
+  sourceUrl: string | null;
+  lastSyncedAt: string | null;
+}
+
+/** TM19: requirement sync settings (Azure DevOps; `query` is WIQL). */
+export interface RequirementSyncConfig {
+  enabled: boolean;
+  scheduled: boolean;
+  query: string;
+  externalIdPrefix: string | null;
+  approvedStates: string;
+  obsoleteStates: string;
+  lastSyncedAt: string | null;
+  lastError: string | null;
+  lastErrorAt: string | null;
+}
+
+export interface SaveRequirementSyncConfigRequest {
+  enabled: boolean;
+  scheduled: boolean;
+  query: string;
+  externalIdPrefix: string | null;
+  approvedStates: string;
+  obsoleteStates: string;
+}
+
+export interface RequirementSyncStatus {
+  enabled: boolean;
+  lastSyncedAt: string | null;
+  lastError: string | null;
+}
+
+export interface RequirementSyncResult {
+  created: number;
+  updated: number;
+  obsoleted: number;
+  unchanged: number;
+  dryRun: boolean;
 }
 
 export interface LinkedTestCase {

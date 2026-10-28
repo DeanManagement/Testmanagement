@@ -5,7 +5,7 @@ import { CoverageStatus, Requirement, TraceabilityRow } from '../../shared/model
 function requirement(id: string, externalId: string, title: string, over: Partial<Requirement> = {}): Requirement {
   return {
     id, externalId, title, description: null, parentId: null, status: 'DRAFT', priority: 'MEDIUM', customFields: {}, testCases: [],
-    createdAt: '', updatedAt: '', ...over,
+    createdAt: '', updatedAt: '', source: null, sourceUrl: null, lastSyncedAt: null, ...over,
   };
 }
 

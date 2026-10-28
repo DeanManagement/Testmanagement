@@ -6,7 +6,11 @@ import { ImportResult } from '../../shared/models/test-case.model';
 import {
   CoverageSummary,
   Requirement,
+  RequirementSyncConfig,
+  RequirementSyncResult,
+  RequirementSyncStatus,
   SaveRequirementRequest,
+  SaveRequirementSyncConfigRequest,
   TraceabilityRow,
 } from '../../shared/models/requirement.model';
 
@@ -68,5 +72,24 @@ export class RequirementApiService {
 
   getCoverage(projectId: string): Observable<CoverageSummary> {
     return this.http.get<CoverageSummary>(`/api/projects/${projectId}/traceability/coverage`);
+  }
+
+  /** TM19: sync settings, admin-only; null when the project has none. */
+  getSyncConfig(projectId: string): Observable<RequirementSyncConfig | null> {
+    return this.http.get<RequirementSyncConfig | null>(`/api/projects/${projectId}/requirement-sync`);
+  }
+
+  saveSyncConfig(projectId: string, request: SaveRequirementSyncConfigRequest): Observable<RequirementSyncConfig> {
+    return this.http.put<RequirementSyncConfig>(`/api/projects/${projectId}/requirement-sync`, request);
+  }
+
+  getSyncStatus(projectId: string): Observable<RequirementSyncStatus> {
+    return this.http.get<RequirementSyncStatus>(`/api/projects/${projectId}/requirement-sync/status`);
+  }
+
+  /** Admin-only; a dry run reports the counts and writes nothing. */
+  runSync(projectId: string, dryRun: boolean): Observable<RequirementSyncResult> {
+    const params = new HttpParams().set('dryRun', String(dryRun));
+    return this.http.post<RequirementSyncResult>(`/api/projects/${projectId}/requirement-sync/run`, {}, { params });
   }
 }

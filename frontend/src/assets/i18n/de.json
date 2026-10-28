@@ -1385,6 +1385,31 @@
       "byPlan": "Nur die Läufe eines Testplans:"
     }
   },
+  "requirementSync": {
+    "title": "Anforderungen aus Azure DevOps synchronisieren",
+    "description": "Anforderungen über diese Verbindung aus Azure DevOps übernehmen. Die synchronisierten Felder (ID, Titel, Beschreibung, Status, Priorität, übergeordnete Anforderung) gehören Azure DevOps; benutzerdefinierte Felder und Testfall-Verknüpfungen bleiben hier bearbeitbar.",
+    "enabled": "Synchronisierung aktiv",
+    "query": "WIQL-Abfrage",
+    "queryHint": "Eine flache Abfrage, die Work-Item-IDs liefert, z. B. alle Epics, Features und User Stories eines Bereichspfads.",
+    "prefix": "Präfix der Anforderungs-ID",
+    "prefixHint": "Wird der Work-Item-ID vorangestellt, z. B. ergibt AB# die ID AB#123. Leer verwendet die reine ID.",
+    "approvedStates": "Zustände für «Genehmigt»",
+    "statesHint": "Azure-DevOps-Zustände, durch Kommas getrennt, ohne Beachtung der Gross-/Kleinschreibung. Leer verwendet die angezeigte Vorgabe.",
+    "obsoleteStates": "Zustände für «Veraltet»",
+    "mappingHint": "Alle anderen Zustände werden zu Entwurf. Azure-Priorität 1-4 wird zu Kritisch, Hoch, Mittel, Niedrig.",
+    "scheduled": "In die geplante Synchronisierung aufnehmen",
+    "scheduledHint": "Läuft, wenn auf dem Server ein Zeitplan eingerichtet ist (REQUIREMENT_SYNC_CRON); standardmässig aus.",
+    "dryRun": "Vorschau",
+    "preview": "Die Synchronisierung würde {{created}} erstellen, {{updated}} aktualisieren und {{obsoleted}} als veraltet markieren; {{unchanged}} sind aktuell.",
+    "saved": "Synchronisierungseinstellungen gespeichert.",
+    "lastSynced": "Zuletzt synchronisiert {{date}}.",
+    "syncNow": "Jetzt synchronisieren",
+    "syncing": "Synchronisiere…",
+    "confirmTitle": "Anforderungen aus Azure DevOps synchronisieren?",
+    "done": "Synchronisierung abgeschlossen: {{created}} erstellt, {{updated}} aktualisiert, {{obsoleted}} als veraltet markiert.",
+    "readOnlyHint": "Aus Azure DevOps synchronisiert: ID, Titel, Beschreibung, Status, Priorität und übergeordnete Anforderung dort ändern. Benutzerdefinierte Felder sind hier bearbeitbar.",
+    "openInTracker": "In Azure DevOps öffnen"
+  },
   "parameter": {
     "title": "Parameter",
     "hint": "Mit Datensätzen läuft dieser Testfall einmal pro Satz, wobei {Platzhalter} in den Schritten ersetzt werden.",

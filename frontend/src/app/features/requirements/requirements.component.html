@@ -26,6 +26,13 @@
           }
         }
       </mat-menu>
+      @if (syncStatus?.enabled) {
+        <button mat-stroked-button [disabled]="syncing" (click)="syncNow()"
+                [matTooltip]="syncStatus?.lastError || ''" data-test-id="requirement-sync-btn">
+          <mat-icon>{{ syncStatus?.lastError ? 'sync_problem' : 'sync' }}</mat-icon>
+          {{ (syncing ? 'requirementSync.syncing' : 'requirementSync.syncNow') | translate }}
+        </button>
+      }
       <button mat-stroked-button (click)="openImport()" data-test-id="requirement-import-btn">
         <mat-icon>upload</mat-icon>
         {{ 'requirement.import.button' | translate }}
@@ -74,26 +81,29 @@
     @if (formOpen) {
       <div class="tm-card form-card" data-test-id="requirement-form">
         <h2>{{ (editingId ? 'requirement.editTitle' : 'requirement.createTitle') | translate }}</h2>
+        @if (editingSynced) {
+          <p class="page-hint" data-test-id="requirement-synced-hint">{{ 'requirementSync.readOnlyHint' | translate }}</p>
+        }
         <div class="field-row">
           <mat-form-field appearance="outline" class="external-id-field" subscriptSizing="dynamic">
             <mat-label>{{ 'requirement.externalId' | translate }}</mat-label>
-            <input matInput [(ngModel)]="formExternalId" placeholder="REQ-014" data-test-id="requirement-external-id-input">
+            <input matInput [(ngModel)]="formExternalId" [disabled]="editingSynced" placeholder="REQ-014" data-test-id="requirement-external-id-input">
             <mat-hint>{{ 'requirement.externalIdHint' | translate }}</mat-hint>
           </mat-form-field>
           <mat-form-field appearance="outline" class="title-field">
             <mat-label>{{ 'requirement.name' | translate }}</mat-label>
-            <input matInput [(ngModel)]="formTitle" data-test-id="requirement-title-input">
+            <input matInput [(ngModel)]="formTitle" [disabled]="editingSynced" data-test-id="requirement-title-input">
           </mat-form-field>
         </div>
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{ 'requirement.descriptionLabel' | translate }}</mat-label>
-          <textarea matInput rows="3" [(ngModel)]="formDescription" data-test-id="requirement-description-input"></textarea>
+          <textarea matInput rows="3" [(ngModel)]="formDescription" [disabled]="editingSynced" data-test-id="requirement-description-input"></textarea>
           <mat-hint>{{ 'common.markdownHint' | translate }}</mat-hint>
         </mat-form-field>
         <div class="field-row">
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ 'requirement.lifecycleLabel' | translate }}</mat-label>
-            <mat-select [(ngModel)]="formStatus" data-test-id="requirement-status-select">
+            <mat-select [(ngModel)]="formStatus" [disabled]="editingSynced" data-test-id="requirement-status-select">
               @for (status of requirementStatuses; track status) {
                 <mat-option [value]="status">{{ 'requirement.lifecycle.' + status | translate }}</mat-option>
               }
@@ -101,7 +111,7 @@
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ 'requirement.priorityLabel' | translate }}</mat-label>
-            <mat-select [(ngModel)]="formPriority" data-test-id="requirement-priority-select">
+            <mat-select [(ngModel)]="formPriority" [disabled]="editingSynced" data-test-id="requirement-priority-select">
               @for (priority of priorities; track priority) {
                 <mat-option [value]="priority">{{ 'priority.' + priority | translate }}</mat-option>
               }
@@ -109,7 +119,7 @@
           </mat-form-field>
           <mat-form-field appearance="outline" subscriptSizing="dynamic" class="title-field">
             <mat-label>{{ 'requirement.parent' | translate }}</mat-label>
-            <mat-select [(ngModel)]="formParentId" data-test-id="requirement-parent-select">
+            <mat-select [(ngModel)]="formParentId" [disabled]="editingSynced" data-test-id="requirement-parent-select">
               <mat-option [value]="null">{{ 'requirement.noParent' | translate }}</mat-option>
               @for (option of parentOptions; track option.id) {
                 <mat-option [value]="option.id">{{ option.externalId }} — {{ option.title }}</mat-option>
@@ -208,6 +218,14 @@
                 }
                 <span class="requirement-key">{{ requirement.externalId }}</span>
                 <span class="requirement-name">{{ requirement.title }}</span>
+                @if (requirement.sourceUrl) {
+                  <a mat-icon-button class="source-link" [href]="requirement.sourceUrl" target="_blank" rel="noopener noreferrer"
+                     [matTooltip]="'requirementSync.openInTracker' | translate"
+                     [attr.aria-label]="'requirementSync.openInTracker' | translate"
+                     [attr.data-test-id]="'requirement-source-' + requirement.externalId">
+                    <mat-icon>open_in_new</mat-icon>
+                  </a>
+                }
                 <span class="badge badge--{{ requirement.priority | lowercase }}" data-test-id="requirement-priority">{{ 'priority.' + requirement.priority | translate }}</span>
                 <span class="badge lifecycle-badge lifecycle-badge--{{ requirement.status | lowercase }}" data-test-id="requirement-status">{{ 'requirement.lifecycle.' + requirement.status | translate }}</span>
                 @if (rowFor(requirement.id); as row) {
