@@ -64,6 +64,7 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>{{ 'requirement.descriptionLabel' | translate }}</mat-label>
           <textarea matInput rows="3" [(ngModel)]="formDescription" data-test-id="requirement-description-input"></textarea>
+          <mat-hint>{{ 'common.markdownHint' | translate }}</mat-hint>
         </mat-form-field>
         <div class="form-actions">
           <button mat-button (click)="closeForm()" data-test-id="requirement-cancel-btn">
@@ -116,7 +117,7 @@
             </div>
 
             @if (requirement.description) {
-              <p class="requirement-description">{{ requirement.description }}</p>
+              <div class="requirement-description tm-markdown" [innerHTML]="requirement.description | markdown"></div>
             }
 
             @if (linkingId === requirement.id) {

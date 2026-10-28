@@ -3,6 +3,7 @@ import { RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
 import { TranslateModule } from '@ngx-translate/core';
 import { TestResult } from '../../../shared/models/test-run.model';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 
 /**
  * The case's preconditions and description while executing it (PRD-048). Shown from the live case,
@@ -12,16 +13,17 @@ import { TestResult } from '../../../shared/models/test-run.model';
 @Component({
   selector: 'app-case-context',
   standalone: true,
-  imports: [RouterLink, MatIconModule, TranslateModule],
+  imports: [RouterLink, MatIconModule, TranslateModule, MarkdownPipe],
   template: `
     @if (result.testCasePreconditions || result.testCaseDescription) {
       <details class="case-context" [open]="!!result.testCasePreconditions" data-test-id="execution-case-context">
         <summary>{{ 'testRun.execution.caseContext' | translate }}</summary>
         @if (result.testCasePreconditions) {
-          <p><strong>{{ 'testCase.form.preconditions' | translate }}:</strong> {{ result.testCasePreconditions }}</p>
+          <strong>{{ 'testCase.form.preconditions' | translate }}:</strong>
+          <div class="tm-markdown" [innerHTML]="result.testCasePreconditions | markdown" data-test-id="execution-case-preconditions"></div>
         }
         @if (result.testCaseDescription) {
-          <p>{{ result.testCaseDescription }}</p>
+          <div class="tm-markdown" [innerHTML]="result.testCaseDescription | markdown" data-test-id="execution-case-description"></div>
         }
       </details>
     }
@@ -36,7 +38,9 @@ import { TestResult } from '../../../shared/models/test-run.model';
   styles: [`
     .case-context { margin: 0 0 12px; font-size: 14px; }
     .case-context summary { cursor: pointer; font-weight: 500; }
-    .case-context p { margin: 6px 0 0; white-space: pre-wrap; }
+    .case-context strong { display: block; margin-top: 6px; }
+    .case-context .tm-markdown { margin-top: 6px; }
+    .case-context strong + .tm-markdown { margin-top: 2px; }
     .case-changed { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--tm-text-secondary); }
     .case-changed mat-icon { font-size: 16px; width: 16px; height: 16px; }
   `],

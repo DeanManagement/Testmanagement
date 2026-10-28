@@ -908,6 +908,7 @@
     "watchedAt": "Watched Since"
   },
   "common": {
+    "markdownHint": "Markdown supported: **bold**, lists, tables, [links](https://…)",
     "save": "Save",
     "cancel": "Cancel",
     "delete": "Delete",

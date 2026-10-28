@@ -39,6 +39,13 @@ describe('CaseContextComponent', () => {
     expect(render({}).querySelector('[data-test-id="execution-case-context"]')).toBeNull();
   });
 
+  it('renders preconditions and description as Markdown (TM03)', () => {
+    const el = render({ testCasePreconditions: '- **Admin** logged in', testCaseDescription: '**Testziel:** pay' });
+
+    expect(el.querySelector('[data-test-id="execution-case-preconditions"] li strong')?.textContent).toBe('Admin');
+    expect(el.querySelector('[data-test-id="execution-case-description"] strong')?.textContent).toBe('Testziel:');
+  });
+
   it('says when the case changed since the result was recorded', () => {
     expect(render({ executedVersion: 2, testCaseVersion: 3 }).querySelector('[data-test-id="execution-case-changed"]'))
       .not.toBeNull();

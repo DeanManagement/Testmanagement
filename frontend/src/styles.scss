@@ -499,3 +499,54 @@ a {
     outline-offset: 2px;
   }
 }
+
+/* TM03: user/agent Markdown rendered by MarkdownPipe. Global so [innerHTML] content is reached,
+   and compact so it reads the same in every view. Text colour and size come from the host. */
+.tm-markdown {
+  overflow-wrap: anywhere;
+  min-width: 0;
+
+  > :first-child { margin-top: 0; }
+  > :last-child { margin-bottom: 0; }
+
+  p, ul, ol, table, pre, blockquote { margin: 0 0 6px; }
+  ul, ol { padding-left: 20px; }
+  li > ul, li > ol { margin: 0; }
+  h1, h2, h3, h4, h5, h6 { margin: 8px 0 4px; font-size: 1em; font-weight: 600; }
+
+  a { text-decoration: underline; }
+
+  table {
+    border-collapse: collapse;
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+  }
+  th, td {
+    border: 1px solid var(--tm-border);
+    padding: 4px 8px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: var(--tm-subtle-bg); font-weight: 600; }
+
+  code {
+    background: var(--tm-subtle-bg);
+    border-radius: 4px;
+    padding: 1px 4px;
+    font-size: 0.9em;
+  }
+  pre {
+    background: var(--tm-subtle-bg);
+    border-radius: 4px;
+    padding: 8px;
+    overflow-x: auto;
+    code { background: none; padding: 0; }
+  }
+
+  blockquote {
+    border-left: 3px solid var(--tm-border);
+    padding-left: 8px;
+    color: var(--tm-text-secondary);
+  }
+}

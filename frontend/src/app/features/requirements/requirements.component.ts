@@ -17,6 +17,7 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { RequirementApiService } from '../../core/services/requirement-api.service';
 import { TestCaseApiService } from '../../core/services/test-case-api.service';
+import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
@@ -42,6 +43,7 @@ import { TestCase } from '../../shared/models/test-case.model';
     RouterLink,
     FormsModule,
     LowerCasePipe,
+    MarkdownPipe,
     MatButtonModule,
     MatIconModule,
     MatFormFieldModule,

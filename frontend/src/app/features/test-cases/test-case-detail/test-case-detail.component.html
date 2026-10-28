@@ -27,12 +27,12 @@
         </div>
       </div>
       @if (tc.description) {
-        <p class="tc-description" data-test-id="test-case-detail-description">{{ tc.description }}</p>
+        <div class="tc-description tm-markdown" data-test-id="test-case-detail-description" [innerHTML]="tc.description | markdown"></div>
       }
       @if (tc.preconditions) {
         <div class="tc-preconditions" data-test-id="test-case-detail-preconditions">
           <strong>{{ 'testCase.form.preconditions' | translate }}:</strong>
-          <p>{{ tc.preconditions }}</p>
+          <div class="tm-markdown" [innerHTML]="tc.preconditions | markdown"></div>
         </div>
       }
       @if (tc.labels.length) {

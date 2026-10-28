@@ -40,6 +40,18 @@ describe('StepSpecCardComponent', () => {
     expect(tile('step-spec-image')?.classList).not.toContain('spec-tile--wide');
   });
 
+  it('renders action, expected result and test data as Markdown (TM03)', () => {
+    fixture.componentRef.setInput('action', '**Open** the cart');
+    fixture.componentRef.setInput('expectedResult', '- total shown\n- VAT shown');
+    fixture.componentRef.setInput('testData', '| user | pw |\n|---|---|\n| a | b |');
+    fixture.detectChanges();
+
+    const texts = fixture.nativeElement.querySelectorAll('.spec-text');
+    expect(texts[0].querySelector('strong')?.textContent).toBe('Open');
+    expect(texts[1].querySelectorAll('li').length).toBe(2);
+    expect(tile('step-spec-test-data')?.querySelector('table')).not.toBeNull();
+  });
+
   it('adds no row when neither exists', () => {
     fixture.detectChanges();
 

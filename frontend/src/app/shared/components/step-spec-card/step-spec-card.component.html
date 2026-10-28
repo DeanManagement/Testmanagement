@@ -1,17 +1,17 @@
 <div class="step-spec-grid">
   <div class="spec-tile">
     <span class="spec-label">{{ 'testCase.form.action' | translate }}</span>
-    <span class="spec-text">{{ action }}</span>
+    <div class="spec-text tm-markdown" [innerHTML]="action | markdown"></div>
   </div>
   <div class="spec-tile">
     <span class="spec-label">{{ 'stepResult.expected' | translate }}</span>
-    <span class="spec-text">{{ expectedResult }}</span>
+    <div class="spec-text tm-markdown" [innerHTML]="expectedResult | markdown"></div>
   </div>
   <!-- PRD-052: a tile only for what exists; alone, it spans the card instead of leaving a gap. -->
   @if (testData) {
     <div class="spec-tile" [class.spec-tile--wide]="!imageUrl" data-test-id="step-spec-test-data">
       <span class="spec-label">{{ 'testCase.form.testData' | translate }}</span>
-      <span class="spec-text">{{ testData }}</span>
+      <div class="spec-text tm-markdown" [innerHTML]="testData | markdown"></div>
     </div>
   }
   @if (imageUrl) {

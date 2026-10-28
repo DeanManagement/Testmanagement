@@ -908,6 +908,7 @@
     "watchedAt": "Beobachtet seit"
   },
   "common": {
+    "markdownHint": "Markdown möglich: **fett**, Listen, Tabellen, [Links](https://…)",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "delete": "Löschen",

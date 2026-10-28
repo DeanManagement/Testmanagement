@@ -39,6 +39,7 @@ import { ProjectMemberApiService } from '../../../core/services/project-member-a
 import { AttachmentsComponent } from '../../../shared/components/attachments/attachments.component';
 import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-fields/custom-fields-display.component';
 import { DurationPipe } from '../../../shared/pipes/duration.pipe';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { millisToMinutes } from '../../../shared/pipes/duration';
 
 @Component({
@@ -49,6 +50,7 @@ import { millisToMinutes } from '../../../shared/pipes/duration';
     ExecutionHistoryComponent,
     AttachmentsComponent,
     DurationPipe,
+    MarkdownPipe,
     CustomFieldsDisplayComponent,
     TestCaseReviewComponent,
     EnvironmentResultsComponent,
