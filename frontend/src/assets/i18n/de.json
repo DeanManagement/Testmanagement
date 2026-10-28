@@ -322,7 +322,9 @@
       "none": "Mit keiner Anforderung verknüpft.",
       "choose": "Anforderung",
       "link": "Anforderung verknüpfen"
-    }
+    },
+    "copy": "Kopieren",
+    "copyTitle": "{{title}} (Kopie)"
   },
   "testSuite": {
     "list": {

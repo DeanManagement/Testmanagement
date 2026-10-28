@@ -38,5 +38,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, UUID> {
 
     Optional<Attachment> findByIdAndTestCaseId(UUID id, UUID testCaseId);
 
+    List<Attachment> findByTestCaseId(UUID testCaseId);
+
     Optional<Attachment> findByIdAndBugReportId(UUID id, UUID bugReportId);
 }

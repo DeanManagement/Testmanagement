@@ -2,7 +2,7 @@ import { CaseContextComponent } from '../case-context/case-context.component';
 import { ExecutionHistoryComponent } from '../execution-history/execution-history.component';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, LowerCasePipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
@@ -10,7 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatDialog } from '@angular/material/dialog';
-import { TranslateModule } from '@ngx-translate/core';
+import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { combineLatest, Observable, of } from 'rxjs';
 import { filter, switchMap, take } from 'rxjs/operators';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -42,6 +42,8 @@ import { CustomFieldsDisplayComponent } from '../../../shared/components/custom-
 import { DurationPipe } from '../../../shared/pipes/duration.pipe';
 import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { millisToMinutes } from '../../../shared/pipes/duration';
+
+const MAX_TITLE_LENGTH = 255;
 
 @Component({
   selector: 'app-test-case-detail',
@@ -85,6 +87,8 @@ export class TestCaseDetailComponent implements OnInit {
   private readonly projectApi = inject(ProjectApiService);
   private readonly memberApi = inject(ProjectMemberApiService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
+  private readonly translate = inject(TranslateService);
 
   projectId = '';
   testCaseId = '';
@@ -180,6 +184,19 @@ export class TestCaseDetailComponent implements OnInit {
   compareWithApproved(approvedVersion: number, testCase: TestCase): void {
     this.versions?.compareVersions(approvedVersion, testCase.currentVersion);
     this.versionsSection?.nativeElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /**
+   * TM09: copies the case and opens the copy's edit form, since a copy is made to be changed. The
+   * edit route also gets a fresh component, where this one reads its case id only once.
+   */
+  copyTestCase(testCase: TestCase): void {
+    const title: string = this.translate.instant('testCase.copyTitle', { title: testCase.title });
+    // Too long for a title: let the server shorten the original and add its own suffix.
+    const requested = title.length <= MAX_TITLE_LENGTH ? title : undefined;
+    this.testCaseApi.copy(this.projectId, testCase.id, requested)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((copy) => this.router.navigate(['/projects', this.projectId, 'test-cases', copy.id, 'edit']));
   }
 
   deleteTestCase(testCase: TestCase): void {

@@ -3,6 +3,8 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseContextResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseExecutionResponse;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseContextService;
+import com.deanmanagement.testmanagement.project.internal.service.TestCaseCopyService;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.CopyTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseReviewService;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.ReviewCapabilitiesResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.RequestChangesRequest;
@@ -61,6 +63,7 @@ public class TestCaseController {
     private final TestCaseReviewService reviewService;
     private final CustomFieldFilterParser customFieldFilterParser;
     private final TestCaseContextService contextService;
+    private final TestCaseCopyService copyService;
 
     @GetMapping
     @RequireProjectRole
@@ -176,6 +179,16 @@ public class TestCaseController {
                                    Authentication authentication) {
         UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         return testCaseService.update(projectId, id, request, userId);
+    }
+
+    /** TM09: a new DRAFT case with this one's content, steps, images and attachments. */
+    @PostMapping("/{id}/copy")
+    @ResponseStatus(HttpStatus.CREATED)
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestCaseResponse copy(@PathVariable UUID projectId, @PathVariable UUID id,
+                                 @Valid @RequestBody(required = false) CopyTestCaseRequest request,
+                                 Authentication authentication) {
+        return copyService.copy(projectId, id, request != null ? request.title() : null, userIdOf(authentication));
     }
 
     /** PRD-030: replaces a shared step reference with copies of the block's steps. */

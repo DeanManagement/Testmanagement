@@ -91,6 +91,11 @@ export class TestCaseApiService {
   }
 
   /** Replaces a shared step reference with copies of its steps, images included (PRD-030). */
+  /** TM09: a new DRAFT case with this one's content; the server names it when {@code title} is absent. */
+  copy(projectId: string, testCaseId: string, title?: string): Observable<TestCase> {
+    return this.http.post<TestCase>(`${this.baseUrl(projectId)}/${testCaseId}/copy`, { title });
+  }
+
   inlineSharedStep(projectId: string, testCaseId: string, stepId: string): Observable<TestCase> {
     return this.http.post<TestCase>(`${this.baseUrl(projectId)}/${testCaseId}/steps/${stepId}/inline`, {});
   }

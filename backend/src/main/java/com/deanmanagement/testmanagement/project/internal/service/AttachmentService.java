@@ -104,6 +104,32 @@ public class AttachmentService {
         audit(projectId, userId, AuditAction.DELETED, attachment);
     }
 
+    /**
+     * Copies every file of {@code source} onto {@code target}, for a copied test case (TM09). The
+     * files were checked when uploaded, so only the project quota is checked again; a copy that
+     * would exceed it fails as a whole rather than leaving the new case with some of its files.
+     */
+    @Transactional
+    public void copyTestCaseAttachments(UUID projectId, TestCase source, TestCase target, UUID userId) {
+        List<Attachment> originals = attachmentRepository.findByTestCaseId(source.getId());
+        long addedBytes = originals.stream().mapToLong(Attachment::getSizeBytes).sum();
+        if (maxProjectBytes > 0 && !originals.isEmpty()
+                && attachmentRepository.totalBytesInProject(projectId) + addedBytes > maxProjectBytes) {
+            throw new ConflictException("Copying the attachments would exceed the project's "
+                    + maxProjectBytes / (1024 * 1024) + " MB. Remove files you no longer need first.");
+        }
+        for (Attachment original : originals) {
+            Attachment copy = new Attachment();
+            copy.setTestCase(target);
+            copy.setFileName(original.getFileName());
+            copy.setContentType(original.getContentType());
+            copy.setSizeBytes(original.getSizeBytes());
+            copy.setSha256(original.getSha256());
+            copy.setData(original.getData());
+            audit(projectId, userId, AuditAction.CREATED, attachmentRepository.save(copy));
+        }
+    }
+
     // ---- bug reports (PRD-051) ------------------------------------------------------------------
 
     public List<AttachmentSummary> list(BugReport bug) {

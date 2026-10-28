@@ -322,7 +322,9 @@
       "none": "Not linked to any requirement.",
       "choose": "Requirement",
       "link": "Link a requirement"
-    }
+    },
+    "copy": "Copy",
+    "copyTitle": "{{title}} (copy)"
   },
   "testSuite": {
     "list": {
