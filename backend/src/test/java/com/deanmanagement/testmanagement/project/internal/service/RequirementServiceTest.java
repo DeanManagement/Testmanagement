@@ -130,6 +130,20 @@ class RequirementServiceTest {
     }
 
     @Test
+    void listsTheRequirementsATestCaseIsLinkedTo() {
+        UUID second = createRequirement("REQ-20");
+        UUID first = createRequirement("REQ-10");
+        createRequirement("REQ-30");
+        TestCase testCase = createCase("TC-LINKED");
+        service.linkTestCase(project.getId(), second, testCase.getId(), null);
+        service.linkTestCase(project.getId(), first, testCase.getId(), null);
+
+        var linked = service.findLinkedTo(project.getId(), testCase.getId());
+
+        assertThat(linked).extracting(r -> r.externalId()).containsExactly("REQ-10", "REQ-20");
+    }
+
+    @Test
     void linkingIsIdempotent() {
         UUID requirementId = createRequirement("REQ-2");
         TestCase testCase = createCase("TC-1");

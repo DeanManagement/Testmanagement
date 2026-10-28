@@ -317,6 +317,11 @@
       "olderWording": "ältere Fassung",
       "olderWordingHint": "Dieses Ergebnis lief gegen eine frühere Version des Falls; der Versionsverlauf zeigt, was sich geändert hat.",
       "unavailable": "Der Ausführungsverlauf konnte nicht geladen werden."
+    },
+    "requirements": {
+      "none": "Mit keiner Anforderung verknüpft.",
+      "choose": "Anforderung",
+      "link": "Anforderung verknüpfen"
     }
   },
   "testSuite": {

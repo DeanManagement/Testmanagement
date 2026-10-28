@@ -45,6 +45,12 @@ public class RequirementController {
         return requirementService.list(projectId, pageable);
     }
 
+    @GetMapping("/test-cases/{testCaseId}/requirements")
+    @RequireProjectRole
+    public List<RequirementResponse> listForTestCase(@PathVariable UUID projectId, @PathVariable UUID testCaseId) {
+        return requirementService.findLinkedTo(projectId, testCaseId);
+    }
+
     @GetMapping("/requirements/{id}")
     @RequireProjectRole
     public RequirementResponse get(@PathVariable UUID projectId, @PathVariable UUID id) {

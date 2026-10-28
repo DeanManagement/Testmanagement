@@ -22,6 +22,11 @@ export class RequirementApiService {
     return this.http.get<Page<Requirement>>(this.baseUrl(projectId), { params });
   }
 
+  /** The requirements a test case is linked to (TM08). */
+  getForTestCase(projectId: string, testCaseId: string): Observable<Requirement[]> {
+    return this.http.get<Requirement[]>(`/api/projects/${projectId}/test-cases/${testCaseId}/requirements`);
+  }
+
   create(projectId: string, request: SaveRequirementRequest): Observable<Requirement> {
     return this.http.post<Requirement>(this.baseUrl(projectId), request);
   }

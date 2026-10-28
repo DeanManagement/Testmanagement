@@ -29,6 +29,7 @@ import { EntityHistoryComponent } from '../../../shared/components/entity-histor
 import { TestCaseVersionsComponent } from '../test-case-versions/test-case-versions.component';
 import { ExecutedStep, expandSteps, sharedStepHeadingAt } from '../../../shared/utils/shared-step-groups';
 import { TestCaseParametersComponent } from '../test-case-parameters/test-case-parameters.component';
+import { TestCaseRequirementsComponent } from '../test-case-requirements/test-case-requirements.component';
 
 import { EnvironmentResultsComponent } from '../environment-results/environment-results.component';
 
@@ -68,6 +69,7 @@ import { millisToMinutes } from '../../../shared/pipes/duration';
     EntityHistoryComponent,
     TestCaseVersionsComponent,
     TestCaseParametersComponent,
+    TestCaseRequirementsComponent,
   ],
   templateUrl: './test-case-detail.component.html',
   styleUrl: './test-case-detail.component.scss',

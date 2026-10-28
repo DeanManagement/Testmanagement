@@ -317,6 +317,11 @@
       "olderWording": "older wording",
       "olderWordingHint": "This result ran an earlier version of the case; the version history shows what changed.",
       "unavailable": "Could not load the execution history."
+    },
+    "requirements": {
+      "none": "Not linked to any requirement.",
+      "choose": "Requirement",
+      "link": "Link a requirement"
     }
   },
   "testSuite": {

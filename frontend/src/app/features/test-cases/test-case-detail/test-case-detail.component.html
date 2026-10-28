@@ -87,6 +87,11 @@
       </div>
     }
 
+    <div class="requirements-section tm-card" data-test-id="test-case-requirements-section">
+      <h3>{{ 'requirement.title' | translate }}</h3>
+      <app-test-case-requirements [projectId]="projectId" [testCaseId]="testCaseId" [canEdit]="canWrite" />
+    </div>
+
     <div class="attachments-section tm-card" data-test-id="test-case-attachments-section">
       <h3>{{ 'attachment.title' | translate }}</h3>
       <app-attachments [url]="attachmentsUrl" [canEdit]="canWrite" />
