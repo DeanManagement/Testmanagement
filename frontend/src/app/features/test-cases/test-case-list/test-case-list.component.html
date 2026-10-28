@@ -208,6 +208,7 @@
           </mat-form-field>
         }
         <app-custom-field-filters [projectId]="projectId" entityType="TEST_CASE" />
+        <app-saved-filters-menu [projectId]="projectId" view="TEST_CASES" />
         <button mat-icon-button (click)="toggleDensity()"
                 [matTooltip]="'filter.density' | translate"
                 class="density-toggle" data-test-id="test-case-density-toggle"

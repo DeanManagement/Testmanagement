@@ -952,6 +952,22 @@
     "type": "Type",
     "watchedAt": "Watched Since"
   },
+  "savedFilters": {
+    "button": "Saved filters",
+    "mine": "My filters",
+    "shared": "Shared in project",
+    "noneMine": "You have not saved a filter yet.",
+    "noneShared": "Nobody has shared a filter yet.",
+    "saveCurrent": "Save current filter…",
+    "saveTitle": "Save current filter",
+    "editTitle": "Edit saved filter",
+    "edit": "Rename or share",
+    "name": "Name",
+    "shareWithProject": "Share with everyone in this project",
+    "sharedHint": "Shared in this project",
+    "deleteTitle": "Delete saved filter",
+    "deleteMessage": "Delete the saved filter \"{{name}}\"? The test cases are not affected."
+  },
   "common": {
     "markdownHint": "Markdown supported: **bold**, lists, tables, [links](https://…)",
     "save": "Save",

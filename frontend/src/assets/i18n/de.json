@@ -952,6 +952,22 @@
     "type": "Typ",
     "watchedAt": "Beobachtet seit"
   },
+  "savedFilters": {
+    "button": "Gespeicherte Filter",
+    "mine": "Meine Filter",
+    "shared": "Im Projekt geteilt",
+    "noneMine": "Du hast noch keinen Filter gespeichert.",
+    "noneShared": "Noch niemand hat einen Filter geteilt.",
+    "saveCurrent": "Aktuellen Filter speichern…",
+    "saveTitle": "Aktuellen Filter speichern",
+    "editTitle": "Gespeicherten Filter bearbeiten",
+    "edit": "Umbenennen oder teilen",
+    "name": "Name",
+    "shareWithProject": "Mit allen im Projekt teilen",
+    "sharedHint": "In diesem Projekt geteilt",
+    "deleteTitle": "Gespeicherten Filter löschen",
+    "deleteMessage": "Den gespeicherten Filter «{{name}}» löschen? Die Testfälle bleiben unverändert."
+  },
   "common": {
     "markdownHint": "Markdown möglich: **fett**, Listen, Tabellen, [Links](https://…)",
     "save": "Speichern",

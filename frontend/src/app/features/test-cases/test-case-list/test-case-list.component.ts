@@ -44,6 +44,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/compo
 import { TestCaseFolder } from '../../../shared/models/test-case-folder.model';
 import { Priority, TestCase, TestCaseQuery, TestCaseStatus, ALL_TEST_CASE_STATUSES } from '../../../shared/models/test-case.model';
 import { CustomFieldFiltersComponent } from '../../../shared/components/custom-fields/custom-field-filters.component';
+import { SavedFiltersMenuComponent } from '../../../shared/components/saved-filters/saved-filters-menu.component';
 import { readCustomFieldParams } from '../../../shared/components/custom-fields/custom-field-filter-params';
 
 interface FlatFolderNode {
@@ -61,6 +62,7 @@ interface FlatFolderNode {
   standalone: true,
   imports: [
     CustomFieldFiltersComponent,
+    SavedFiltersMenuComponent,
     AsyncPipe,
     LowerCasePipe,
     RouterLink,
