@@ -11,6 +11,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.service.CustomFieldWriteMode;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.service.RequirementService;
+import com.deanmanagement.testmanagement.project.internal.service.RequirementSyncService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,7 @@ public class RequirementTools {
     private final TestCaseRepository testCaseRepository;
     private final McpValidator validator;
     private final McpWriteThrottle writeThrottle;
+    private final RequirementSyncService syncService;
 
     @McpTool(
             name = "list_requirements",
@@ -77,7 +79,9 @@ public class RequirementTools {
             name = "get_requirement",
             description = """
                     One requirement with the test cases linked to it, by its externalId (REQ-14)
-                    or its UUID.
+                    or its UUID. A synced requirement names its source (AZURE_DEVOPS), the work
+                    item's sourceUrl and lastSyncedAt; its own fields can only be changed in the
+                    tracker, its custom fields and test case links here.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
@@ -126,6 +130,27 @@ public class RequirementTools {
 
         return toRequirement(requirementService.create(caller.projectId(), request, caller.userId(),
                 CustomFieldWriteMode.MACHINE));
+    }
+
+    @McpTool(
+            name = "sync_requirements",
+            description = """
+                    Pull the project's requirements from Azure DevOps now, using the query and
+                    mappings set up in the project's requirement sync settings. Requires an ADMIN
+                    key. Work items are created or updated by externalId; ones that left the query
+                    are marked OBSOLETE, never deleted. Pass dryRun true to only count what would
+                    change — a dry run also works before sync is enabled.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    public McpDtos.RequirementSyncResult syncRequirements(
+            @McpToolParam(description = "true to only report the counts; default false", required = false)
+            Boolean dryRun) {
+        var caller = callerContext.requireAdmin();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        var result = syncService.sync(caller.projectId(), Boolean.TRUE.equals(dryRun), caller.userId());
+        return new McpDtos.RequirementSyncResult(result.created(), result.updated(), result.obsoleted(),
+                result.unchanged(), result.dryRun());
     }
 
     @McpTool(
@@ -318,6 +343,8 @@ public class RequirementTools {
                         ? null : requirement.customFields(),
                 requirement.testCases() == null ? List.of() : requirement.testCases().stream()
                         .map(tc -> new McpDtos.TestCaseRef(tc.id(), tc.title()))
-                        .toList());
+                        .toList(),
+                requirement.source() == null ? null : requirement.source().name(),
+                requirement.sourceUrl(), requirement.lastSyncedAt());
     }
 }

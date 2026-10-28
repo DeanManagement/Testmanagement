@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.dto.requirement;
 
+import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerProviderType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.RequirementStatus;
 
@@ -21,7 +22,11 @@ public record RequirementResponse(
         Map<String, Object> customFields,
         List<LinkedTestCase> testCases,
         Instant createdAt,
-        Instant updatedAt
+        Instant updatedAt,
+        /* TM19: the tracker it is synced from (null when local), its work item, and the last sync. */
+        IssueTrackerProviderType source,
+        String sourceUrl,
+        Instant lastSyncedAt
 ) {
     public record LinkedTestCase(UUID id, String key, String title) {
     }

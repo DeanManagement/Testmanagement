@@ -72,6 +72,7 @@ public class RequirementImportService {
 
         List<ImportError> errors = new ArrayList<>();
         Map<String, Row> rows = parse(projectId, content, errors);
+        dropSynced(rows, existing, errors);
         dropUnknownParents(rows, existing, errors);
         dropCycles(rows, existing, errors);
 
@@ -152,6 +153,18 @@ public class RequirementImportService {
     }
 
     // ---- hierarchy checks -------------------------------------------------
+
+    /** TM19: a synced requirement belongs to its tracker; the file cannot overwrite it. */
+    private static void dropSynced(Map<String, Row> rows, Map<String, Requirement> existing, List<ImportError> errors) {
+        for (Row row : List.copyOf(rows.values())) {
+            Requirement current = existing.get(row.externalId());
+            if (current != null && current.getSource() != null) {
+                rows.remove(row.externalId());
+                errors.add(new ImportError(row.number(), row.externalId() + " is synced from the issue tracker "
+                        + "and cannot be changed by an import"));
+            }
+        }
+    }
 
     /** Repeats until stable: dropping a row can orphan a row below it. */
     private static void dropUnknownParents(Map<String, Row> rows, Map<String, Requirement> existing,

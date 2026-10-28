@@ -16,6 +16,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -60,6 +61,21 @@ public class Requirement extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private Priority priority = Priority.MEDIUM;
+
+    /**
+     * TM19: the tracker this requirement is synced from, null for a local one. A synced requirement's
+     * own fields belong to the tracker and cannot be edited here; custom fields and links can.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
+    private IssueTrackerProviderType source;
+
+    /** TM19: the work item in the tracker. */
+    @Column(name = "source_url", length = 1000)
+    private String sourceUrl;
+
+    @Column(name = "last_synced_at")
+    private Instant lastSyncedAt;
 
     /** PRD-035 / TM18. Lazy; the global batch fetch size keeps list pages to one query per page. */
     @OneToMany(mappedBy = "requirement", cascade = CascadeType.ALL, orphanRemoval = true)

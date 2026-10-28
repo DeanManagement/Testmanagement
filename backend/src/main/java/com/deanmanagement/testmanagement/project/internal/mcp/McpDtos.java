@@ -535,7 +535,11 @@ final class McpDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record Requirement(UUID id, String externalId, String title, @Nullable String description,
                        @Nullable UUID parentId, RequirementStatus status, Priority priority,
-                       @Nullable Map<String, Object> customFields, List<TestCaseRef> testCases) {}
+                       @Nullable Map<String, Object> customFields, List<TestCaseRef> testCases,
+                       @Nullable String source, @Nullable String sourceUrl, @Nullable Instant lastSyncedAt) {}
+
+    /** TM19: what a requirement sync did, or with dryRun would do. */
+    record RequirementSyncResult(int created, int updated, int obsoleted, int unchanged, boolean dryRun) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record RequirementPage(List<Requirement> requirements, int page, int size, long totalElements,

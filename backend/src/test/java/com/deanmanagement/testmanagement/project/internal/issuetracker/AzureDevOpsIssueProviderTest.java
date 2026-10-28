@@ -175,4 +175,61 @@ class AzureDevOpsIssueProviderTest {
         assertThatThrownBy(() -> provider.testConnection(config))
                 .hasMessageContaining("5.0 for Server 2019");
     }
+
+    // ---- requirement sync (TM19) ----------------------------------------------------------------
+
+    @Test
+    void queryWorkItemsReadsTheIdsInBatchesOfTwoHundredWithRelations() {
+        String ids = java.util.stream.IntStream.rangeClosed(1, 450).mapToObj(i -> "{\"id\":" + i + "}")
+                .collect(java.util.stream.Collectors.joining(","));
+        server.respond(Response.json("{\"workItems\":[" + ids + "]}"),
+                Response.json("{\"value\":[" + workItem(1, "Active") + "]}"),
+                Response.json("{\"value\":[" + workItem(201, "Active") + "]}"),
+                Response.json("{\"value\":[" + workItem(401, "Active") + "]}"));
+
+        var items = provider.queryWorkItems(config, "SELECT [System.Id] FROM WorkItems");
+
+        assertThat(items).extracting(TrackerWorkItem::id).containsExactly("1", "201", "401");
+        assertThat(server.requests()).hasSize(4);
+        JsonNode second = json.readTree(server.requests().get(2).body());
+        assertThat(second.get("ids")).hasSize(200);
+        assertThat(second.get("ids").get(0).asInt()).isEqualTo(201);
+        assertThat(second.get("$expand").asString()).isEqualTo("Relations");
+        assertThat(json.readTree(server.requests().get(3).body()).get("ids")).hasSize(50);
+        assertThat(json.readTree(server.requests().get(0).body()).get("query").asString())
+                .isEqualTo("SELECT [System.Id] FROM WorkItems");
+    }
+
+    @Test
+    void aQueryWithoutResultsMakesNoBatchCall() {
+        server.respond(Response.json("{\"workItems\":[]}"));
+
+        assertThat(provider.queryWorkItems(config, "SELECT [System.Id] FROM WorkItems")).isEmpty();
+        assertThat(server.requests()).hasSize(1);
+    }
+
+    @Test
+    void aWorkItemCarriesItsParentPriorityAndPlainTextDescription() {
+        server.respond(Response.json("{\"workItems\":[{\"id\":5}]}"), Response.json("{\"value\":[{\"id\":5,"
+                + "\"fields\":{\"System.Title\":\"Pay\",\"System.State\":\"New\",\"System.TeamProject\":\"Payments\","
+                + "\"Microsoft.VSTS.Common.Priority\":2,\"System.Description\":\"<div>a &amp; b</div>\"},"
+                + "\"relations\":[{\"rel\":\"System.LinkTypes.Related\",\"url\":\"https://x/_apis/wit/workItems/8\"},"
+                + "{\"rel\":\"System.LinkTypes.Hierarchy-Reverse\",\"url\":\"https://x/_apis/wit/workItems/3\"}]}]}"));
+
+        TrackerWorkItem item = provider.queryWorkItems(config, "SELECT [System.Id] FROM WorkItems").getFirst();
+
+        assertThat(item.parentId()).isEqualTo("3");
+        assertThat(item.priority()).isEqualTo(2);
+        assertThat(item.description()).isEqualTo("a & b");
+        assertThat(item.url()).endsWith("/contoso/Payments/_workitems/edit/5");
+    }
+
+    @Test
+    void aRejectedQuerySurfacesTheProvidersReason() {
+        server.respond(Response.json(400, "{\"message\":\"TF51005: The query references a field that does not exist.\"}"));
+
+        assertThatThrownBy(() -> provider.queryWorkItems(config, "SELECT [Nope] FROM WorkItems"))
+                .isInstanceOf(UpstreamServiceException.class)
+                .hasMessageContaining("TF51005: The query references a field that does not exist.");
+    }
 }

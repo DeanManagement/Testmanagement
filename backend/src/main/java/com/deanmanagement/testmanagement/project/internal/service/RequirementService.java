@@ -8,6 +8,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.requirement.Tracea
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
+import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerProviderType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Requirement;
 import com.deanmanagement.testmanagement.project.internal.entity.RequirementStatus;
@@ -32,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -47,6 +49,9 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
 public class RequirementService {
+
+    private static final Map<IssueTrackerProviderType, String> SYNC_SOURCE_NAMES =
+            Map.of(IssueTrackerProviderType.AZURE_DEVOPS, "Azure DevOps");
 
     private final RequirementRepository requirementRepository;
     private final TestCaseRepository testCaseRepository;
@@ -128,6 +133,7 @@ public class RequirementService {
                                       CustomFieldWriteMode mode) {
         Requirement requirement = require(projectId, id);
         String externalId = request.externalId().trim();
+        refuseSyncedFieldChanges(requirement, request, externalId);
 
         if (!requirement.getExternalId().equals(externalId)
                 && requirementRepository.existsByProjectIdAndExternalId(projectId, externalId)) {
@@ -375,10 +381,59 @@ public class RequirementService {
         return parentId;
     }
 
+    /**
+     * TM19: a synced requirement's own fields belong to the tracker, so a change to any of them is
+     * refused; sending them back unchanged is fine, which is what an edit of only the custom fields
+     * through this full-replace API does.
+     */
+    private static void refuseSyncedFieldChanges(Requirement requirement, SaveRequirementRequest request,
+                                                 String externalId) {
+        if (requirement.getSource() == null) {
+            return;
+        }
+        List<String> changed = new ArrayList<>();
+        if (!requirement.getExternalId().equals(externalId)) {
+            changed.add("externalId");
+        }
+        if (!requirement.getTitle().equals(request.title().trim())) {
+            changed.add("title");
+        }
+        if (!Objects.equals(blankToNull(requirement.getDescription()), blankToNull(request.description()))) {
+            changed.add("description");
+        }
+        if (statusOf(request) != requirement.getStatus()) {
+            changed.add("status");
+        }
+        if (priorityOf(request) != requirement.getPriority()) {
+            changed.add("priority");
+        }
+        if (!Objects.equals(requirement.getParentId(), request.parentId())) {
+            changed.add("parent");
+        }
+        if (!changed.isEmpty()) {
+            throw new IllegalArgumentException("Requirement " + requirement.getExternalId() + " is synced from "
+                    + SYNC_SOURCE_NAMES.getOrDefault(requirement.getSource(), requirement.getSource().name())
+                    + "; change " + String.join(", ", changed) + " there. Only custom fields and test case "
+                    + "links can be edited here.");
+        }
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.strip();
+    }
+
     /** Null status / priority mean the defaults, as for a new requirement. */
     private static void applyFields(Requirement requirement, SaveRequirementRequest request) {
-        requirement.setStatus(request.status() == null ? RequirementStatus.DRAFT : request.status());
-        requirement.setPriority(request.priority() == null ? Priority.MEDIUM : request.priority());
+        requirement.setStatus(statusOf(request));
+        requirement.setPriority(priorityOf(request));
+    }
+
+    private static RequirementStatus statusOf(SaveRequirementRequest request) {
+        return request.status() == null ? RequirementStatus.DRAFT : request.status();
+    }
+
+    private static Priority priorityOf(SaveRequirementRequest request) {
+        return request.priority() == null ? Priority.MEDIUM : request.priority();
     }
 
     private Requirement require(UUID projectId, UUID id) {
@@ -410,6 +465,9 @@ public class RequirementService {
                 CustomFieldValueMaps.toMap(requirement.getCustomFieldValues()),
                 cases,
                 requirement.getCreatedAt(),
-                requirement.getUpdatedAt());
+                requirement.getUpdatedAt(),
+                requirement.getSource(),
+                requirement.getSourceUrl(),
+                requirement.getLastSyncedAt());
     }
 }

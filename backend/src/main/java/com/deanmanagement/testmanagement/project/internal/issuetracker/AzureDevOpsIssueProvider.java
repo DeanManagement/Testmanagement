@@ -38,7 +38,11 @@ public class AzureDevOpsIssueProvider extends HttpIssueProviderSupport implement
     static final String REPRO_STEPS = "Microsoft.VSTS.TCM.ReproSteps";
     static final String DESCRIPTION = "System.Description";
     private static final String FIELDS = "System.Id,System.Title,System.State,System.WorkItemType,System.TeamProject";
+    static final String PRIORITY = "Microsoft.VSTS.Common.Priority";
+    static final String PARENT_RELATION = "System.LinkTypes.Hierarchy-Reverse";
+    static final int WORK_ITEM_BATCH_SIZE = 200;
     private static final int SEARCH_LIMIT = 20;
+    private static final int MAX_ERROR_MESSAGE_LENGTH = 300;
     private static final int MAX_TITLE_LENGTH = 500;
     private static final int HTTP_NON_AUTHORITATIVE = 203;
     private static final int HTTP_BAD_REQUEST = 400;
@@ -119,6 +123,65 @@ public class AzureDevOpsIssueProvider extends HttpIssueProviderSupport implement
                 + version(config, "&")));
     }
 
+    /**
+     * Requirement sync (TM19): runs a flat WIQL query, then reads the work items with their
+     * relations in batches of {@value #WORK_ITEM_BATCH_SIZE}, the most {@code workitemsbatch}
+     * accepts. Fields cannot be named together with {@code $expand}, so every field comes back.
+     */
+    public List<TrackerWorkItem> queryWorkItems(DecryptedConfig config, String wiql) {
+        JsonNode found = postJson(config, projectApi(config) + "/_apis/wit/wiql" + version(config, "?"),
+                Map.of("query", wiql));
+        List<String> ids = new ArrayList<>();
+        found.path("workItems").forEach(item -> {
+            String id = text(item, "id");
+            if (id != null) {
+                ids.add(id);
+            }
+        });
+        List<TrackerWorkItem> items = new ArrayList<>();
+        for (int start = 0; start < ids.size(); start += WORK_ITEM_BATCH_SIZE) {
+            List<Long> batch = ids.subList(start, Math.min(start + WORK_ITEM_BATCH_SIZE, ids.size())).stream()
+                    .map(Long::valueOf).toList();
+            JsonNode page = postJson(config, projectApi(config) + "/_apis/wit/workitemsbatch" + version(config, "?"),
+                    Map.of("ids", batch, "$expand", "Relations", "errorPolicy", "Omit"));
+            page.path("value").forEach(item -> {
+                if (!item.isNull()) {
+                    items.add(toWorkItem(config, item));
+                }
+            });
+        }
+        return items;
+    }
+
+    private TrackerWorkItem toWorkItem(DecryptedConfig config, JsonNode item) {
+        String id = text(item, "id");
+        if (id == null) {
+            throw new UpstreamServiceException("Azure DevOps work item response is missing an id");
+        }
+        JsonNode fields = item.path("fields");
+        String project = firstNonNull(text(fields, "System.TeamProject"), config.projectRef());
+        JsonNode priority = fields.get(PRIORITY);
+        return new TrackerWorkItem(id,
+                truncate(firstNonNull(text(fields, "System.Title"), "#" + id), MAX_TITLE_LENGTH),
+                HtmlToText.convert(text(fields, DESCRIPTION)),
+                text(fields, "System.State"),
+                priority != null && priority.isNumber() ? priority.asInt() : null,
+                projectUrl(config, project) + "/_workitems/edit/" + id,
+                parentOf(item));
+    }
+
+    /** The work item id at the end of the parent link's URL, or null at the top. */
+    private static String parentOf(JsonNode item) {
+        for (JsonNode relation : item.path("relations")) {
+            String url = text(relation, "url");
+            if (PARENT_RELATION.equals(text(relation, "rel")) && url != null) {
+                String id = url.substring(url.lastIndexOf('/') + 1);
+                return id.chars().allMatch(Character::isDigit) && !id.isEmpty() ? id : null;
+            }
+        }
+        return null;
+    }
+
     /** Reads the project itself: proves the organization, the project and the token in one call. */
     @Override
     public void testConnection(DecryptedConfig config) {
@@ -139,10 +202,28 @@ public class AzureDevOpsIssueProvider extends HttpIssueProviderSupport implement
             throw new UpstreamServiceException("Azure DevOps does not support API version " + apiVersion(config)
                     + "; set the API version in the tracker settings (6.0 for Server 2020, 5.0 for Server 2019)");
         }
+        if (response.statusCode() == HTTP_BAD_REQUEST) {
+            String reason = errorMessage(response.body());
+            if (reason != null) {
+                // A rejected WIQL query (TM19) is only fixable with Azure's own words, e.g. TF51005.
+                throw new UpstreamServiceException("Azure DevOps rejected the request (HTTP 400): " + reason);
+            }
+        }
         super.rejectFailure(response, config);
     }
 
     // ---- helpers --------------------------------------------------------------------------------
+
+    /** The {@code message} of an Azure error body, on one line and bounded; null if there is none. */
+    private String errorMessage(String body) {
+        try {
+            String message = body == null ? null : text(objectMapper.readTree(body), "message");
+            return message == null || message.isBlank() ? null
+                    : truncate(message.replaceAll("\\s+", " ").strip(), MAX_ERROR_MESSAGE_LENGTH);
+        } catch (RuntimeException notJson) {
+            return null;
+        }
+    }
 
     private HttpRequest patch(DecryptedConfig config, String url, IssueDraft draft, String bodyField) {
         List<Map<String, Object>> operations = List.of(

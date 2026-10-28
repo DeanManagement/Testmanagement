@@ -159,6 +159,10 @@ app:
     # Labels are user-owned, and every change is audited, so this stays off unless asked for.
     auto-label: ${FLAKY_AUTO_LABEL:false}
     label: flaky
+  requirementsync:
+    # TM19: when to sync requirements from Azure DevOps for projects that ticked "scheduled", as a
+    # Spring cron expression (e.g. "0 0 * * * *" hourly). "-" (the default) turns it off.
+    cron: ${REQUIREMENT_SYNC_CRON:-}
   issuetracker:
     # AES key (base64, 16/24/32 bytes) for stored tracker API tokens. Unset means the
     # integration refuses to store a token rather than keeping it in plaintext (PRD-010).
