@@ -378,6 +378,7 @@ class McpEndpointApiTest {
                 .contains("delete_requirement")
                 .contains("delete_test_run")
                 .contains("delete_bug_report")
+                .contains("delete_exploratory_session")
                 .contains("reopen_test_run");
         List<String> deletesNotMarked = new ArrayList<>();
         for (JsonNode tool : MAPPER.readTree(tools.body()).path("result").path("tools")) {

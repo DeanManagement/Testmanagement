@@ -8,6 +8,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEnti
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.RequirementStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.SessionNoteType;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
@@ -469,6 +470,27 @@ final class McpDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record PipelineRunPage(List<PipelineRun> pipelineRuns, int page, int size, long totalElements,
                            boolean hasMore) {}
+
+    // --- exploratory sessions (PRD-034) -------------------------------------------------------
+
+    /** @param notes and bugs only on get_exploratory_session and the write tools, never on a list */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record ExploratorySession(UUID id, String key, String charter, int timeboxMinutes, TestRunStatus status,
+                              @Nullable UUID testPlanId, @Nullable String testPlanName,
+                              @Nullable String environment, @Nullable String testerName,
+                              @Nullable Instant startedAt, @Nullable Instant endedAt,
+                              @Nullable String summary, @Nullable List<SessionNote> notes,
+                              @Nullable List<SessionBug> bugs) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record SessionNote(UUID id, SessionNoteType type, String body, Instant occurredAt, boolean hasImage) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record SessionBug(UUID id, String title, String status) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record ExploratorySessionPage(List<ExploratorySession> sessions, int page, int size, long totalElements,
+                                  boolean hasMore) {}
 
     // --- external issues (PRD-010) ------------------------------------------------------------
 

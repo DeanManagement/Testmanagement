@@ -17,6 +17,8 @@ public interface ExploratorySessionRepository
 
     Optional<ExploratorySession> findByIdAndProjectId(UUID id, UUID projectId);
 
+    Optional<ExploratorySession> findByKeyAndProjectId(String key, UUID projectId);
+
     List<ExploratorySession> findByTestPlanIdOrderByCreatedAtAsc(UUID testPlanId);
 
     @Query("SELECT s FROM ExploratorySession s JOIN FETCH s.project WHERE s.tester.id = :testerId "

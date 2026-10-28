@@ -142,7 +142,8 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `get_test_case_version`, `list_shared_steps`, `get_shared_step`, `download_test_case_attachment`,
 `list_environments`, `get_project_dashboard`, `list_flaky_tests`, `get_release_readiness`,
 `get_test_suite_report`,
-`list_pipeline_workflows`, `list_pipeline_runs`, `get_pipeline_run`, `list_issue_links`.
+`list_pipeline_workflows`, `list_pipeline_runs`, `get_pipeline_run`, `list_issue_links`,
+`list_exploratory_sessions`, `get_exploratory_session`.
 
 **Write** (Tester only) — `create_test_case`, `update_test_case`, `create_test_cases_bulk`,
 `create_test_suite`, `create_test_plan`, `create_test_case_folder`,
@@ -157,7 +158,9 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `unlink_bug_report`, `update_comment`, `create_shared_step`, `update_shared_step`,
 `add_test_case_attachment`, `copy_test_case`, `insert_test_step`, `move_test_step`,
 `remove_test_step`, `add_test_cases_to_run`, `remove_test_cases_from_run`, `reorder_test_run_cases`,
-`link_test_cases`, `unlink_test_cases`, `assign_test_run_cases`.
+`link_test_cases`, `unlink_test_cases`, `assign_test_run_cases`, `create_exploratory_session`,
+`update_exploratory_session`, `start_exploratory_session`, `complete_exploratory_session`,
+`abort_exploratory_session`, `add_session_note`.
 
 **Project settings** (ADMIN keys only, like the settings pages) — `create_environment`,
 `update_environment` (rename, describe, archive / restore), `create_custom_field`,
@@ -167,7 +170,7 @@ VIEWER, TESTER or ADMIN; only system admins create keys.
 **Delete** (Tester only, like the UI) — `delete_test_case`, `delete_test_case_folder`,
 `delete_test_suite`, `delete_test_plan`, `delete_test_run`, `delete_requirement`,
 `delete_parameter_set`, `delete_shared_step`, `delete_test_case_attachment`, `delete_bug_report`,
-`delete_bug_report_attachment`, `delete_comment`. Each is marked `destructiveHint`, so a client can
+`delete_bug_report_attachment`, `delete_comment`, `delete_exploratory_session`. Each is marked `destructiveHint`, so a client can
 ask before calling it, and each applies the UI's rules: a test case with results is refused (naming
 the runs; deprecate it instead), a shared step still in use is refused, a deleted folder's cases move
 to the project root, and comments can only be changed or deleted by the key that wrote them.
@@ -208,6 +211,12 @@ environment the way CI uploads and the UI still do; adding environments stays wi
 update), and `get_test_case` returns it with `medianActualMs`. An agent that executes tests should
 pass `durationMs` to `record_test_result(s)`. `get_test_run` and `get_test_plan` include an
 `effort` object: estimated, remaining and actual minutes, and pending results without an estimate.
+
+**Exploratory sessions** — sessions are named by key (`PROJ-Session-3`) or UUID and follow the UI's
+life cycle: created `PLANNED`, then `start_exploratory_session`, then complete or abort.
+`add_session_note` works while the session runs and up to 24 hours after it completed, and can carry
+one screenshot as base64 (at most 2 MB, PNG / JPEG / GIF / WebP). Assigning a tester stays with
+humans.
 
 **Release readiness** — `get_release_readiness(planId)` answers "is release X ready?": GO, NO_GO or
 NO_CRITERIA, with each configured criterion's actual value, threshold and outcome. Thresholds are
@@ -280,7 +289,7 @@ holds.
 | Group | Tools |
 |---|---|
 | Authoring | test cases and their attachments, folders, suites, plans, requirements, parameter sets, shared steps, version history |
-| Execution | test runs, results, step results, comments, environments, native bug reports |
+| Execution | test runs, results, step results, comments, environments, native bug reports, exploratory sessions |
 | Reporting | dashboard, flaky tests, suite report, traceability matrix |
 | Pipelines | build-server workflows and pipeline runs |
 | Issue tracker | linking and filing issues in the external tracker |
