@@ -80,7 +80,11 @@ public class TestRun extends BaseEntity {
     @OrderBy("position ASC")
     private List<TestResult> results = new ArrayList<>();
 
-    @OneToOne(mappedBy = "testRun", fetch = FetchType.LAZY)
+    /*
+     * REMOVE so deleting the run deletes its report in the same flush. The FK cascades in the
+     * database too, but a report Hibernate had already loaded made the delete fail on flush.
+     */
+    @OneToOne(mappedBy = "testRun", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE)
     private AllureReport allureReport;
 
     /** PRD-035. Lazy; the global batch fetch size keeps list pages to one query per page. */

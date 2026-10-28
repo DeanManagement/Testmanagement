@@ -20,7 +20,8 @@ import java.util.zip.ZipOutputStream;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * A second upload to the same run failed with a 500 (TM38): the unique run column broke when the old
+ * A second upload to the same run failed with a 500 (TM38), and a run holding a report could not be
+ * deleted at all: the unique run column broke when the old
  * report was deleted and the new one inserted in one flush. Not {@code @Transactional}, because the
  * failure only showed at commit.
  */
@@ -36,13 +37,16 @@ class AllureReportReplaceTest {
     private ProjectRepository projectRepository;
     @Autowired
     private TestRunRepository testRunRepository;
+    @Autowired
+    private TestRunService testRunService;
 
-    @Test
-    void aSecondUploadReplacesTheRunsReport() throws Exception {
+    private UUID projectId;
+
+    private UUID runWithReport() throws Exception {
         Project project = new Project();
-        project.setName("Allure ersetzt");
+        project.setName("Allure");
         project.setKey("ALR" + Integer.toHexString(new java.util.Random().nextInt(0xFFFF)));
-        project = projectRepository.save(project);
+        projectId = projectRepository.save(project).getId();
         TestRun run = new TestRun();
         run.setProject(project);
         run.setKey(project.getKey() + "-R1");
@@ -50,11 +54,27 @@ class AllureReportReplaceTest {
         run.setStatus(TestRunStatus.IN_PROGRESS);
         UUID runId = testRunRepository.save(run).getId();
         allureReportService.upload(runId, "first.zip", zipWithIndex("first"));
+        return runId;
+    }
+
+    @Test
+    void aSecondUploadReplacesTheRunsReport() throws Exception {
+        UUID runId = runWithReport();
 
         allureReportService.upload(runId, "second.zip", zipWithIndex("second"));
 
         assertThat(allureReportRepository.findByTestRunId(runId).orElseThrow().getFileName())
                 .isEqualTo("second.zip");
+    }
+
+    @Test
+    void aRunWithAReportCanBeDeleted() throws Exception {
+        UUID runId = runWithReport();
+
+        testRunService.delete(projectId, runId, null);
+
+        assertThat(testRunRepository.findById(runId)).isEmpty();
+        assertThat(allureReportRepository.findByTestRunId(runId)).isEmpty();
     }
 
     private static byte[] zipWithIndex(String body) throws Exception {
