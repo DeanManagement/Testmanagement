@@ -37,7 +37,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun run = runOf(login);
 
         McpDtos.RecordedStepResult recorded = stepRecordingTools.recordStepResult(run.key(), 2,
-                TestResultStatus.FAILED, login.id(), null, "Button does nothing");
+                TestResultStatus.FAILED, login.id(), null, "Button does nothing", null);
 
         assertThat(recorded.runStatus()).isEqualTo(TestRunStatus.IN_PROGRESS);
         assertThat(recorded.resultStatus()).isEqualTo(TestResultStatus.FAILED);
@@ -54,9 +54,9 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun run = runOf(login);
 
         McpDtos.RecordedStepResult afterFirst = stepRecordingTools.recordStepResult(run.key(), 1,
-                TestResultStatus.PASSED, login.id(), null, null);
+                TestResultStatus.PASSED, login.id(), null, null, null);
         McpDtos.RecordedStepResult afterSecond = stepRecordingTools.recordStepResult(run.key(), 2,
-                TestResultStatus.PASSED, login.id(), null, null);
+                TestResultStatus.PASSED, login.id(), null, null, null);
 
         assertThat(afterFirst.resultStatus()).isEqualTo(TestResultStatus.PENDING);
         assertThat(afterSecond.resultStatus()).isEqualTo(TestResultStatus.PASSED);
@@ -68,10 +68,10 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase login = createCase("Login", "Open page");
         McpDtos.CreatedTestRun run = runOf(login);
         stepRecordingTools.recordStepResult(run.key(), 1, TestResultStatus.FAILED, login.id(), null,
-                "HTTP 500");
+                "HTTP 500", null);
 
         McpDtos.RecordedStepResult again = stepRecordingTools.recordStepResult(run.key(), 1,
-                TestResultStatus.FAILED, login.id(), null, null);
+                TestResultStatus.FAILED, login.id(), null, null, null);
 
         assertThat(again.steps().getFirst().actualResult()).isEqualTo("HTTP 500");
     }
@@ -83,7 +83,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun run = runOf(login);
 
         assertThatThrownBy(() -> stepRecordingTools.recordStepResult(run.key(), 3,
-                TestResultStatus.PASSED, login.id(), null, null))
+                TestResultStatus.PASSED, login.id(), null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("between 1 and 2");
     }
@@ -95,7 +95,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun run = runOf(stepless);
 
         assertThatThrownBy(() -> stepRecordingTools.recordStepResult(run.key(), 1,
-                TestResultStatus.PASSED, stepless.id(), null, null))
+                TestResultStatus.PASSED, stepless.id(), null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("record_test_result");
     }
@@ -108,7 +108,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         testRunWriteTools.completeTestRun(run.key(), null, null);
 
         assertThatThrownBy(() -> stepRecordingTools.recordStepResult(run.key(), 1,
-                TestResultStatus.PASSED, login.id(), null, null))
+                TestResultStatus.PASSED, login.id(), null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("final");
     }
@@ -118,7 +118,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.VIEWER);
 
         assertThatThrownBy(() -> stepRecordingTools.recordStepResult("any", 1,
-                TestResultStatus.PASSED, UUID.randomUUID(), null, null))
+                TestResultStatus.PASSED, UUID.randomUUID(), null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("TESTER");
     }
@@ -181,7 +181,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase second = createCase("Second");
         McpDtos.CreatedTestRun source = runOf(first, second);
         resultRecordingTools.recordTestResult(source.key(), TestResultStatus.FAILED, first.id(), null,
-                "broken", null, null, null);
+                "broken", null, null, null, null);
         testRunWriteTools.completeTestRun(source.key(), null, null);
 
         McpDtos.CreatedTestRun clone = maintenanceTools.cloneTestRun(source.key(), "Re-test", null);

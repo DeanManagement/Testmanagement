@@ -182,8 +182,8 @@
                     {{ 'bulk.setStatus' | translate }}
                   </button>
                   <mat-menu #bulkStatusMenu="matMenu">
-                    @for (s of resultStatuses; track s) {
-                      <button mat-menu-item (click)="bulkApply(s)">{{ 'resultStatus.' + s | translate }}</button>
+                    @for (s of statusOptions; track optionKey(s)) {
+                      <button mat-menu-item (click)="bulkApply(s)">{{ statusLabelKey(s.category, s.name) | translate }}</button>
                     }
                   </mat-menu>
                   <button mat-stroked-button [matMenuTriggerFor]="bulkAssignMenu" data-test-id="bulk-assign">
@@ -217,7 +217,7 @@
                       </span>
                     }
                   </span>
-                  <span class="badge badge--{{ result.status | lowercase }} badge--small">{{ 'resultStatus.' + result.status | translate }}</span>
+                  <span class="badge badge--{{ result.status | lowercase }} badge--small">@if (statusColor(result.customStatusId); as c) {<span class="status-dot" [style.background]="c"></span>}{{ statusLabelKey(result.status, result.customStatusName) | translate }}</span>
                 </div>
               }
             </div>
@@ -245,9 +245,9 @@
                     }
                   </mat-form-field>
                   <mat-form-field appearance="outline" class="status-select">
-                    <mat-select [value]="result.status" (selectionChange)="chooseResultStatus(result, $event.value)" [attr.data-test-id]="'execution-result-status-' + result.id">
-                      @for (s of resultStatuses; track s) {
-                        <mat-option [value]="s">{{ 'resultStatus.' + s | translate }}</mat-option>
+                    <mat-select [value]="selectedStatusKey(result.status, result.customStatusId)" (selectionChange)="chooseResultStatus(result, $event.value)" [attr.data-test-id]="'execution-result-status-' + result.id">
+                      @for (s of statusOptions; track optionKey(s)) {
+                        <mat-option [value]="optionKey(s)">{{ statusLabelKey(s.category, s.name) | translate }}</mat-option>
                       }
                     </mat-select>
                   </mat-form-field>
@@ -282,7 +282,7 @@
                     <div class="step-row" [class.step-row--shared]="!!step.sharedStepTitle" [attr.data-test-id]="'step-result-row-' + step.id">
                       <div class="step-header">
                         <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
-                        <span class="badge badge--{{ step.status | lowercase }} badge--small">{{ 'resultStatus.' + step.status | translate }}</span>
+                        <span class="badge badge--{{ step.status | lowercase }} badge--small">@if (statusColor(step.customStatusId); as c) {<span class="status-dot" [style.background]="c"></span>}{{ statusLabelKey(step.status, step.customStatusName) | translate }}</span>
                         @if (bugReportsEnabled && isStepFailure(step.status)) {
                           <span class="step-defect-actions">
                             <button mat-icon-button (click)="reportBug(result, run, step)" [matTooltip]="'bugReport.reportBug' | translate"
@@ -305,9 +305,9 @@
                       <div class="step-inputs">
                         <mat-form-field appearance="outline" class="step-status-select">
                           <mat-label>{{ 'testCase.form.status' | translate }}</mat-label>
-                          <mat-select [value]="step.status" (selectionChange)="onStepStatusChange(result.id, step, $event.value)">
-                            @for (s of resultStatuses; track s) {
-                              <mat-option [value]="s">{{ 'resultStatus.' + s | translate }}</mat-option>
+                          <mat-select [value]="selectedStatusKey(step.status, step.customStatusId)" (selectionChange)="chooseStepStatus(result.id, step, $event.value)">
+                            @for (s of statusOptions; track optionKey(s)) {
+                              <mat-option [value]="optionKey(s)">{{ statusLabelKey(s.category, s.name) | translate }}</mat-option>
                             }
                           </mat-select>
                         </mat-form-field>
@@ -488,7 +488,7 @@
                         <mat-icon class="meta-icon">person</mat-icon>{{ result.assigneeName }}
                       </span>
                     }
-                    <span class="badge badge--{{ result.status | lowercase }}" data-test-id="test-result-status-badge">{{ 'resultStatus.' + result.status | translate }}</span>
+                    <span class="badge badge--{{ result.status | lowercase }}" data-test-id="test-result-status-badge">@if (statusColor(result.customStatusId); as c) {<span class="status-dot" [style.background]="c"></span>}{{ statusLabelKey(result.status, result.customStatusName) | translate }}</span>
                   </mat-panel-description>
                 </mat-expansion-panel-header>
 
@@ -519,7 +519,7 @@
                       <div class="step-row" [class.step-row--shared]="!!step.sharedStepTitle" [attr.data-test-id]="'step-result-row-' + step.id">
                         <div class="step-header">
                           <span class="step-number">{{ 'stepResult.step' | translate }} {{ i + 1 }}</span>
-                          <span class="badge badge--{{ step.status | lowercase }} badge--small">{{ 'resultStatus.' + step.status | translate }}</span>
+                          <span class="badge badge--{{ step.status | lowercase }} badge--small">@if (statusColor(step.customStatusId); as c) {<span class="status-dot" [style.background]="c"></span>}{{ statusLabelKey(step.status, step.customStatusName) | translate }}</span>
                         </div>
                         <app-step-spec-card
                           [action]="step.action"

@@ -1716,5 +1716,16 @@
     "clear": "Clear selection",
     "selectedHidden": "Selected, hidden by the filters",
     "truncated": "Showing {{shown}} of {{total}}. Narrow the filters to see the rest."
+  },
+  "resultStatusSettings": {
+    "title": "Result statuses",
+    "description": "The statuses testers pick when recording a result. Each counts as one fixed outcome (passed, failed, blocked, skipped or pending), so pass rate and release gates are unaffected.",
+    "manage": "Manage statuses",
+    "name": "Name",
+    "category": "Counts as",
+    "color": "Colour",
+    "add": "Add status",
+    "reorder": "Drag to reorder",
+    "activeHint": "Archived statuses are kept on past results but can no longer be picked"
   }
 }

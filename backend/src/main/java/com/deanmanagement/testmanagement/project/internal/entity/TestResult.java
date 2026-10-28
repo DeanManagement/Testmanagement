@@ -36,6 +36,15 @@ public class TestResult extends BaseEntity {
     private TestResultStatus status;
 
     /**
+     * The project's name for the outcome (TM24), e.g. "Not applicable"; null means the category's
+     * default. Always of the same category as {@link #status}, which is what metrics read.
+     */
+    @Setter(AccessLevel.NONE)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "custom_status_id")
+    private ProjectResultStatus customStatus;
+
+    /**
      * When the result left PENDING (PRD-036); null while pending, and for results recorded before
      * this existed. Kept in step by {@link #setStatus}, never by callers.
      */
@@ -117,6 +126,16 @@ public class TestResult extends BaseEntity {
             this.executedAt = Instant.now();
             this.executedBy = executor;
         }
+        // A custom status names one category; recording another outcome drops it (TM24).
+        if (customStatus != null && customStatus.getCategory() != status) {
+            this.customStatus = null;
+        }
         this.status = status;
+    }
+
+    /** TM24: the status a tester picked; the category follows from it, through {@link #setStatus}. */
+    public void setCustomStatus(ProjectResultStatus customStatus, UUID executor) {
+        setStatus(customStatus.getCategory(), executor);
+        this.customStatus = customStatus;
     }
 }

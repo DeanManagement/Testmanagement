@@ -53,7 +53,7 @@ class McpDeleteToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase login = createCase("Login");
         McpDtos.CreatedTestRun run = runOf(login);
         resultRecordingTools.recordTestResult(run.key(), TestResultStatus.PASSED, login.id(), null,
-                null, null, null, null);
+                null, null, null, null, null);
 
         assertThatThrownBy(() -> testCaseTools.deleteTestCase(login.key()))
                 .isInstanceOf(McpToolException.class)
@@ -155,7 +155,7 @@ class McpDeleteToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase login = createCase("Login");
         McpDtos.CreatedTestRun run = runOf(login);
         resultRecordingTools.recordTestResult(run.key(), TestResultStatus.FAILED, login.id(), null,
-                null, null, null, null);
+                null, null, null, null, null);
 
         runMaintenanceTools.deleteTestRun(run.key());
 

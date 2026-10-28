@@ -40,6 +40,9 @@ public record TestResultResponse(
         int position,
         /* TM23: who should execute it, else the run's executor; both null when neither is set. */
         UUID assigneeId,
-        String assigneeName
+        String assigneeName,
+        /* TM24: the project status it was recorded as; null means the category's default. */
+        UUID customStatusId,
+        String customStatusName
 ) {
 }

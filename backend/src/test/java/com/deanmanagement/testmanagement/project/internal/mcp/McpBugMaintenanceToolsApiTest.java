@@ -71,7 +71,7 @@ class McpBugMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase pay = createCase("Pay");
         McpDtos.CreatedTestRun run = runOf(pay);
         UUID resultId = resultRecordingTools.recordTestResult(run.key(), TestResultStatus.FAILED, pay.id(),
-                null, null, null, null, null).resultId();
+                null, null, null, null, null, null).resultId();
         McpDtos.BugDetail found = bugReportTools.createBugReport("Pay fails", Priority.HIGH, null, null,
                 null, null, null, resultId, null, null, null);
         bugReportTools.linkBugReport(bug.key(), resultId, null);

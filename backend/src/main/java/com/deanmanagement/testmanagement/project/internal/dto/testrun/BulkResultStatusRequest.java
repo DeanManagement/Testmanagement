@@ -11,6 +11,11 @@ import java.util.UUID;
 public record BulkResultStatusRequest(
         @NotEmpty Set<UUID> resultIds,
         @NotNull TestResultStatus status,
-        boolean cascadeSteps
+        boolean cascadeSteps,
+        /* TM24: a project result status; when set, its category replaces status. */
+        UUID customStatusId
 ) {
+    public BulkResultStatusRequest(Set<UUID> resultIds, TestResultStatus status, boolean cascadeSteps) {
+        this(resultIds, status, cascadeSteps, null);
+    }
 }

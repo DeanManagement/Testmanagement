@@ -23,7 +23,12 @@ import { Observable, combineLatest, interval, of } from 'rxjs';
 import { filter, switchMap, take } from 'rxjs/operators';
 import { TestRunActions } from '../../../store/test-run/test-run.actions';
 import { selectTestRunById } from '../../../store/test-run/test-run.selectors';
-import { TestRun, TestResult, StepResult, TestResultStatus } from '../../../shared/models/test-run.model';
+import {
+  StepResult, TestResult, TestResultStatus, TestRun, UpdateStepResultRequest, UpdateTestResultRequest,
+} from '../../../shared/models/test-run.model';
+import { ProjectResultStatus } from '../../../shared/models/result-status.model';
+import { ResultStatusApiService } from '../../../core/services/result-status-api.service';
+import { optionKey, selectedKey, statusLabelKey, statusOptions } from '../../../shared/utils/result-status-options';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
@@ -124,6 +129,7 @@ export class TestRunDetailComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly issueTrackerApi = inject(IssueTrackerApiService);
   private readonly memberApi = inject(ProjectMemberApiService);
+  private readonly resultStatusApi = inject(ResultStatusApiService);
   /** Per-step autosave of typed actual results (TES-BUG-18); pending text is saved on leaving. */
   private readonly actualAutosave = new StepActualAutosave((resultId, stepId, actualResult) =>
     this.saveStepActual(resultId, stepId, actualResult));
@@ -147,7 +153,10 @@ export class TestRunDetailComponent implements OnInit {
   runId = '';
   runKey = '';
   testRun$: Observable<TestRun | undefined> = of(undefined);
-  resultStatuses: TestResultStatus[] = ['PENDING', 'PASSED', 'FAILED', 'BLOCKED', 'SKIPPED'];
+  /** TM24: the project's result statuses a tester picks from; each names one category. */
+  statusOptions: ProjectResultStatus[] = statusOptions([]);
+  readonly statusLabelKey = statusLabelKey;
+  readonly optionKey = optionKey;
 
   activeResultId: string | null = null;
 
@@ -213,6 +222,16 @@ export class TestRunDetailComponent implements OnInit {
           this.cdr.detectChanges();
         });
       this.loadIssueTrackerContext();
+      this.resultStatusApi.getActive(this.projectId)
+        .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (statuses) => {
+            this.statusOptions = statusOptions(statuses);
+            this.cdr.detectChanges();
+          },
+          // Without them the picker offers the plain categories.
+          error: () => undefined,
+        });
       this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: this.runId }));
       this.testRun$ = this.store.select(selectTestRunById(this.runId));
       this.testRun$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(run => {
@@ -375,10 +394,30 @@ export class TestRunDetailComponent implements OnInit {
   cascadeOffer: { resultId: string; status: TestResultStatus; count: number } | null = null;
 
   /** A status picked by the tester; a pass or skip then offers to cascade to pending steps. */
-  chooseResultStatus(result: TestResult, status: TestResultStatus): void {
-    this.onResultStatusChange(result.id, status);
-    const count = cascadableSteps(result, status);
-    this.cascadeOffer = count > 0 ? { resultId: result.id, status, count } : null;
+  chooseResultStatus(result: TestResult, key: string): void {
+    const option = this.optionFor(key);
+    this.onResultStatusChange(result.id, option.category, option.id || undefined);
+    const count = cascadableSteps(result, option.category);
+    this.cascadeOffer = count > 0 ? { resultId: result.id, status: option.category, count } : null;
+  }
+
+  chooseStepStatus(resultId: string, step: StepResult, key: string): void {
+    const option = this.optionFor(key);
+    this.onStepStatusChange(resultId, step, option.category, option.id || undefined);
+  }
+
+  /** TM24: the picker value a recorded outcome shows as. */
+  selectedStatusKey(status: TestResultStatus, customStatusId?: string | null): string {
+    return selectedKey(this.statusOptions, status, customStatusId);
+  }
+
+  /** TM24: the colour the project gave the recorded status, if any. */
+  statusColor(customStatusId?: string | null): string | null {
+    return this.statusOptions.find((o) => o.id && o.id === customStatusId)?.color ?? null;
+  }
+
+  private optionFor(key: string): ProjectResultStatus {
+    return this.statusOptions.find((o) => optionKey(o) === key) ?? statusOptions([]).find((o) => o.category === key)!;
   }
 
   acceptCascade(): void {
@@ -393,13 +432,14 @@ export class TestRunDetailComponent implements OnInit {
     }));
   }
 
-  onResultStatusChange(resultId: string, status: TestResultStatus): void {
+  onResultStatusChange(resultId: string, status: TestResultStatus, customStatusId?: string): void {
     const result = this.currentRun?.results?.find(r => r.id === resultId);
     // Only the result open in the panel is timed; bulk and list changes record no duration rather than a fake one.
     const durationMs = status === 'PENDING' || resultId !== this.activeResultId || !result
       ? undefined
       : this.timer.durationFor(resultId, result.durationMs, this.typedDurationMs(result));
-    this.confirmLongDuration(durationMs, (confirmed) => this.dispatchResultUpdate(resultId, status, confirmed));
+    this.confirmLongDuration(durationMs,
+      (confirmed) => this.dispatchResultUpdate(resultId, status, confirmed, customStatusId));
   }
 
   /** Saves an edited duration on a result that already has a status (before that, it goes with the status). */
@@ -450,14 +490,17 @@ export class TestRunDetailComponent implements OnInit {
       .subscribe((confirmed) => proceed(confirmed ? durationMs : undefined));
   }
 
-  private dispatchResultUpdate(resultId: string, status: TestResultStatus, durationMs: number | undefined): void {
+  private dispatchResultUpdate(resultId: string, status: TestResultStatus, durationMs: number | undefined,
+                               customStatusId?: string): void {
+    const request: UpdateTestResultRequest = { status };
+    if (durationMs !== undefined) {
+      request.durationMs = durationMs;
+    }
+    if (customStatusId) {
+      request.customStatusId = customStatusId;
+    }
     this.store.dispatch(
-      TestRunActions.updateTestResult({
-        projectId: this.projectId,
-        runId: this.runId,
-        resultId,
-        request: durationMs === undefined ? { status } : { status, durationMs },
-      })
+      TestRunActions.updateTestResult({ projectId: this.projectId, runId: this.runId, resultId, request })
     );
     if (resultId === this.activeResultId && durationMs !== undefined) {
       this.durationInputMinutes = millisToMinutes(durationMs);
@@ -481,12 +524,13 @@ export class TestRunDetailComponent implements OnInit {
     }
   }
 
-  bulkApply(status: TestResultStatus): void {
+  bulkApply(option: ProjectResultStatus): void {
     if (this.selectedResultIds.size === 0) {
       return;
     }
     this.testRunApi
-      .bulkResultStatus(this.projectId, this.runId, [...this.selectedResultIds], status, this.bulkCascade)
+      .bulkResultStatus(this.projectId, this.runId, [...this.selectedResultIds], option.category, this.bulkCascade,
+        option.id || undefined)
       .pipe(take(1), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.selectedResultIds.clear();
@@ -509,17 +553,15 @@ export class TestRunDetailComponent implements OnInit {
       });
   }
 
-  onStepStatusChange(resultId: string, step: StepResult, status: TestResultStatus): void {
+  onStepStatusChange(resultId: string, step: StepResult, status: TestResultStatus, customStatusId?: string): void {
     // Text typed but not saved yet travels with the status; the stored value would overwrite it.
     const actualResult = this.actualAutosave.take(step.id) ?? step.actualResult;
+    const request: UpdateStepResultRequest = { status, actualResult: actualResult || undefined };
+    if (customStatusId) {
+      request.customStatusId = customStatusId;
+    }
     this.store.dispatch(
-      TestRunActions.updateStepResult({
-        projectId: this.projectId,
-        runId: this.runId,
-        resultId,
-        stepResultId: step.id,
-        request: { status, actualResult: actualResult || undefined },
-      })
+      TestRunActions.updateStepResult({ projectId: this.projectId, runId: this.runId, resultId, stepResultId: step.id, request })
     );
   }
 

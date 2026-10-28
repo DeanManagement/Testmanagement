@@ -559,3 +559,12 @@ a {
   font-weight: 400;
   color: var(--tm-text-secondary);
 }
+
+// TM24: the colour a project gave a result status, before its name in a badge.
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+  flex: none;
+}

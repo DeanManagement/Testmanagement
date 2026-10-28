@@ -5,6 +5,8 @@ import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.UpdateTestRunRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectResultStatus;
+import com.deanmanagement.testmanagement.project.internal.service.ProjectResultStatusService;
 import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -24,6 +26,26 @@ import java.util.stream.Collectors;
 class McpRunSupport {
 
     private final TestRunService testRunService;
+    private final ProjectResultStatusService resultStatusService;
+
+    /**
+     * TM24: the project status an agent named, or null when it named none. The category stays the
+     * required {@code status}, so a name that belongs to another category is refused rather than
+     * silently changing what the agent said happened.
+     */
+    UUID customStatusId(UUID projectId, String name, TestResultStatus status) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        ProjectResultStatus custom = resultStatusService.findActiveByName(projectId, name)
+                .orElseThrow(() -> new McpToolException("Unknown customStatus \"" + name.trim()
+                        + "\". This project's statuses are: " + resultStatusService.describeActive(projectId) + "."));
+        if (custom.getCategory() != status) {
+            throw new McpToolException("\"" + custom.getName() + "\" is a " + custom.getCategory()
+                    + " status, but status is " + status + ". Pass status " + custom.getCategory() + " with it.");
+        }
+        return custom.getId();
+    }
 
     /** Results of a closed run are the signed-off record; reopening is a human call (PRD-027 §2). */
     static void requireOpen(TestRunResponse run) {

@@ -28,6 +28,12 @@ public class StepResult extends BaseEntity {
     @Column(nullable = false, length = 20)
     private TestResultStatus status;
 
+    /** TM24: the project's name for the outcome; null means the category's default. */
+    @Setter(AccessLevel.NONE)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "custom_status_id")
+    private ProjectResultStatus customStatus;
+
     @Column(columnDefinition = "TEXT")
     private String actualResult;
 
@@ -72,5 +78,19 @@ public class StepResult extends BaseEntity {
         this.stepAction = testStep == null ? null : testStep.getAction();
         this.stepExpectedResult = testStep == null ? null : testStep.getExpectedResult();
         this.stepTestData = testStep == null ? null : testStep.getTestData();
+    }
+
+    /** Recording another category drops a custom status of a different one (TM24), as on TestResult. */
+    public void setStatus(TestResultStatus status) {
+        if (customStatus != null && customStatus.getCategory() != status) {
+            this.customStatus = null;
+        }
+        this.status = status;
+    }
+
+    /** TM24: the status a tester picked; the category follows from it. */
+    public void setCustomStatus(ProjectResultStatus customStatus) {
+        setStatus(customStatus.getCategory());
+        this.customStatus = customStatus;
     }
 }

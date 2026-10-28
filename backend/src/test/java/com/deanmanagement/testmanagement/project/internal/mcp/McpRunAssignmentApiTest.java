@@ -84,7 +84,7 @@ class McpRunAssignmentApiTest extends McpToolApiTestSupport {
                 .extracting(MyQueueResponse.AssignedResultItem::id).containsExactly(first.id());
 
         resultRecordingTools.recordTestResult(run.key(), TestResultStatus.PASSED, null, first.id(),
-                null, null, null, null);
+                null, null, null, null, null);
 
         assertThat(myQueueService.buildFor(tess.getId()).assignedResults()).isEmpty();
     }

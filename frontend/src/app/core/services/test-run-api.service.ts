@@ -126,11 +126,12 @@ export class TestRunApiService {
     return this.http.put<StepResult>(`${this.baseUrl(projectId)}/${runId}/results/${resultId}/steps/${stepResultId}`, request);
   }
 
-  bulkResultStatus(projectId: string, runId: string, resultIds: string[], status: string, cascadeSteps: boolean):
-    Observable<{ affected: number; message: string }> {
+  /** TM24: with customStatusId, its category replaces status on the server. */
+  bulkResultStatus(projectId: string, runId: string, resultIds: string[], status: string, cascadeSteps: boolean,
+                   customStatusId?: string): Observable<{ affected: number; message: string }> {
     return this.http.post<{ affected: number; message: string }>(
       `${this.baseUrl(projectId)}/${runId}/results/bulk-status`,
-      { resultIds, status, cascadeSteps });
+      { resultIds, status, cascadeSteps, customStatusId });
   }
 
   uploadScreenshot(stepResultId: string, file: File): Observable<{ id: string }> {

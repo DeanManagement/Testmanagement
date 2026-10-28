@@ -50,6 +50,9 @@ public class TestResultRecordingTools {
                     reads later, so be specific.
                     Recording the first result on a PLANNED run starts it. When you are done, call
                     complete_test_run.
+                    customStatus optionally names one of the project's own statuses, e.g.
+                    "Not applicable"; it must belong to the category you pass as status. Leave it
+                    out unless a human asked for it.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
@@ -67,7 +70,9 @@ public class TestResultRecordingTools {
             @McpToolParam(description = "How long the execution took, in milliseconds", required = false)
             Long durationMs,
             @McpToolParam(description = "With PASSED or SKIPPED: also set the steps still PENDING; steps "
-                    + "already recorded keep their outcome", required = false) Boolean cascadeSteps) {
+                    + "already recorded keep their outcome", required = false) Boolean cascadeSteps,
+            @McpToolParam(description = "Name of a project status in the same category, e.g. "
+                    + "\"Not applicable\" for SKIPPED", required = false) String customStatus) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
@@ -86,6 +91,7 @@ public class TestResultRecordingTools {
         UUID runId = McpRunReferences.resolve(testRunRepository, caller.projectId(), runIdOrKey);
         TestRunResponse run = testRunService.findById(caller.projectId(), runId);
         McpRunSupport.requireOpen(run);
+        UUID customStatusId = runSupport.customStatusId(caller.projectId(), customStatus, status);
 
         TestResultResponse target = McpRunSupport.resolveResult(run, resultId, testCaseId);
 
@@ -100,7 +106,8 @@ public class TestResultRecordingTools {
         if (target != null) {
             // Absent comment/defectLink leave the result's own alone (updateResult treats null as
             // unchanged), so a retried record never erases evidence already on the result.
-            var update = new UpdateTestResultRequest(status, comment, defectLink, durationMs, cascadeSteps);
+            var update = new UpdateTestResultRequest(status, comment, defectLink, durationMs, cascadeSteps,
+                    customStatusId);
             validator.validate(update);
             recordedId = testRunService.updateResult(caller.projectId(), runId, target.id(), update, caller.userId())
                     .id();
@@ -113,6 +120,10 @@ public class TestResultRecordingTools {
             target = testRunService.addResult(caller.projectId(), runId, create, caller.userId());
             recordedId = target.id();
             added = true;
+            if (customStatusId != null) {
+                testRunService.updateResult(caller.projectId(), runId, recordedId,
+                        new UpdateTestResultRequest(status, null, null, null, null, customStatusId), caller.userId());
+            }
         }
 
         TestResultResponse recorded = target;

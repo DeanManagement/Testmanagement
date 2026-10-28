@@ -22,12 +22,15 @@ public record StepResultResponse(
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,
-        UUID updatedBy
+        UUID updatedBy,
+        /* TM24: the project status it was recorded as; null means the category's default. */
+        UUID customStatusId,
+        String customStatusName
 ) {
     public StepResultResponse(UUID id, UUID testStepId, String action, String expectedResult, String testData,
                               int orderIndex, TestResultStatus status, String actualResult, UUID screenshotId,
                               UUID stepImageId, Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
         this(id, testStepId, action, expectedResult, testData, orderIndex, status, actualResult, screenshotId,
-                stepImageId, null, createdAt, updatedAt, createdBy, updatedBy);
+                stepImageId, null, createdAt, updatedAt, createdBy, updatedBy, null, null);
     }
 }

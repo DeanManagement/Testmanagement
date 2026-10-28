@@ -271,7 +271,9 @@ final class McpDtos {
                       /* TM21: 1-based place in the run's execution order. */
                       int position,
                       /* TM23: who should execute it; the run's executor unless one was assigned. */
-                      @Nullable String assignee) {}
+                      @Nullable String assignee,
+                      /* TM24: the project status it was recorded as; absent means the category's default. */
+                      @Nullable String customStatus) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record TestRunDetail(UUID id, String key, String name, @Nullable String environment,
@@ -323,7 +325,9 @@ final class McpDtos {
     /** @param stepNumber 1-based position within the result, which is how the agent addresses it */
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record StepOutcome(int stepNumber, String action, TestResultStatus status,
-                       @Nullable String actualResult) {}
+                       @Nullable String actualResult,
+                       /* TM24: the project status it was recorded as, when one was named. */
+                       @Nullable String customStatus) {}
 
     /**
      * @param resultStatus the parent result's status <em>after</em> the call — it is derived from

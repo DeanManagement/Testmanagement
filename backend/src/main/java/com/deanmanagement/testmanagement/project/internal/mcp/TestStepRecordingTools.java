@@ -51,6 +51,8 @@ public class TestStepRecordingTools {
                     lists every step of the result so you can see what is left.
                     Identify the result by testCaseId, or by resultId when the case is
                     parameterized. Recording the first step on a PLANNED run starts it.
+                    customStatus optionally names one of the project's own statuses, e.g.
+                    "Not applicable"; it must belong to the category you pass as status.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
@@ -66,7 +68,9 @@ public class TestStepRecordingTools {
             @McpToolParam(description = "Result UUID from get_test_run; use when testCaseId is "
                     + "ambiguous", required = false) UUID resultId,
             @McpToolParam(description = "What you observed at this step", required = false)
-            String actualResult) {
+            String actualResult,
+            @McpToolParam(description = "Name of a project status in the same category, e.g. "
+                    + "\"Not applicable\" for SKIPPED", required = false) String customStatus) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
@@ -81,6 +85,7 @@ public class TestStepRecordingTools {
         UUID runId = McpRunReferences.resolve(testRunRepository, caller.projectId(), runIdOrKey);
         TestRunResponse run = testRunService.findById(caller.projectId(), runId);
         McpRunSupport.requireOpen(run);
+        UUID customStatusId = runSupport.customStatusId(caller.projectId(), customStatus, status);
 
         TestResultResponse result = McpRunSupport.resolveResult(run, resultId, testCaseId);
         if (result == null) {
@@ -93,7 +98,7 @@ public class TestStepRecordingTools {
         // Absent actualResult means "leave alone", not "clear" — a re-record must not erase the
         // evidence, for the reason record_test_result gives about its comment.
         var update = new UpdateStepResultRequest(status,
-                actualResult == null ? step.actualResult() : actualResult);
+                actualResult == null ? step.actualResult() : actualResult, customStatusId);
         validator.validate(update);
         testRunService.updateStepResult(caller.projectId(), runId, result.id(), step.id(), update, caller.userId());
 
@@ -103,7 +108,8 @@ public class TestStepRecordingTools {
         List<McpDtos.StepOutcome> steps = new ArrayList<>(ordered.size());
         for (int index = 0; index < ordered.size(); index++) {
             StepResultResponse s = ordered.get(index);
-            steps.add(new McpDtos.StepOutcome(index + 1, s.action(), s.status(), s.actualResult()));
+            steps.add(new McpDtos.StepOutcome(index + 1, s.action(), s.status(), s.actualResult(),
+                    s.customStatusName()));
         }
         return new McpDtos.RecordedStepResult(recorded.id(), recorded.testCaseId(),
                 recorded.testCaseTitle(), recorded.status(), runStatus, steps);

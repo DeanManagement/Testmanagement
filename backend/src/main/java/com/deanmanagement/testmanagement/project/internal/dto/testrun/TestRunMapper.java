@@ -54,6 +54,8 @@ public abstract class TestRunMapper {
     @Mapping(target = "estimateMinutes", source = "testCase.estimateMinutes")
     @Mapping(target = "executedByName", expression = "java(executorNames.nameOf(testResult.getExecutedBy()))")
     @Mapping(target = "assigneeId", expression = "java(assigneeOf(testResult))")
+    @Mapping(target = "customStatusId", source = "testResult.customStatus.id")
+    @Mapping(target = "customStatusName", source = "testResult.customStatus.name")
     @Mapping(target = "assigneeName", expression = "java(executorNames.nameOf(assigneeOf(testResult)))")
     protected abstract TestResultResponse toResultResponse(TestResult testResult, @Context ExecutorNames executorNames);
 
@@ -99,6 +101,8 @@ public abstract class TestRunMapper {
     @Mapping(target = "orderIndex", expression = "java(orderIndexOf(stepResult))")
     @Mapping(target = "sharedStepTitle", source = "testStep.sharedStep.title")
     @Mapping(target = "screenshotId", source = "screenshot.id")
+    @Mapping(target = "customStatusId", source = "customStatus.id")
+    @Mapping(target = "customStatusName", source = "customStatus.name")
     @Mapping(target = "stepImageId", expression = "java(stepResult.getTestStep() != null && stepResult.getTestStep().getImage() != null ? stepResult.getTestStep().getImage().getId() : null)")
     public abstract StepResultResponse toStepResultResponse(StepResult stepResult);
 

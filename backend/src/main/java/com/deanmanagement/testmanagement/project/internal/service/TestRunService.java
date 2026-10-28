@@ -23,6 +23,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.ProjectEnvironm
 import com.deanmanagement.testmanagement.project.internal.entity.StepResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseParameterSet;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
@@ -88,6 +89,7 @@ public class TestRunService {
     private final ProjectEnvironmentService environmentService;
     private final TestCaseReviewService reviewService;
     private final CustomFieldValueWriter customFieldWriter;
+    private final ProjectResultStatusService resultStatusService;
 
     private static final int MAX_RUN_NAME_LENGTH = 255;
 
@@ -564,17 +566,24 @@ public class TestRunService {
                 .filter(r -> r.getTestRun().getId().equals(run.getId()))
                 .orElseThrow(() -> new ResourceNotFoundException("TestResult", resultId));
 
+        ProjectResultStatus custom = request.customStatusId() == null ? null
+                : resultStatusService.requireActive(projectId, request.customStatusId());
+        TestResultStatus status = custom == null ? request.status() : custom.getCategory();
         boolean cascade = Boolean.TRUE.equals(request.cascadeSteps());
-        if (cascade && !CASCADABLE.contains(request.status())) {
+        if (cascade && !CASCADABLE.contains(status)) {
             throw new IllegalArgumentException("Only PASSED and SKIPPED cascade to the steps; a failure belongs "
                     + "to the step that failed, so set that one");
         }
-        result.setStatus(request.status(), userId);
+        if (custom == null) {
+            result.setStatus(status, userId);
+        } else {
+            result.setCustomStatus(custom, userId);
+        }
         if (cascade) {
             // Only what nobody has recorded yet: a step already marked keeps its own outcome (PRD-048).
             result.getStepResults().stream()
                     .filter(step -> step.getStatus() == TestResultStatus.PENDING)
-                    .forEach(step -> step.setStatus(request.status()));
+                    .forEach(step -> step.setStatus(status));
         }
         // Null leaves them alone and "" clears (PRD-047). The SPA sends only the status when a tester
         // clicks it, which used to wipe a comment or defect link written by CI or an agent.
@@ -590,7 +599,7 @@ public class TestRunService {
         }
 
         result = testResultRepository.save(result);
-        if (request.status() == TestResultStatus.FAILED) {
+        if (status == TestResultStatus.FAILED) {
             publishTestFailedEvent(run, result);
         }
         return testRunMapper.toResultResponse(result);
@@ -614,20 +623,28 @@ public class TestRunService {
             throw new IllegalArgumentException("Some results do not belong to this test run");
         }
 
+        ProjectResultStatus custom = request.customStatusId() == null ? null
+                : resultStatusService.requireActive(projectId, request.customStatusId());
+        TestResultStatus status = custom == null ? request.status() : custom.getCategory();
         for (TestResult result : results) {
-            result.setStatus(request.status(), userId);
+            if (custom == null) {
+                result.setStatus(status, userId);
+            } else {
+                result.setCustomStatus(custom, userId);
+            }
             if (request.cascadeSteps()) {
-                result.getStepResults().forEach(sr -> sr.setStatus(request.status()));
+                result.getStepResults().forEach(sr -> sr.setStatus(status));
             }
         }
         testResultRepository.saveAll(results);
 
+        String label = custom == null ? status.name() : custom.getName() + " (" + status + ")";
         auditService.log(projectId, userId, AuditAction.STATUS_CHANGED,
                 AuditEntityType.TEST_RUN, run.getId(), run.getName(),
-                "Bulk set " + results.size() + " results to " + request.status());
+                "Bulk set " + results.size() + " results to " + label);
 
         return new com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkOperationResponse(
-                results.size(), results.size() + " results updated to " + request.status());
+                results.size(), results.size() + " results updated to " + label);
     }
 
     @Transactional
@@ -648,7 +665,11 @@ public class TestRunService {
                 .filter(sr -> sr.getTestResult().getId().equals(testResult.getId()))
                 .orElseThrow(() -> new ResourceNotFoundException("StepResult", stepResultId));
 
-        stepResult.setStatus(request.status());
+        if (request.customStatusId() == null) {
+            stepResult.setStatus(request.status());
+        } else {
+            stepResult.setCustomStatus(resultStatusService.requireActive(projectId, request.customStatusId()));
+        }
         stepResult.setActualResult(request.actualResult());
 
         stepResult = stepResultRepository.save(stepResult);

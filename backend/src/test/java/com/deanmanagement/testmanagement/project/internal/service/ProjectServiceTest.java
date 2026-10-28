@@ -51,6 +51,10 @@ class ProjectServiceTest {
     @Mock
     private UserService userService;
 
+    /** TM24: new projects get the default result statuses; covered by ProjectResultStatusApiTest. */
+    @Mock
+    private ProjectResultStatusService resultStatusService;
+
     @InjectMocks
     private ProjectService projectService;
 

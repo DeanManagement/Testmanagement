@@ -17,6 +17,9 @@ export interface StepResult {
   stepImageId: string | null;
   /** PRD-030: the shared step this step came from; consecutive steps with one title are one block. */
   sharedStepTitle?: string | null;
+  /** TM24: the project status it was recorded as; null means the category's default. */
+  customStatusId?: string | null;
+  customStatusName?: string | null;
 }
 
 export interface TestResult {
@@ -53,6 +56,9 @@ export interface TestResult {
   /** TM23: who should execute it; the run's executor unless someone was assigned. */
   assigneeId?: string | null;
   assigneeName?: string | null;
+  /** TM24: the project status it was recorded as; null means the category's default. */
+  customStatusId?: string | null;
+  customStatusName?: string | null;
 }
 
 export interface TestRun {
@@ -153,11 +159,15 @@ export interface UpdateTestResultRequest {
   durationMs?: number;
   /** PRD-048: with PASSED or SKIPPED, the steps still pending take the same status. */
   cascadeSteps?: boolean;
+  /** TM24: a project result status; its category replaces status on the server. */
+  customStatusId?: string;
 }
 
 export interface UpdateStepResultRequest {
   status: TestResultStatus;
   actualResult?: string;
+  /** TM24: a project result status; its category replaces status on the server. */
+  customStatusId?: string;
 }
 
 export interface TestRunReport {

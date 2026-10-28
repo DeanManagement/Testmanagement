@@ -1716,5 +1716,16 @@
     "clear": "Auswahl aufheben",
     "selectedHidden": "Ausgewählt, durch die Filter ausgeblendet",
     "truncated": "{{shown}} von {{total}} angezeigt. Grenze die Filter ein, um den Rest zu sehen."
+  },
+  "resultStatusSettings": {
+    "title": "Ergebnisstatus",
+    "description": "Die Status, die Testende beim Erfassen eines Ergebnisses wählen. Jeder zählt als eines der festen Ergebnisse (bestanden, fehlgeschlagen, blockiert, übersprungen oder ausstehend); Erfolgsquote und Release-Gates bleiben unverändert.",
+    "manage": "Status verwalten",
+    "name": "Name",
+    "category": "Zählt als",
+    "color": "Farbe",
+    "add": "Status hinzufügen",
+    "reorder": "Zum Sortieren ziehen",
+    "activeHint": "Archivierte Status bleiben bei bisherigen Ergebnissen erhalten, können aber nicht mehr gewählt werden"
   }
 }

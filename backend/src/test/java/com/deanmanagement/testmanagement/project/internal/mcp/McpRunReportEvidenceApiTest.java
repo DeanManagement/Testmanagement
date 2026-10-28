@@ -27,9 +27,9 @@ class McpRunReportEvidenceApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestCase checkout = createCase("Checkout", "Open cart", "Submit order");
         McpDtos.CreatedTestRun run = runOf(checkout);
         stepRecordingTools.recordStepResult(run.key(), 1, TestResultStatus.PASSED, checkout.id(),
-                null, "Cart opened");
+                null, "Cart opened", null);
         stepRecordingTools.recordStepResult(run.key(), 2, TestResultStatus.FAILED, checkout.id(),
-                null, "Order button returns HTTP 500");
+                null, "Order button returns HTTP 500", null);
         testRunWriteTools.completeTestRun(run.key(), null, null);
 
         byte[] pdf = pdfReportService.generateTestRunReport(project.getId(), run.id());

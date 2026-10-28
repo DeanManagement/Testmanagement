@@ -160,6 +160,16 @@
       </div>
       <div class="setting-item">
         <div class="setting-info">
+          <h4>{{ 'resultStatusSettings.title' | translate }}</h4>
+          <p class="setting-description">{{ 'resultStatusSettings.description' | translate }}</p>
+        </div>
+        <a mat-stroked-button [routerLink]="['/projects', project.id, 'result-statuses']" data-test-id="project-settings-result-statuses-link">
+          <mat-icon>label</mat-icon>
+          {{ 'resultStatusSettings.manage' | translate }}
+        </a>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
           <h4>{{ 'customField.title' | translate }}</h4>
           <p class="setting-description">{{ 'customField.description' | translate }}</p>
         </div>

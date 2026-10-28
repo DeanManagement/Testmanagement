@@ -234,6 +234,11 @@ The one sequence you cannot infer from the tool list. An agent that runs tests i
    status is then derived from its steps (worst one wins, `PENDING` until all are recorded), so use
    either this or `record_test_result` for a given case, not both: a step recorded after a
    whole-case outcome recomputes that outcome from the steps.
+
+   Both take an optional `customStatus`: the name of one of the project's own result statuses
+   (e.g. `Not applicable`), which must belong to the category passed as `status`. An unknown name
+   is refused with the valid ones listed. Metrics only ever count the category; `get_test_run`
+   shows the name as `customStatus`.
 3. **`complete_test_run`** — `COMPLETED`, or `ABORTED` with a `reason` saying what blocked you.
    Results still pending are reported back, not refused.
 4. **`create_bug_report`** for a real defect, passing the `resultId` from step 2 as `testResultId`

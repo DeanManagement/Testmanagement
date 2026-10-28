@@ -35,6 +35,7 @@ public class ProjectService {
     private final ProjectMapper projectMapper;
     private final AuditService auditService;
     private final UserService userService;
+    private final ProjectResultStatusService resultStatusService;
 
     public List<ProjectResponse> findAll(UUID userId, boolean isSystemAdmin) {
         if (isSystemAdmin) {
@@ -59,6 +60,7 @@ public class ProjectService {
         project.setKey(generateKey(request.name()));
         project = projectRepository.save(project);
         addCreatorAsAdmin(project, userId);
+        resultStatusService.seedDefaults(project);
         auditService.log(project.getId(), userId, AuditAction.CREATED,
                 AuditEntityType.PROJECT, project.getId(), project.getName(), null);
         return projectMapper.toResponse(project);

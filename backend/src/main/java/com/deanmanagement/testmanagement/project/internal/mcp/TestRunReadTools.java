@@ -139,7 +139,9 @@ public class TestRunReadTools {
                     One test run with its per-case results, so you can see exactly which test cases
                     failed and what the executor recorded. Pass onlyStatus to narrow it — for
                     example FAILED to get just the failures of a large run.
-                    Result status: PENDING | PASSED | FAILED | BLOCKED | SKIPPED.
+                    Result status: PENDING | PASSED | FAILED | BLOCKED | SKIPPED. customStatus, when
+                    present, is the project's own name for that outcome (e.g. "Not applicable" for
+                    SKIPPED); assignee is who should execute the result.
                     Takes the run's UUID or its key (PROJ-Run-7) — whichever you have.
                     Each result carries its own id; pass that to record_test_result when a test
                     case appears more than once in the run, which happens when the case is
@@ -172,6 +174,6 @@ public class TestRunReadTools {
     private static McpDtos.TestResult toResult(TestResultResponse r, int position) {
         return new McpDtos.TestResult(r.id(), r.testCaseId(), r.testCaseKey(), r.testCaseTitle(),
                 r.status(), r.comment(), r.defectLink(), r.parameterSetName(), r.durationMs(),
-                r.executedByName(), r.executedAt(), position, r.assigneeName());
+                r.executedByName(), r.executedAt(), position, r.assigneeName(), r.customStatusName());
     }
 }

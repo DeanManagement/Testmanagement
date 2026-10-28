@@ -82,7 +82,7 @@ class McpTestRunCaseToolsApiTest extends McpToolApiTestSupport {
     @Test
     void aCaseWithARecordedResultIsNotRemoved() {
         resultRecordingTools.recordTestResult(run.key(), TestResultStatus.FAILED, first.id(), null,
-                null, null, null, null);
+                null, null, null, null, null);
 
         assertThatThrownBy(() -> runCaseTools.removeTestCasesFromRun(run.key(), List.of(first.id())))
                 .isInstanceOf(McpToolException.class)
