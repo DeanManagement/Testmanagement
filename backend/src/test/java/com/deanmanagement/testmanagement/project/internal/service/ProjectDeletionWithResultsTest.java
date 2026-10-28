@@ -5,7 +5,10 @@ import com.deanmanagement.testmanagement.project.internal.dto.testrun.CreateTest
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.Webhook;
+import com.deanmanagement.testmanagement.project.internal.entity.WebhookEventType;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.WebhookRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,6 +43,8 @@ class ProjectDeletionWithResultsTest {
     private TestCaseService testCaseService;
     @Autowired
     private TestRunService testRunService;
+    @Autowired
+    private WebhookRepository webhookRepository;
 
     @Test
     void aProjectWithExecutedTestCasesCanBeDeleted() {
@@ -58,6 +63,24 @@ class ProjectDeletionWithResultsTest {
         assertThatCode(() -> projectService.delete(projectId, null))
                 .as("a project that has been executed must still be deletable")
                 .doesNotThrowAnyException();
+
+        assertThat(projectRepository.findById(projectId)).isEmpty();
+    }
+
+    @Test
+    void aProjectWithAWebhookCanBeDeleted() {
+        Project project = new Project();
+        project.setName("Mit Webhook");
+        project.setKey("WHK" + Integer.toHexString(new java.util.Random().nextInt(0xFFFF)));
+        UUID projectId = projectRepository.save(project).getId();
+        Webhook webhook = new Webhook();
+        webhook.setProject(project);
+        webhook.setUrl("https://hooks.example.com/tm");
+        webhook.setSecret("s");
+        webhook.setEvents(Set.of(WebhookEventType.values()[0]));
+        webhookRepository.save(webhook);
+
+        projectService.delete(projectId, null);
 
         assertThat(projectRepository.findById(projectId)).isEmpty();
     }
