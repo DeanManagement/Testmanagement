@@ -36,7 +36,8 @@ class McpEnvironmentGuard {
             return;
         }
         String known = environmentService.list(projectId, false).stream()
-                .map(EnvironmentResponse::name)
+                // Quoted: names may contain commas themselves ("prod, agent").
+                .map(environment -> "\"" + environment.name() + "\"")
                 .collect(Collectors.joining(", "));
         throw new McpToolException("Unknown environment \"" + name.strip() + "\". "
                 + (known.isEmpty() ? "This project has no environments yet."
