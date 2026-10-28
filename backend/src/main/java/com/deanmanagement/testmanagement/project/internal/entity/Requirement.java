@@ -49,6 +49,10 @@ public class Requirement extends BaseEntity {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    /** The requirement this one refines (TM18), e.g. the epic of a story; null at the top. */
+    @Column(name = "parent_id")
+    private UUID parentId;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private RequirementStatus status = RequirementStatus.DRAFT;

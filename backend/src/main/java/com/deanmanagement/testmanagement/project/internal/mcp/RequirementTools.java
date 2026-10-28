@@ -95,7 +95,9 @@ public class RequirementTools {
                     tool — a Jira key, a spec section number, a clause reference — and must be
                     unique in the project. status is DRAFT (default), APPROVED or OBSOLETE;
                     priority is LOW, MEDIUM (default), HIGH or CRITICAL. customFields are keyed by
-                    field NAME (list_custom_fields with entityType REQUIREMENT).
+                    field NAME (list_custom_fields with entityType REQUIREMENT). parent places it
+                    under another requirement (an epic, say); a parent counts as covered only when
+                    every requirement under it is.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
@@ -111,11 +113,15 @@ public class RequirementTools {
             @McpToolParam(description = "LOW, MEDIUM, HIGH or CRITICAL; default MEDIUM", required = false)
             Priority priority,
             @McpToolParam(description = "Custom field values keyed by field name", required = false)
-            Map<String, Object> customFields) {
+            Map<String, Object> customFields,
+            @McpToolParam(description = "Parent requirement: externalId (REQ-1) or UUID", required = false)
+            String parent) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
-        var request = new SaveRequirementRequest(externalId, title, description, status, priority, customFields);
+        UUID parentId = parent == null || parent.isBlank() ? null : requirementService.get(caller.projectId(), parent).id();
+        var request = new SaveRequirementRequest(externalId, title, description, status, priority, customFields,
+                parentId);
         validator.validate(request);
 
         return toRequirement(requirementService.create(caller.projectId(), request, caller.userId(),
@@ -162,10 +168,12 @@ public class RequirementTools {
     @McpTool(
             name = "update_requirement",
             description = """
-                    Change a requirement's externalId, title, description, status, priority or
-                    custom fields. Only the fields you pass are changed; to CLEAR the description
-                    pass an empty string "", to clear a custom field pass it as null. An externalId
-                    already used by another requirement in this project is refused.
+                    Change a requirement's externalId, title, description, status, priority,
+                    custom fields or parent. Only the fields you pass are changed; to CLEAR the
+                    description pass an empty string "", to clear a custom field pass it as null,
+                    to move it to the top level pass parent "". An externalId already used by
+                    another requirement in this project, or a parent below the requirement itself,
+                    is refused.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
@@ -183,14 +191,16 @@ public class RequirementTools {
             @McpToolParam(description = "LOW, MEDIUM, HIGH or CRITICAL", required = false)
             Priority priority,
             @McpToolParam(description = "Custom field values keyed by field name; null clears one", required = false)
-            Map<String, Object> customFields) {
+            Map<String, Object> customFields,
+            @McpToolParam(description = "New parent: externalId or UUID; \"\" moves it to the top level",
+                    required = false) String parent) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
         if (externalId == null && title == null && description == null && status == null && priority == null
-                && customFields == null) {
-            throw new McpToolException(
-                    "Nothing to update: pass externalId, title, description, status, priority or customFields.");
+                && customFields == null && parent == null) {
+            throw new McpToolException("Nothing to update: pass externalId, title, description, status, priority, "
+                    + "customFields or parent.");
         }
 
         // Merged here because the service is a full replace; safe only while this method stays
@@ -202,7 +212,9 @@ public class RequirementTools {
                 description == null ? current.description() : emptyToNull(description),
                 status == null ? current.status() : status,
                 priority == null ? current.priority() : priority,
-                customFields);
+                customFields,
+                parent == null ? current.parentId()
+                        : parent.isBlank() ? null : requirementService.get(caller.projectId(), parent).id());
         validator.validate(request);
 
         return toRequirement(requirementService.update(caller.projectId(), id, request, caller.userId(),
@@ -280,7 +292,8 @@ public class RequirementTools {
 
         List<McpDtos.TraceabilityRow> mapped = rows.stream()
                 .map(row -> new McpDtos.TraceabilityRow(
-                        row.requirementId(), row.externalId(), row.title(), row.status(), row.priority(),
+                        row.requirementId(), row.externalId(), row.title(), row.parentId(), row.status(),
+                        row.priority(),
                         row.coverage().name(),
                         row.cells().stream()
                                 .map(cell -> new McpDtos.TraceabilityCell(cell.testCaseId(),
@@ -299,7 +312,8 @@ public class RequirementTools {
 
     private static McpDtos.Requirement toRequirement(RequirementResponse requirement) {
         return new McpDtos.Requirement(requirement.id(), requirement.externalId(),
-                requirement.title(), requirement.description(), requirement.status(), requirement.priority(),
+                requirement.title(), requirement.description(), requirement.parentId(), requirement.status(),
+                requirement.priority(),
                 requirement.customFields() == null || requirement.customFields().isEmpty()
                         ? null : requirement.customFields(),
                 requirement.testCases() == null ? List.of() : requirement.testCases().stream()

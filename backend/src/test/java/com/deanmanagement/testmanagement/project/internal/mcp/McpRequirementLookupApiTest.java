@@ -51,7 +51,7 @@ class McpRequirementLookupApiTest extends McpToolApiTestSupport {
     void getTestCaseNamesTheRequirementsItIsLinkedTo() {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
-        UUID id = requirementTools.createRequirement("REQ-1", "Users can log in", null, null, null, null).id();
+        UUID id = requirementTools.createRequirement("REQ-1", "Users can log in", null, null, null, null, null).id();
         requirementTools.linkTestCasesToRequirement(id, List.of(login.id()));
 
         assertThat(testCaseTools.getTestCase(login.key()).requirements())
@@ -63,7 +63,7 @@ class McpRequirementLookupApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
         createCase("Logout");
-        UUID id = requirementTools.createRequirement("REQ-1", "Users can log in", null, null, null, null).id();
+        UUID id = requirementTools.createRequirement("REQ-1", "Users can log in", null, null, null, null, null).id();
         requirementTools.linkTestCasesToRequirement(id, List.of(login.id()));
 
         assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null, null,
@@ -74,6 +74,6 @@ class McpRequirementLookupApiTest extends McpToolApiTestSupport {
     private UUID requirementOf(com.deanmanagement.testmanagement.project.internal.entity.Project target,
                                String externalId, String title) {
         authenticateAs(target, ProjectRole.TESTER);
-        return requirementTools.createRequirement(externalId, title, null, null, null, null).id();
+        return requirementTools.createRequirement(externalId, title, null, null, null, null, null).id();
     }
 }

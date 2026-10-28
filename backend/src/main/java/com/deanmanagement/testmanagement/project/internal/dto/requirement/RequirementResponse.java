@@ -13,6 +13,8 @@ public record RequirementResponse(
         String externalId,
         String title,
         String description,
+        /* TM18: the parent requirement, null at the top of the tree. */
+        UUID parentId,
         RequirementStatus status,
         Priority priority,
         /* PRD-035: values keyed by field name, in display order (CustomFieldValueMaps). */

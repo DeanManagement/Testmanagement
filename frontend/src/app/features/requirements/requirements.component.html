@@ -103,6 +103,15 @@
               }
             </mat-select>
           </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic" class="title-field">
+            <mat-label>{{ 'requirement.parent' | translate }}</mat-label>
+            <mat-select [(ngModel)]="formParentId" data-test-id="requirement-parent-select">
+              <mat-option [value]="null">{{ 'requirement.noParent' | translate }}</mat-option>
+              @for (option of parentOptions; track option.id) {
+                <mat-option [value]="option.id">{{ option.externalId }} — {{ option.title }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
         </div>
         <app-custom-fields-form [projectId]="projectId" entityType="REQUIREMENT" [(ngModel)]="formCustomFields"
                                 #customFields="ngModel" />
@@ -172,15 +181,27 @@
         </button>
       </div>
 
-      @if (visibleRequirements.length === 0) {
+      @let rows = visibleRows;
+      @if (rows.length === 0) {
         <p class="no-cases" data-test-id="requirements-no-matches">{{ 'requirement.noMatches' | translate }}</p>
       }
 
       <div class="requirement-list">
-        @for (requirement of visibleRequirements; track requirement.id) {
-          <div class="tm-card requirement-card" [attr.data-test-id]="'requirement-' + requirement.externalId">
+        @for (treeRow of rows; track treeRow.requirement.id) {
+          @let requirement = treeRow.requirement;
+          <div class="tm-card requirement-card" [class.requirement-card--context]="!treeRow.matches"
+               [style.margin-left.px]="treeRow.depth * 24"
+               [attr.data-test-id]="'requirement-' + requirement.externalId">
             <div class="requirement-head">
               <div class="requirement-heading">
+                @if (treeRow.hasChildren) {
+                  <button mat-icon-button class="tree-toggle" (click)="toggleCollapsed(requirement.id)"
+                          [attr.aria-expanded]="!collapsed.has(requirement.id)"
+                          [attr.aria-label]="(collapsed.has(requirement.id) ? 'requirement.expand' : 'requirement.collapse') | translate"
+                          [attr.data-test-id]="'requirement-toggle-' + requirement.externalId">
+                    <mat-icon>{{ collapsed.has(requirement.id) ? 'chevron_right' : 'expand_more' }}</mat-icon>
+                  </button>
+                }
                 <span class="requirement-key">{{ requirement.externalId }}</span>
                 <span class="requirement-name">{{ requirement.title }}</span>
                 <span class="badge badge--{{ requirement.priority | lowercase }}" data-test-id="requirement-priority">{{ 'priority.' + requirement.priority | translate }}</span>

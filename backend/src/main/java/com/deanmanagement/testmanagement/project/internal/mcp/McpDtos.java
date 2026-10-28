@@ -471,7 +471,7 @@ final class McpDtos {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record Requirement(UUID id, String externalId, String title, @Nullable String description,
-                       RequirementStatus status, Priority priority,
+                       @Nullable UUID parentId, RequirementStatus status, Priority priority,
                        @Nullable Map<String, Object> customFields, List<TestCaseRef> testCases) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -482,7 +482,8 @@ final class McpDtos {
     record TraceabilityCell(UUID testCaseId, String testCaseKey, String testCaseTitle, String status) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record TraceabilityRow(UUID requirementId, String externalId, String title, RequirementStatus status,
+    record TraceabilityRow(UUID requirementId, String externalId, String title, @Nullable UUID parentId,
+                           RequirementStatus status,
                            Priority priority, String coverage, List<TraceabilityCell> cells) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)

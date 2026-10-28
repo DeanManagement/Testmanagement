@@ -1,16 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { viewRequirements } from './requirement-view';
+import { requirementTree, selfAndDescendants, viewRequirements } from './requirement-view';
 import { CoverageStatus, Requirement, TraceabilityRow } from '../../shared/models/requirement.model';
 
 function requirement(id: string, externalId: string, title: string, over: Partial<Requirement> = {}): Requirement {
   return {
-    id, externalId, title, description: null, status: 'DRAFT', priority: 'MEDIUM', customFields: {}, testCases: [],
+    id, externalId, title, description: null, parentId: null, status: 'DRAFT', priority: 'MEDIUM', customFields: {}, testCases: [],
     createdAt: '', updatedAt: '', ...over,
   };
 }
 
 function row(requirementId: string, coverage: CoverageStatus): TraceabilityRow {
-  return { requirementId, externalId: '', title: '', status: 'DRAFT', priority: 'MEDIUM', cells: [], coverage };
+  return { requirementId, externalId: '', title: '', parentId: null, status: 'DRAFT', priority: 'MEDIUM', cells: [], coverage };
 }
 
 const none = { coverage: '' as const, status: '' as const, priority: '' as const };
@@ -89,5 +89,45 @@ describe('viewRequirements', () => {
       { ...none, query: '', sort: { active: 'title', direction: 'desc' } });
 
     expect(result.map((r) => r.title)).toEqual(['Logout', 'Login works', 'Export a report']);
+  });
+});
+
+describe('requirementTree', () => {
+  const tree = [
+    requirement('task', 'REQ-3', 'Hash passwords', { parentId: 'story' }),
+    requirement('story', 'REQ-2', 'Secure login', { parentId: 'epic' }),
+    requirement('epic', 'REQ-1', 'Accounts'),
+    requirement('other', 'REQ-4', 'Reports'),
+  ];
+  const noRows = new Map<string, TraceabilityRow>();
+  const all = { ...none, query: '', sort: { active: 'externalId', direction: 'asc' as const } };
+
+  it('nests children under their parents, siblings in sort order', () => {
+    const rows = requirementTree(tree, noRows, all, new Set());
+
+    expect(rows.map((r) => `${r.depth}:${r.requirement.externalId}`)).toEqual(['0:REQ-1', '1:REQ-2', '2:REQ-3', '0:REQ-4']);
+    expect(rows[0].hasChildren).toBe(true);
+  });
+
+  it('keeps the ancestors of a match, marked as context', () => {
+    const rows = requirementTree(tree, noRows, { ...all, query: 'hash' }, new Set());
+
+    expect(rows.map((r) => [r.requirement.externalId, r.matches])).toEqual([['REQ-1', false], ['REQ-2', false], ['REQ-3', true]]);
+  });
+
+  it('hides what is below a collapsed requirement', () => {
+    const rows = requirementTree(tree, noRows, all, new Set(['story']));
+
+    expect(rows.map((r) => r.requirement.externalId)).toEqual(['REQ-1', 'REQ-2', 'REQ-4']);
+  });
+
+  it('treats a requirement whose parent is not loaded as a root', () => {
+    const rows = requirementTree([requirement('x', 'REQ-9', 'Orphan', { parentId: 'gone' })], noRows, all, new Set());
+
+    expect(rows.map((r) => r.depth)).toEqual([0]);
+  });
+
+  it('names the requirement and its descendants as unfit parents', () => {
+    expect([...selfAndDescendants(tree, 'story')].sort()).toEqual(['story', 'task']);
   });
 });

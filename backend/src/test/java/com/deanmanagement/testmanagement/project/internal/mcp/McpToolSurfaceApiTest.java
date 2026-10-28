@@ -599,8 +599,8 @@ class McpToolSurfaceApiTest {
         McpDtos.CreatedTestCase covering = createCase("Prüft die Anmeldung");
 
         McpDtos.Requirement covered = requirementTools.createRequirement(
-                "REQ-1", "Benutzer können sich anmelden", "Aus dem Pflichtenheft, Abschnitt 3.1", null, null, null);
-        requirementTools.createRequirement("REQ-2", "Benutzer können ihr Passwort zurücksetzen", null, null, null, null);
+                "REQ-1", "Benutzer können sich anmelden", "Aus dem Pflichtenheft, Abschnitt 3.1", null, null, null, null);
+        requirementTools.createRequirement("REQ-2", "Benutzer können ihr Passwort zurücksetzen", null, null, null, null, null);
 
         requirementTools.linkTestCasesToRequirement(covered.id(), List.of(covering.id()));
 
@@ -631,7 +631,7 @@ class McpToolSurfaceApiTest {
     void requirementsListShowsTheirLinkedCases() {
         authenticateAs(project, ProjectRole.TESTER, "agent");
         McpDtos.CreatedTestCase testCase = createCase("Ein abdeckender Fall");
-        McpDtos.Requirement requirement = requirementTools.createRequirement("REQ-9", "Etwas", null, null, null, null);
+        McpDtos.Requirement requirement = requirementTools.createRequirement("REQ-9", "Etwas", null, null, null, null, null);
         requirementTools.linkTestCasesToRequirement(requirement.id(), List.of(testCase.id()));
 
         assertThat(requirementTools.listRequirements(null, null, null).requirements())
@@ -647,7 +647,7 @@ class McpToolSurfaceApiTest {
         SecurityContextHolder.clearContext();
 
         authenticateAs(project, ProjectRole.TESTER, "agent");
-        McpDtos.Requirement requirement = requirementTools.createRequirement("REQ-3", "Etwas", null, null, null, null);
+        McpDtos.Requirement requirement = requirementTools.createRequirement("REQ-3", "Etwas", null, null, null, null, null);
 
         assertThatThrownBy(() ->
                 requirementTools.linkTestCasesToRequirement(requirement.id(), List.of(foreign.id())))
@@ -662,7 +662,7 @@ class McpToolSurfaceApiTest {
         authenticateAs(project, ProjectRole.VIEWER, "read-only-agent");
 
         assertThatCode(() -> requirementTools.getTraceabilityMatrix(null)).doesNotThrowAnyException();
-        assertThatThrownBy(() -> requirementTools.createRequirement("REQ-4", "Nicht erlaubt", null, null, null, null))
+        assertThatThrownBy(() -> requirementTools.createRequirement("REQ-4", "Nicht erlaubt", null, null, null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("TESTER");
     }

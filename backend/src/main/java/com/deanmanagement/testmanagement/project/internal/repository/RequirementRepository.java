@@ -40,4 +40,6 @@ public interface RequirementRepository extends JpaRepository<Requirement, UUID> 
     List<Requirement> findWithTestCases(@Param("ids") List<UUID> ids);
 
     long countByProjectId(UUID projectId);
+
+    List<Requirement> findByParentId(UUID parentId);
 }

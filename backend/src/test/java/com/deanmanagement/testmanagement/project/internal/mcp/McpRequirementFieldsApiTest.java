@@ -29,7 +29,7 @@ class McpRequirementFieldsApiTest extends McpToolApiTestSupport {
     void aNewRequirementIsADraftOfMediumPriority() {
         authenticateAs(project, ProjectRole.TESTER);
 
-        McpDtos.Requirement created = requirementTools.createRequirement("REQ-1", "Log in", null, null, null, null);
+        McpDtos.Requirement created = requirementTools.createRequirement("REQ-1", "Log in", null, null, null, null, null);
 
         assertThat(created.status()).isEqualTo(RequirementStatus.DRAFT);
         assertThat(created.priority()).isEqualTo(Priority.MEDIUM);
@@ -41,10 +41,10 @@ class McpRequirementFieldsApiTest extends McpToolApiTestSupport {
                 "Source", CustomFieldType.SELECT, List.of("Customer", "Regulator"), false), null);
         authenticateAs(project, ProjectRole.TESTER);
         UUID id = requirementTools.createRequirement("REQ-1", "Log in", null, RequirementStatus.APPROVED,
-                Priority.HIGH, Map.of("source", "regulator")).id();
+                Priority.HIGH, Map.of("source", "regulator"), null).id();
 
         McpDtos.Requirement updated = requirementTools.updateRequirement(id, null, null, null,
-                RequirementStatus.OBSOLETE, null, null);
+                RequirementStatus.OBSOLETE, null, null, null);
 
         assertThat(updated.status()).isEqualTo(RequirementStatus.OBSOLETE);
         assertThat(updated.priority()).isEqualTo(Priority.HIGH);
@@ -56,14 +56,14 @@ class McpRequirementFieldsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
 
         assertThatThrownBy(() -> requirementTools.createRequirement("REQ-1", "Log in", null, null, null,
-                Map.of("Nope", "x"))).isInstanceOf(IllegalArgumentException.class);
+                Map.of("Nope", "x"), null)).isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
     void anObsoleteRequirementDoesNotCountTowardsCoverage() {
         authenticateAs(project, ProjectRole.TESTER);
-        requirementTools.createRequirement("REQ-1", "Live", null, null, null, null);
-        requirementTools.createRequirement("REQ-2", "Gone", null, RequirementStatus.OBSOLETE, null, null);
+        requirementTools.createRequirement("REQ-1", "Live", null, null, null, null, null);
+        requirementTools.createRequirement("REQ-2", "Gone", null, RequirementStatus.OBSOLETE, null, null, null);
 
         assertThat(requirementService.coverage(project.getId()).totalRequirements()).isEqualTo(1);
         assertThat(requirementTools.getTraceabilityMatrix(null).requirements()).hasSize(2);

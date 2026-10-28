@@ -19,6 +19,8 @@ export interface Requirement {
   externalId: string;
   title: string;
   description: string | null;
+  /** TM18: the requirement this one refines; null at the top of the tree. */
+  parentId: string | null;
   status: RequirementStatus;
   priority: Priority;
   customFields: CustomFieldValues;
@@ -37,6 +39,7 @@ export interface SaveRequirementRequest {
   externalId: string;
   title: string;
   description?: string;
+  parentId: string | null;
   status: RequirementStatus;
   priority: Priority;
   customFields?: CustomFieldValues;
@@ -46,6 +49,7 @@ export interface TraceabilityRow {
   requirementId: string;
   externalId: string;
   title: string;
+  parentId: string | null;
   status: RequirementStatus;
   priority: Priority;
   cells: TraceabilityCell[];

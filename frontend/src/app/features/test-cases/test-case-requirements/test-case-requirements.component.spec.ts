@@ -9,7 +9,7 @@ import { Requirement } from '../../../shared/models/requirement.model';
 
 function requirement(id: string, externalId: string): Requirement {
   return {
-    id, externalId, title: 'T ' + externalId, description: null, status: 'DRAFT', priority: 'MEDIUM', customFields: {},
+    id, externalId, title: 'T ' + externalId, description: null, parentId: null, status: 'DRAFT', priority: 'MEDIUM', customFields: {},
     testCases: [], createdAt: '', updatedAt: '',
   };
 }

@@ -1356,6 +1356,10 @@
       "OBSOLETE": "Veraltet"
     },
     "priorityLabel": "Priorität",
+    "parent": "Übergeordnete Anforderung",
+    "noParent": "Keine (oberste Ebene)",
+    "expand": "Untergeordnete Anforderungen anzeigen",
+    "collapse": "Untergeordnete Anforderungen ausblenden",
     "export": {
       "button": "CSV exportieren",
       "allRuns": "Neueste Ergebnisse aller Läufe",

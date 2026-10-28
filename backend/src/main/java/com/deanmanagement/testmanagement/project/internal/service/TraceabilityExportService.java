@@ -12,10 +12,14 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * The traceability matrix as CSV (TM20): one row per requirement and linked test case, with the
+ * requirement's parent (TM18) and
  * case's latest result; a requirement with no case gets one row with the case columns empty, so
  * the gap shows in the file instead of the requirement silently missing from it.
  */
@@ -23,7 +27,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TraceabilityExportService {
 
-    private static final String[] HEADERS = {"requirementId", "requirementTitle", "requirementStatus",
+    private static final String[] HEADERS = {"requirementId", "parentRequirementId", "requirementTitle", "requirementStatus",
             "requirementPriority", "requirementCoverage", "testCaseKey", "testCaseTitle", "latestResult"};
 
     private final RequirementService requirementService;
@@ -32,14 +36,18 @@ public class TraceabilityExportService {
     public byte[] exportCsv(UUID projectId, UUID testPlanId) {
         StringWriter out = new StringWriter();
         try (CSVPrinter printer = new CSVPrinter(out, CSVFormat.DEFAULT.builder().setHeader(HEADERS).build())) {
-            for (TraceabilityRowResponse row : requirementService.matrix(projectId, testPlanId)) {
+            List<TraceabilityRowResponse> rows = requirementService.matrix(projectId, testPlanId);
+            Map<UUID, String> externalIds = new HashMap<>();
+            rows.forEach(row -> externalIds.put(row.requirementId(), row.externalId()));
+            for (TraceabilityRowResponse row : rows) {
+                String parent = row.parentId() == null ? "" : CsvCells.safe(externalIds.get(row.parentId()));
                 if (row.cells().isEmpty()) {
-                    printer.printRecord(CsvCells.safe(row.externalId()), CsvCells.safe(row.title()), row.status(),
+                    printer.printRecord(CsvCells.safe(row.externalId()), parent, CsvCells.safe(row.title()), row.status(),
                             row.priority(), row.coverage(),
                             "", "", "");
                 }
                 for (TraceabilityRowResponse.Cell cell : row.cells()) {
-                    printer.printRecord(CsvCells.safe(row.externalId()), CsvCells.safe(row.title()), row.status(),
+                    printer.printRecord(CsvCells.safe(row.externalId()), parent, CsvCells.safe(row.title()), row.status(),
                             row.priority(), row.coverage(),
                             cell.testCaseKey(), CsvCells.safe(cell.testCaseTitle()), cell.status());
                 }

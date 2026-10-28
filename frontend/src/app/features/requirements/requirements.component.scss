@@ -131,6 +131,10 @@
   &--uncovered { background: var(--tm-tint-danger-bg); color: var(--tm-tint-danger-fg); }
 }
 
+.requirement-card--context { opacity: 0.7; }
+
+.tree-toggle { margin: -8px 0 -8px -8px; }
+
 .lifecycle-badge {
   &--draft { background: var(--tm-tint-neutral-bg); color: var(--tm-tint-neutral-fg); }
   &--approved { background: var(--tm-tint-success-bg); color: var(--tm-tint-success-fg); }

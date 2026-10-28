@@ -14,10 +14,11 @@ public record TraceabilityRowResponse(
         UUID requirementId,
         String externalId,
         String title,
+        UUID parentId,
         RequirementStatus status,
         Priority priority,
         List<Cell> cells,
-        /** Worst status across the row — what the coverage report counts. */
+        /** Worst status across the row, or for a parent across its leaves — what the coverage report counts. */
         CoverageStatus coverage
 ) {
     public record Cell(UUID testCaseId, String testCaseKey, String testCaseTitle, CoverageStatus status) {

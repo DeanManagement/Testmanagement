@@ -1356,6 +1356,10 @@
       "OBSOLETE": "Obsolete"
     },
     "priorityLabel": "Priority",
+    "parent": "Parent requirement",
+    "noParent": "None (top level)",
+    "expand": "Show the requirements below",
+    "collapse": "Hide the requirements below",
     "export": {
       "button": "Export CSV",
       "allRuns": "Latest results of all runs",

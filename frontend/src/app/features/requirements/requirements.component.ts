@@ -39,7 +39,7 @@ import { Priority, TestCase } from '../../shared/models/test-case.model';
 import { CustomFieldValues } from '../../shared/models/custom-field.model';
 import { CustomFieldsFormComponent } from '../../shared/components/custom-fields/custom-fields-form.component';
 import { CustomFieldsDisplayComponent } from '../../shared/components/custom-fields/custom-fields-display.component';
-import { RequirementSortColumn, viewRequirements } from './requirement-view';
+import { RequirementSortColumn, RequirementTreeRow, requirementTree, selfAndDescendants } from './requirement-view';
 
 /**
  * Requirements, the traceability matrix and the coverage summary on one screen (PRD-014 §3.4).
@@ -98,6 +98,9 @@ export class RequirementsComponent implements OnInit {
   formStatus: RequirementStatus = 'DRAFT';
   formPriority: Priority = 'MEDIUM';
   formCustomFields: CustomFieldValues = {};
+  formParentId: string | null = null;
+  /** Requirements whose children are folded away in the tree. */
+  readonly collapsed = new Set<string>();
 
   /** Which requirement's link picker is open, and what is selected in it. */
   linkingId: string | null = null;
@@ -116,14 +119,27 @@ export class RequirementsComponent implements OnInit {
   /** Offered in the export menu; loaded when the menu is first opened. */
   testPlans: TestPlan[] | null = null;
 
-  get visibleRequirements(): Requirement[] {
-    return viewRequirements(this.requirements, this.rowsById, {
+  get visibleRows(): RequirementTreeRow[] {
+    return requirementTree(this.requirements, this.rowsById, {
       query: this.searchQuery,
       coverage: this.coverageFilter,
       status: this.statusFilter,
       priority: this.priorityFilter,
       sort: { active: this.sortColumn, direction: this.sortDirection },
-    });
+    }, this.collapsed);
+  }
+
+  toggleCollapsed(id: string): void {
+    if (!this.collapsed.delete(id)) {
+      this.collapsed.add(id);
+    }
+  }
+
+  /** Requirements the one being edited may be placed under: not itself, nor anything below it. */
+  get parentOptions(): Requirement[] {
+    const excluded = this.editingId ? selfAndDescendants(this.requirements, this.editingId) : new Set<string>();
+    return this.requirements.filter((r) => !excluded.has(r.id))
+      .sort((a, b) => a.externalId.localeCompare(b.externalId, undefined, { numeric: true }));
   }
 
   toggleSortDirection(): void {
@@ -193,6 +209,7 @@ export class RequirementsComponent implements OnInit {
     this.formStatus = 'DRAFT';
     this.formPriority = 'MEDIUM';
     this.formCustomFields = {};
+    this.formParentId = null;
   }
 
   openEdit(requirement: Requirement): void {
@@ -204,6 +221,7 @@ export class RequirementsComponent implements OnInit {
     this.formStatus = requirement.status;
     this.formPriority = requirement.priority;
     this.formCustomFields = requirement.customFields ?? {};
+    this.formParentId = requirement.parentId;
   }
 
   closeForm(): void {
@@ -223,6 +241,7 @@ export class RequirementsComponent implements OnInit {
       status: this.formStatus,
       priority: this.formPriority,
       customFields: this.formCustomFields,
+      parentId: this.formParentId,
     };
     const call = this.editingId
       ? this.api.update(this.projectId, this.editingId, request)

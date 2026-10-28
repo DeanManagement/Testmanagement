@@ -109,6 +109,7 @@ public class RequirementService {
         requirement.setTitle(request.title().trim());
         requirement.setDescription(request.description());
         applyFields(requirement, request);
+        requirement.setParentId(validParent(projectId, null, request.parentId()));
         customFieldWriter.write(requirement, request.customFields(), mode);
         requirement = requirementRepository.save(requirement);
 
@@ -136,6 +137,7 @@ public class RequirementService {
         requirement.setTitle(request.title().trim());
         requirement.setDescription(request.description());
         applyFields(requirement, request);
+        requirement.setParentId(validParent(projectId, requirement.getId(), request.parentId()));
         customFieldWriter.write(requirement, request.customFields(), mode);
         requirement = requirementRepository.save(requirement);
 
@@ -144,9 +146,16 @@ public class RequirementService {
         return toResponse(requirement);
     }
 
+    /**
+     * Its children move up to its own parent (TM18): deleting an epic must not silently delete, or
+     * orphan out of sight, the stories under it.
+     */
     @Transactional
     public void delete(UUID projectId, UUID id, UUID actorId) {
         Requirement requirement = require(projectId, id);
+        for (Requirement child : requirementRepository.findByParentId(id)) {
+            child.setParentId(requirement.getParentId());
+        }
         auditService.log(projectId, actorId, AuditAction.DELETED,
                 AuditEntityType.REQUIREMENT, requirement.getId(), requirement.getExternalId(), null);
         requirementRepository.delete(requirement);
@@ -203,20 +212,64 @@ public class RequirementService {
         }
         Map<UUID, CoverageStatus> latestByCase = latestStatusByTestCase(projectId, testPlanId, requirements);
 
-        List<TraceabilityRowResponse> rows = new ArrayList<>();
+        Map<UUID, List<TraceabilityRowResponse.Cell>> cellsById = new HashMap<>();
         for (Requirement requirement : requirements) {
-            List<TraceabilityRowResponse.Cell> cells = requirement.getTestCases().stream()
+            cellsById.put(requirement.getId(), requirement.getTestCases().stream()
                     .sorted(Comparator.comparing(TestCase::getKey))
                     .map(tc -> new TraceabilityRowResponse.Cell(
                             tc.getId(), tc.getKey(), tc.getTitle(),
                             latestByCase.getOrDefault(tc.getId(), CoverageStatus.UNTESTED)))
-                    .toList();
+                    .toList());
+        }
+        Map<UUID, List<Requirement>> liveChildren = liveChildrenByParent(requirements);
+        Map<UUID, CoverageStatus> coverageById = new HashMap<>();
 
+        List<TraceabilityRowResponse> rows = new ArrayList<>();
+        for (Requirement requirement : requirements) {
+            List<TraceabilityRowResponse.Cell> cells = cellsById.get(requirement.getId());
             rows.add(new TraceabilityRowResponse(
                     requirement.getId(), requirement.getExternalId(), requirement.getTitle(),
-                    requirement.getStatus(), requirement.getPriority(), cells, rollUp(cells)));
+                    requirement.getParentId(), requirement.getStatus(), requirement.getPriority(), cells,
+                    coverageOf(requirement, cellsById, liveChildren, coverageById)));
         }
         return rows;
+    }
+
+    /** Children that still need proving, by parent id; an obsolete child does not hold its parent back. */
+    private static Map<UUID, List<Requirement>> liveChildrenByParent(List<Requirement> requirements) {
+        Map<UUID, List<Requirement>> children = new HashMap<>();
+        requirements.stream()
+                .filter(r -> r.getParentId() != null && r.getStatus() != RequirementStatus.OBSOLETE)
+                .forEach(r -> children.computeIfAbsent(r.getParentId(), k -> new ArrayList<>()).add(r));
+        return children;
+    }
+
+    /**
+     * A leaf's coverage is its worst cell; a parent's is the worst over its own cells and its live
+     * children (TM18) — covered only when every leaf under it is. Memoised; cycles cannot occur
+     * because writes refuse them.
+     */
+    private static CoverageStatus coverageOf(Requirement requirement,
+                                             Map<UUID, List<TraceabilityRowResponse.Cell>> cellsById,
+                                             Map<UUID, List<Requirement>> liveChildren,
+                                             Map<UUID, CoverageStatus> memo) {
+        CoverageStatus known = memo.get(requirement.getId());
+        if (known != null) {
+            return known;
+        }
+        List<TraceabilityRowResponse.Cell> cells = cellsById.get(requirement.getId());
+        List<Requirement> children = liveChildren.getOrDefault(requirement.getId(), List.of());
+        CoverageStatus coverage;
+        if (children.isEmpty()) {
+            coverage = rollUp(cells);
+        } else {
+            Set<CoverageStatus> statuses = new HashSet<>();
+            cells.forEach(c -> statuses.add(c.status()));
+            children.forEach(child -> statuses.add(coverageOf(child, cellsById, liveChildren, memo)));
+            coverage = worst(statuses);
+        }
+        memo.put(requirement.getId(), coverage);
+        return coverage;
     }
 
     public CoverageSummaryResponse coverage(UUID projectId) {
@@ -224,9 +277,15 @@ public class RequirementService {
     }
 
     public CoverageSummaryResponse coverage(UUID projectId, UUID testPlanId) {
-        // An obsolete requirement no longer needs proving, so it neither helps nor hurts coverage.
-        List<TraceabilityRowResponse> rows = matrix(projectId, testPlanId).stream()
-                .filter(r -> r.status() != RequirementStatus.OBSOLETE)
+        // Only live leaves count: a parent's coverage is derived from them (counting it too would
+        // weigh one epic like each of its stories), and an obsolete requirement needs no proof.
+        List<TraceabilityRowResponse> all = matrix(projectId, testPlanId);
+        Set<UUID> liveParents = new HashSet<>();
+        all.stream()
+                .filter(r -> r.parentId() != null && r.status() != RequirementStatus.OBSOLETE)
+                .forEach(r -> liveParents.add(r.parentId()));
+        List<TraceabilityRowResponse> rows = all.stream()
+                .filter(r -> r.status() != RequirementStatus.OBSOLETE && !liveParents.contains(r.requirementId()))
                 .toList();
         long total = rows.size();
         long uncovered = rows.stream().filter(r -> r.coverage() == CoverageStatus.UNCOVERED).count();
@@ -251,10 +310,13 @@ public class RequirementService {
         }
         Set<CoverageStatus> statuses = new HashSet<>();
         cells.forEach(c -> statuses.add(c.status()));
+        return worst(statuses);
+    }
 
-        // Severity order, worst first.
+    /** Severity order, worst first; a gap below a parent (UNCOVERED) outranks a skip. */
+    private static CoverageStatus worst(Set<CoverageStatus> statuses) {
         for (CoverageStatus candidate : List.of(CoverageStatus.FAILED, CoverageStatus.BLOCKED,
-                CoverageStatus.UNTESTED, CoverageStatus.SKIPPED)) {
+                CoverageStatus.UNTESTED, CoverageStatus.UNCOVERED, CoverageStatus.SKIPPED)) {
             if (statuses.contains(candidate)) {
                 return candidate;
             }
@@ -293,6 +355,26 @@ public class RequirementService {
 
     // ---- helpers ----------------------------------------------------------
 
+    /**
+     * The parent, checked: in this project, and neither the requirement itself nor one of its
+     * descendants — either would make a cycle. {@code id} is null for a new requirement.
+     */
+    UUID validParent(UUID projectId, UUID id, UUID parentId) {
+        if (parentId == null) {
+            return null;
+        }
+        Requirement ancestor = require(projectId, parentId);
+        Set<UUID> seen = new HashSet<>();
+        while (ancestor != null && seen.add(ancestor.getId())) {
+            if (ancestor.getId().equals(id)) {
+                throw new IllegalArgumentException("A requirement cannot be placed under itself or one of its children");
+            }
+            ancestor = ancestor.getParentId() == null ? null
+                    : requirementRepository.findById(ancestor.getParentId()).orElse(null);
+        }
+        return parentId;
+    }
+
     /** Null status / priority mean the defaults, as for a new requirement. */
     private static void applyFields(Requirement requirement, SaveRequirementRequest request) {
         requirement.setStatus(request.status() == null ? RequirementStatus.DRAFT : request.status());
@@ -322,6 +404,7 @@ public class RequirementService {
                 requirement.getExternalId(),
                 requirement.getTitle(),
                 requirement.getDescription(),
+                requirement.getParentId(),
                 requirement.getStatus(),
                 requirement.getPriority(),
                 CustomFieldValueMaps.toMap(requirement.getCustomFieldValues()),
