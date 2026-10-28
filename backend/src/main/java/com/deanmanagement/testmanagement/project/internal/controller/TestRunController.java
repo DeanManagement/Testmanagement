@@ -45,6 +45,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.AddRunTestCasesRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.RemoveRunTestCasesRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.testrun.ReorderRunResultsRequest;
+import com.deanmanagement.testmanagement.project.internal.service.TestRunCaseService;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -63,6 +67,7 @@ public class TestRunController {
     private final PdfReportService pdfReportService;
     private final CustomFieldFilterParser customFieldFilterParser;
     private final RunComparisonService runComparisonService;
+    private final TestRunCaseService runCaseService;
 
     @GetMapping
     @RequireProjectRole
@@ -222,6 +227,34 @@ public class TestRunController {
             Authentication authentication) {
         UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         return testRunService.bulkUpdateResultStatus(projectId, runId, request, userId);
+    }
+
+    /** TM22: pending results for more cases, appended exactly as creating the run would. */
+    @PostMapping("/{runId}/test-cases")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestRunResponse addTestCases(@PathVariable UUID projectId, @PathVariable UUID runId,
+                                        @Valid @RequestBody AddRunTestCasesRequest request,
+                                        Authentication authentication) {
+        return runCaseService.addTestCases(projectId, runId, request.testCaseIds(), actor(authentication));
+    }
+
+    /** TM22: 409 when a removed case has a recorded result, unless discardRecordedResults is set. */
+    @PostMapping("/{runId}/test-cases/remove")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestRunResponse removeTestCases(@PathVariable UUID projectId, @PathVariable UUID runId,
+                                           @Valid @RequestBody RemoveRunTestCasesRequest request,
+                                           Authentication authentication) {
+        return runCaseService.removeTestCases(projectId, runId, request.testCaseIds(),
+                request.discards(), actor(authentication));
+    }
+
+    /** TM21: the execution order of the run's results. */
+    @PutMapping("/{runId}/results/order")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestRunResponse reorderResults(@PathVariable UUID projectId, @PathVariable UUID runId,
+                                          @Valid @RequestBody ReorderRunResultsRequest request,
+                                          Authentication authentication) {
+        return runCaseService.reorder(projectId, runId, request.resultIds(), actor(authentication));
     }
 
     private static UUID actor(Authentication authentication) {

@@ -82,6 +82,10 @@ public class TestResult extends BaseEntity {
     @Column(name = "parameter_values_json", columnDefinition = "TEXT")
     private String parameterValuesJson;
 
+    /** Where the result sits in its run, ascending (TM21). Not dense: removing a case leaves a gap. */
+    @Column(nullable = false)
+    private int position;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_run_id", nullable = false)
     private TestRun testRun;

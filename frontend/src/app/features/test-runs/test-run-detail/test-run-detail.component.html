@@ -67,6 +67,12 @@
               <span>{{ 'testRun.allureReport.upload' | translate }}</span>
             </button>
           }
+          @if (canEditCases(run)) {
+            <button mat-menu-item (click)="openRunCases(run)" data-test-id="test-run-edit-cases-btn">
+              <mat-icon>playlist_add_check</mat-icon>
+              <span>{{ 'testRun.cases.title' | translate }}</span>
+            </button>
+          }
           <button mat-menu-item (click)="cloneTestRun(run)" data-test-id="test-run-clone-btn">
             <mat-icon>content_copy</mat-icon>
             <span>{{ 'testRun.clone' | translate }}</span>
@@ -178,9 +184,10 @@
                 </div>
               }
             </div>
-            <div class="result-list">
+            <div class="result-list" cdkDropList [cdkDropListDisabled]="!canDragResults"
+                 (cdkDropListDropped)="dropResult(run, $event)" data-test-id="execution-result-list">
               @for (result of filteredResults(run); track result.id) {
-                <div class="result-item"
+                <div class="result-item" cdkDrag cdkDragLockAxis="y"
                      [class.result-item--active]="!bulkMode && result.id === activeResultId"
                      [class.result-item--selected]="bulkMode && isResultSelected(result.id)"
                      (click)="bulkMode ? toggleResultSelection(result.id) : setActiveResult(result.id)"

@@ -72,7 +72,7 @@ public class ExternalTestRunService {
             result.setComment(resultReq.comment());
             result.setDefectLink(resultReq.defectLink());
             result.setDurationMs(resultReq.durationMs());
-            run.getResults().add(result);
+            run.addResult(result);
 
             if (resultReq.stepResults() != null && !resultReq.stepResults().isEmpty()) {
                 // stepIndex counts the steps as executed, shared blocks expanded (PRD-030).

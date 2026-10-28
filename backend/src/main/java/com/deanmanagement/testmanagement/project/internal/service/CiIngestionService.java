@@ -111,7 +111,7 @@ public class CiIngestionService {
             if (keyed != null) {
                 assignParameterSet(result, keyed, rowsPerKeyedCase.merge(keyed.getId(), 1, Integer::sum) - 1);
             }
-            run.getResults().add(result);
+            run.addResult(result);
 
             // Matched by index against the steps as executed, shared blocks expanded (PRD-030).
             List<TestStep> steps = StepExpansion.expandedSteps(testCase.getSteps());

@@ -447,6 +447,16 @@
       "ended": "Ended",
       "results": "Results",
       "mixTooltip": "{{passed}} passed, {{failed}} failed, {{blocked}} blocked, {{skipped}} skipped, {{pending}} pending"
+    },
+    "cases": {
+      "title": "Edit test cases",
+      "hint": "Drag to set the order the cases are executed in. Changes are saved straight away.",
+      "drag": "Drag to reorder",
+      "remove": "Remove from this run",
+      "addTitle": "Add test cases",
+      "add": "Add {{count}}",
+      "discardTitle": "Discard the recorded result?",
+      "discardMessage": "{{key}} already has a recorded result in this run. Removing it from the run deletes that result, and this cannot be undone."
     }
   },
   "testPlan": {

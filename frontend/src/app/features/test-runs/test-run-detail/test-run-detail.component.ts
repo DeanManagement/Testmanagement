@@ -28,6 +28,8 @@ import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { CloneTestRunDialogComponent, CloneTestRunDialogResult } from '../clone-test-run-dialog/clone-test-run-dialog.component';
+import { RunCasesDialogComponent, RunCasesDialogData } from '../run-cases-dialog/run-cases-dialog.component';
+import { CdkDrag, CdkDragDrop, CdkDropList, moveItemInArray } from '@angular/cdk/drag-drop';
 import { CompleteTestRunDialogComponent } from '../complete-test-run-dialog/complete-test-run-dialog.component';
 import { ReasonDialogData, ReopenTestRunDialogComponent } from '../reopen-test-run-dialog/reopen-test-run-dialog.component';
 import { CommentActions } from '../../../store/comment/comment.actions';
@@ -101,6 +103,7 @@ import { sharedStepHeadingAt } from '../../../shared/utils/shared-step-groups';
     WatchToggleComponent,
     IssueLinksComponent,
     AttachmentsComponent,
+    CdkDropList, CdkDrag,
   ],
   templateUrl: './test-run-detail.component.html',
   styleUrl: './test-run-detail.component.scss',
@@ -686,6 +689,38 @@ export class TestRunDetailComponent implements OnInit {
         );
       }
     });
+  }
+
+  /** TM21/TM22: a completed or aborted run keeps the cases it was run with. */
+  canEditCases(run: TestRun): boolean {
+    return run.status === 'PLANNED' || run.status === 'IN_PROGRESS';
+  }
+
+  /** TM21/TM22: add, remove and reorder; the dialog saves as it goes, so reload when it closes. */
+  openRunCases(run: TestRun): void {
+    const data: RunCasesDialogData = { projectId: this.projectId, run };
+    this.dialog.open(RunCasesDialogComponent, { data, width: '760px', maxWidth: '95vw' })
+      .afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: run.id })));
+  }
+
+  /** Drag only on the full list: with a search or status filter, a drop position would be ambiguous. */
+  get canDragResults(): boolean {
+    return !this.bulkMode && !this.executionSearchTerm && !this.resultStatusFilter;
+  }
+
+  /** TM21: drag and drop in the execution list sets the run's order. */
+  dropResult(run: TestRun, event: CdkDragDrop<unknown>): void {
+    if (!this.canDragResults || event.previousIndex === event.currentIndex) return;
+    const ordered = [...(run.results ?? [])];
+    moveItemInArray(ordered, event.previousIndex, event.currentIndex);
+    this.store.dispatch(TestRunActions.loadTestRunSuccess({ testRun: { ...run, results: ordered } }));
+    this.testRunApi.reorderResults(this.projectId, run.id, ordered.map((r) => r.id))
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (saved) => this.store.dispatch(TestRunActions.loadTestRunSuccess({ testRun: saved })),
+        error: () => this.store.dispatch(TestRunActions.loadTestRunSuccess({ testRun: run })),
+      });
   }
 
   cloneTestRun(run: TestRun): void {

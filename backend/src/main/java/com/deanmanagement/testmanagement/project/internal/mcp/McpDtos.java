@@ -248,7 +248,9 @@ final class McpDtos {
                       @Nullable String comment, @Nullable String defectLink,
                       @Nullable String parameterSetName, @Nullable Long durationMs,
                       /* PRD-048: who executed it and when; absent while pending. */
-                      @Nullable String executedBy, @Nullable Instant executedAt) {}
+                      @Nullable String executedBy, @Nullable Instant executedAt,
+                      /* TM21: 1-based place in the run's execution order. */
+                      int position) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record TestRunDetail(UUID id, String key, String name, @Nullable String environment,

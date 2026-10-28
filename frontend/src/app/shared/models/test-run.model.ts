@@ -48,6 +48,8 @@ export interface TestResult {
   updatedAt: string;
   createdBy?: string;
   updatedBy?: string;
+  /** TM21: place in the run's execution order; the server lists results by it. */
+  position?: number;
 }
 
 export interface TestRun {

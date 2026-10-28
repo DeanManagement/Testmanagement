@@ -12,6 +12,7 @@ import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.Getter;
@@ -76,6 +77,7 @@ public class TestRun extends BaseEntity {
     private TestPlan testPlan;
 
     @OneToMany(mappedBy = "testRun", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("position ASC")
     private List<TestResult> results = new ArrayList<>();
 
     @OneToOne(mappedBy = "testRun", fetch = FetchType.LAZY)
@@ -84,6 +86,16 @@ public class TestRun extends BaseEntity {
     /** PRD-035. Lazy; the global batch fetch size keeps list pages to one query per page. */
     @OneToMany(mappedBy = "testRun", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<CustomFieldValue> customFieldValues = new ArrayList<>();
+
+    /** Appends a result after the last one, so it is executed last (TM21). */
+    public void addResult(TestResult result) {
+        result.setPosition(nextResultPosition());
+        results.add(result);
+    }
+
+    public int nextResultPosition() {
+        return results.stream().mapToInt(TestResult::getPosition).max().orElse(-1) + 1;
+    }
 
     public void assignEnvironment(ProjectEnvironment environment) {
         this.projectEnvironment = environment;

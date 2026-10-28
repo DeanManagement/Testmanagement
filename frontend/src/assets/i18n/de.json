@@ -447,6 +447,16 @@
       "ended": "Beendet",
       "results": "Ergebnisse",
       "mixTooltip": "{{passed}} bestanden, {{failed}} fehlgeschlagen, {{blocked}} blockiert, {{skipped}} übersprungen, {{pending}} ausstehend"
+    },
+    "cases": {
+      "title": "Testfälle bearbeiten",
+      "hint": "Ziehen, um die Reihenfolge der Ausführung festzulegen. Änderungen werden sofort gespeichert.",
+      "drag": "Zum Verschieben ziehen",
+      "remove": "Aus diesem Lauf entfernen",
+      "addTitle": "Testfälle hinzufügen",
+      "add": "{{count}} hinzufügen",
+      "discardTitle": "Erfasstes Ergebnis verwerfen?",
+      "discardMessage": "Für {{key}} wurde in diesem Lauf bereits ein Ergebnis erfasst. Wird der Testfall entfernt, geht dieses Ergebnis unwiderruflich verloren."
     }
   },
   "testPlan": {

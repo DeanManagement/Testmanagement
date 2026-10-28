@@ -89,6 +89,22 @@ export class TestRunApiService {
     return this.http.delete<void>(`${this.baseUrl(projectId)}/${id}`);
   }
 
+  /** TM22: pending results for more cases, at the end of the run; cases already in it are skipped. */
+  addTestCases(projectId: string, runId: string, testCaseIds: string[]): Observable<TestRun> {
+    return this.http.post<TestRun>(`${this.baseUrl(projectId)}/${runId}/test-cases`, { testCaseIds });
+  }
+
+  /** TM22: 409 when a case has a recorded result, unless {@code discardRecordedResults}. */
+  removeTestCases(projectId: string, runId: string, testCaseIds: string[], discardRecordedResults: boolean): Observable<TestRun> {
+    return this.http.post<TestRun>(`${this.baseUrl(projectId)}/${runId}/test-cases/remove`,
+      { testCaseIds, discardRecordedResults });
+  }
+
+  /** TM21: every result id of the run, in the new execution order. */
+  reorderResults(projectId: string, runId: string, resultIds: string[]): Observable<TestRun> {
+    return this.http.put<TestRun>(`${this.baseUrl(projectId)}/${runId}/results/order`, { resultIds });
+  }
+
   clone(projectId: string, runId: string, request: { name: string; environment: string }): Observable<TestRun> {
     return this.http.post<TestRun>(`${this.baseUrl(projectId)}/${runId}/clone`, request);
   }

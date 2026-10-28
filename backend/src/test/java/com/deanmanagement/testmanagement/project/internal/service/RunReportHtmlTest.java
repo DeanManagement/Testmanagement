@@ -94,7 +94,7 @@ class RunReportHtmlTest {
     private static TestResultResponse result(List<StepResultResponse> steps, String executorName) {
         return new TestResultResponse(UUID.randomUUID(), UUID.randomUUID(), "SPI-7", "Checkout", null, null, null,
                 TestResultStatus.FAILED, null, null, 3, null, steps, EXECUTED, UUID.randomUUID(), executorName,
-                null, null, null, null, null, null);
+                null, null, null, null, null, null, 0);
     }
 
     private static StepResultResponse step(int orderIndex, UUID screenshotId) {

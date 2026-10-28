@@ -249,18 +249,8 @@ public class TestRunService {
 
         // If test case IDs provided, create pending results for each
         if (request.testCaseIds() != null && !request.testCaseIds().isEmpty()) {
-            List<TestCase> testCases = resolveTestCases(projectId, request.testCaseIds());
-            for (TestCase tc : testCases) {
-                // A parameterized case expands into one result per set (PRD-015); a case with no
-                // sets yields exactly one result, byte-for-byte as before this feature existed.
-                List<TestCaseParameterSet> parameterSets = parameterSetService.setsFor(tc.getId());
-                if (parameterSets.isEmpty()) {
-                    run.getResults().add(newPendingResult(run, tc, null));
-                } else {
-                    for (TestCaseParameterSet set : parameterSets) {
-                        run.getResults().add(newPendingResult(run, tc, set));
-                    }
-                }
+            for (TestCase tc : resolveTestCases(projectId, request.testCaseIds())) {
+                appendPendingResults(run, tc);
             }
         }
 
@@ -299,7 +289,7 @@ public class TestRunService {
                 .toList();
     }
 
-    private static boolean isClosed(TestRunStatus status) {
+    static boolean isClosed(TestRunStatus status) {
         return status == TestRunStatus.COMPLETED || status == TestRunStatus.ABORTED;
     }
 
@@ -323,6 +313,22 @@ public class TestRunService {
     private static String runNameFor(String name, ProjectEnvironment environment) {
         String combined = name + " · " + environment.getName();
         return combined.length() > MAX_RUN_NAME_LENGTH ? combined.substring(0, MAX_RUN_NAME_LENGTH) : combined;
+    }
+
+    /**
+     * Appends the pending results of one case to the run, as creating the run does (and adding a
+     * case later, TM22). A parameterized case expands into one result per set (PRD-015); a case with
+     * no sets yields exactly one result, byte-for-byte as before this feature existed.
+     */
+    void appendPendingResults(TestRun run, TestCase tc) {
+        List<TestCaseParameterSet> parameterSets = parameterSetService.setsFor(tc.getId());
+        if (parameterSets.isEmpty()) {
+            run.addResult(newPendingResult(run, tc, null));
+        } else {
+            for (TestCaseParameterSet set : parameterSets) {
+                run.addResult(newPendingResult(run, tc, set));
+            }
+        }
     }
 
     /**
@@ -538,6 +544,7 @@ public class TestRunService {
             result.setDefectLink(request.defectLink().isBlank() ? null : request.defectLink().strip());
         }
         result.setDurationMs(request.durationMs());
+        result.setPosition(run.nextResultPosition());
 
         result = testResultRepository.save(result);
         if (request.status() == TestResultStatus.FAILED) {
@@ -684,7 +691,7 @@ public class TestRunService {
      * {@code resolveTestCases} makes, and for the same reason: a partial run that looks complete is
      * worse than no run.
      */
-    private List<TestCase> resolveTestCases(UUID projectId, Set<UUID> testCaseIds) {
+    List<TestCase> resolveTestCases(UUID projectId, Set<UUID> testCaseIds) {
         List<TestCase> found = testCaseRepository.findByIdInAndProjectId(testCaseIds, projectId);
         if (found.size() != testCaseIds.size()) {
             Set<UUID> foundIds = found.stream().map(TestCase::getId).collect(Collectors.toSet());

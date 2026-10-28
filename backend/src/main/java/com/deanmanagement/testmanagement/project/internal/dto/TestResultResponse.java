@@ -35,6 +35,8 @@ public record TestResultResponse(
         Instant createdAt,
         Instant updatedAt,
         UUID createdBy,
-        UUID updatedBy
+        UUID updatedBy,
+        /* TM21: where the result sits in its run; results are listed in ascending order. */
+        int position
 ) {
 }

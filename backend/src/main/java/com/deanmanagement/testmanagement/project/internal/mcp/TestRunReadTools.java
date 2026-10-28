@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.mcp;
 import com.deanmanagement.testmanagement.project.internal.dto.comparison.RunComparisonResponse;
 import com.deanmanagement.testmanagement.project.internal.service.RunComparisonService;
 import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
+import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.TestRunSummaryResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestRunListFilter;
@@ -21,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.stream.IntStream;
 import java.util.UUID;
 
 /**
@@ -142,6 +144,8 @@ public class TestRunReadTools {
                     Each result carries its own id; pass that to record_test_result when a test
                     case appears more than once in the run, which happens when the case is
                     parameterized (those results also carry parameterSetName).
+                    Results are listed in execution order; position is each one's 1-based place in
+                    it (see reorder_test_run_cases).
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
@@ -154,16 +158,20 @@ public class TestRunReadTools {
         TestRunResponse run = testRunService.findById(caller.projectId(),
                 McpRunReferences.resolve(testRunRepository, caller.projectId(), idOrKey));
 
-        List<McpDtos.TestResult> results = (run.results() == null ? List.<
-                com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse>of()
-                : run.results()).stream()
-                .filter(r -> onlyStatus == null || onlyStatus.isEmpty() || onlyStatus.contains(r.status()))
-                .map(r -> new McpDtos.TestResult(r.id(), r.testCaseId(), r.testCaseKey(), r.testCaseTitle(),
-                        r.status(), r.comment(), r.defectLink(), r.parameterSetName(), r.durationMs(),
-                        r.executedByName(), r.executedAt()))
+        List<TestResultResponse> all = run.results() == null ? List.of() : run.results();
+        // Position counts every result of the run, so it stays the same when onlyStatus filters some out.
+        List<McpDtos.TestResult> results = IntStream.range(0, all.size())
+                .filter(i -> onlyStatus == null || onlyStatus.isEmpty() || onlyStatus.contains(all.get(i).status()))
+                .mapToObj(i -> toResult(all.get(i), i + 1))
                 .toList();
 
         return new McpDtos.TestRunDetail(run.id(), run.key(), run.name(), run.environment(),
                 run.status(), run.startTime(), run.endTime(), results, run.effort());
+    }
+
+    private static McpDtos.TestResult toResult(TestResultResponse r, int position) {
+        return new McpDtos.TestResult(r.id(), r.testCaseId(), r.testCaseKey(), r.testCaseTitle(),
+                r.status(), r.comment(), r.defectLink(), r.parameterSetName(), r.durationMs(),
+                r.executedByName(), r.executedAt(), position);
     }
 }
