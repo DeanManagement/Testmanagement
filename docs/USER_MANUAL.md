@@ -697,6 +697,34 @@ actually *passed* — not merely those that have a test attached. A requirement 
 that has never run counts as untested, not covered. That is deliberate: coverage that counts
 intentions rather than evidence is worse than no number at all.
 
+### Syncing requirements from Azure DevOps
+
+When the project's [issue tracker](#issue-tracker) is Azure DevOps, a project admin can pull the
+requirements from there instead of typing them in. The **Issue tracker** settings page then shows a
+**Requirement sync** card:
+
+| Setting | Notes |
+|---|---|
+| **WIQL query** | A flat query returning the work items to sync, e.g. `SELECT [System.Id] FROM WorkItems WHERE [System.TeamProject] = @project AND [System.WorkItemType] IN ('Epic', 'Feature', 'User Story')` |
+| **Requirement ID prefix** | Put in front of the work item id: `AB#` turns work item 123 into `AB#123`. Empty uses the bare id |
+| **States that mean Approved / Obsolete** | Comma-separated state names; every other state is *Draft*. Azure priority 1–4 becomes Critical, High, Medium, Low |
+| **Include in the scheduled sync** | Synced automatically when the server has a schedule (`REQUIREMENT_SYNC_CRON`) |
+
+**Preview** shows what a sync would create, update and mark obsolete without changing anything.
+Once sync is enabled, the requirements page has **Sync now**, which shows the same preview and
+asks before running.
+
+A sync matches work items to requirements by ID and copies the title, the description (as plain
+text), the state, the priority and a link to the work item. A work item's parent becomes the
+requirement's parent when that parent is synced too; otherwise the requirement sits at the top.
+A work item that no longer matches the query is marked **Obsolete**, never deleted, so its
+coverage history stays.
+
+The sync is one-way: Azure DevOps owns those fields. On a synced requirement they are read-only
+here, and the API, the MCP tools and a CSV import refuse to change them — change them in Azure
+DevOps and sync again. Custom fields and linked test cases stay yours to edit. A failed sync
+shows Azure DevOps's own error message.
+
 ---
 
 ## 10. Test runs
@@ -1744,6 +1772,7 @@ Optional, with defaults:
 | `WEBHOOKS_ALLOW_PRIVATE_TARGETS` | `false` |
 | `BUILDSERVER_ALLOW_PRIVATE_TARGETS` | `false` |
 | `FLAKY_AUTO_LABEL` | `false` |
+| `REQUIREMENT_SYNC_CRON` | `-` (off) — Spring cron for the [scheduled requirement sync](#syncing-requirements-from-azure-devops), e.g. `0 0 * * * *` hourly |
 | `APP_VERSION` | `dev` |
 
 The four `ALLOW_PRIVATE_*` flags are SSRF guards. They stop an administrator — or anyone who has

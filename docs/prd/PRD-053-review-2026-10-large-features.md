@@ -112,11 +112,18 @@ custom fields, and there is no import or tracker sync. SN has 179 requirements e
    for GitLab/GitHub/Forgejo) and upsert by `externalId`, storing the issue URL. One direction
    only — the tracker owns requirement text; local edits to synced fields are refused.
 
-**Decision needed:** whether the SN project's requirements live in Jira or Azure DevOps — that
-decides which provider gets sync first.
+**Decision (2026-10-28):** Azure DevOps is the main tracker; sync is built for Azure DevOps only,
+with the settings and the `source` column kept provider-neutral for later.
 
 **Status (2026-10-28):** steps 1–2 and the CSV import of step 3 are implemented (V91, V92).
-Tracker sync is **pending** that decision and not started. As built: deleting a requirement moves
+Tracker sync from Azure DevOps is implemented too (V93, V94): per-project settings (WIQL query,
+ID prefix, state lists for APPROVED/OBSOLETE; priority 1–4 maps to CRITICAL…LOW) on the project's
+Azure DevOps tracker connection; "Sync now" with a dry-run preview, MCP `sync_requirements`
+(ADMIN) and an opt-in scheduled sync (`app.requirementsync.cron`, off by default). Work items are
+read 200 per `workitemsbatch` call and upserted by externalId; the HTML description is stored as
+plain text; the parent comes from the hierarchy link when that parent is synced too. A work item
+leaving the query is marked OBSOLETE, not deleted. Synced fields are refused in REST, MCP and CSV
+import; custom fields and test case links stay editable. As built for steps 1–2: deleting a requirement moves
 its children up to its own parent; an OBSOLETE requirement does not count towards coverage (and
 does not hold its parent back); the coverage summary counts leaves only, a parent's status being
 derived from them. The CSV import upserts by `externalId`; a present `description` or

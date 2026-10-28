@@ -137,7 +137,8 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 **Read** — `get_project`, `search_test_cases`, `get_test_case`, `list_test_case_folders`,
 `list_custom_fields`,
 `list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`, `list_test_runs`,
-`get_test_run`, `compare_test_runs`, `list_requirements`, `get_requirement`, `get_traceability_matrix`,
+`get_test_run`, `compare_test_runs`, `list_requirements`, `get_requirement` (a synced requirement names
+its `source`, `sourceUrl` and `lastSyncedAt`; `update_requirement` refuses its synced fields), `get_traceability_matrix`,
 `list_bug_reports`, `get_bug_report`, `list_comments`, `list_parameter_sets`, `list_test_case_versions`,
 `get_test_case_version`, `list_shared_steps`, `get_shared_step`, `download_test_case_attachment`,
 `list_environments`, `get_project_dashboard`, `list_flaky_tests`, `get_release_readiness`,
@@ -164,7 +165,9 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 
 **Project settings** (ADMIN keys only, like the settings pages) — `create_environment`,
 `update_environment` (rename, describe, archive / restore), `create_custom_field`,
-`update_custom_field` (rename, replace options, required, archive / restore). A key may hold
+`update_custom_field` (rename, replace options, required, archive / restore), `sync_requirements`
+(pull requirements from Azure DevOps with the project's sync settings; `dryRun` only counts what
+would change). A key may hold
 VIEWER, TESTER or ADMIN; only system admins create keys.
 
 **Project configuration** (ADMIN keys that also hold the Configuration group, see below) —
