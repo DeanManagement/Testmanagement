@@ -12,6 +12,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -34,9 +35,26 @@ public class StepResult extends BaseEntity {
     @JoinColumn(name = "test_result_id", nullable = false)
     private TestResult testResult;
 
+    @Setter(AccessLevel.NONE)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "test_step_id")
     private TestStep testStep;
+
+    /*
+     * The step's text when this result was created (TM25). Replacing a case's steps deletes the old
+     * rows and the link above goes null, so without these an open run lost the instructions.
+     */
+    @Setter(AccessLevel.NONE)
+    @Column(name = "step_action", columnDefinition = "TEXT")
+    private String stepAction;
+
+    @Setter(AccessLevel.NONE)
+    @Column(name = "step_expected_result", columnDefinition = "TEXT")
+    private String stepExpectedResult;
+
+    @Setter(AccessLevel.NONE)
+    @Column(name = "step_test_data", columnDefinition = "TEXT")
+    private String stepTestData;
 
     /**
      * Order within the result (PRD-030): expanded steps come from several owners, each numbered from
@@ -47,4 +65,12 @@ public class StepResult extends BaseEntity {
 
     @OneToOne(mappedBy = "stepResult", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private Screenshot screenshot;
+
+    /** Links the step and keeps a copy of its text, so the result still reads after the step is gone. */
+    public void setTestStep(TestStep testStep) {
+        this.testStep = testStep;
+        this.stepAction = testStep == null ? null : testStep.getAction();
+        this.stepExpectedResult = testStep == null ? null : testStep.getExpectedResult();
+        this.stepTestData = testStep == null ? null : testStep.getTestData();
+    }
 }

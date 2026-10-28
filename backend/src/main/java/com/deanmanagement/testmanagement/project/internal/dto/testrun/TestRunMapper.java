@@ -79,9 +79,10 @@ public abstract class TestRunMapper {
     }
 
     @Mapping(target = "testStepId", source = "testStep.id")
-    @Mapping(target = "action", source = "testStep.action")
-    @Mapping(target = "expectedResult", source = "testStep.expectedResult")
-    @Mapping(target = "testData", source = "testStep.testData")
+    // The live step while it exists, else the copy taken when the result was created (TM25).
+    @Mapping(target = "action", expression = "java(stepResult.getTestStep() != null ? stepResult.getTestStep().getAction() : stepResult.getStepAction())")
+    @Mapping(target = "expectedResult", expression = "java(stepResult.getTestStep() != null ? stepResult.getTestStep().getExpectedResult() : stepResult.getStepExpectedResult())")
+    @Mapping(target = "testData", expression = "java(stepResult.getTestStep() != null ? stepResult.getTestStep().getTestData() : stepResult.getStepTestData())")
     @Mapping(target = "orderIndex", expression = "java(orderIndexOf(stepResult))")
     @Mapping(target = "sharedStepTitle", source = "testStep.sharedStep.title")
     @Mapping(target = "screenshotId", source = "screenshot.id")
