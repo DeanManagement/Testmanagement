@@ -8,7 +8,10 @@ import { RequirementApiService } from '../../../core/services/requirement-api.se
 import { Requirement } from '../../../shared/models/requirement.model';
 
 function requirement(id: string, externalId: string): Requirement {
-  return { id, externalId, title: 'T ' + externalId, description: null, testCases: [], createdAt: '', updatedAt: '' };
+  return {
+    id, externalId, title: 'T ' + externalId, description: null, status: 'DRAFT', priority: 'MEDIUM', customFields: {},
+    testCases: [], createdAt: '', updatedAt: '',
+  };
 }
 
 /** TM08: the requirements a case proves, linked and unlinked from the case. */

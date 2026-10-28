@@ -41,6 +41,10 @@ public class CustomFieldValue extends BaseEntity {
     @JoinColumn(name = "bug_report_id")
     private BugReport bugReport;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "requirement_id")
+    private Requirement requirement;
+
     @Column(length = 500)
     private String valueText;
 

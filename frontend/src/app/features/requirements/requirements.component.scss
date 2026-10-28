@@ -131,6 +131,12 @@
   &--uncovered { background: var(--tm-tint-danger-bg); color: var(--tm-tint-danger-fg); }
 }
 
+.lifecycle-badge {
+  &--draft { background: var(--tm-tint-neutral-bg); color: var(--tm-tint-neutral-fg); }
+  &--approved { background: var(--tm-tint-success-bg); color: var(--tm-tint-success-fg); }
+  &--obsolete { background: var(--tm-tint-neutral-bg); color: var(--tm-text-secondary); text-decoration: line-through; }
+}
+
 .link-picker {
   display: flex;
   align-items: center;

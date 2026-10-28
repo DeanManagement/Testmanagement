@@ -5,7 +5,10 @@ import com.deanmanagement.testmanagement.project.internal.dto.requirement.Covera
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.RequirementResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.SaveRequirementRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.TraceabilityRowResponse;
+import com.deanmanagement.testmanagement.project.internal.entity.Priority;
+import com.deanmanagement.testmanagement.project.internal.entity.RequirementStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
+import com.deanmanagement.testmanagement.project.internal.service.CustomFieldWriteMode;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.service.RequirementService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
@@ -19,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -89,7 +93,9 @@ public class RequirementTools {
             description = """
                     Record a requirement. externalId is the identifier it is known by outside this
                     tool — a Jira key, a spec section number, a clause reference — and must be
-                    unique in the project.
+                    unique in the project. status is DRAFT (default), APPROVED or OBSOLETE;
+                    priority is LOW, MEDIUM (default), HIGH or CRITICAL. customFields are keyed by
+                    field NAME (list_custom_fields with entityType REQUIREMENT).
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
@@ -99,15 +105,21 @@ public class RequirementTools {
             String externalId,
             @McpToolParam(description = "What the requirement states. Max 500 characters") String title,
             @McpToolParam(description = "Fuller wording, if the title is not the whole story", required = false)
-            String description) {
+            String description,
+            @McpToolParam(description = "DRAFT, APPROVED or OBSOLETE; default DRAFT", required = false)
+            RequirementStatus status,
+            @McpToolParam(description = "LOW, MEDIUM, HIGH or CRITICAL; default MEDIUM", required = false)
+            Priority priority,
+            @McpToolParam(description = "Custom field values keyed by field name", required = false)
+            Map<String, Object> customFields) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
-        var request = new SaveRequirementRequest(externalId, title, description);
+        var request = new SaveRequirementRequest(externalId, title, description, status, priority, customFields);
         validator.validate(request);
 
-        return toRequirement(
-                requirementService.create(caller.projectId(), request, caller.userId()));
+        return toRequirement(requirementService.create(caller.projectId(), request, caller.userId(),
+                CustomFieldWriteMode.MACHINE));
     }
 
     @McpTool(
@@ -150,9 +162,10 @@ public class RequirementTools {
     @McpTool(
             name = "update_requirement",
             description = """
-                    Change a requirement's externalId, title or description. Only the fields you
-                    pass are changed; to CLEAR the description pass an empty string "". An
-                    externalId already used by another requirement in this project is refused.
+                    Change a requirement's externalId, title, description, status, priority or
+                    custom fields. Only the fields you pass are changed; to CLEAR the description
+                    pass an empty string "", to clear a custom field pass it as null. An externalId
+                    already used by another requirement in this project is refused.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
@@ -164,12 +177,20 @@ public class RequirementTools {
             @McpToolParam(description = "New title, max 500 characters", required = false)
             String title,
             @McpToolParam(description = "New description; \"\" clears it", required = false)
-            String description) {
+            String description,
+            @McpToolParam(description = "DRAFT, APPROVED or OBSOLETE", required = false)
+            RequirementStatus status,
+            @McpToolParam(description = "LOW, MEDIUM, HIGH or CRITICAL", required = false)
+            Priority priority,
+            @McpToolParam(description = "Custom field values keyed by field name; null clears one", required = false)
+            Map<String, Object> customFields) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
-        if (externalId == null && title == null && description == null) {
-            throw new McpToolException("Nothing to update: pass externalId, title or description.");
+        if (externalId == null && title == null && description == null && status == null && priority == null
+                && customFields == null) {
+            throw new McpToolException(
+                    "Nothing to update: pass externalId, title, description, status, priority or customFields.");
         }
 
         // Merged here because the service is a full replace; safe only while this method stays
@@ -178,11 +199,14 @@ public class RequirementTools {
         var request = new SaveRequirementRequest(
                 externalId == null ? current.externalId() : externalId,
                 title == null ? current.title() : title,
-                description == null ? current.description() : emptyToNull(description));
+                description == null ? current.description() : emptyToNull(description),
+                status == null ? current.status() : status,
+                priority == null ? current.priority() : priority,
+                customFields);
         validator.validate(request);
 
-        return toRequirement(
-                requirementService.update(caller.projectId(), id, request, caller.userId()));
+        return toRequirement(requirementService.update(caller.projectId(), id, request, caller.userId(),
+                CustomFieldWriteMode.MACHINE));
     }
 
     @McpTool(
@@ -256,7 +280,7 @@ public class RequirementTools {
 
         List<McpDtos.TraceabilityRow> mapped = rows.stream()
                 .map(row -> new McpDtos.TraceabilityRow(
-                        row.requirementId(), row.externalId(), row.title(),
+                        row.requirementId(), row.externalId(), row.title(), row.status(), row.priority(),
                         row.coverage().name(),
                         row.cells().stream()
                                 .map(cell -> new McpDtos.TraceabilityCell(cell.testCaseId(),
@@ -275,7 +299,9 @@ public class RequirementTools {
 
     private static McpDtos.Requirement toRequirement(RequirementResponse requirement) {
         return new McpDtos.Requirement(requirement.id(), requirement.externalId(),
-                requirement.title(), requirement.description(),
+                requirement.title(), requirement.description(), requirement.status(), requirement.priority(),
+                requirement.customFields() == null || requirement.customFields().isEmpty()
+                        ? null : requirement.customFields(),
                 requirement.testCases() == null ? List.of() : requirement.testCases().stream()
                         .map(tc -> new McpDtos.TestCaseRef(tc.id(), tc.title()))
                         .toList());

@@ -86,11 +86,31 @@
           <textarea matInput rows="3" [(ngModel)]="formDescription" data-test-id="requirement-description-input"></textarea>
           <mat-hint>{{ 'common.markdownHint' | translate }}</mat-hint>
         </mat-form-field>
+        <div class="field-row">
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'requirement.lifecycleLabel' | translate }}</mat-label>
+            <mat-select [(ngModel)]="formStatus" data-test-id="requirement-status-select">
+              @for (status of requirementStatuses; track status) {
+                <mat-option [value]="status">{{ 'requirement.lifecycle.' + status | translate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ 'requirement.priorityLabel' | translate }}</mat-label>
+            <mat-select [(ngModel)]="formPriority" data-test-id="requirement-priority-select">
+              @for (priority of priorities; track priority) {
+                <mat-option [value]="priority">{{ 'priority.' + priority | translate }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <app-custom-fields-form [projectId]="projectId" entityType="REQUIREMENT" [(ngModel)]="formCustomFields"
+                                #customFields="ngModel" />
         <div class="form-actions">
           <button mat-button (click)="closeForm()" data-test-id="requirement-cancel-btn">
             {{ 'common.cancel' | translate }}
           </button>
-          <button mat-flat-button [disabled]="!canSave || saving" (click)="save()" data-test-id="requirement-save-btn">
+          <button mat-flat-button [disabled]="!canSave || saving || customFields.invalid" (click)="save()" data-test-id="requirement-save-btn">
             {{ (saving ? 'common.saving' : 'common.save') | translate }}
           </button>
         </div>
@@ -119,11 +139,30 @@
           </mat-select>
         </mat-form-field>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'requirement.lifecycleLabel' | translate }}</mat-label>
+          <mat-select [(ngModel)]="statusFilter" data-test-id="requirement-status-filter">
+            <mat-option value="">{{ 'requirement.allStatuses' | translate }}</mat-option>
+            @for (status of requirementStatuses; track status) {
+              <mat-option [value]="status">{{ 'requirement.lifecycle.' + status | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'requirement.priorityLabel' | translate }}</mat-label>
+          <mat-select [(ngModel)]="priorityFilter" data-test-id="requirement-priority-filter">
+            <mat-option value="">{{ 'requirement.allStatuses' | translate }}</mat-option>
+            @for (priority of priorities; track priority) {
+              <mat-option [value]="priority">{{ 'priority.' + priority | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'requirement.sortBy' | translate }}</mat-label>
           <mat-select [(ngModel)]="sortColumn" data-test-id="requirement-sort-select">
             <mat-option value="externalId">{{ 'requirement.externalId' | translate }}</mat-option>
             <mat-option value="title">{{ 'requirement.name' | translate }}</mat-option>
             <mat-option value="coverage">{{ 'requirement.coverage' | translate }}</mat-option>
+            <mat-option value="priority">{{ 'requirement.priorityLabel' | translate }}</mat-option>
           </mat-select>
         </mat-form-field>
         <button mat-icon-button (click)="toggleSortDirection()"
@@ -144,6 +183,8 @@
               <div class="requirement-heading">
                 <span class="requirement-key">{{ requirement.externalId }}</span>
                 <span class="requirement-name">{{ requirement.title }}</span>
+                <span class="badge badge--{{ requirement.priority | lowercase }}" data-test-id="requirement-priority">{{ 'priority.' + requirement.priority | translate }}</span>
+                <span class="badge lifecycle-badge lifecycle-badge--{{ requirement.status | lowercase }}" data-test-id="requirement-status">{{ 'requirement.lifecycle.' + requirement.status | translate }}</span>
                 @if (rowFor(requirement.id); as row) {
                   <span class="badge coverage-badge coverage-badge--{{ row.coverage | lowercase }}"
                         [matTooltip]="'requirement.statusHint.' + row.coverage | translate">
@@ -173,6 +214,7 @@
             @if (requirement.description) {
               <div class="requirement-description tm-markdown" [innerHTML]="requirement.description | markdown"></div>
             }
+            <app-custom-fields-display [values]="requirement.customFields" />
 
             @if (linkingId === requirement.id) {
               <div class="link-picker" [attr.data-test-id]="'requirement-link-picker-' + requirement.externalId">

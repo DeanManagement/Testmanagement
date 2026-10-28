@@ -84,7 +84,7 @@ public class ProjectDiscoveryTools {
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     public McpDtos.CustomFieldList listCustomFields(
-            @McpToolParam(description = "Only fields of TEST_CASE, TEST_RUN or BUG_REPORT; omit for all",
+            @McpToolParam(description = "Only fields of TEST_CASE, TEST_RUN, BUG_REPORT or REQUIREMENT; omit for all",
                     required = false) CustomFieldEntityType entityType) {
         var caller = callerContext.require();
         return new McpDtos.CustomFieldList(customFieldService.list(caller.projectId(), entityType).stream()

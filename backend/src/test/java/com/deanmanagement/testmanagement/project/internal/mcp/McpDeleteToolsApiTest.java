@@ -215,7 +215,7 @@ class McpDeleteToolsApiTest extends McpToolApiTestSupport {
     void deletingARequirementKeepsItsCases() {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
-        UUID requirementId = requirementTools.createRequirement("REQ-1", "Users can log in", null).id();
+        UUID requirementId = requirementTools.createRequirement("REQ-1", "Users can log in", null, null, null, null).id();
         requirementTools.linkTestCasesToRequirement(requirementId, java.util.List.of(login.id()));
 
         McpDtos.Deleted deleted = requirementTools.deleteRequirement("REQ-1");

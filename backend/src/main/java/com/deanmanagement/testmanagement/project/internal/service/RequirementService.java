@@ -7,7 +7,10 @@ import com.deanmanagement.testmanagement.project.internal.dto.requirement.Tracea
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.TraceabilityRowResponse.CoverageStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
+import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
+import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Requirement;
+import com.deanmanagement.testmanagement.project.internal.entity.RequirementStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.repository.RequirementRepository;
@@ -50,6 +53,7 @@ public class RequirementService {
     private final TestResultRepository testResultRepository;
     private final TestPlanRepository testPlanRepository;
     private final AuditService auditService;
+    private final CustomFieldValueWriter customFieldWriter;
 
     // ---- CRUD -------------------------------------------------------------
 
@@ -89,6 +93,12 @@ public class RequirementService {
 
     @Transactional
     public RequirementResponse create(UUID projectId, SaveRequirementRequest request, UUID actorId) {
+        return create(projectId, request, actorId, CustomFieldWriteMode.INTERACTIVE);
+    }
+
+    @Transactional
+    public RequirementResponse create(UUID projectId, SaveRequirementRequest request, UUID actorId,
+                                      CustomFieldWriteMode mode) {
         String externalId = request.externalId().trim();
         if (requirementRepository.existsByProjectIdAndExternalId(projectId, externalId)) {
             throw new DuplicateKeyException("externalId", externalId);
@@ -98,6 +108,8 @@ public class RequirementService {
         requirement.setExternalId(externalId);
         requirement.setTitle(request.title().trim());
         requirement.setDescription(request.description());
+        applyFields(requirement, request);
+        customFieldWriter.write(requirement, request.customFields(), mode);
         requirement = requirementRepository.save(requirement);
 
         auditService.log(projectId, actorId, AuditAction.CREATED,
@@ -107,6 +119,12 @@ public class RequirementService {
 
     @Transactional
     public RequirementResponse update(UUID projectId, UUID id, SaveRequirementRequest request, UUID actorId) {
+        return update(projectId, id, request, actorId, CustomFieldWriteMode.INTERACTIVE);
+    }
+
+    @Transactional
+    public RequirementResponse update(UUID projectId, UUID id, SaveRequirementRequest request, UUID actorId,
+                                      CustomFieldWriteMode mode) {
         Requirement requirement = require(projectId, id);
         String externalId = request.externalId().trim();
 
@@ -117,6 +135,8 @@ public class RequirementService {
         requirement.setExternalId(externalId);
         requirement.setTitle(request.title().trim());
         requirement.setDescription(request.description());
+        applyFields(requirement, request);
+        customFieldWriter.write(requirement, request.customFields(), mode);
         requirement = requirementRepository.save(requirement);
 
         auditService.log(projectId, actorId, AuditAction.UPDATED,
@@ -194,7 +214,7 @@ public class RequirementService {
 
             rows.add(new TraceabilityRowResponse(
                     requirement.getId(), requirement.getExternalId(), requirement.getTitle(),
-                    cells, rollUp(cells)));
+                    requirement.getStatus(), requirement.getPriority(), cells, rollUp(cells)));
         }
         return rows;
     }
@@ -204,7 +224,10 @@ public class RequirementService {
     }
 
     public CoverageSummaryResponse coverage(UUID projectId, UUID testPlanId) {
-        List<TraceabilityRowResponse> rows = matrix(projectId, testPlanId);
+        // An obsolete requirement no longer needs proving, so it neither helps nor hurts coverage.
+        List<TraceabilityRowResponse> rows = matrix(projectId, testPlanId).stream()
+                .filter(r -> r.status() != RequirementStatus.OBSOLETE)
+                .toList();
         long total = rows.size();
         long uncovered = rows.stream().filter(r -> r.coverage() == CoverageStatus.UNCOVERED).count();
         long untested = rows.stream().filter(r -> r.coverage() == CoverageStatus.UNTESTED).count();
@@ -270,6 +293,12 @@ public class RequirementService {
 
     // ---- helpers ----------------------------------------------------------
 
+    /** Null status / priority mean the defaults, as for a new requirement. */
+    private static void applyFields(Requirement requirement, SaveRequirementRequest request) {
+        requirement.setStatus(request.status() == null ? RequirementStatus.DRAFT : request.status());
+        requirement.setPriority(request.priority() == null ? Priority.MEDIUM : request.priority());
+    }
+
     private Requirement require(UUID projectId, UUID id) {
         return requirementRepository.findByIdAndProjectId(id, projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Requirement", id));
@@ -293,6 +322,9 @@ public class RequirementService {
                 requirement.getExternalId(),
                 requirement.getTitle(),
                 requirement.getDescription(),
+                requirement.getStatus(),
+                requirement.getPriority(),
+                CustomFieldValueMaps.toMap(requirement.getCustomFieldValues()),
                 cases,
                 requirement.getCreatedAt(),
                 requirement.getUpdatedAt());

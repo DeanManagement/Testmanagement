@@ -23,8 +23,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class TraceabilityExportService {
 
-    private static final String[] HEADERS = {"requirementId", "requirementTitle", "requirementCoverage",
-            "testCaseKey", "testCaseTitle", "latestResult"};
+    private static final String[] HEADERS = {"requirementId", "requirementTitle", "requirementStatus",
+            "requirementPriority", "requirementCoverage", "testCaseKey", "testCaseTitle", "latestResult"};
 
     private final RequirementService requirementService;
 
@@ -34,11 +34,13 @@ public class TraceabilityExportService {
         try (CSVPrinter printer = new CSVPrinter(out, CSVFormat.DEFAULT.builder().setHeader(HEADERS).build())) {
             for (TraceabilityRowResponse row : requirementService.matrix(projectId, testPlanId)) {
                 if (row.cells().isEmpty()) {
-                    printer.printRecord(CsvCells.safe(row.externalId()), CsvCells.safe(row.title()), row.coverage(),
+                    printer.printRecord(CsvCells.safe(row.externalId()), CsvCells.safe(row.title()), row.status(),
+                            row.priority(), row.coverage(),
                             "", "", "");
                 }
                 for (TraceabilityRowResponse.Cell cell : row.cells()) {
-                    printer.printRecord(CsvCells.safe(row.externalId()), CsvCells.safe(row.title()), row.coverage(),
+                    printer.printRecord(CsvCells.safe(row.externalId()), CsvCells.safe(row.title()), row.status(),
+                            row.priority(), row.coverage(),
                             cell.testCaseKey(), CsvCells.safe(cell.testCaseTitle()), cell.status());
                 }
             }

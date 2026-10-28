@@ -29,11 +29,16 @@ import {
 import {
   CoverageStatus,
   CoverageSummary,
+  REQUIREMENT_STATUSES,
   Requirement,
+  RequirementStatus,
   SaveRequirementRequest,
   TraceabilityRow,
 } from '../../shared/models/requirement.model';
-import { TestCase } from '../../shared/models/test-case.model';
+import { Priority, TestCase } from '../../shared/models/test-case.model';
+import { CustomFieldValues } from '../../shared/models/custom-field.model';
+import { CustomFieldsFormComponent } from '../../shared/components/custom-fields/custom-fields-form.component';
+import { CustomFieldsDisplayComponent } from '../../shared/components/custom-fields/custom-fields-display.component';
 import { RequirementSortColumn, viewRequirements } from './requirement-view';
 
 /**
@@ -59,6 +64,8 @@ import { RequirementSortColumn, viewRequirements } from './requirement-view';
     MatTooltipModule,
     MatMenuModule,
     TranslateModule,
+    CustomFieldsFormComponent,
+    CustomFieldsDisplayComponent,
   ],
   templateUrl: './requirements.component.html',
   styleUrl: './requirements.component.scss',
@@ -88,14 +95,21 @@ export class RequirementsComponent implements OnInit {
   formExternalId = '';
   formTitle = '';
   formDescription = '';
+  formStatus: RequirementStatus = 'DRAFT';
+  formPriority: Priority = 'MEDIUM';
+  formCustomFields: CustomFieldValues = {};
 
   /** Which requirement's link picker is open, and what is selected in it. */
   linkingId: string | null = null;
   linkSelection = '';
 
   readonly coverageStatuses: CoverageStatus[] = ['PASSED', 'FAILED', 'BLOCKED', 'SKIPPED', 'UNTESTED', 'UNCOVERED'];
+  readonly requirementStatuses = REQUIREMENT_STATUSES;
+  readonly priorities: Priority[] = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
   searchQuery = '';
   coverageFilter: CoverageStatus | '' = '';
+  statusFilter: RequirementStatus | '' = '';
+  priorityFilter: Priority | '' = '';
   sortColumn: RequirementSortColumn = 'externalId';
   sortDirection: 'asc' | 'desc' = 'asc';
 
@@ -106,6 +120,8 @@ export class RequirementsComponent implements OnInit {
     return viewRequirements(this.requirements, this.rowsById, {
       query: this.searchQuery,
       coverage: this.coverageFilter,
+      status: this.statusFilter,
+      priority: this.priorityFilter,
       sort: { active: this.sortColumn, direction: this.sortDirection },
     });
   }
@@ -174,6 +190,9 @@ export class RequirementsComponent implements OnInit {
     this.formExternalId = '';
     this.formTitle = '';
     this.formDescription = '';
+    this.formStatus = 'DRAFT';
+    this.formPriority = 'MEDIUM';
+    this.formCustomFields = {};
   }
 
   openEdit(requirement: Requirement): void {
@@ -182,6 +201,9 @@ export class RequirementsComponent implements OnInit {
     this.formExternalId = requirement.externalId;
     this.formTitle = requirement.title;
     this.formDescription = requirement.description ?? '';
+    this.formStatus = requirement.status;
+    this.formPriority = requirement.priority;
+    this.formCustomFields = requirement.customFields ?? {};
   }
 
   closeForm(): void {
@@ -198,6 +220,9 @@ export class RequirementsComponent implements OnInit {
       externalId: this.formExternalId.trim(),
       title: this.formTitle.trim(),
       description: this.formDescription.trim() || undefined,
+      status: this.formStatus,
+      priority: this.formPriority,
+      customFields: this.formCustomFields,
     };
     const call = this.editingId
       ? this.api.update(this.projectId, this.editingId, request)

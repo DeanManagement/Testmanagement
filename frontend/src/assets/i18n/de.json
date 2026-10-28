@@ -1340,7 +1340,7 @@
       "UNTESTED": "Ein Test ist verknüpft, wurde aber nie ausgeführt — die Anforderung ist damit noch nicht belegt.",
       "UNCOVERED": "Dieser Anforderung ist kein Testfall zugeordnet."
     },
-    "search": "Nach ID oder Titel suchen",
+    "search": "Nach ID, Titel oder Zusatzfeld suchen",
     "coverageFilter": "Abdeckung",
     "allStatuses": "Alle",
     "sortBy": "Sortieren nach",
@@ -1349,6 +1349,13 @@
       "desc": "Absteigend"
     },
     "noMatches": "Keine Anforderungen entsprechen diesen Filtern.",
+    "lifecycleLabel": "Status",
+    "lifecycle": {
+      "DRAFT": "Entwurf",
+      "APPROVED": "Freigegeben",
+      "OBSOLETE": "Veraltet"
+    },
+    "priorityLabel": "Priorität",
     "export": {
       "button": "CSV exportieren",
       "allRuns": "Neueste Ergebnisse aller Läufe",
@@ -1486,7 +1493,7 @@
   },
   "customField": {
     "title": "Benutzerdefinierte Felder",
-    "description": "Zusätzliche typisierte Felder für Testfälle, Testläufe und Fehlerberichte dieses Projekts, etwa Komponente, Sprint oder Kunde.",
+    "description": "Zusätzliche typisierte Felder für Testfälle, Testläufe, Fehlerberichte und Anforderungen dieses Projekts, etwa Komponente, Sprint oder Kunde.",
     "manage": "Benutzerdefinierte Felder verwalten",
     "add": "Feld hinzufügen",
     "empty": "Noch keine benutzerdefinierten Felder.",
@@ -1504,7 +1511,8 @@
     "entityType": {
       "TEST_CASE": "Testfälle",
       "TEST_RUN": "Testläufe",
-      "BUG_REPORT": "Fehlerberichte"
+      "BUG_REPORT": "Fehlerberichte",
+      "REQUIREMENT": "Anforderungen"
     },
     "type": {
       "TEXT": "Text",

@@ -1,8 +1,8 @@
-/** Custom fields (PRD-035): typed, per-project attributes on test cases, test runs and bug reports. */
-export type CustomFieldEntityType = 'TEST_CASE' | 'TEST_RUN' | 'BUG_REPORT';
+/** Custom fields (PRD-035): typed, per-project attributes on test cases, runs, bug reports and requirements (TM18). */
+export type CustomFieldEntityType = 'TEST_CASE' | 'TEST_RUN' | 'BUG_REPORT' | 'REQUIREMENT';
 export type CustomFieldType = 'TEXT' | 'NUMBER' | 'DATE' | 'SELECT' | 'MULTI_SELECT';
 
-export const CUSTOM_FIELD_ENTITY_TYPES: CustomFieldEntityType[] = ['TEST_CASE', 'TEST_RUN', 'BUG_REPORT'];
+export const CUSTOM_FIELD_ENTITY_TYPES: CustomFieldEntityType[] = ['TEST_CASE', 'TEST_RUN', 'BUG_REPORT', 'REQUIREMENT'];
 export const CUSTOM_FIELD_TYPES: CustomFieldType[] = ['TEXT', 'NUMBER', 'DATE', 'SELECT', 'MULTI_SELECT'];
 
 /** Server-side limits, mirrored so the UI can say why a button is disabled. */

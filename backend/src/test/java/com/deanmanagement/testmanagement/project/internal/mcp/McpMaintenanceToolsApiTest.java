@@ -184,11 +184,11 @@ class McpMaintenanceToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
         UUID requirementId = requirementTools.createRequirement("REQ-1", "Users can log in",
-                "Any role").id();
+                "Any role", null, null, null).id();
         requirementTools.linkTestCasesToRequirement(requirementId, List.of(login.id()));
 
         McpDtos.Requirement updated = requirementTools.updateRequirement(requirementId, null,
-                "Users can sign in", null);
+                "Users can sign in", null, null, null, null);
 
         assertThat(updated.title()).isEqualTo("Users can sign in");
         assertThat(updated.externalId()).isEqualTo("REQ-1");
@@ -201,7 +201,7 @@ class McpMaintenanceToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
         UUID requirementId = requirementTools.createRequirement("REQ-1", "Users can log in",
-                null).id();
+                null, null, null, null).id();
         requirementTools.linkTestCasesToRequirement(requirementId, List.of(login.id()));
 
         requirementTools.unlinkTestCaseFromRequirement(requirementId, login.id());

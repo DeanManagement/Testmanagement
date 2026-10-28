@@ -7,6 +7,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
+import com.deanmanagement.testmanagement.project.internal.entity.RequirementStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
@@ -470,7 +471,8 @@ final class McpDtos {
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record Requirement(UUID id, String externalId, String title, @Nullable String description,
-                       List<TestCaseRef> testCases) {}
+                       RequirementStatus status, Priority priority,
+                       @Nullable Map<String, Object> customFields, List<TestCaseRef> testCases) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record RequirementPage(List<Requirement> requirements, int page, int size, long totalElements,
@@ -480,8 +482,8 @@ final class McpDtos {
     record TraceabilityCell(UUID testCaseId, String testCaseKey, String testCaseTitle, String status) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    record TraceabilityRow(UUID requirementId, String externalId, String title, String coverage,
-                           List<TraceabilityCell> cells) {}
+    record TraceabilityRow(UUID requirementId, String externalId, String title, RequirementStatus status,
+                           Priority priority, String coverage, List<TraceabilityCell> cells) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record CoverageSummary(long totalRequirements, long uncovered, long untested, long failing,

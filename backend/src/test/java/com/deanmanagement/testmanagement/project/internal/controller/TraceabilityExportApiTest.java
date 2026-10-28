@@ -80,10 +80,11 @@ class TraceabilityExportApiTest {
                 .andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
 
         assertThat(csv.lines()).containsExactly(
-                "requirementId,requirementTitle,requirementCoverage,testCaseKey,testCaseTitle,latestResult",
-                "REQ-1,Users can log in,UNTESTED,TR-1,Log in,UNTESTED",
+                "requirementId,requirementTitle,requirementStatus,requirementPriority,requirementCoverage,"
+                        + "testCaseKey,testCaseTitle,latestResult",
+                "REQ-1,Users can log in,DRAFT,MEDIUM,UNTESTED,TR-1,Log in,UNTESTED",
                 // A formula is neutralised, and an uncovered requirement still gets its row.
-                "REQ-2,\"'=HYPERLINK(\"\"x\"\")\",UNCOVERED,,,");
+                "REQ-2,\"'=HYPERLINK(\"\"x\"\")\",DRAFT,MEDIUM,UNCOVERED,,,");
     }
 
     @Test

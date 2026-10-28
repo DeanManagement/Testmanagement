@@ -1340,7 +1340,7 @@
       "UNTESTED": "A test is linked but has never been executed, so nothing proves this requirement yet.",
       "UNCOVERED": "No test case is linked to this requirement."
     },
-    "search": "Search by ID or title",
+    "search": "Search by ID, title or custom field",
     "coverageFilter": "Coverage",
     "allStatuses": "All",
     "sortBy": "Sort by",
@@ -1349,6 +1349,13 @@
       "desc": "Descending"
     },
     "noMatches": "No requirements match these filters.",
+    "lifecycleLabel": "Status",
+    "lifecycle": {
+      "DRAFT": "Draft",
+      "APPROVED": "Approved",
+      "OBSOLETE": "Obsolete"
+    },
+    "priorityLabel": "Priority",
     "export": {
       "button": "Export CSV",
       "allRuns": "Latest results of all runs",
@@ -1486,7 +1493,7 @@
   },
   "customField": {
     "title": "Custom fields",
-    "description": "Extra typed fields on this project's test cases, test runs and bug reports, such as Component, Sprint or Customer.",
+    "description": "Extra typed fields on this project's test cases, test runs, bug reports and requirements, such as Component, Sprint or Customer.",
     "manage": "Manage custom fields",
     "add": "Add field",
     "empty": "No custom fields yet.",
@@ -1504,7 +1511,8 @@
     "entityType": {
       "TEST_CASE": "Test cases",
       "TEST_RUN": "Test runs",
-      "BUG_REPORT": "Bug reports"
+      "BUG_REPORT": "Bug reports",
+      "REQUIREMENT": "Requirements"
     },
     "type": {
       "TEXT": "Text",

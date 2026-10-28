@@ -57,7 +57,7 @@ export class CustomFieldSettingsComponent implements OnInit {
 
   projectId = '';
   loading = false;
-  fieldsByType: Record<CustomFieldEntityType, CustomField[]> = { TEST_CASE: [], TEST_RUN: [], BUG_REPORT: [] };
+  fieldsByType: Record<CustomFieldEntityType, CustomField[]> = { TEST_CASE: [], TEST_RUN: [], BUG_REPORT: [], REQUIREMENT: [] };
 
   ngOnInit(): void {
     this.projectId = this.route.snapshot.paramMap.get('id') ?? '';

@@ -1,5 +1,8 @@
 package com.deanmanagement.testmanagement.project.internal.dto.requirement;
 
+import com.deanmanagement.testmanagement.project.internal.entity.Priority;
+import com.deanmanagement.testmanagement.project.internal.entity.RequirementStatus;
+
 import java.util.List;
 import java.util.UUID;
 
@@ -11,6 +14,8 @@ public record TraceabilityRowResponse(
         UUID requirementId,
         String externalId,
         String title,
+        RequirementStatus status,
+        Priority priority,
         List<Cell> cells,
         /** Worst status across the row — what the coverage report counts. */
         CoverageStatus coverage

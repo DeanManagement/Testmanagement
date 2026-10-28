@@ -4,5 +4,6 @@ package com.deanmanagement.testmanagement.project.internal.entity;
 public enum CustomFieldEntityType {
     TEST_CASE,
     TEST_RUN,
-    BUG_REPORT
+    BUG_REPORT,
+    REQUIREMENT
 }

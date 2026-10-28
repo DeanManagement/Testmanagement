@@ -4,6 +4,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldDefinition;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldValue;
+import com.deanmanagement.testmanagement.project.internal.entity.Requirement;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.repository.CustomFieldDefinitionRepository;
@@ -58,6 +59,12 @@ public class CustomFieldValueWriter {
     public void write(BugReport bugReport, Map<String, Object> values, CustomFieldWriteMode mode) {
         write(new Owner(bugReport.getProject().getId(), CustomFieldEntityType.BUG_REPORT,
                 bugReport.getCustomFieldValues(), v -> v.setBugReport(bugReport), bugReport.getId() == null),
+                values, mode);
+    }
+
+    public void write(Requirement requirement, Map<String, Object> values, CustomFieldWriteMode mode) {
+        write(new Owner(requirement.getProjectId(), CustomFieldEntityType.REQUIREMENT,
+                requirement.getCustomFieldValues(), v -> v.setRequirement(requirement), requirement.getId() == null),
                 values, mode);
     }
 

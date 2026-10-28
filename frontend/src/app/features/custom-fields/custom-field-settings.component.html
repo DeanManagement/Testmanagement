@@ -9,7 +9,7 @@
 
   <p class="page-hint">{{ 'customField.description' | translate }}</p>
 
-  @if (loading && fieldsByType.TEST_CASE.length + fieldsByType.TEST_RUN.length + fieldsByType.BUG_REPORT.length === 0) {
+  @if (loading && fieldsByType.TEST_CASE.length + fieldsByType.TEST_RUN.length + fieldsByType.BUG_REPORT.length + fieldsByType.REQUIREMENT.length === 0) {
     <div class="spinner-container"><mat-spinner diameter="40"></mat-spinner></div>
   } @else {
     @for (entityType of entityTypes; track entityType) {

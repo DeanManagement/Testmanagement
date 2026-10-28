@@ -1,3 +1,10 @@
+import { CustomFieldValues } from './custom-field.model';
+import { Priority } from './test-case.model';
+
+/** Where a requirement is in its life (TM18). */
+export type RequirementStatus = 'DRAFT' | 'APPROVED' | 'OBSOLETE';
+export const REQUIREMENT_STATUSES: RequirementStatus[] = ['DRAFT', 'APPROVED', 'OBSOLETE'];
+
 /** Coverage of a requirement, worst-cell-first (PRD-014). */
 export type CoverageStatus =
   | 'PASSED'
@@ -12,6 +19,9 @@ export interface Requirement {
   externalId: string;
   title: string;
   description: string | null;
+  status: RequirementStatus;
+  priority: Priority;
+  customFields: CustomFieldValues;
   testCases: LinkedTestCase[];
   createdAt: string;
   updatedAt: string;
@@ -27,12 +37,17 @@ export interface SaveRequirementRequest {
   externalId: string;
   title: string;
   description?: string;
+  status: RequirementStatus;
+  priority: Priority;
+  customFields?: CustomFieldValues;
 }
 
 export interface TraceabilityRow {
   requirementId: string;
   externalId: string;
   title: string;
+  status: RequirementStatus;
+  priority: Priority;
   cells: TraceabilityCell[];
   coverage: CoverageStatus;
 }
