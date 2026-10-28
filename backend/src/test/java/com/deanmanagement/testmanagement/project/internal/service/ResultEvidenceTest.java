@@ -14,7 +14,7 @@ class ResultEvidenceTest {
 
     private static StepResultResponse step(int orderIndex, TestResultStatus status, String actual) {
         return new StepResultResponse(UUID.randomUUID(), UUID.randomUUID(), "action", null, null,
-                orderIndex, status, actual, null, null, null, null, null, null);
+                orderIndex, status, actual, null, null, null, null, null);
     }
 
     private static TestResultResponse result(String comment, List<StepResultResponse> steps) {
