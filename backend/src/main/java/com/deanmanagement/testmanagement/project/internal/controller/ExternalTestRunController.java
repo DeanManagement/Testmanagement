@@ -64,15 +64,15 @@ public class ExternalTestRunController {
     public TestRunResponse importJunit(@PathVariable String projectRef,
                                        @RequestBody byte[] body,
                                        @RequestParam(required = false) String runName,
+                                       @RequestParam(required = false) String name,
                                        @RequestParam(required = false) String environment,
                                        @RequestParam(required = false) UUID testPlanId,
                                        @RequestParam(required = false) UUID pipelineRunId,
                                        Authentication authentication) {
         requireTester(projectRef);
         checkSize(body);
-        // With a pipelineRunId and no explicit name the run is named after its workflow (PRD-024).
-        String name = runName != null ? runName : pipelineRunId != null ? null : "JUnit import";
-        return ciIngestionService.ingest(projectRef, name, environment, testPlanId,
+        return ciIngestionService.ingest(projectRef, runNameOf(runName, name, pipelineRunId, "JUnit import"),
+                environment, testPlanId,
                 jUnitXmlParser.parse(body), pipelineRunId, executor(authentication));
     }
 
@@ -81,15 +81,31 @@ public class ExternalTestRunController {
     public TestRunResponse importCucumber(@PathVariable String projectRef,
                                           @RequestBody byte[] body,
                                           @RequestParam(required = false) String runName,
+                                          @RequestParam(required = false) String name,
                                           @RequestParam(required = false) String environment,
                                           @RequestParam(required = false) UUID testPlanId,
                                           @RequestParam(required = false) UUID pipelineRunId,
                                           Authentication authentication) {
         requireTester(projectRef);
         checkSize(body);
-        String name = runName != null ? runName : pipelineRunId != null ? null : "Cucumber import";
-        return ciIngestionService.ingest(projectRef, name, environment, testPlanId,
+        return ciIngestionService.ingest(projectRef, runNameOf(runName, name, pipelineRunId, "Cucumber import"),
+                environment, testPlanId,
                 cucumberJsonParser.parse(body), pipelineRunId, executor(authentication));
+    }
+
+    /**
+     * {@code name} is accepted beside the documented {@code runName} because it is the parameter
+     * people guess (TM40); ignoring it silently left the run named after its importer. With a
+     * pipelineRunId and neither given, null names the run after its workflow (PRD-024).
+     */
+    private static String runNameOf(String runName, String name, UUID pipelineRunId, String importer) {
+        if (runName != null) {
+            return runName;
+        }
+        if (name != null) {
+            return name;
+        }
+        return pipelineRunId != null ? null : importer;
     }
 
     /**

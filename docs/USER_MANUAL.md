@@ -1513,7 +1513,7 @@ curl -X POST "http://localhost:8089/api/external/projects/TES/test-runs/cucumber
   --data-binary @target/cucumber.json
 ```
 
-Optional query parameters: `runName`, `environment`, `testPlanId`. Reports are capped at 10 MB.
+Optional query parameters: `runName` (or `name`), `environment`, `testPlanId`. Reports are capped at 10 MB.
 
 A Cucumber scenario tagged `@tm:<case key>` (see [BDD / Gherkin](#bdd--gherkin)) is recorded on
 that case, even if the scenario has been renamed since; untagged scenarios are matched by the title

@@ -274,6 +274,16 @@ class CiIngestionApiTest {
     }
 
     @Test
+    void cucumber_takesTheRunNameFromTheNameParameter() throws Exception {
+        mockMvc.perform(post("/api/external/projects/{k}/test-runs/cucumber", KEY)
+                        .queryParam("name", "Probe")
+                        .header("X-API-Key", apiKey)
+                        .contentType(MediaType.APPLICATION_JSON).content(CUCUMBER_JSON))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath("$.name").value("Probe"));
+    }
+
+    @Test
     void malformedXml_returns400() throws Exception {
         mockMvc.perform(post("/api/external/projects/{k}/test-runs/junit", KEY)
                         .header("X-API-Key", apiKey)
