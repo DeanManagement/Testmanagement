@@ -1306,7 +1306,12 @@
       "asc": "Ascending",
       "desc": "Descending"
     },
-    "noMatches": "No requirements match these filters."
+    "noMatches": "No requirements match these filters.",
+    "export": {
+      "button": "Export CSV",
+      "allRuns": "Latest results of all runs",
+      "byPlan": "Only the runs of a test plan:"
+    }
   },
   "parameter": {
     "title": "Parameters",

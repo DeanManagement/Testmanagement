@@ -604,7 +604,7 @@ class McpToolSurfaceApiTest {
 
         requirementTools.linkTestCasesToRequirement(covered.id(), List.of(covering.id()));
 
-        McpDtos.TraceabilityMatrix matrix = requirementTools.getTraceabilityMatrix();
+        McpDtos.TraceabilityMatrix matrix = requirementTools.getTraceabilityMatrix(null);
 
         assertThat(matrix.summary().totalRequirements()).isEqualTo(2);
         assertThat(matrix.summary().uncovered())
@@ -661,7 +661,7 @@ class McpToolSurfaceApiTest {
     void aViewerKeyCanReadTheMatrixButNotWriteRequirements() {
         authenticateAs(project, ProjectRole.VIEWER, "read-only-agent");
 
-        assertThatCode(() -> requirementTools.getTraceabilityMatrix()).doesNotThrowAnyException();
+        assertThatCode(() -> requirementTools.getTraceabilityMatrix(null)).doesNotThrowAnyException();
         assertThatThrownBy(() -> requirementTools.createRequirement("REQ-4", "Nicht erlaubt", null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("TESTER");

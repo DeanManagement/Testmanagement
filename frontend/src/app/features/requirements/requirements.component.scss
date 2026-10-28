@@ -213,3 +213,9 @@
     flex: 1 1 240px;
   }
 }
+
+.page-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

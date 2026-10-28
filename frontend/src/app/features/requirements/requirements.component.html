@@ -7,12 +7,32 @@
       </a>
       <h1 data-test-id="requirements-title">{{ 'requirement.title' | translate }}</h1>
     </div>
-    @if (!formOpen) {
-      <button mat-flat-button (click)="openCreate()" data-test-id="requirement-add-btn">
-        <mat-icon>add</mat-icon>
-        {{ 'requirement.add' | translate }}
+    <div class="page-header-actions">
+      <button mat-stroked-button [matMenuTriggerFor]="exportMenu" (menuOpened)="loadTestPlans()"
+              data-test-id="requirement-export-btn">
+        <mat-icon>download</mat-icon>
+        {{ 'requirement.export.button' | translate }}
       </button>
-    }
+      <mat-menu #exportMenu="matMenu">
+        <button mat-menu-item (click)="exportMatrix()" data-test-id="requirement-export-all">
+          {{ 'requirement.export.allRuns' | translate }}
+        </button>
+        @if (testPlans?.length) {
+          <div class="menu-heading" mat-menu-item disabled>{{ 'requirement.export.byPlan' | translate }}</div>
+          @for (plan of testPlans; track plan.id) {
+            <button mat-menu-item (click)="exportMatrix(plan)" [attr.data-test-id]="'requirement-export-plan-' + plan.id">
+              {{ plan.name }}
+            </button>
+          }
+        }
+      </mat-menu>
+      @if (!formOpen) {
+        <button mat-flat-button (click)="openCreate()" data-test-id="requirement-add-btn">
+          <mat-icon>add</mat-icon>
+          {{ 'requirement.add' | translate }}
+        </button>
+      }
+    </div>
   </div>
 
   <p class="page-hint">{{ 'requirement.description' | translate }}</p>

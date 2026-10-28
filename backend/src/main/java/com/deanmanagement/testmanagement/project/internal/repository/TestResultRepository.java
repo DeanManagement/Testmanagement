@@ -47,6 +47,15 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
     @Query("SELECT DISTINCT r.testRun.key FROM TestResult r WHERE r.testCase.id IN :testCaseIds ORDER BY r.testRun.key")
     List<String> findRunKeysByTestCaseIdIn(@Param("testCaseIds") Set<UUID> testCaseIds);
 
+    /** As {@link #findByTestCaseIdsAndCompletedRuns}, limited to the completed runs of one test plan (TM20). */
+    @Query("SELECT r FROM TestResult r JOIN FETCH r.testCase JOIN FETCH r.testRun run " +
+           "WHERE r.testCase.id IN :testCaseIds AND run.project.id = :projectId " +
+           "AND run.testPlan.id = :testPlanId AND run.status = 'COMPLETED' ORDER BY r.updatedAt DESC")
+    List<TestResult> findByTestCaseIdsAndCompletedRunsOfPlan(
+            @Param("testCaseIds") Set<UUID> testCaseIds,
+            @Param("projectId") UUID projectId,
+            @Param("testPlanId") UUID testPlanId);
+
     @Query("SELECT r FROM TestResult r LEFT JOIN FETCH r.stepResults WHERE r.id IN :ids AND r.testRun.id = :runId")
     List<TestResult> findByIdInAndTestRunId(@Param("ids") Set<UUID> ids, @Param("runId") UUID runId);
 

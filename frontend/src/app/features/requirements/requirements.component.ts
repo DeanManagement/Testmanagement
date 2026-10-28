@@ -13,11 +13,15 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatMenuModule } from '@angular/material/menu';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { RequirementApiService } from '../../core/services/requirement-api.service';
 import { TestCaseApiService } from '../../core/services/test-case-api.service';
 import { MarkdownPipe } from '../../shared/pipes/markdown.pipe';
+import { TestPlanApiService } from '../../core/services/test-plan-api.service';
+import { TestPlan } from '../../shared/models/test-plan.model';
+import { saveFile } from '../../shared/utils/save-file';
 import {
   ConfirmDialogComponent,
   ConfirmDialogData,
@@ -53,6 +57,7 @@ import { RequirementSortColumn, viewRequirements } from './requirement-view';
     MatSelectModule,
     MatProgressSpinnerModule,
     MatTooltipModule,
+    MatMenuModule,
     TranslateModule,
   ],
   templateUrl: './requirements.component.html',
@@ -67,6 +72,7 @@ export class RequirementsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly dialog = inject(MatDialog);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly testPlanApi = inject(TestPlanApiService);
 
   projectId = '';
   requirements: Requirement[] = [];
@@ -92,6 +98,9 @@ export class RequirementsComponent implements OnInit {
   coverageFilter: CoverageStatus | '' = '';
   sortColumn: RequirementSortColumn = 'externalId';
   sortDirection: 'asc' | 'desc' = 'asc';
+
+  /** Offered in the export menu; loaded when the menu is first opened. */
+  testPlans: TestPlan[] | null = null;
 
   get visibleRequirements(): Requirement[] {
     return viewRequirements(this.requirements, this.rowsById, {
@@ -273,9 +282,35 @@ export class RequirementsComponent implements OnInit {
     return this.rowsById.get(requirementId);
   }
 
+  loadTestPlans(): void {
+    if (this.testPlans !== null) {
+      return;
+    }
+    this.testPlanApi.getAll(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (plans) => {
+          this.testPlans = plans;
+          this.cdr.markForCheck();
+        },
+        error: () => undefined,
+      });
+  }
+
+  /** TM20: requirement, linked cases and latest result as CSV, optionally from one plan's runs. */
+  exportMatrix(testPlan?: TestPlan): void {
+    this.api.exportMatrixCsv(this.projectId, testPlan?.id)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((blob) => saveFile(blob, testPlan ? `traceability-${slug(testPlan.name)}.csv` : 'traceability.csv'));
+  }
+
   private notify(key: string): void {
     this.snackBar.open(this.translate.instant(key), this.translate.instant('common.close'), {
       duration: 4000,
     });
   }
+}
+
+/** A plan name made safe for a file name. */
+function slug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'plan';
 }

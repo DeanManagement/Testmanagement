@@ -51,6 +51,12 @@ export class RequirementApiService {
     return this.http.get<TraceabilityRow[]>(`/api/projects/${projectId}/traceability`);
   }
 
+  /** TM20: the matrix as CSV; with a test plan, results come from its completed runs only. */
+  exportMatrixCsv(projectId: string, testPlanId?: string): Observable<Blob> {
+    const params = testPlanId ? new HttpParams().set('testPlanId', testPlanId) : new HttpParams();
+    return this.http.get(`/api/projects/${projectId}/traceability/export`, { params, responseType: 'blob' });
+  }
+
   getCoverage(projectId: string): Observable<CoverageSummary> {
     return this.http.get<CoverageSummary>(`/api/projects/${projectId}/traceability/coverage`);
   }

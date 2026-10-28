@@ -12,6 +12,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.repository.RequirementRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.spec.LikePatterns;
 import com.deanmanagement.testmanagement.shared.exception.DuplicateKeyException;
@@ -47,6 +48,7 @@ public class RequirementService {
     private final RequirementRepository requirementRepository;
     private final TestCaseRepository testCaseRepository;
     private final TestResultRepository testResultRepository;
+    private final TestPlanRepository testPlanRepository;
     private final AuditService auditService;
 
     // ---- CRUD -------------------------------------------------------------
@@ -163,11 +165,23 @@ public class RequirementService {
     // ---- matrix & coverage -------------------------------------------------
 
     public List<TraceabilityRowResponse> matrix(UUID projectId) {
+        return matrix(projectId, null);
+    }
+
+    /**
+     * With {@code testPlanId}, "latest result" means the latest in that plan's completed runs (TM20),
+     * so the matrix answers "what did this release prove?"; a case the plan never ran is UNTESTED.
+     */
+    public List<TraceabilityRowResponse> matrix(UUID projectId, UUID testPlanId) {
+        if (testPlanId != null) {
+            testPlanRepository.findByIdAndProjectId(testPlanId, projectId)
+                    .orElseThrow(() -> new ResourceNotFoundException("TestPlan", testPlanId));
+        }
         List<Requirement> requirements = requirementRepository.findByProjectIdOrderByExternalIdAsc(projectId);
         if (requirements.isEmpty()) {
             return List.of();
         }
-        Map<UUID, CoverageStatus> latestByCase = latestStatusByTestCase(projectId, requirements);
+        Map<UUID, CoverageStatus> latestByCase = latestStatusByTestCase(projectId, testPlanId, requirements);
 
         List<TraceabilityRowResponse> rows = new ArrayList<>();
         for (Requirement requirement : requirements) {
@@ -186,7 +200,11 @@ public class RequirementService {
     }
 
     public CoverageSummaryResponse coverage(UUID projectId) {
-        List<TraceabilityRowResponse> rows = matrix(projectId);
+        return coverage(projectId, null);
+    }
+
+    public CoverageSummaryResponse coverage(UUID projectId, UUID testPlanId) {
+        List<TraceabilityRowResponse> rows = matrix(projectId, testPlanId);
         long total = rows.size();
         long uncovered = rows.stream().filter(r -> r.coverage() == CoverageStatus.UNCOVERED).count();
         long untested = rows.stream().filter(r -> r.coverage() == CoverageStatus.UNTESTED).count();
@@ -225,7 +243,8 @@ public class RequirementService {
      * Latest terminal status per linked test case, reusing the completed-run query the suite report
      * already relies on (PRD-014 §3.3) rather than introducing a second definition of "latest".
      */
-    private Map<UUID, CoverageStatus> latestStatusByTestCase(UUID projectId, List<Requirement> requirements) {
+    private Map<UUID, CoverageStatus> latestStatusByTestCase(UUID projectId, UUID testPlanId,
+                                                             List<Requirement> requirements) {
         Set<UUID> caseIds = new HashSet<>();
         requirements.forEach(r -> r.getTestCases().forEach(tc -> caseIds.add(tc.getId())));
         if (caseIds.isEmpty()) {
@@ -234,7 +253,10 @@ public class RequirementService {
 
         Map<UUID, CoverageStatus> latest = new HashMap<>();
         // Ordered newest first by the query, so the first entry per case wins.
-        for (TestResult result : testResultRepository.findByTestCaseIdsAndCompletedRuns(caseIds, projectId)) {
+        List<TestResult> results = testPlanId == null
+                ? testResultRepository.findByTestCaseIdsAndCompletedRuns(caseIds, projectId)
+                : testResultRepository.findByTestCaseIdsAndCompletedRunsOfPlan(caseIds, projectId, testPlanId);
+        for (TestResult result : results) {
             latest.putIfAbsent(result.getTestCase().getId(), switch (result.getStatus()) {
                 case PASSED -> CoverageStatus.PASSED;
                 case FAILED -> CoverageStatus.FAILED;

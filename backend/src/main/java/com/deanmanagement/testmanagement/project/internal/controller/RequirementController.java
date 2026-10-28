@@ -7,6 +7,12 @@ import com.deanmanagement.testmanagement.project.internal.dto.requirement.SaveRe
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.TraceabilityRowResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.service.RequirementService;
+import com.deanmanagement.testmanagement.project.internal.service.TraceabilityExportService;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.RequestParam;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
 
@@ -38,6 +45,7 @@ import java.util.UUID;
 public class RequirementController {
 
     private final RequirementService requirementService;
+    private final TraceabilityExportService exportService;
 
     @GetMapping("/requirements")
     @RequireProjectRole
@@ -106,6 +114,18 @@ public class RequirementController {
     @RequireProjectRole
     public List<TraceabilityRowResponse> matrix(@PathVariable UUID projectId) {
         return requirementService.matrix(projectId);
+    }
+
+    /** TM20: the matrix as CSV; with testPlanId, results come from that plan's completed runs only. */
+    @GetMapping("/traceability/export")
+    @RequireProjectRole
+    public ResponseEntity<byte[]> export(@PathVariable UUID projectId,
+                                         @RequestParam(required = false) UUID testPlanId) {
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename("traceability.csv").build().toString())
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(exportService.exportCsv(projectId, testPlanId));
     }
 
     @GetMapping("/traceability/coverage")

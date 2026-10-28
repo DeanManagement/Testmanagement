@@ -242,14 +242,17 @@ public class RequirementTools {
                     linked but has never run) or UNCOVERED (no case is linked at all). UNTESTED is
                     the one worth acting on — the requirement looks covered on paper and nothing has
                     demonstrated it.
+                    Pass testPlanId to count only results from that test plan's completed runs.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
-    public McpDtos.TraceabilityMatrix getTraceabilityMatrix() {
+    public McpDtos.TraceabilityMatrix getTraceabilityMatrix(
+            @McpToolParam(description = "Only results from this test plan's completed runs", required = false)
+            UUID testPlanId) {
         var caller = callerContext.require();
-        List<TraceabilityRowResponse> rows = requirementService.matrix(caller.projectId());
-        CoverageSummaryResponse coverage = requirementService.coverage(caller.projectId());
+        List<TraceabilityRowResponse> rows = requirementService.matrix(caller.projectId(), testPlanId);
+        CoverageSummaryResponse coverage = requirementService.coverage(caller.projectId(), testPlanId);
 
         List<McpDtos.TraceabilityRow> mapped = rows.stream()
                 .map(row -> new McpDtos.TraceabilityRow(

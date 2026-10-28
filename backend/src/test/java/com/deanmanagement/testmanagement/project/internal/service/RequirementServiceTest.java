@@ -8,15 +8,19 @@ import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.TestPlan;
+import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.shared.exception.DuplicateKeyException;
+import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,6 +58,8 @@ class RequirementServiceTest {
     private TestRunRepository testRunRepository;
     @Autowired
     private TestResultRepository testResultRepository;
+    @Autowired
+    private TestPlanRepository testPlanRepository;
 
     private final AtomicInteger sequence = new AtomicInteger();
     private Project project;
@@ -96,6 +102,62 @@ class RequirementServiceTest {
         result.setTestCase(testCase);
         result.setStatus(status, null);
         testResultRepository.save(result);
+    }
+
+    private TestPlan createPlan() {
+        TestPlan plan = new TestPlan();
+        plan.setProject(project);
+        plan.setName("Release " + sequence.incrementAndGet());
+        plan.setStatus(TestPlanStatus.OPEN);
+        return testPlanRepository.save(plan);
+    }
+
+    /** A completed run of the plan with one result. */
+    private void recordResultInPlan(TestPlan plan, TestCase testCase, TestResultStatus status) {
+        TestRun run = new TestRun();
+        run.setProject(project);
+        run.setKey(testCase.getKey() + "-P" + sequence.incrementAndGet());
+        run.setName("plan run");
+        run.setStatus(TestRunStatus.COMPLETED);
+        run.setTestPlan(plan);
+        run = testRunRepository.save(run);
+
+        TestResult result = new TestResult();
+        result.setTestRun(run);
+        result.setTestCase(testCase);
+        result.setStatus(status, null);
+        testResultRepository.save(result);
+    }
+
+    @Test
+    void withATestPlanOnlyThatPlansResultsCount() {
+        UUID requirementId = createRequirement("REQ-PLAN");
+        TestCase testCase = createCase("TC-PLAN");
+        service.linkTestCase(project.getId(), requirementId, testCase.getId(), null);
+        recordResult(testCase, TestResultStatus.PASSED, 1);
+        TestPlan plan = createPlan();
+
+        assertThat(service.matrix(project.getId(), plan.getId()).getFirst().coverage())
+                .as("passed elsewhere, never run in this plan").isEqualTo(CoverageStatus.UNTESTED);
+
+        recordResultInPlan(plan, testCase, TestResultStatus.FAILED);
+        assertThat(service.matrix(project.getId(), plan.getId()).getFirst().coverage()).isEqualTo(CoverageStatus.FAILED);
+    }
+
+    @Test
+    void aTestPlanOfAnotherProjectIsNotFound() {
+        Project other = new Project();
+        other.setName("Other");
+        other.setKey("OTH" + sequence.incrementAndGet());
+        other = projectRepository.save(other);
+        TestPlan theirs = new TestPlan();
+        theirs.setProject(other);
+        theirs.setName("Theirs");
+        theirs.setStatus(TestPlanStatus.OPEN);
+        UUID theirPlanId = testPlanRepository.save(theirs).getId();
+
+        assertThatThrownBy(() -> service.matrix(project.getId(), theirPlanId))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 
     private TraceabilityRowResponse rowFor(UUID requirementId) {
