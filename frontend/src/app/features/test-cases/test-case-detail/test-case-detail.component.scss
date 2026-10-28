@@ -53,12 +53,13 @@
   font-size: 15px;
   line-height: 1.6;
   margin: 0 0 16px;
+  white-space: pre-wrap;
 }
 
 .tc-preconditions {
   margin-bottom: 16px;
   strong { color: var(--tm-text); }
-  p { color: var(--tm-text-secondary); margin: 4px 0 0; }
+  p { color: var(--tm-text-secondary); margin: 4px 0 0; white-space: pre-wrap; }
 }
 
 .tc-labels {
