@@ -145,7 +145,7 @@ public class PdfReportService {
         return sb.toString();
     }
 
-    private byte[] renderPdf(String html) {
+    static byte[] renderPdf(String html) {
         try (ByteArrayOutputStream os = new ByteArrayOutputStream()) {
             PdfRendererBuilder builder = new PdfRendererBuilder();
             builder.useFastMode();
@@ -171,7 +171,7 @@ public class PdfReportService {
                 .replace("\"", "&quot;");
     }
 
-    private static final String CSS = """
+    static final String CSS = """
             body {
                 font-family: Helvetica, Arial, sans-serif;
                 font-size: 11px;

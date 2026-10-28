@@ -3,8 +3,14 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 import com.deanmanagement.testmanagement.project.internal.access.RequireProjectRole;
 import com.deanmanagement.testmanagement.project.internal.dto.io.GherkinPreviewResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.io.ImportResultResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.filter.TestCaseListFilter;
+import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
+import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
+import com.deanmanagement.testmanagement.project.internal.service.CustomFieldFilterParser;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseImportExportService;
+import com.deanmanagement.testmanagement.project.internal.service.TestSpecificationService;
 import com.deanmanagement.testmanagement.project.internal.service.gherkin.GherkinExporter;
 import com.deanmanagement.testmanagement.project.internal.service.gherkin.GherkinFileParser;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,16 +26,18 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/projects/{projectId}/test-cases")
-@Tag(name = "Test Case Import/Export", description = "Import and export test cases as JSON, CSV or Gherkin")
+@Tag(name = "Test Case Import/Export", description = "Import and export test cases as JSON, CSV, Gherkin or a PDF specification")
 @RequiredArgsConstructor
 public class TestCaseImportExportController {
 
@@ -38,6 +46,8 @@ public class TestCaseImportExportController {
 
     private final TestCaseImportExportService importExportService;
     private final GherkinExporter gherkinExporter;
+    private final TestSpecificationService specificationService;
+    private final CustomFieldFilterParser customFieldFilterParser;
 
     @GetMapping("/export")
     @RequireProjectRole
@@ -71,6 +81,31 @@ public class TestCaseImportExportController {
                         .filename(file.fileName(), StandardCharsets.UTF_8).build().toString())
                 .contentType(contentType)
                 .body(file.content());
+    }
+
+    /**
+     * TM12: the test specification as a PDF. {@code ids} exports the cases selected in the list;
+     * without them, the cases the list's filter matches (the same parameters as the list, a folder
+     * with {@code includeSubfolders} included).
+     */
+    @GetMapping("/specification")
+    @RequireProjectRole
+    public ResponseEntity<byte[]> exportSpecification(@PathVariable UUID projectId,
+                                                      @RequestParam(required = false) List<UUID> ids,
+                                                      @RequestParam(required = false) String q,
+                                                      @RequestParam(required = false) List<TestCaseStatus> status,
+                                                      @RequestParam(required = false) List<Priority> priority,
+                                                      @RequestParam(required = false) List<String> label,
+                                                      @RequestParam(required = false) UUID folderId,
+                                                      @RequestParam(defaultValue = "false") boolean includeSubfolders,
+                                                      @RequestParam(defaultValue = "false") boolean rootOnly,
+                                                      @RequestParam MultiValueMap<String, String> params) {
+        TestCaseListFilter filter = new TestCaseListFilter(q, status, priority, label, folderId, includeSubfolders,
+                rootOnly, null, customFieldFilterParser.parse(projectId, CustomFieldEntityType.TEST_CASE, params));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"test-specification.pdf\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(specificationService.generate(projectId, filter, ids));
     }
 
     /** Reads one scenario for the case form; writes nothing (PRD-040 §3.6). */

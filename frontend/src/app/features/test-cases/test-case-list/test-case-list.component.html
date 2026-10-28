@@ -23,6 +23,9 @@
         <button mat-menu-item (click)="exportFeatures()" data-test-id="export-feature">
           {{ (selectedFolderId ? 'import.gherkinFolder' : 'import.gherkin') | translate }}
         </button>
+        <button mat-menu-item (click)="exportSpecification()" data-test-id="export-spec-pdf">
+          {{ ((hasSelection$ | async) ? 'import.specPdfSelected' : 'import.specPdf') | translate }}
+        </button>
       </mat-menu>
       <a mat-flat-button [routerLink]="['new']" [queryParams]="getCreateLink()" class="create-btn" data-test-id="test-case-create-btn">
         <mat-icon>add</mat-icon>

@@ -484,13 +484,18 @@ Create the shared steps first.
 
 ### Exporting
 
-**Export** offers four formats:
+**Export** offers five formats:
 
 - **JSON** — round-trips everything, including step test data and custom fields
 - **CSV** — for spreadsheets and diffing. [Shared steps](#shared-steps) are written out as their
   steps, so importing the file again gives the case local copies
 - **CSV (Excel)** — same, with a byte-order mark so Excel opens UTF-8 correctly
 - **Gherkin (.feature)** — the selected folder, or the whole project; see below
+- **Test specification (PDF)** — a printable specification of the selected cases or, with none
+  selected, of every case the current filter matches (a folder with its subfolders when chosen so),
+  in folder order: metadata, description, preconditions and each step with its test data, expected
+  result and reference image; attached files are named. Text is shown as written, Markdown
+  included. Up to 500 cases per export; images beyond 20 MB in total are named instead of shown
 
 JSON lists each case's attachments by name, type, size and checksum, but not their content, so the
 file stays readable. Importing such a file skips the attachments and the preview says so for each

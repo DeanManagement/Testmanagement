@@ -23,7 +23,8 @@ import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Subject } from 'rxjs';
-import { debounceTime, take } from 'rxjs/operators';
+import { debounceTime, switchMap, take } from 'rxjs/operators';
+import { saveFile } from '../../../shared/utils/save-file';
 import { TranslateModule, TranslateService } from '@ngx-translate/core';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { ImportTestCasesDialogComponent } from '../import-test-cases-dialog/import-test-cases-dialog.component';
@@ -544,6 +545,20 @@ export class TestCaseListComponent implements OnInit {
         a.click();
         setTimeout(() => URL.revokeObjectURL(url));
       });
+  }
+
+  /** TM12: the selected cases as a printable specification, or every case the filter matches. */
+  exportSpecification(): void {
+    this.selectedIds$.pipe(
+      take(1),
+      switchMap((selectedIds) =>
+        this.testCaseApi.exportSpecification(this.projectId, this.currentQuery ?? {}, selectedIds)),
+      takeUntilDestroyed(this.destroyRef),
+    ).subscribe({
+      next: (blob) => saveFile(blob, 'test-specification.pdf'),
+      error: () => this.snackBar.open(this.translate.instant('import.specPdfFailed'), undefined,
+        { duration: 4000 }),
+    });
   }
 
   /** PRD-040: the selected folder as a feature, or the whole project as one file per top-level folder. */

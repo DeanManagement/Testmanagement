@@ -15,6 +15,25 @@ export class TestCaseApiService {
   }
 
   getAll(projectId: string, query: TestCaseQuery = {}): Observable<Page<TestCase>> {
+    let params = this.filterParams(query);
+    if (query.page != null) params = params.set('page', String(query.page));
+    if (query.size != null) params = params.set('size', String(query.size));
+    if (query.sort) params = params.set('sort', query.sort);
+    return this.http.get<Page<TestCase>>(this.baseUrl(projectId), { params }).pipe(retryWithBackoff());
+  }
+
+  /**
+   * TM12: the test specification PDF of the selected cases, or, with none selected, of every case
+   * the list's filter matches (all pages, not only the one shown).
+   */
+  exportSpecification(projectId: string, query: TestCaseQuery, selectedIds: string[]): Observable<Blob> {
+    const params = selectedIds.length
+      ? selectedIds.reduce((p, id) => p.append('ids', id), new HttpParams())
+      : this.filterParams(query);
+    return this.http.get(`${this.baseUrl(projectId)}/specification`, { params, responseType: 'blob' });
+  }
+
+  private filterParams(query: TestCaseQuery): HttpParams {
     let params = new HttpParams();
     if (query.q) params = params.set('q', query.q);
     (query.status ?? []).forEach((s) => (params = params.append('status', s)));
@@ -29,10 +48,7 @@ export class TestCaseApiService {
     if (query.updatedAfter) params = params.set('updatedAfter', query.updatedAfter);
     Object.entries(query.customFieldParams ?? {}).forEach(([name, values]) =>
       values.forEach((value) => (params = params.append(name, value))));
-    if (query.page != null) params = params.set('page', String(query.page));
-    if (query.size != null) params = params.set('size', String(query.size));
-    if (query.sort) params = params.set('sort', query.sort);
-    return this.http.get<Page<TestCase>>(this.baseUrl(projectId), { params }).pipe(retryWithBackoff());
+    return params;
   }
 
   /** PRD-052: every label used in the project, distinct and sorted. */

@@ -52,7 +52,10 @@
     "unchanged": "Unverändert",
     "doneKeyed": "Import abgeschlossen: {{imported}} erstellt, {{updated}} aktualisiert, {{unchanged}} unverändert, {{skipped}} übersprungen.",
     "gherkin": "Gherkin (.feature)",
-    "gherkinFolder": "Gherkin (.feature) – dieser Ordner"
+    "gherkinFolder": "Gherkin (.feature) – dieser Ordner",
+    "specPdf": "Testspezifikation (PDF) – gefilterte Testfälle",
+    "specPdfSelected": "Testspezifikation (PDF) – ausgewählte Testfälle",
+    "specPdfFailed": "Die Spezifikation konnte nicht erstellt werden. Ein Filter mit mehr als 500 Testfällen wird abgelehnt."
   },
   "webhook": {
     "title": "Webhooks",

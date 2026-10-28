@@ -52,7 +52,10 @@
     "unchanged": "Unchanged",
     "doneKeyed": "Import complete: {{imported}} created, {{updated}} updated, {{unchanged}} unchanged, {{skipped}} skipped.",
     "gherkin": "Gherkin (.feature)",
-    "gherkinFolder": "Gherkin (.feature) – this folder"
+    "gherkinFolder": "Gherkin (.feature) – this folder",
+    "specPdf": "Test specification (PDF) – filtered cases",
+    "specPdfSelected": "Test specification (PDF) – selected cases",
+    "specPdfFailed": "The specification could not be created. A filter that matches more than 500 cases is refused."
   },
   "webhook": {
     "title": "Webhooks",
