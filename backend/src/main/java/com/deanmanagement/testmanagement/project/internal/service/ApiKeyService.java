@@ -99,9 +99,11 @@ public class ApiKeyService {
     }
 
     /**
-     * @return the groups to store, or null for an unrestricted key. Naming every selectable group
-     *         is normalised to null too: it means the same today, and unlike the explicit list it
-     *         keeps meaning "everything" when a group is added later
+     * @return the groups to store, or null for an unrestricted key. Naming exactly the groups an
+     *         unrestricted key implies is normalised to null too: it means the same today, and
+     *         unlike the explicit list it keeps meaning "everything" when a group is added later.
+     *         A selection that includes CONFIGURATION is always stored as named, since null does
+     *         not imply it
      */
     private static Set<McpToolGroup> restrictedToolGroups(Set<McpToolGroup> requested) {
         if (requested == null || requested.isEmpty()) {
@@ -110,8 +112,13 @@ public class ApiKeyService {
         if (requested.contains(McpToolGroup.CORE)) {
             throw new IllegalArgumentException("CORE is always granted and cannot be selected");
         }
-        Set<McpToolGroup> selectable = EnumSet.complementOf(EnumSet.of(McpToolGroup.CORE));
-        return requested.containsAll(selectable) ? null : EnumSet.copyOf(requested);
+        Set<McpToolGroup> implied = EnumSet.noneOf(McpToolGroup.class);
+        for (McpToolGroup group : McpToolGroup.values()) {
+            if (group != McpToolGroup.CORE && group.isImpliedByUnrestrictedKey()) {
+                implied.add(group);
+            }
+        }
+        return requested.equals(implied) ? null : EnumSet.copyOf(requested);
     }
 
     /**

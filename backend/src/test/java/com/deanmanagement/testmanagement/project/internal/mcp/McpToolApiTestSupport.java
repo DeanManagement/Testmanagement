@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
@@ -96,8 +97,13 @@ abstract class McpToolApiTestSupport {
      * @return the service user's id
      */
     protected UUID authenticateAs(Project target, ProjectRole role) {
+        return authenticateAs(target, role, null);
+    }
+
+    /** As {@link #authenticateAs(Project, ProjectRole)}, with a key restricted to these tool groups. */
+    protected UUID authenticateAs(Project target, ProjectRole role, Set<McpToolGroup> toolGroups) {
         var created = apiKeyService.create(new CreateApiKeyRequest(
-                "agent-" + role + "-" + UUID.randomUUID(), target.getId(), role));
+                "agent-" + role + "-" + UUID.randomUUID(), target.getId(), role, toolGroups));
         UUID serviceUserId = apiKeyRepository.findById(created.id()).orElseThrow()
                 .getServiceUser().getId();
         SecurityContextHolder.getContext().setAuthentication(

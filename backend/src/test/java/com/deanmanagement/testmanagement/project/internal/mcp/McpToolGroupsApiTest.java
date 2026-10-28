@@ -77,8 +77,20 @@ class McpToolGroupsApiTest {
     }
 
     private String keyWith(Set<McpToolGroup> groups) {
+        return keyWith(ProjectRole.TESTER, groups);
+    }
+
+    private String keyWith(ProjectRole role, Set<McpToolGroup> groups) {
         return apiKeyService.create(new CreateApiKeyRequest("agent-" + UUID.randomUUID(),
-                project.getId(), ProjectRole.TESTER, groups)).rawKey();
+                project.getId(), role, groups)).rawKey();
+    }
+
+    private static Set<McpToolGroup> everySelectableGroup() {
+        return EnumSet.complementOf(EnumSet.of(McpToolGroup.CORE));
+    }
+
+    private static Set<McpToolGroup> everyGroupButConfiguration() {
+        return EnumSet.complementOf(EnumSet.of(McpToolGroup.CORE, McpToolGroup.CONFIGURATION));
     }
 
     // --- the catalogue ---------------------------------------------------------------------
@@ -89,7 +101,7 @@ class McpToolGroupsApiTest {
      */
     @Test
     void everyAdvertisedToolBelongsToAGroup() throws Exception {
-        List<String> advertised = toolNames(keyWith(null));
+        List<String> advertised = toolNames(keyWith(everySelectableGroup()));
 
         assertThat(advertised).isNotEmpty();
         assertThat(advertised).allSatisfy(name ->
@@ -175,12 +187,67 @@ class McpToolGroupsApiTest {
     // --- issuing keys ----------------------------------------------------------------------
 
     @Test
-    void selectingEveryGroupIsStoredAsUnrestricted() {
+    void selectingEveryGroupButConfigurationIsStoredAsUnrestricted() {
         UUID keyId = apiKeyService.create(new CreateApiKeyRequest("all-" + UUID.randomUUID(),
-                project.getId(), ProjectRole.TESTER,
-                EnumSet.complementOf(EnumSet.of(McpToolGroup.CORE)))).id();
+                project.getId(), ProjectRole.TESTER, everyGroupButConfiguration())).id();
 
         assertThat(listed(keyId).mcpToolGroups()).isNull();
+    }
+
+    /** Null does not imply CONFIGURATION, so normalising this selection to null would drop it. */
+    @Test
+    void selectingEveryGroupIncludingConfigurationIsStoredAsNamed() {
+        UUID keyId = apiKeyService.create(new CreateApiKeyRequest("all-" + UUID.randomUUID(),
+                project.getId(), ProjectRole.TESTER, everySelectableGroup())).id();
+
+        assertThat(listed(keyId).mcpToolGroups()).containsExactlyInAnyOrderElementsOf(everySelectableGroup());
+    }
+
+    // --- CONFIGURATION (TM37) ----------------------------------------------------------------
+
+    @Test
+    void anUnrestrictedAdminKeyIsNotShownConfigurationTools() throws Exception {
+        List<String> shown = toolNames(keyWith(ProjectRole.ADMIN, null));
+
+        assertThat(shown).contains("create_test_case", "create_environment");
+        assertThat(shown).doesNotContain("list_webhooks", "create_webhook", "set_issue_tracker_config",
+                "set_pipeline_workflows");
+    }
+
+    @Test
+    void anUnrestrictedAdminKeyCannotCallAConfigurationTool() throws Exception {
+        JsonNode result = call("list_webhooks", keyWith(ProjectRole.ADMIN, null));
+
+        assertThat(result.path("isError").asBoolean()).isTrue();
+        assertThat(result.path("content").get(0).path("text").asString())
+                .contains("not allowed to use list_webhooks")
+                .contains("CONFIGURATION");
+    }
+
+    @Test
+    void anAdminKeyWithConfigurationSeesAndCallsTheTools() throws Exception {
+        String rawKey = keyWith(ProjectRole.ADMIN, EnumSet.of(McpToolGroup.CONFIGURATION));
+
+        assertThat(toolNames(rawKey)).contains("list_webhooks", "get_issue_tracker_config")
+                .doesNotContain("create_test_case");
+        JsonNode result = call("list_webhooks", rawKey);
+        assertThat(result.path("isError").asBoolean(false)).isFalse();
+        assertThat(result.path("structuredContent").path("webhooks").isArray()).isTrue();
+    }
+
+    @Test
+    void aTesterKeyWithConfigurationIsRefusedForWantOfAdmin() throws Exception {
+        JsonNode result = call("list_webhooks",
+                keyWith(ProjectRole.TESTER, EnumSet.of(McpToolGroup.CONFIGURATION)));
+
+        assertThat(result.path("isError").asBoolean()).isTrue();
+        assertThat(result.path("content").get(0).path("text").asString()).contains("requires ADMIN");
+    }
+
+    private JsonNode call(String tool, String rawKey) throws Exception {
+        return MAPPER.readTree(post("""
+                {"jsonrpc":"2.0","id":5,"method":"tools/call","params":{"name":"%s","arguments":{}}}
+                """.formatted(tool), rawKey).body()).path("result");
     }
 
     @Test

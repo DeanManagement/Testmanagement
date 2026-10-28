@@ -45,8 +45,17 @@ public class McpCallerContext {
             return toolGroups != null;
         }
 
+        /** The one place group membership is decided; the list filter and the call guard both ask here. */
         public boolean allows(McpToolGroup group) {
-            return !isRestricted() || group == McpToolGroup.CORE || toolGroups.contains(group);
+            if (group == McpToolGroup.CORE) {
+                return true;
+            }
+            return isRestricted() ? toolGroups.contains(group) : group.isImpliedByUnrestrictedKey();
+        }
+
+        /** A tool nobody placed in a group is allowed to unrestricted keys only. */
+        public boolean allows(Optional<McpToolGroup> group) {
+            return group.map(this::allows).orElse(!isRestricted());
         }
     }
 
@@ -87,13 +96,13 @@ public class McpCallerContext {
     @Transactional(readOnly = true)
     public Caller requireAllowed(String toolName, Optional<McpToolGroup> group) {
         Caller caller = require();
-        if (!caller.isRestricted() || group.filter(caller::allows).isPresent()) {
+        if (caller.allows(group)) {
             return caller;
         }
         throw new McpToolException("This API key is not allowed to use " + toolName
                 + group.map(g -> ", which is in the " + g + " tool group").orElse("")
-                + ". It holds " + caller.toolGroups() + " — ask an administrator to issue a key "
-                + "that includes the group you need.");
+                + ". It holds " + (caller.isRestricted() ? caller.toolGroups() : "every group but CONFIGURATION")
+                + " — ask an administrator to issue a key that includes the group you need.");
     }
 
     /**

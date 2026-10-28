@@ -8,7 +8,8 @@ export type ApiKeyRole = 'VIEWER' | 'TESTER' | 'ADMIN';
  * PRD-027 §9: the units MCP access is granted in. CORE (get_project) is always granted by the
  * server and is deliberately absent here — it can be neither selected nor withheld.
  */
-export type McpToolGroup = 'AUTHORING' | 'EXECUTION' | 'REPORTING' | 'PIPELINES' | 'ISSUE_TRACKER';
+export type McpToolGroup =
+  'AUTHORING' | 'EXECUTION' | 'REPORTING' | 'PIPELINES' | 'ISSUE_TRACKER' | 'CONFIGURATION';
 
 export const MCP_TOOL_GROUPS: readonly McpToolGroup[] = [
   'AUTHORING',
@@ -16,6 +17,8 @@ export const MCP_TOOL_GROUPS: readonly McpToolGroup[] = [
   'REPORTING',
   'PIPELINES',
   'ISSUE_TRACKER',
+  // Never part of "all tools": a key only gets it when it is selected here.
+  'CONFIGURATION',
 ];
 
 export interface ApiKey {

@@ -22,5 +22,20 @@ public enum McpToolGroup {
     /** Build-server workflows and pipeline runs. */
     PIPELINES,
     /** Issues in the project's external tracker. */
-    ISSUE_TRACKER
+    ISSUE_TRACKER,
+    /**
+     * Webhooks, the issue-tracker connection and the project's pipeline workflows (TM37): settings
+     * that hold credentials and outbound URLs. Never implied by an unrestricted key — see
+     * {@link #isImpliedByUnrestrictedKey()}.
+     */
+    CONFIGURATION;
+
+    /**
+     * Whether a key with no stored groups (NULL, "everything") holds this group. CONFIGURATION is
+     * not: an agent that can point a webhook at any URL can exfiltrate every event the project
+     * emits, so that has to be granted on purpose, by naming the group (PRD-053 §9).
+     */
+    public boolean isImpliedByUnrestrictedKey() {
+        return this != CONFIGURATION;
+    }
 }

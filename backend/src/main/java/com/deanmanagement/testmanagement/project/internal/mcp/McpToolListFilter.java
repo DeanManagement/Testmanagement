@@ -19,8 +19,8 @@ import java.io.IOException;
 import java.util.Iterator;
 
 /**
- * Drops the tools a restricted API key may not use from its {@code tools/list} response
- * (PRD-027 §9), so their descriptions stop riding along on every turn of an agent that will never
+ * Drops the tools an API key may not use from its {@code tools/list} response (PRD-027 §9) — for
+ * a restricted key the groups it was not given, for an unrestricted one CONFIGURATION — so their descriptions stop riding along on every turn of an agent that will never
  * call them. That saving is the whole reason the allow-list exists.
  *
  * <p><b>Why an HTTP filter.</b> The list is built by
@@ -63,7 +63,7 @@ class McpToolListFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
                                     FilterChain filterChain) throws ServletException, IOException {
-        McpCallerContext.Caller caller = restrictedCallerOrNull();
+        McpCallerContext.Caller caller = callerOrNull();
         if (caller == null) {
             filterChain.doFilter(request, response);
             return;
@@ -84,11 +84,13 @@ class McpToolListFilter extends OncePerRequestFilter {
         cachedResponse.copyBodyToResponse();
     }
 
-    /** Null for an unrestricted key, and for a caller the tools will refuse anyway. */
-    private McpCallerContext.Caller restrictedCallerOrNull() {
+    /**
+     * Null for a caller the tools will refuse anyway. An unrestricted key is trimmed too: it does
+     * not hold CONFIGURATION.
+     */
+    private McpCallerContext.Caller callerOrNull() {
         try {
-            McpCallerContext.Caller caller = callerContext.require();
-            return caller.isRestricted() ? caller : null;
+            return callerContext.require();
         } catch (McpToolException notAProjectKey) {
             return null;
         } finally {
@@ -115,7 +117,7 @@ class McpToolListFilter extends OncePerRequestFilter {
             }
             for (Iterator<JsonNode> each = tools.iterator(); each.hasNext(); ) {
                 String name = each.next().path("name").asString("");
-                if (toolGroups.groupOf(name).filter(caller::allows).isEmpty()) {
+                if (!caller.allows(toolGroups.groupOf(name))) {
                     each.remove();
                 }
             }

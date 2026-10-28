@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
 import com.deanmanagement.testmanagement.project.internal.dto.apiKey.CreateApiKeyRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
@@ -23,6 +24,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -44,6 +46,7 @@ class McpEndpointApiTest {
     private ApiKeyService apiKeyService;
 
     private String rawKey;
+    private Project project;
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -60,7 +63,7 @@ class McpEndpointApiTest {
 
     @BeforeEach
     void setUp() {
-        Project project = projectRepository.findByKey("MCPE").orElseGet(() -> {
+        project = projectRepository.findByKey("MCPE").orElseGet(() -> {
             Project p = new Project();
             p.setKey("MCPE");
             p.setName("MCP Endpoint Test");
@@ -371,9 +374,14 @@ class McpEndpointApiTest {
      */
     @Test
     void deleteToolsAreExposedAndMarkedDestructive() throws Exception {
-        HttpResponse<String> tools = post(TOOLS_LIST, "X-API-Key", rawKey);
+        // Every group named, so the CONFIGURATION tools an unrestricted key never sees are checked too.
+        String everyGroupKey = apiKeyService.create(new CreateApiKeyRequest("mcp-endpoint-every-group",
+                project.getId(), ProjectRole.TESTER, EnumSet.complementOf(EnumSet.of(McpToolGroup.CORE)))).rawKey();
+        HttpResponse<String> tools = post(TOOLS_LIST, "X-API-Key", everyGroupKey);
 
         assertThat(tools.body())
+                .contains("delete_webhook")
+                .contains("delete_issue_tracker_config")
                 .contains("delete_test_case")
                 .contains("delete_requirement")
                 .contains("delete_test_run")

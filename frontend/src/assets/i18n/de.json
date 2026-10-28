@@ -588,22 +588,24 @@
       "roleAdmin": "Admin (kann auch Projekteinstellungen ändern)",
       "roleHint": "Der Schlüssel agiert als Dienstkonto mit dieser Rolle im Projekt.",
       "toolGroups": "MCP-Tools",
-      "toolGroupsAll": "Alle Tools",
-      "toolGroupsHint": "Leer lassen, um alle Tools zu erlauben. Ein Agent führt die Beschreibung jedes sichtbaren Tools bei jedem Schritt mit – ein Schlüssel für eine Art von Arbeit ist günstiger und sicherer, wenn er nur diese Art sieht.",
+      "toolGroupsAll": "Alle Tools ausser Konfiguration",
+      "toolGroupsHint": "Leer lassen, um alle Tools ausser der Konfiguration zu erlauben; diese muss ausdrücklich gewählt werden und erfordert zudem die Rolle Admin. Ein Agent führt die Beschreibung jedes sichtbaren Tools bei jedem Schritt mit – ein Schlüssel für eine Art von Arbeit ist günstiger und sicherer, wenn er nur diese Art sieht.",
       "toolGroupsOnly": "MCP-Tools:",
       "toolGroup": {
         "AUTHORING": "Erstellung – Testfälle, Ordner, Suiten, Pläne, Anforderungen",
         "EXECUTION": "Ausführung – Testläufe, Ergebnisse, Kommentare, Fehlerberichte",
         "REPORTING": "Berichte – Dashboard, instabile Tests, Suitenbericht, Rückverfolgbarkeit",
         "PIPELINES": "Pipelines – Build-Server-Workflows auslösen und verfolgen",
-        "ISSUE_TRACKER": "Issue-Tracker – externe Issues verknüpfen und anlegen"
+        "ISSUE_TRACKER": "Issue-Tracker – externe Issues verknüpfen und anlegen",
+        "CONFIGURATION": "Konfiguration – Webhooks, Issue-Tracker-Verbindung, Pipeline-Workflows (nur Admin)"
       },
       "toolGroupShort": {
         "AUTHORING": "Erstellung",
         "EXECUTION": "Ausführung",
         "REPORTING": "Berichte",
         "PIPELINES": "Pipelines",
-        "ISSUE_TRACKER": "Issue-Tracker"
+        "ISSUE_TRACKER": "Issue-Tracker",
+        "CONFIGURATION": "Konfiguration"
       },
       "mcpTitle": "KI-Agent verbinden (MCP)",
       "mcpHint": "Fügen Sie dies in die Konfiguration Ihres MCP-Clients ein. Der Endpunkt lässt sich nicht automatisch ermitteln; ein Agent benötigt die vollständige URL und den Header.",

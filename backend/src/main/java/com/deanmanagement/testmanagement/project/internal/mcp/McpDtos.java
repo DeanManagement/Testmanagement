@@ -6,6 +6,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus
 import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldType;
+import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerProviderType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.RequirementStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.SessionNoteType;
@@ -13,6 +14,8 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlanStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.WebhookEventType;
+import com.deanmanagement.testmanagement.project.internal.entity.WebhookFormat;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import org.jspecify.annotations.Nullable;
 
@@ -491,6 +494,32 @@ final class McpDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record ExploratorySessionPage(List<ExploratorySession> sessions, int page, int size, long totalElements,
                                   boolean hasMore) {}
+
+    // --- project configuration (TM37) ---------------------------------------------------------
+
+    /**
+     * A webhook as an agent may see it. The signing secret is never returned — {@code secretSet}
+     * says one is stored — and a Slack / Teams URL, which is itself the credential, comes back
+     * masked exactly as the settings page shows it.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record Webhook(UUID id, String url, WebhookFormat format, Set<WebhookEventType> events, boolean active,
+                   boolean secretSet) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record WebhookList(List<Webhook> webhooks) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record WebhookDelivery(UUID id, @Nullable Integer responseStatus, @Nullable Boolean success,
+                           @Nullable String error) {}
+
+    /** The tracker connection without its API token; {@code tokenSet} says whether one is stored. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record IssueTrackerConfig(boolean configured, @Nullable IssueTrackerProviderType provider,
+                              @Nullable String baseUrl, @Nullable String projectRef, @Nullable Boolean active,
+                              @Nullable Boolean tokenSet, @Nullable String authUsername,
+                              @Nullable String apiVersion, @Nullable String workItemType,
+                              @Nullable String lastError, @Nullable Instant lastErrorAt) {}
 
     // --- external issues (PRD-010) ------------------------------------------------------------
 

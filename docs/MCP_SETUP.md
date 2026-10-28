@@ -167,10 +167,23 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `update_custom_field` (rename, replace options, required, archive / restore). A key may hold
 VIEWER, TESTER or ADMIN; only system admins create keys.
 
+**Project configuration** (ADMIN keys that also hold the Configuration group, see below) —
+`list_webhooks`, `create_webhook`, `update_webhook`, `delete_webhook`, `test_webhook`,
+`get_issue_tracker_config`, `set_issue_tracker_config`, `test_issue_tracker_connection`,
+`delete_issue_tracker_config`, `list_available_pipeline_workflows`, `set_pipeline_workflows`.
+Secrets are write-only: webhook signing secrets and tracker API tokens are accepted but never
+returned (`secretSet` / `tokenSet` say whether one is stored), Slack / Teams URLs come back masked,
+and any `user:password@` or query string in a returned URL is cut off. Outbound URLs go through the
+same private-address checks as the settings pages. Build servers and their workflows remain an
+instance administrator's job; `set_pipeline_workflows` only picks which of the workflows open to the
+project testers may trigger, as the project settings page does. These changes are not written to the
+project audit log (the UI's are not either); the MCP activity log records each call.
+
 **Delete** (Tester only, like the UI) — `delete_test_case`, `delete_test_case_folder`,
 `delete_test_suite`, `delete_test_plan`, `delete_test_run`, `delete_requirement`,
 `delete_parameter_set`, `delete_shared_step`, `delete_test_case_attachment`, `delete_bug_report`,
-`delete_bug_report_attachment`, `delete_comment`, `delete_exploratory_session`. Each is marked `destructiveHint`, so a client can
+`delete_bug_report_attachment`, `delete_comment`, `delete_exploratory_session` (and, with an ADMIN
+key in the Configuration group, `delete_webhook`, `delete_issue_tracker_config`). Each is marked `destructiveHint`, so a client can
 ask before calling it, and each applies the UI's rules: a test case with results is refused (naming
 the runs; deprecate it instead), a shared step still in use is refused, a deleted folder's cases move
 to the project root, and comments can only be changed or deleted by the key that wrote them.
@@ -283,8 +296,8 @@ results arrive one at a time.
 
 An agent carries the description of every tool it is shown on every turn, so a key meant for one
 kind of work should only see that kind. When creating a key, **MCP tools** selects the groups it may
-use; leaving it empty allows everything, which is also what every key issued before this existed
-holds.
+use; leaving it empty allows everything except Configuration, which is also what every key issued
+before this existed holds.
 
 | Group | Tools |
 |---|---|
@@ -293,6 +306,11 @@ holds.
 | Reporting | dashboard, flaky tests, suite report, traceability matrix |
 | Pipelines | build-server workflows and pipeline runs |
 | Issue tracker | linking and filing issues in the external tracker |
+| Configuration | webhooks, the issue-tracker connection, which pipeline workflows testers are offered — ADMIN keys only |
+
+**Configuration is never implied.** An agent that can point a webhook at any URL can send every
+event the project emits there, so a key gets these tools only when Configuration is selected
+explicitly — an unrestricted key, even an ADMIN one, neither sees nor can call them.
 
 `get_project` is always available. A restricted key does not see the other groups' tools in
 `tools/list`, and calling one anyway is refused with a message naming the group it would need — the
