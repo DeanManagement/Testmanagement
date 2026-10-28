@@ -137,9 +137,10 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 **Read** — `get_project`, `search_test_cases`, `get_test_case`, `list_test_case_folders`,
 `list_custom_fields`,
 `list_test_suites`, `get_test_suite`, `list_test_plans`, `get_test_plan`, `list_test_runs`,
-`get_test_run`, `compare_test_runs`, `list_requirements`, `get_traceability_matrix`, `list_bug_reports`,
-`get_bug_report`, `list_comments`, `list_parameter_sets`, `list_test_case_versions`,
-`get_test_case_version`, `list_shared_steps`, `get_project_dashboard`, `list_flaky_tests`, `get_release_readiness`,
+`get_test_run`, `compare_test_runs`, `list_requirements`, `get_requirement`, `get_traceability_matrix`,
+`list_bug_reports`, `get_bug_report`, `list_comments`, `list_parameter_sets`, `list_test_case_versions`,
+`get_test_case_version`, `list_shared_steps`, `get_shared_step`, `download_test_case_attachment`,
+`list_environments`, `get_project_dashboard`, `list_flaky_tests`, `get_release_readiness`,
 `get_test_suite_report`,
 `list_pipeline_workflows`, `list_pipeline_runs`, `get_pipeline_run`, `list_issue_links`.
 
@@ -152,10 +153,20 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `remove_test_cases_from_suite`, `update_test_plan`, `update_requirement`,
 `unlink_test_case_from_requirement`, `rename_test_case_folder`, `move_test_case_folder`, `change_test_case_status_bulk`,
 `create_parameter_set`, `update_parameter_set`, `trigger_pipeline`, `refresh_pipeline_run`,
-`link_issue`, `create_linked_issue`.
+`link_issue`, `create_linked_issue`, `unlink_issue`, `reopen_test_run`, `update_bug_report`,
+`unlink_bug_report`, `update_comment`, `create_shared_step`, `update_shared_step`,
+`add_test_case_attachment`.
+
+**Delete** (Tester only, like the UI) — `delete_test_case`, `delete_test_case_folder`,
+`delete_test_suite`, `delete_test_plan`, `delete_test_run`, `delete_requirement`,
+`delete_parameter_set`, `delete_shared_step`, `delete_test_case_attachment`, `delete_bug_report`,
+`delete_bug_report_attachment`, `delete_comment`. Each is marked `destructiveHint`, so a client can
+ask before calling it, and each applies the UI's rules: a test case with results is refused (naming
+the runs; deprecate it instead), a shared step still in use is refused, a deleted folder's cases move
+to the project root, and comments can only be changed or deleted by the key that wrote them.
 
 Every `update_*` tool is partial: only the arguments you pass change, and an empty string `""`
-clears a text field. There are no delete tools. Assigning work stays a human decision too, with one
+clears a text field (and, on `update_test_plan`, the target date). Assigning work stays a human decision too, with one
 exception: `assign_bug_reports` assigns bugs to a member (by email) or unassigns them, and its
 description tells the agent to use it only when a human asked.
 
@@ -170,7 +181,15 @@ steps appear in place, each with `sharedStepId` and `sharedStepTitle`. To use a 
 `create_test_case` / `update_test_case`, pass a step with just its `sharedStepId` (from
 `list_shared_steps`) instead of an `action`. Consecutive steps with the same `sharedStepId` count as
 one use of it, so steps read from `get_test_case` can be sent back unchanged. Shared steps
-themselves can only be edited in the UI: one edit changes every case that uses them.
+themselves can be maintained with `create_shared_step` / `update_shared_step` /
+`delete_shared_step`; an edit changes every case that uses it, so those cases get a new version and
+go back to review exactly as when a human edits it. Send back the step ids from `get_shared_step`
+for the steps you keep.
+
+**Environments** — the `environment` of `create_test_run`, `update_test_run`, `clone_test_run`,
+`create_bug_report` and `update_bug_report` must be a name from `list_environments` (case does not
+matter). An unknown name is refused with the known ones listed, rather than registered as a new
+environment the way CI uploads and the UI still do; adding environments stays with project admins.
 
 **Time** — `create_test_case` / `update_test_case` take `estimateMinutes` (1-1440; `0` clears it on
 update), and `get_test_case` returns it with `medianActualMs`. An agent that executes tests should
@@ -212,8 +231,9 @@ The one sequence you cannot infer from the tool list. An agent that runs tests i
 4. **`create_bug_report`** for a real defect, passing the `resultId` from step 2 as `testResultId`
    so the bug is reachable from the failure that produced it.
 
-To re-test after a fix, **`clone_test_run`** opens a fresh `PLANNED` run with the same cases; a
-completed run cannot be reopened over MCP. **`update_test_run`** renames a run, changes its
+To re-test after a fix, **`clone_test_run`** opens a fresh `PLANNED` run with the same cases.
+**`reopen_test_run`** reopens a completed or aborted run instead, with a required reason that lands
+in the audit log. **`update_test_run`** renames a run, changes its
 environment or files it under a plan — it cannot change the status.
 
 Anywhere a run is named — `get_test_run`, `record_test_result`, `record_test_results`,
@@ -234,8 +254,8 @@ holds.
 
 | Group | Tools |
 |---|---|
-| Authoring | test cases, folders, suites, plans, requirements, parameter sets, version history |
-| Execution | test runs, results, step results, comments, native bug reports |
+| Authoring | test cases and their attachments, folders, suites, plans, requirements, parameter sets, shared steps, version history |
+| Execution | test runs, results, step results, comments, environments, native bug reports |
 | Reporting | dashboard, flaky tests, suite report, traceability matrix |
 | Pipelines | build-server workflows and pipeline runs |
 | Issue tracker | linking and filing issues in the external tracker |
@@ -290,8 +310,7 @@ curl -s -X POST https://your-instance/api/mcp \
   | jq '.result.tools[] | select(.name=="search_test_cases") | .outputSchema'
 ```
 
-There are no delete tools, and no tool reopens a completed run. Deleting anything stays a human
-action in the UI, and re-testing means a new run rather than editing a signed-off one.
+Delete tools return `{type, id, name}` naming what was removed.
 
 ## Things worth knowing before you let an agent loose
 
