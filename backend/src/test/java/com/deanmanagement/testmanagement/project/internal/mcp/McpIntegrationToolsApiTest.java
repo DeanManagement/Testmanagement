@@ -212,6 +212,22 @@ class McpIntegrationToolsApiTest extends McpToolApiTestSupport {
     }
 
     @Test
+    void unlinkingAnIssueRemovesOnlyTheLinkAndUnknownReferencesAreRefused() {
+        configureTracker();
+        stubResponse.set("{\"iid\": 42, \"title\": \"Checkout bug\", \"state\": \"opened\", "
+                + "\"web_url\": \"https://gitlab.test/i/42\"}");
+        authenticateAs(project, ProjectRole.TESTER);
+        UUID resultId = aResult();
+        issueLinkTools.linkIssue(resultId, "group/project#42");
+
+        assertThatThrownBy(() -> issueLinkTools.unlinkIssue(resultId, "group/project#7"))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("group/project#42");
+        assertThat(issueLinkTools.unlinkIssue(resultId, "group/project#42").total()).isZero();
+        assertThat(issueLinkTools.listIssueLinks(resultId).total()).isZero();
+    }
+
+    @Test
     void filingANewIssueWritesItsBodyFromTheResult() {
         configureTracker();
         stubResponse.set("{\"iid\": 43, \"title\": \"Checkout fails on empty cart\", "

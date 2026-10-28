@@ -99,6 +99,20 @@ final class McpDtos {
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record SharedStepItem(UUID id, String title, @Nullable String description, int stepCount, long usedByCount) {}
 
+    /**
+     * One step of a shared step. {@code id} is what keeps a step in place on update — results
+     * recorded against it keep their text — so send back the ids get_shared_step returned; a step
+     * without one is new. {@code @Nullable}s as on {@link Step}: nested properties are otherwise
+     * schema-required.
+     */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record SharedStepStep(@Nullable UUID id, String action, @Nullable String expectedResult,
+                          @Nullable String testData) {}
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record SharedStepDetail(UUID id, String title, @Nullable String description, long usedByCount,
+                            List<SharedStepStep> steps) {}
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record SharedStepList(List<SharedStepItem> sharedSteps, long totalElements, boolean hasMore) {}
 
@@ -108,11 +122,22 @@ final class McpDtos {
                           @Nullable Set<String> labels, @Nullable UUID folderId,
                           List<Step> steps, @Nullable Map<String, Object> customFields,
                           @Nullable Integer estimateMinutes, @Nullable Long medianActualMs,
-                          List<Attachment> attachments) {}
+                          List<Attachment> attachments, List<RequirementRef> requirements) {}
+
+    /** A requirement a test case is linked to (TM08); get_requirement has the rest. */
+    record RequirementRef(UUID id, String externalId, String title) {}
+
+    /** What a delete removed, so the agent can quote it back to a human. */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record Deleted(String type, UUID id, @Nullable String name) {}
+
+    /** A test-case attachment with its bytes (TM13). */
+    record AttachmentContent(UUID id, String fileName, String contentType, long sizeBytes,
+                             String contentBase64) {}
 
     /**
-     * Metadata only (PRD-044 §3.8): the agent can tell a human the file exists, not fetch it. The id
-     * is what a human's download link is built from.
+     * Metadata only (PRD-044 §3.8); the bytes come from download_test_case_attachment (TM13), so a
+     * list of cases does not drag every file into the agent's context.
      */
     record Attachment(UUID id, String fileName, String contentType, long sizeBytes) {}
 

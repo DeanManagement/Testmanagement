@@ -27,6 +27,8 @@ import com.deanmanagement.testmanagement.project.internal.service.ProjectService
 import com.deanmanagement.testmanagement.project.internal.service.TestRunService;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import org.junit.jupiter.api.AfterEach;
+import com.deanmanagement.testmanagement.project.internal.dto.environment.CreateEnvironmentRequest;
+import com.deanmanagement.testmanagement.project.internal.service.ProjectEnvironmentService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -107,6 +109,8 @@ class McpToolSurfaceApiTest {
     private TestRunService testRunService;
     @Autowired
     private ProjectService projectService;
+    @Autowired
+    private ProjectEnvironmentService environmentService;
 
     @Autowired
     private UserRepository userRepository;
@@ -124,6 +128,8 @@ class McpToolSurfaceApiTest {
         String suffix = Integer.toHexString(new java.util.Random().nextInt(0xFFFFF));
         project = newProject("MCP Project", "A" + suffix);
         otherProject = newProject("Other Project", "B" + suffix);
+        // MCP writes refuse an environment the catalogue does not know (TM34).
+        environmentService.create(project.getId(), new CreateEnvironmentRequest("staging", null), null);
     }
 
     @AfterEach
@@ -188,7 +194,7 @@ class McpToolSurfaceApiTest {
                 Set.of("req-aca-027"), null, null, null, null, null);
 
         assertThat(testCaseTools.searchTestCases(null, null, null, List.of("req-aca-027", "negativ"),
-                null, null, null, null, null).testCases())
+                null, null, null, null, null, null).testCases())
                 .extracting(McpDtos.TestCaseSummary::id)
                 .containsExactly(both.id());
     }
@@ -203,7 +209,7 @@ class McpToolSurfaceApiTest {
 
         assertThatThrownBy(() -> testCaseTools.getTestCase(foreign.id().toString()))
                 .isInstanceOf(ResourceNotFoundException.class);
-        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null, null)
+        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null, null, null)
                 .testCases())
                 .noneMatch(tc -> tc.id().equals(foreign.id()));
     }
@@ -396,7 +402,7 @@ class McpToolSurfaceApiTest {
 
         assertThat(result.dryRun()).isTrue();
         assertThat(result.created()).isEqualTo(1);
-        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null, null)
+        assertThat(testCaseTools.searchTestCases(null, null, null, null, null, null, null, null, null, null)
                 .totalElements()).isZero();
     }
 
@@ -628,7 +634,7 @@ class McpToolSurfaceApiTest {
         McpDtos.Requirement requirement = requirementTools.createRequirement("REQ-9", "Etwas", null);
         requirementTools.linkTestCasesToRequirement(requirement.id(), List.of(testCase.id()));
 
-        assertThat(requirementTools.listRequirements(null, null).requirements())
+        assertThat(requirementTools.listRequirements(null, null, null).requirements())
                 .singleElement()
                 .satisfies(r -> assertThat(r.testCases()).extracting(McpDtos.TestCaseRef::id)
                         .containsExactly(testCase.id()));
@@ -646,7 +652,7 @@ class McpToolSurfaceApiTest {
         assertThatThrownBy(() ->
                 requirementTools.linkTestCasesToRequirement(requirement.id(), List.of(foreign.id())))
                 .isInstanceOf(ResourceNotFoundException.class);
-        assertThat(requirementTools.listRequirements(null, null).requirements())
+        assertThat(requirementTools.listRequirements(null, null, null).requirements())
                 .singleElement()
                 .satisfies(r -> assertThat(r.testCases()).isEmpty());
     }

@@ -17,7 +17,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.tuple;
 
-/** Agents see and use shared steps, but do not edit them (PRD-030 §3.5). */
+/** Agents see, use and — since TM14 — maintain shared steps (PRD-030 §3.5). */
 class McpSharedStepToolsApiTest extends McpToolApiTestSupport {
 
     @Autowired private SharedStepService sharedStepService;
@@ -99,5 +99,73 @@ class McpSharedStepToolsApiTest extends McpToolApiTestSupport {
         assertThat(list.sharedSteps()).extracting(McpDtos.SharedStepItem::title, McpDtos.SharedStepItem::stepCount)
                 .containsExactly(tuple("Log in", 2));
         assertThat(list.sharedSteps().getFirst().id()).isEqualTo(login.id());
+    }
+
+    // --- maintenance (TM14) ----------------------------------------------------------------
+
+    private static McpDtos.SharedStepStep step(UUID id, String action) {
+        return new McpDtos.SharedStepStep(id, action, null, null);
+    }
+
+    @Test
+    void anAgentCreatesASharedStepAndReadsItBack() {
+        authenticateAs(project, ProjectRole.TESTER);
+
+        McpDtos.SharedStepDetail created = sharedStepTools.createSharedStep("Log in",
+                List.of(step(null, "Open the login page"), step(null, "Sign in")), null);
+
+        assertThat(sharedStepTools.getSharedStep(created.id()).steps())
+                .extracting(McpDtos.SharedStepStep::action).containsExactly("Open the login page", "Sign in");
+    }
+
+    @Test
+    void renamingKeepsTheStepsAndTheirIds() {
+        SharedStepResponse login = loginIn(project);
+        authenticateAs(project, ProjectRole.TESTER);
+        List<UUID> idsBefore = sharedStepTools.getSharedStep(login.id()).steps().stream()
+                .map(McpDtos.SharedStepStep::id).toList();
+
+        McpDtos.SharedStepDetail renamed = sharedStepTools.updateSharedStep(login.id(), "Sign in as admin", null, null);
+
+        assertThat(renamed.title()).isEqualTo("Sign in as admin");
+        assertThat(renamed.steps()).extracting(McpDtos.SharedStepStep::id).containsExactlyElementsOf(idsBefore);
+    }
+
+    @Test
+    void stepsSentBackWithTheirIdsAreEditedInPlace() {
+        SharedStepResponse login = loginIn(project);
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.SharedStepStep first = sharedStepTools.getSharedStep(login.id()).steps().getFirst();
+
+        McpDtos.SharedStepDetail updated = sharedStepTools.updateSharedStep(login.id(), null, null,
+                List.of(step(first.id(), "Open /login"), step(null, "Accept cookies")));
+
+        assertThat(updated.steps()).extracting(McpDtos.SharedStepStep::action)
+                .containsExactly("Open /login", "Accept cookies");
+        assertThat(updated.steps().getFirst().id()).isEqualTo(first.id());
+    }
+
+    @Test
+    void aSharedStepInUseCannotBeDeletedButAnUnusedOneCan() {
+        SharedStepResponse login = loginIn(project);
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.CreatedTestCase checkout = caseWith(List.of(shared(login.id())));
+
+        assertThatThrownBy(() -> sharedStepTools.deleteSharedStep(login.id()))
+                .hasMessageContaining("used by 1 test case");
+
+        testCaseTools.updateTestCase(checkout.key(), null, null, null, null, null, null, List.of(local("Pay")),
+                null, null, null);
+        sharedStepTools.deleteSharedStep(login.id());
+        assertThat(sharedStepTools.listSharedSteps(null).sharedSteps()).isEmpty();
+    }
+
+    @Test
+    void aViewerKeyCannotCreateASharedStep() {
+        authenticateAs(project, ProjectRole.VIEWER);
+
+        assertThatThrownBy(() -> sharedStepTools.createSharedStep("Log in", List.of(step(null, "Sign in")), null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("TESTER");
     }
 }

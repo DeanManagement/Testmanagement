@@ -52,7 +52,7 @@ public class ProjectDiscoveryTools {
             description = """
                     Describe the project this API key is scoped to, with counts of test cases,
                     suites and plans, and the role your key holds (VIEWER can only read; TESTER can
-                    also create and update). Call this first to confirm which project you are in.
+                    also create, update and delete). Call this first to confirm which project you are in.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
@@ -226,6 +226,30 @@ public class ProjectDiscoveryTools {
         folderService.moveTestCases(caller.projectId(),
                 new MoveTestCasesRequest(testCaseIds, folderId), caller.userId());
         return new McpDtos.MoveResult(testCaseIds.size(), folderId);
+    }
+
+    @McpTool(
+            name = "delete_test_case_folder",
+            description = """
+                    Delete a folder. Nothing in it is deleted: its test cases move to the project
+                    root (not to the parent folder), and its subfolders move up one level to the
+                    deleted folder's parent, keeping their contents. Cannot be undone — move the
+                    cases elsewhere first with move_test_cases_to_folder if the root is not where
+                    they belong.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = true, idempotentHint = false))
+    @Transactional
+    public McpDtos.Deleted deleteTestCaseFolder(
+            @McpToolParam(description = "Folder UUID from list_test_case_folders") UUID folderId) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        String name = find(folderService.getTree(caller.projectId()), folderId)
+                .map(TestCaseFolderResponse::name)
+                .orElseThrow(() -> new ResourceNotFoundException("TestCaseFolder", folderId));
+        folderService.delete(caller.projectId(), folderId, caller.userId());
+        return new McpDtos.Deleted("TEST_CASE_FOLDER", folderId, name);
     }
 
     private static Optional<TestCaseFolderResponse> find(List<TestCaseFolderResponse> folders,

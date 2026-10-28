@@ -44,6 +44,7 @@ public class TestRunWriteTools {
     private final McpValidator validator;
     private final TestRunRepository testRunRepository;
     private final McpRunSupport runSupport;
+    private final McpEnvironmentGuard environmentGuard;
 
     @McpTool(
             name = "create_test_run",
@@ -55,6 +56,7 @@ public class TestRunWriteTools {
                     with neither is legal and starts empty, for exploratory testing.
                     testPlanId optionally files the run under a plan. The run is created PLANNED
                     and starts automatically when you record the first result.
+                    environment must be a name from list_environments; an unknown one is refused.
                     You are recorded as the executor.
                     """,
             generateOutputSchema = true,
@@ -62,7 +64,7 @@ public class TestRunWriteTools {
     @Transactional
     public McpDtos.CreatedTestRun createTestRun(
             @McpToolParam(description = "Run name, max 255 characters") String name,
-            @McpToolParam(description = "Environment the run targets; prefer a name from list_environments", required = false)
+            @McpToolParam(description = "Environment the run targets: a name from list_environments", required = false)
             String environment,
             @McpToolParam(description = "UUIDs of test cases to seed the run with", required = false)
             Set<UUID> testCaseIds,
@@ -76,6 +78,7 @@ public class TestRunWriteTools {
         if (name == null || name.isBlank()) {
             throw new McpToolException("name is required.");
         }
+        environmentGuard.requireKnown(caller.projectId(), environment);
 
         Set<UUID> seed = new LinkedHashSet<>(testCaseIds == null ? Set.of() : testCaseIds);
         if (testSuiteId != null) {
@@ -104,8 +107,8 @@ public class TestRunWriteTools {
                     status: COMPLETED (default) when you executed what you set out to, or ABORTED
                     when something blocked you part-way — an aborted run is a more honest record
                     than one left open forever. ABORTED needs a reason saying what blocked you.
-                    Results still PENDING are reported back rather than refused. A completed run
-                    cannot be reopened from here; run again in a new run instead.
+                    Results still PENDING are reported back rather than refused. To test again,
+                    prefer clone_test_run; reopen_test_run reopens this run itself.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))

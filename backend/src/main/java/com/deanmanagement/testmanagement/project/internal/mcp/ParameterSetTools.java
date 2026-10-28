@@ -127,6 +127,34 @@ public class ParameterSetTools {
                 parameterSetId, request));
     }
 
+    @McpTool(
+            name = "delete_parameter_set",
+            description = """
+                    Remove one data row from a test case. Runs created afterwards no longer get a
+                    result for it; results already recorded keep the values they ran with. Removing
+                    the last set makes the case an ordinary, non-data-driven one again.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = true, idempotentHint = false))
+    @Transactional
+    public McpDtos.Deleted deleteParameterSet(
+            @McpToolParam(description = "Test case key (PROJ-12) or UUID") String testCaseIdOrKey,
+            @McpToolParam(description = "Parameter set UUID from list_parameter_sets")
+            UUID parameterSetId) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        UUID testCaseId = testCaseId(caller, testCaseIdOrKey);
+        String name = parameterSetService.list(caller.projectId(), testCaseId).stream()
+                .filter(set -> set.id().equals(parameterSetId))
+                .map(ParameterSetResponse::name)
+                .findFirst()
+                .orElseThrow(() -> new McpToolException("No parameter set " + parameterSetId
+                        + " on this test case. Call list_parameter_sets to see what there is."));
+        parameterSetService.delete(caller.projectId(), testCaseId, parameterSetId);
+        return new McpDtos.Deleted("PARAMETER_SET", parameterSetId, name);
+    }
+
     private UUID testCaseId(McpCallerContext.Caller caller, String testCaseIdOrKey) {
         return McpTestCaseReferences.resolve(testCaseRepository, caller.projectId(),
                 testCaseIdOrKey).getId();

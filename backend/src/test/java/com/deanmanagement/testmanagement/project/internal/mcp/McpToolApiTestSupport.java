@@ -8,6 +8,8 @@ import com.deanmanagement.testmanagement.project.internal.repository.ApiKeyRepos
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.service.ApiKeyService;
 import com.deanmanagement.testmanagement.project.internal.service.ProjectService;
+import com.deanmanagement.testmanagement.project.internal.dto.environment.CreateEnvironmentRequest;
+import com.deanmanagement.testmanagement.project.internal.service.ProjectEnvironmentService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,6 +48,8 @@ abstract class McpToolApiTestSupport {
     @Autowired
     private McpWriteThrottle writeThrottle;
     @Autowired
+    protected ProjectEnvironmentService environmentService;
+    @Autowired
     protected TestCaseTools testCaseTools;
     @Autowired
     protected TestRunWriteTools testRunWriteTools;
@@ -67,6 +71,8 @@ abstract class McpToolApiTestSupport {
         String suffix = Integer.toHexString(new java.util.Random().nextInt(0xFFFFF));
         project = newProject("MCP Project", "C" + suffix);
         otherProject = newProject("Other Project", "D" + suffix);
+        // MCP writes refuse an environment the catalogue does not know (TM34).
+        environmentService.create(project.getId(), new CreateEnvironmentRequest("staging", null), null);
     }
 
     @AfterEach

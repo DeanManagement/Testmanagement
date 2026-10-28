@@ -20,8 +20,8 @@ import java.util.UUID;
  * <p>Complementary to {@link BugReportTools}: a native bug report needs no configuration, this
  * needs an administrator to have connected a tracker. Linking and filing are two tools rather than
  * one with a {@code create} flag, so that filing — which writes to a system outside this one —
- * cannot happen by getting an optional argument wrong. There is no unlink tool, per PRD-025's
- * no-deletion rule.
+ * cannot happen by getting an optional argument wrong. {@code unlink_issue} only removes the link
+ * here; the issue in the tracker is untouched.
  *
  * <p>Not {@code @Transactional} here: the service calls the tracker over the network.
  */
@@ -96,6 +96,40 @@ public class IssueLinkTools {
             @McpToolParam(description = "Issue body, max 20000 characters", required = false)
             String body) {
         return link(resultId, new CreateIssueLinkRequest(null, true, title, body));
+    }
+
+    @McpTool(
+            name = "unlink_issue",
+            description = """
+                    Detach an external-tracker issue from a test result, undoing link_issue or
+                    create_linked_issue here. The issue itself stays in the tracker, untouched.
+                    issueReference is the externalId list_issue_links shows for it.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
+    public McpDtos.IssueLinkList unlinkIssue(
+            @McpToolParam(description = "Result UUID from get_test_run") UUID resultId,
+            @McpToolParam(description = "The issue's externalId from list_issue_links")
+            String issueReference) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        if (issueReference == null || issueReference.isBlank()) {
+            throw new McpToolException("issueReference is required: the externalId from list_issue_links.");
+        }
+        UUID result = requireResultId(resultId);
+        List<IssueLinkResponse> links = issueLinkService.findForResult(caller.projectId(), result);
+        IssueLinkResponse link = links.stream()
+                .filter(l -> l.externalId().equalsIgnoreCase(issueReference.strip()))
+                .findFirst()
+                .orElseThrow(() -> new McpToolException("No issue " + issueReference
+                        + " is linked to this result. Linked: " + (links.isEmpty() ? "none"
+                        : links.stream().map(IssueLinkResponse::externalId).toList()) + "."));
+        issueLinkService.unlink(caller.projectId(), result, link.id(), caller.userId());
+
+        List<McpDtos.IssueLink> remaining = links.stream().filter(l -> !l.id().equals(link.id()))
+                .map(IssueLinkTools::toIssueLink).toList();
+        return new McpDtos.IssueLinkList(remaining, remaining.size());
     }
 
     private McpDtos.IssueLink link(UUID resultId, CreateIssueLinkRequest request) {

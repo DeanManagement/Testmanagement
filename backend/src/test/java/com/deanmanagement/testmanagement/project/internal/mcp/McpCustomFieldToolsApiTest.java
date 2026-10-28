@@ -86,7 +86,7 @@ class McpCustomFieldToolsApiTest extends McpToolApiTestSupport {
         createWith("Find", Map.of("Component", "Search"));
 
         McpDtos.TestCasePage page = testCaseTools.searchTestCases(null, null, null, null, null, null,
-                Map.of("Component", List.of("Search")), null, null);
+                Map.of("Component", List.of("Search")), null, null, null);
 
         assertThat(page.testCases()).extracting(McpDtos.TestCaseSummary::title).containsExactly("Find");
     }

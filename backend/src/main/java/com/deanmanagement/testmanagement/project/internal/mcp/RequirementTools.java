@@ -47,17 +47,18 @@ public class RequirementTools {
                     The project's requirements with the test cases linked to each. Call this before
                     creating one: externalId is how a requirement is recognised, and creating a
                     second requirement with an id that already exists is the usual way this gets
-                    messy.
+                    messy. query matches the externalId or the title, ignoring case.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
     @Transactional(readOnly = true)
     public McpDtos.RequirementPage listRequirements(
             @McpToolParam(description = "Zero-based page number, default 0", required = false) Integer page,
-            @McpToolParam(description = "Page size, default 50, max 200", required = false) Integer size) {
+            @McpToolParam(description = "Page size, default 50, max 200", required = false) Integer size,
+            @McpToolParam(description = "Part of the externalId or title", required = false) String query) {
 
         var caller = callerContext.require();
-        var result = requirementService.list(caller.projectId(), PageableUtils.normalize(
+        var result = requirementService.list(caller.projectId(), query, PageableUtils.normalize(
                 PageRequest.of(page == null || page < 0 ? 0 : page,
                         size == null || size < 1 ? PageableUtils.DEFAULT_SIZE : size)));
 
@@ -66,6 +67,21 @@ public class RequirementTools {
                 .toList();
         return new McpDtos.RequirementPage(requirements, result.getNumber(), result.getSize(),
                 result.getTotalElements(), result.hasNext());
+    }
+
+    @McpTool(
+            name = "get_requirement",
+            description = """
+                    One requirement with the test cases linked to it, by its externalId (REQ-14)
+                    or its UUID.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
+    @Transactional(readOnly = true)
+    public McpDtos.Requirement getRequirement(
+            @McpToolParam(description = "externalId (REQ-14) or UUID") String idOrExternalId) {
+        var caller = callerContext.require();
+        return toRequirement(requirementService.get(caller.projectId(), idOrExternalId));
     }
 
     @McpTool(
@@ -191,6 +207,26 @@ public class RequirementTools {
         requirementService.unlinkTestCase(caller.projectId(), requirementId, testCaseId,
                 caller.userId());
         return toRequirement(requirementService.get(caller.projectId(), requirementId));
+    }
+
+    @McpTool(
+            name = "delete_requirement",
+            description = """
+                    Permanently delete a requirement and its links to test cases. The test cases
+                    themselves are not touched. Cannot be undone; to drop just one link use
+                    unlink_test_case_from_requirement.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = true, idempotentHint = false))
+    @Transactional
+    public McpDtos.Deleted deleteRequirement(
+            @McpToolParam(description = "externalId (REQ-14) or UUID") String idOrExternalId) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        RequirementResponse requirement = requirementService.get(caller.projectId(), idOrExternalId);
+        requirementService.delete(caller.projectId(), requirement.id(), caller.userId());
+        return new McpDtos.Deleted("REQUIREMENT", requirement.id(), requirement.externalId());
     }
 
     // A read-out of coverage rather than authoring, so a reporting-only key can ask what is proven

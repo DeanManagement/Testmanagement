@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.mcp;
 import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.comment.CommentResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.comment.CreateCommentRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.comment.UpdateCommentRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.CommentEntityType;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.service.CommentService;
@@ -14,13 +15,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 /**
  * The discussion thread on a test case or on one result of a run.
  *
  * <p>Not the same thing as the {@code comment} argument of {@code record_test_result}: that is the
- * result's own evidence field and is overwritten on re-record, whereas these are an append-only
- * conversation with humans. No edit or delete tool, per PRD-025's no-deletion rule.
+ * result's own evidence field and is overwritten on re-record, whereas these are a conversation
+ * with humans. An agent may edit or delete only comments it wrote itself, exactly as
+ * {@link CommentService} allows any non-admin author (API keys cannot hold ADMIN).
  */
 @Service
 @InToolGroup(McpToolGroup.EXECUTION)
@@ -88,6 +91,57 @@ public class CommentTools {
         Target target = target(caller.projectId(), testCaseIdOrKey, resultId);
         return toComment(commentService.create(caller.projectId(), target.type(), target.id(),
                 request, caller.userId()));
+    }
+
+    @McpTool(
+            name = "update_comment",
+            description = """
+                    Rewrite a comment you added yourself. Max 2000 characters. Comments by anyone
+                    else are refused. commentId comes from list_comments.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.Comment updateComment(
+            @McpToolParam(description = "Comment UUID from list_comments") UUID commentId,
+            @McpToolParam(description = "The new text, max 2000 characters") String content) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        var request = new UpdateCommentRequest(content);
+        validator.validate(request);
+        return ownComment(() -> toComment(
+                commentService.update(caller.projectId(), commentId, request, caller.userId())));
+    }
+
+    @McpTool(
+            name = "delete_comment",
+            description = """
+                    Delete a comment you added yourself. Comments by anyone else are refused.
+                    Cannot be undone.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = true, idempotentHint = false))
+    @Transactional
+    public McpDtos.Deleted deleteComment(
+            @McpToolParam(description = "Comment UUID from list_comments") UUID commentId) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        return ownComment(() -> {
+            commentService.delete(caller.projectId(), commentId, caller.userId());
+            return new McpDtos.Deleted("COMMENT", commentId, null);
+        });
+    }
+
+    /** CommentService refuses someone else's comment with an IllegalStateException. */
+    private static <T> T ownComment(Supplier<T> call) {
+        try {
+            return call.get();
+        } catch (IllegalStateException notTheAuthor) {
+            throw new McpToolException("Only comments this API key wrote can be changed or deleted. "
+                    + "Reply with add_comment instead.");
+        }
     }
 
     private Target target(UUID projectId, String testCaseIdOrKey, UUID resultId) {

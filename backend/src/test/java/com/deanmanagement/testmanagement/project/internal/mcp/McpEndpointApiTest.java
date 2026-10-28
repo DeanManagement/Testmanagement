@@ -365,25 +365,29 @@ class McpEndpointApiTest {
     }
 
     /**
-     * Was {@code execution_toolsAreNotExposed}, asserting PRD-025 §2's authoring-only scope.
-     * PRD-027 reverses that half deliberately — an agent that can see failures and not run tests
-     * cannot close the loop — so the execution tools are now asserted *present*.
-     *
-     * <p>The other half of the original assertion still stands and is what this test is now for:
-     * no tool deletes anything. Deletion stays a human action in the UI (PRD-025 §2, unchanged by
-     * PRD-027 §2).
+     * PRD-025 §2 kept deletion a human action; the product owner has since opened it to agents
+     * (TM01 and siblings) with the same TESTER role the UI needs. What must hold instead is that
+     * every delete tool tells a client it is destructive, so the client can ask before calling it.
      */
     @Test
-    void destructive_toolsAreNotExposed() throws Exception {
+    void deleteToolsAreExposedAndMarkedDestructive() throws Exception {
         HttpResponse<String> tools = post(TOOLS_LIST, "X-API-Key", rawKey);
 
         assertThat(tools.body())
-                .doesNotContain("delete_test_case")
-                .doesNotContain("delete_requirement")
-                .doesNotContain("delete_test_run")
-                .doesNotContain("delete_bug_report")
-                // Reopening a signed-off run is a human judgment call, not an agent's (PRD-027 §2).
-                .doesNotContain("reopen_test_run");
+                .contains("delete_test_case")
+                .contains("delete_requirement")
+                .contains("delete_test_run")
+                .contains("delete_bug_report")
+                .contains("reopen_test_run");
+        List<String> deletesNotMarked = new ArrayList<>();
+        for (JsonNode tool : MAPPER.readTree(tools.body()).path("result").path("tools")) {
+            String name = tool.path("name").asText();
+            if (name.startsWith("delete_")
+                    && !tool.path("annotations").path("destructiveHint").asBoolean(false)) {
+                deletesNotMarked.add(name);
+            }
+        }
+        assertThat(deletesNotMarked).isEmpty();
     }
 
     @Test

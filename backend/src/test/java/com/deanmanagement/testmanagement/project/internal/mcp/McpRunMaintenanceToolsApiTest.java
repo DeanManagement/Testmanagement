@@ -234,6 +234,52 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
     }
 
     @Test
+    void anAgentCanEditAndDeleteItsOwnComment() {
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.CreatedTestCase login = createCase("Login");
+        UUID commentId = commentTools.addComment("Draft question", login.key(), null).id();
+
+        assertThat(commentTools.updateComment(commentId, "Final question").content()).isEqualTo("Final question");
+        commentTools.deleteComment(commentId);
+        assertThat(commentTools.listComments(login.key(), null).total()).isZero();
+    }
+
+    @Test
+    void someoneElsesCommentCannotBeEditedOrDeleted() {
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.CreatedTestCase login = createCase("Login");
+        UUID commentId = commentTools.addComment("Mine", login.key(), null).id();
+        authenticateAs(project, ProjectRole.TESTER);
+
+        assertThatThrownBy(() -> commentTools.updateComment(commentId, "Yours now"))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("Only comments");
+        assertThatThrownBy(() -> commentTools.deleteComment(commentId))
+                .isInstanceOf(McpToolException.class);
+        assertThat(commentTools.listComments(login.key(), null).comments().getFirst().content()).isEqualTo("Mine");
+    }
+
+    // --- environments (TM34) ---------------------------------------------------------------
+
+    @Test
+    void anUnknownEnvironmentIsRefusedAndNotRegistered() {
+        authenticateAs(project, ProjectRole.TESTER);
+
+        assertThatThrownBy(() -> testRunWriteTools.createTestRun("Run", "Staging env", null, null, null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("staging");
+        assertThat(testRunReadTools.listEnvironments().environments())
+                .extracting(McpDtos.Environment::name).containsExactly("staging");
+    }
+
+    @Test
+    void aKnownEnvironmentMatchesIgnoringCase() {
+        authenticateAs(project, ProjectRole.TESTER);
+
+        assertThat(testRunWriteTools.createTestRun("Run", " STAGING ", null, null, null).id()).isNotNull();
+    }
+
+    @Test
     void aCommentNeedsExactlyOneTarget() {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");

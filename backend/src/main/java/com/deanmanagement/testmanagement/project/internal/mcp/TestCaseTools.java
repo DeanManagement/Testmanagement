@@ -14,7 +14,9 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.service.CustomFieldFilterParser;
 import com.deanmanagement.testmanagement.project.internal.service.CustomFieldWriteMode;
+import com.deanmanagement.testmanagement.project.internal.service.RequirementService;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
+import com.deanmanagement.testmanagement.shared.exception.ConflictException;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.mcp.annotation.McpTool;
@@ -55,6 +57,7 @@ public class TestCaseTools {
     private final McpValidator validator;
     private final McpWriteThrottle writeThrottle;
     private final CustomFieldFilterParser customFieldFilterParser;
+    private final RequirementService requirementService;
 
     // --- read ------------------------------------------------------------------------------
 
@@ -69,6 +72,8 @@ public class TestCaseTools {
                     does not exist.
                     customFields: by field NAME (see list_custom_fields), e.g. {"Component": "Checkout"};
                     a list value matches any of its entries; a TEXT field matches a substring.
+                    requirement: only cases linked to that requirement, by its externalId (REQ-14)
+                    or UUID.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
@@ -92,14 +97,18 @@ public class TestCaseTools {
             @McpToolParam(description = "Zero-based page number, default 0", required = false)
             Integer page,
             @McpToolParam(description = "Page size, default 50, max 200", required = false)
-            Integer size) {
+            Integer size,
+            @McpToolParam(description = "Only cases linked to this requirement: externalId or UUID",
+                    required = false) String requirement) {
 
         var caller = callerContext.require();
         Pageable pageable = pageable(page, size);
+        UUID requirementId = requirement == null || requirement.isBlank() ? null
+                : requirementService.get(caller.projectId(), requirement).id();
         var filter = new TestCaseListFilter(blankToNull(query), status, priority, labels, folderId,
                 Boolean.TRUE.equals(includeSubfolders), false, null,
                 customFieldFilterParser.parse(caller.projectId(), CustomFieldEntityType.TEST_CASE,
-                        asFilterParams(customFields)));
+                        asFilterParams(customFields)), requirementId);
 
         Page<TestCaseResponse> result =
                 testCaseService.findByProject(caller.projectId(), filter, pageable);
@@ -118,7 +127,8 @@ public class TestCaseTools {
                     One test case in full, including its ordered steps, its estimateMinutes and
                     medianActualMs (median measured duration of its last 5 executions), and the
                     names of files attached to it (not their content: ask the human to open them in
-                    the app when a step needs one). Steps are
+                    the app when a step needs one; download_test_case_attachment fetches one), and
+                    the requirements it is linked to. Steps are
                     as executed: a shared step's steps appear in place, each with its sharedStepId
                     and sharedStepTitle. Accepts either the case key
                     (for example PROJ-12, which is what humans quote) or its UUID.
@@ -139,6 +149,9 @@ public class TestCaseTools {
                 response.customFields(), response.estimateMinutes(), response.medianActualMs(),
                 response.attachments().stream()
                         .map(a -> new McpDtos.Attachment(a.id(), a.fileName(), a.contentType(), a.sizeBytes()))
+                        .toList(),
+                requirementService.findLinkedTo(caller.projectId(), response.id()).stream()
+                        .map(r -> new McpDtos.RequirementRef(r.id(), r.externalId(), r.title()))
                         .toList());
     }
 
@@ -255,6 +268,32 @@ public class TestCaseTools {
                     new MoveTestCasesRequest(List.of(existing.getId()), folderId), caller.userId());
         }
         return new McpDtos.CreatedTestCase(updated.id(), updated.key(), updated.title(), updated.status());
+    }
+
+    @McpTool(
+            name = "delete_test_case",
+            description = """
+                    Permanently delete a test case with its steps, attachments, parameter sets,
+                    version history and requirement links. Cannot be undone.
+                    A case that has results in any test run is refused, naming the runs: to retire
+                    a case that has been executed, set it to DEPRECATED with update_test_case
+                    instead, which keeps its history.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = true, idempotentHint = false))
+    @Transactional
+    public McpDtos.Deleted deleteTestCase(
+            @McpToolParam(description = "Test case key (PROJ-12) or UUID") String idOrKey) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        TestCase testCase = resolve(caller.projectId(), idOrKey);
+        try {
+            testCaseService.delete(caller.projectId(), testCase.getId(), caller.userId());
+        } catch (ConflictException hasResults) {
+            throw new McpToolException(hasResults.getMessage());
+        }
+        return new McpDtos.Deleted("TEST_CASE", testCase.getId(), testCase.getKey());
     }
 
     // --- internals -------------------------------------------------------------------------

@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.Set;
 import java.util.UUID;
 
@@ -133,8 +134,8 @@ public class TestPlanningMaintenanceTools {
             name = "update_test_plan",
             description = """
                     Rename a test plan, change its description or target date, or move its status.
-                    Only the fields you pass are changed; to CLEAR the description pass an empty
-                    string "". A target date can be changed here but not cleared.
+                    Only the fields you pass are changed; to CLEAR the description or the target
+                    date pass an empty string "".
                     status: OPEN | IN_PROGRESS | COMPLETED | CANCELLED.
                     The assignee is left as it is: assigning work is a human's decision.
                     """,
@@ -148,8 +149,8 @@ public class TestPlanningMaintenanceTools {
             String description,
             @McpToolParam(description = "OPEN, IN_PROGRESS, COMPLETED or CANCELLED", required = false)
             TestPlanStatus status,
-            @McpToolParam(description = "Target date as YYYY-MM-DD", required = false)
-            LocalDate targetDate) {
+            @McpToolParam(description = "Target date as YYYY-MM-DD; \"\" clears it", required = false)
+            String targetDate) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
@@ -163,7 +164,7 @@ public class TestPlanningMaintenanceTools {
                 name == null ? current.name() : name,
                 description == null ? current.description() : emptyToNull(description),
                 status,
-                targetDate == null ? current.targetDate() : targetDate,
+                targetDate == null ? current.targetDate() : parseDate(targetDate),
                 // Echoed, not chosen: the service reads a null here as "clear the assignee".
                 current.assigneeId());
         validator.validate(request);
@@ -172,6 +173,52 @@ public class TestPlanningMaintenanceTools {
                 testPlanService.update(caller.projectId(), id, request, caller.userId());
         return new McpDtos.PlanSummary(plan.id(), plan.name(), plan.description(), plan.status(),
                 plan.targetDate(), plan.testRunCount());
+    }
+
+    @McpTool(
+            name = "delete_test_plan",
+            description = """
+                    Permanently delete a test plan. Its test runs are kept, with their results, and
+                    simply no longer belong to a plan. Cannot be undone.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = true, idempotentHint = false))
+    @Transactional
+    public McpDtos.Deleted deleteTestPlan(@McpToolParam(description = "Test plan UUID") UUID id) {
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        String name = testPlanService.findById(caller.projectId(), id).name();
+        testPlanService.delete(caller.projectId(), id, caller.userId());
+        return new McpDtos.Deleted("TEST_PLAN", id, name);
+    }
+
+    @McpTool(
+            name = "delete_test_suite",
+            description = """
+                    Permanently delete a test suite. The test cases in it are not deleted, and runs
+                    already seeded from it keep their results. Cannot be undone.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = true, idempotentHint = false))
+    @Transactional
+    public McpDtos.Deleted deleteTestSuite(@McpToolParam(description = "Test suite UUID") UUID id) {
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        String name = testSuiteService.findById(caller.projectId(), id).name();
+        testSuiteService.delete(caller.projectId(), id, caller.userId());
+        return new McpDtos.Deleted("TEST_SUITE", id, name);
+    }
+
+    private static LocalDate parseDate(String value) {
+        if (value.isBlank()) {
+            return null;
+        }
+        try {
+            return LocalDate.parse(value.strip());
+        } catch (DateTimeParseException e) {
+            throw new McpToolException("targetDate must be YYYY-MM-DD, or \"\" to clear it; got "
+                    + value + ".");
+        }
     }
 
     private McpDtos.SuiteMembership membership(McpCallerContext.Caller caller, UUID suiteId,

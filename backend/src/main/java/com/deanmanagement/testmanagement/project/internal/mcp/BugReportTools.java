@@ -46,10 +46,7 @@ import java.util.stream.Collectors;
  * complementary — a bug report carries {@code testResultId}, which is what {@code IssueLinkService}
  * keys off.
  *
- * <p>There is deliberately no update-the-body tool. {@code UpdateBugReportRequest} is a full
- * replace by design (the SPA sends the whole object, and an omitted assignee is how a human
- * unassigns), so a partial-update tool over it would need the read-then-merge that PRD-025 §8
- * removed from {@code update_test_case} — making the agent the author of fields it never touched.
+ * <p>Editing, deleting and unlinking live in {@link BugReportMaintenanceTools}.
  */
 @Service
 @InToolGroup(McpToolGroup.EXECUTION)
@@ -64,6 +61,7 @@ public class BugReportTools {
     private final BugReportLinkService linkService;
     private final ProjectMemberRepository projectMemberRepository;
     private final BugReportAttachmentService attachmentService;
+    private final McpEnvironmentGuard environmentGuard;
 
     private static final String UNASSIGNED = "none";
     /** Screenshots are well under this; larger evidence goes through the UI (PRD-051 §3.6). */
@@ -78,6 +76,7 @@ public class BugReportTools {
                     test — the run records that it failed, this records why it matters.
                     priority: LOW | MEDIUM | HIGH | CRITICAL. Filed as NEW, for a human to triage.
                     Fields you leave empty start from the project's bug template.
+                    environment must be a name from list_environments; an unknown one is refused.
                     Pass testResultId (from get_test_run) whenever the bug came out of a run, so
                     the bug is reachable from the failure that produced it. That links the run too
                     — do not also pass testRunId. testRunId is for a bug about a run as a whole,
@@ -100,7 +99,7 @@ public class BugReportTools {
             String expectedBehavior,
             @McpToolParam(description = "What actually happened", required = false)
             String actualBehavior,
-            @McpToolParam(description = "Where it was seen; prefer a name from list_environments", required = false)
+            @McpToolParam(description = "Where it was seen: a name from list_environments", required = false)
             String environment,
             @McpToolParam(description = "Test result this bug came from", required = false)
             UUID testResultId,
@@ -120,6 +119,7 @@ public class BugReportTools {
         if (priority == null) {
             throw new McpToolException("priority is required: LOW, MEDIUM, HIGH or CRITICAL.");
         }
+        environmentGuard.requireKnown(caller.projectId(), environment);
 
         if (!Boolean.TRUE.equals(allowDuplicateTitle)) {
             List<McpDtos.DuplicateBug> duplicates = findDuplicates(caller.projectId(), title);
@@ -306,7 +306,7 @@ public class BugReportTools {
         return attachment(stored);
     }
 
-    private static byte[] decodeAttachment(String contentBase64) {
+    static byte[] decodeAttachment(String contentBase64) {
         if (contentBase64 == null || contentBase64.isBlank()) {
             throw new McpToolException("contentBase64 is required: the file's bytes, base64-encoded.");
         }
@@ -407,7 +407,7 @@ public class BugReportTools {
      * and the fact that the agent cannot change it: the toggle needs project ADMIN and API keys
      * top out at TESTER.
      */
-    private <T> T enabled(Supplier<T> call) {
+    static <T> T enabled(Supplier<T> call) {
         try {
             return call.get();
         } catch (ForbiddenException e) {
@@ -427,6 +427,10 @@ public class BugReportTools {
     }
 
     private McpDtos.BugDetail detail(BugReportResponse b) {
+        return detail(attachmentService, b);
+    }
+
+    static McpDtos.BugDetail detail(BugReportAttachmentService attachmentService, BugReportResponse b) {
         List<McpDtos.Attachment> attachments = attachmentService.list(b.projectId(), b.id().toString()).stream()
                 .map(BugReportTools::attachment).toList();
         return new McpDtos.BugDetail(b.id(), b.key(), b.title(), b.description(), b.stepsToReproduce(),
