@@ -6,7 +6,10 @@ import com.deanmanagement.testmanagement.project.internal.dto.requirement.Requir
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.SaveRequirementRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.TraceabilityRowResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
+import com.deanmanagement.testmanagement.project.internal.dto.io.ImportResultResponse;
+import com.deanmanagement.testmanagement.project.internal.service.RequirementImportService;
 import com.deanmanagement.testmanagement.project.internal.service.RequirementService;
+import org.springframework.web.multipart.MultipartFile;
 import com.deanmanagement.testmanagement.project.internal.service.TraceabilityExportService;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -30,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.UUID;
@@ -46,6 +50,7 @@ public class RequirementController {
 
     private final RequirementService requirementService;
     private final TraceabilityExportService exportService;
+    private final RequirementImportService importService;
 
     @GetMapping("/requirements")
     @RequireProjectRole
@@ -72,6 +77,16 @@ public class RequirementController {
                                       @Valid @RequestBody SaveRequirementRequest request,
                                       Authentication authentication) {
         return requirementService.create(projectId, request, actor(authentication));
+    }
+
+    /** TM19: upsert by externalId from CSV; with dryRun nothing is written. */
+    @PostMapping(value = "/requirements/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @RequireProjectRole(ProjectRole.TESTER)
+    public ImportResultResponse importCsv(@PathVariable UUID projectId,
+                                          @RequestParam("file") MultipartFile file,
+                                          @RequestParam(defaultValue = "false") boolean dryRun,
+                                          Authentication authentication) throws IOException {
+        return importService.importCsv(projectId, file.getBytes(), dryRun, actor(authentication));
     }
 
     @PutMapping("/requirements/{id}")

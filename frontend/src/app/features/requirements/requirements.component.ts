@@ -39,6 +39,8 @@ import { Priority, TestCase } from '../../shared/models/test-case.model';
 import { CustomFieldValues } from '../../shared/models/custom-field.model';
 import { CustomFieldsFormComponent } from '../../shared/components/custom-fields/custom-fields-form.component';
 import { CustomFieldsDisplayComponent } from '../../shared/components/custom-fields/custom-fields-display.component';
+import { ImportRequirementsDialogComponent } from './import-requirements-dialog.component';
+import { ImportResult } from '../../shared/models/test-case.model';
 import { RequirementSortColumn, RequirementTreeRow, requirementTree, selfAndDescendants } from './requirement-view';
 
 /**
@@ -259,6 +261,20 @@ export class RequirementsComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  openImport(): void {
+    this.dialog.open(ImportRequirementsDialogComponent, { data: { projectId: this.projectId }, width: '640px' })
+      .afterClosed()
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe((result?: ImportResult) => {
+        if (result) {
+          this.snackBar.open(this.translate.instant('requirement.import.done',
+            { created: result.imported, updated: result.updated, skipped: result.skipped }),
+          this.translate.instant('common.close'), { duration: 6000 });
+          this.load();
+        }
+      });
   }
 
   remove(requirement: Requirement): void {

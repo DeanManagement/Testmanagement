@@ -58,6 +58,9 @@ object linked to many tests.
 **Out of scope.** Automatically adding precondition cases to a run, or ordering by them — offer it
 later if asked; the link is the prerequisite.
 
+**Status (2026-10-28):** implemented (V90). A precondition link both ways round between the same
+two cases is refused; a RELATES_TO link counts as one whichever way it was made.
+
 ---
 
 ## 3. Saved and shared filters (TM10) — S/M
@@ -111,6 +114,14 @@ custom fields, and there is no import or tracker sync. SN has 179 requirements e
 
 **Decision needed:** whether the SN project's requirements live in Jira or Azure DevOps — that
 decides which provider gets sync first.
+
+**Status (2026-10-28):** steps 1–2 and the CSV import of step 3 are implemented (V91, V92).
+Tracker sync is **pending** that decision and not started. As built: deleting a requirement moves
+its children up to its own parent; an OBSOLETE requirement does not count towards coverage (and
+does not hold its parent back); the coverage summary counts leaves only, a parent's status being
+derived from them. The CSV import upserts by `externalId`; a present `description` or
+`parentExternalId` column is authoritative (blank clears), blank `status`/`priority`/`cf:` cells
+keep the current value.
 
 ---
 

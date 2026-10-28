@@ -1360,6 +1360,12 @@
     "noParent": "Keine (oberste Ebene)",
     "expand": "Untergeordnete Anforderungen anzeigen",
     "collapse": "Untergeordnete Anforderungen ausblenden",
+    "import": {
+      "button": "CSV importieren",
+      "title": "Anforderungen importieren",
+      "hint": "Eine Anforderung pro Zeile, zugeordnet über die externalId: neue IDs werden angelegt, bekannte aktualisiert. Eine übergeordnete Anforderung darf irgendwo in der Datei stehen. Eine leere Beschreibung oder übergeordnete Anforderung wird entfernt; ein leerer Status oder eine leere Priorität bleibt unverändert.",
+      "done": "Import abgeschlossen: {{created}} angelegt, {{updated}} aktualisiert, {{skipped}} übersprungen."
+    },
     "export": {
       "button": "CSV exportieren",
       "allRuns": "Neueste Ergebnisse aller Läufe",

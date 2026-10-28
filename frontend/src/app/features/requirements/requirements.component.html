@@ -26,6 +26,10 @@
           }
         }
       </mat-menu>
+      <button mat-stroked-button (click)="openImport()" data-test-id="requirement-import-btn">
+        <mat-icon>upload</mat-icon>
+        {{ 'requirement.import.button' | translate }}
+      </button>
       @if (!formOpen) {
         <button mat-flat-button (click)="openCreate()" data-test-id="requirement-add-btn">
           <mat-icon>add</mat-icon>

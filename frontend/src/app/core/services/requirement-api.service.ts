@@ -2,6 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { Page } from '../../shared/models/page.model';
+import { ImportResult } from '../../shared/models/test-case.model';
 import {
   CoverageSummary,
   Requirement,
@@ -37,6 +38,14 @@ export class RequirementApiService {
 
   delete(projectId: string, id: string): Observable<void> {
     return this.http.delete<void>(`${this.baseUrl(projectId)}/${id}`);
+  }
+
+  /** TM19: CSV upsert by externalId; a dry run writes nothing and reports the same rows. */
+  importCsv(projectId: string, file: File, dryRun: boolean): Observable<ImportResult> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const params = new HttpParams().set('dryRun', String(dryRun));
+    return this.http.post<ImportResult>(`${this.baseUrl(projectId)}/import`, formData, { params });
   }
 
   linkTestCase(projectId: string, id: string, testCaseId: string): Observable<Requirement> {

@@ -1360,6 +1360,12 @@
     "noParent": "None (top level)",
     "expand": "Show the requirements below",
     "collapse": "Hide the requirements below",
+    "import": {
+      "button": "Import CSV",
+      "title": "Import requirements",
+      "hint": "One requirement per row, matched by externalId: new ids are created, known ones updated. A parent may be defined anywhere in the file. A blank description or parent clears it; a blank status or priority keeps the current value.",
+      "done": "Import finished: {{created}} created, {{updated}} updated, {{skipped}} skipped."
+    },
     "export": {
       "button": "Export CSV",
       "allRuns": "Latest results of all runs",
