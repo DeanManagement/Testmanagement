@@ -43,8 +43,9 @@ public interface TestResultRepository extends JpaRepository<TestResult, UUID> {
             @Param("testCaseIds") Set<UUID> testCaseIds,
             @Param("projectId") UUID projectId);
 
-    @Query("SELECT CASE WHEN COUNT(r) > 0 THEN true ELSE false END FROM TestResult r WHERE r.testCase.id IN :testCaseIds")
-    boolean existsByTestCaseIdIn(@Param("testCaseIds") Set<UUID> testCaseIds);
+    /** The keys of the runs holding a result of any of these cases, so a refused delete can name them. */
+    @Query("SELECT DISTINCT r.testRun.key FROM TestResult r WHERE r.testCase.id IN :testCaseIds ORDER BY r.testRun.key")
+    List<String> findRunKeysByTestCaseIdIn(@Param("testCaseIds") Set<UUID> testCaseIds);
 
     @Query("SELECT r FROM TestResult r LEFT JOIN FETCH r.stepResults WHERE r.id IN :ids AND r.testRun.id = :runId")
     List<TestResult> findByIdInAndTestRunId(@Param("ids") Set<UUID> ids, @Param("runId") UUID runId);

@@ -38,4 +38,12 @@ describe('errorInterceptor', () => {
       expect(open).toHaveBeenCalledWith('errors.server', expect.anything(), expect.anything());
     });
   });
+
+  describe('when the server refused a change that clashes with existing data (409)', () => {
+    it('shows the reason, so a refused delete is not silent', () => {
+      const open = failWith(409, { message: 'Test cases with results cannot be deleted.' });
+
+      expect(open).toHaveBeenCalledWith('Test cases with results cannot be deleted.', expect.anything(), expect.anything());
+    });
+  });
 });

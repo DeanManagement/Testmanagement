@@ -8,6 +8,8 @@ import { AuthService } from '../services/auth.service';
 
 /** The backend's status for a failed external service (424, not 502, which proxies replace). */
 const UPSTREAM_FAILED = 424;
+/** A refusal over the resource's state (in use, moved on); its reason is the whole message. */
+const CONFLICT = 409;
 
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   const router = inject(Router);
@@ -48,8 +50,9 @@ export const errorInterceptor: HttpInterceptorFn = (req, next) => {
         const backendMessage = (error.error?.message ?? '').toLowerCase();
         const key = backendMessage.includes('member') ? 'auth.notProjectMember' : 'auth.forbidden';
         show(key);
-      } else if (error.status === UPSTREAM_FAILED) {
-        // A build server, issue tracker or SSO issuer failed; its reason is what the user needs.
+      } else if (error.status === UPSTREAM_FAILED || error.status === CONFLICT) {
+        // A build server, issue tracker or SSO issuer failed, or the server refused a change that
+        // clashes with existing data; either way its reason is what the user needs.
         // A caller showing its own message replaces this one, since it runs after the interceptor.
         const message = error.error?.message;
         if (message) {

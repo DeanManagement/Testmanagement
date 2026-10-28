@@ -21,6 +21,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseFolder;
 import com.deanmanagement.testmanagement.project.internal.entity.StepImage;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
+import com.deanmanagement.testmanagement.shared.exception.ConflictException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseFolderRepository;
@@ -233,9 +234,22 @@ public class TestCaseService {
         TestCase tc = testCaseRepository.findById(id)
                 .filter(t -> t.getProject().getId().equals(projectId))
                 .orElseThrow(() -> new ResourceNotFoundException("TestCase", id));
+        refuseDeleteWithResults(Set.of(id));
         auditService.log(projectId, userId, AuditAction.DELETED,
                 AuditEntityType.TEST_CASE, tc.getId(), tc.getTitle(), null);
         testCaseRepository.delete(tc);
+    }
+
+    /**
+     * A result is an execution record, so its case cannot go while one exists — the database would
+     * refuse anyway, but only with a bare 409. This names the runs and the way out instead.
+     */
+    private void refuseDeleteWithResults(Set<UUID> testCaseIds) {
+        List<String> runKeys = testResultRepository.findRunKeysByTestCaseIdIn(testCaseIds);
+        if (!runKeys.isEmpty()) {
+            throw new ConflictException("Test cases with results cannot be deleted. Results exist in test runs: "
+                    + String.join(", ", runKeys) + ". Delete those runs first, or set the test case to DEPRECATED.");
+        }
     }
 
     @Transactional
@@ -278,9 +292,7 @@ public class TestCaseService {
             throw new IllegalArgumentException("Some test case IDs do not belong to this project");
         }
 
-        if (testResultRepository.existsByTestCaseIdIn(request.testCaseIds())) {
-            throw new IllegalArgumentException("Cannot delete test cases that have test results. Remove the test results first.");
-        }
+        refuseDeleteWithResults(request.testCaseIds());
 
         testCaseRepository.deleteAll(projectTestCases);
 
