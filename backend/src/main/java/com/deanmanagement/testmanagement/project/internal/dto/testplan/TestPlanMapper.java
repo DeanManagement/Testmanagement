@@ -15,7 +15,7 @@ public interface TestPlanMapper {
 
     default ReleaseGate gateOf(TestPlan plan) {
         return new ReleaseGate(plan.getGateMinPassRate(), plan.getGateMaxBlockerBugs(), plan.getGateMinCoverage(),
-                plan.getGateMaxFlaky());
+                plan.getGateMaxFlaky(), plan.isGateCoverageOnScope());
     }
 
     @Mapping(target = "id", ignore = true)
@@ -29,5 +29,7 @@ public interface TestPlanMapper {
     @Mapping(target = "gateMaxBlockerBugs", ignore = true)
     @Mapping(target = "gateMinCoverage", ignore = true)
     @Mapping(target = "gateMaxFlaky", ignore = true)
+    @Mapping(target = "gateCoverageOnScope", ignore = true)
+    @Mapping(target = "scope", ignore = true)
     TestPlan toEntity(CreateTestPlanRequest request);
 }

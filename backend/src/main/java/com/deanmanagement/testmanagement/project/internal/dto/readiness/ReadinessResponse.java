@@ -25,7 +25,7 @@ public record ReadinessResponse(
 
     public enum Outcome { PASS, FAIL, NOT_APPLICABLE }
 
-    public enum CriterionName { PASS_RATE, BLOCKER_BUGS, COVERAGE, FLAKY_TESTS }
+    public enum CriterionName { PASS_RATE, BLOCKER_BUGS, COVERAGE, FLAKY_TESTS, SCOPE_COVERAGE }
 
     /** @param actual null when the criterion does not apply, e.g. coverage without requirements */
     @JsonInclude(JsonInclude.Include.NON_NULL)

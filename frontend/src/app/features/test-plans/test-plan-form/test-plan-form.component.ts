@@ -14,6 +14,7 @@ import { MatNativeDateModule } from '@angular/material/core';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatExpansionModule } from '@angular/material/expansion';
+import { MatCheckboxModule } from '@angular/material/checkbox';
 import { TranslateModule } from '@ngx-translate/core';
 import { TestPlanActions } from '../../../store/test-plan/test-plan.actions';
 import { selectTestPlanById } from '../../../store/test-plan/test-plan.selectors';
@@ -41,6 +42,7 @@ import { hasCriteria, toGate } from './release-gate-form';
     MatIconModule,
     MatProgressSpinnerModule,
     MatExpansionModule,
+    MatCheckboxModule,
     TranslateModule,
   ],
   templateUrl: './test-plan-form.component.html',
@@ -77,6 +79,7 @@ export class TestPlanFormComponent implements OnInit, HasUnsavedChanges {
       maxBlockerBugs: [null as number | null, [Validators.min(0)]],
       minCoverage: [null as number | null, [Validators.min(0), Validators.max(100)]],
       maxFlaky: [null as number | null, [Validators.min(0)]],
+      coverageOnScope: [false as boolean | null],
     }),
   });
 

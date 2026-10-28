@@ -80,6 +80,9 @@
               <mat-error>{{ 'readiness.gate.notNegative' | translate }}</mat-error>
             </mat-form-field>
           </div>
+          <mat-checkbox formControlName="coverageOnScope" data-test-id="test-plan-gate-coverage-on-scope">
+            {{ 'readiness.gate.coverageOnScope' | translate }}
+          </mat-checkbox>
         </mat-expansion-panel>
 
         <div class="actions">

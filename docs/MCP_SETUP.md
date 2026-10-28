@@ -150,7 +150,7 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `create_test_run`, `record_test_result`, `record_test_results`, `record_step_result`,
 `complete_test_run`, `update_test_run`, `clone_test_run`, `add_comment`, `create_bug_report`,
 `change_bug_report_status`, `assign_bug_reports`, `link_bug_report`, `add_bug_report_attachment`, `update_test_suite`, `add_test_cases_to_suite`,
-`remove_test_cases_from_suite`, `update_test_plan`, `update_requirement`,
+`remove_test_cases_from_suite`, `update_test_plan`, `add_cases_to_plan`, `remove_cases_from_plan`, `update_requirement`,
 `unlink_test_case_from_requirement`, `rename_test_case_folder`, `move_test_case_folder`, `change_test_case_status_bulk`,
 `create_parameter_set`, `update_parameter_set`, `trigger_pipeline`, `refresh_pipeline_run`,
 `link_issue`, `create_linked_issue`, `unlink_issue`, `reopen_test_run`, `update_bug_report`,

@@ -1,6 +1,7 @@
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { RatePipe } from '../../../shared/pipes/rate.pipe';
 import { PlanDefectsComponent } from '../plan-defects/plan-defects.component';
+import { PlanScopeComponent } from '../plan-scope/plan-scope.component';
 import { ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
@@ -62,6 +63,7 @@ import { sortRows, SortValue } from '../../../shared/utils/sort-rows';
     MatTooltipModule,
     RatePipe,
     PlanDefectsComponent,
+    PlanScopeComponent,
     ReleaseReadinessCardComponent,
     DurationPipe,
     LocalizedDatePipe,

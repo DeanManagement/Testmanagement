@@ -407,6 +407,8 @@ class McpEndpointApiTest {
                 .contains("add_test_cases_to_suite")
                 .contains("remove_test_cases_from_suite")
                 .contains("update_test_plan")
+                .contains("add_cases_to_plan")
+                .contains("remove_cases_from_plan")
                 .contains("update_requirement")
                 .contains("unlink_test_case_from_requirement")
                 .contains("rename_test_case_folder")

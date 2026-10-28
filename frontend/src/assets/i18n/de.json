@@ -495,6 +495,16 @@
     "defects": {
       "title": "Fehler",
       "foundIn": "gefunden in {{run}}"
+    },
+    "scope": {
+      "title": "Umfang",
+      "totals": "{{executed}} von {{total}} ausgeführt · {{notExecuted}} noch nicht ausgeführt",
+      "addCases": "Testfälle hinzufügen",
+      "createRun": "Testlauf aus nicht ausgeführten Testfällen erstellen ({{count}})",
+      "runName": "{{plan}} – noch nicht ausgeführt",
+      "notExecuted": "Noch nicht ausgeführt",
+      "remove": "Aus dem Umfang entfernen",
+      "empty": "Noch keine Testfälle geplant. Füge die Testfälle hinzu, die dieser Plan abdecken soll."
     }
   },
   "priority": {
@@ -1544,7 +1554,8 @@
       "PASS_RATE": "Bestanden von den Tests im Umfang",
       "BLOCKER_BUGS": "Offene kritische Fehler",
       "COVERAGE": "Anforderungsabdeckung",
-      "FLAKY_TESTS": "Instabile Tests"
+      "FLAKY_TESTS": "Instabile Tests",
+      "SCOPE_COVERAGE": "Planumfang ausgeführt"
     },
     "effectiveHint": "Das jeweils letzte Ergebnis jedes Testfalls über die Läufe dieses Plans: Ein Fehlschlag, der erneut getestet und bestanden wurde, zählt einmal, als bestanden. Anders als bei der Erfolgsquote zählt ein noch nicht ausgeführter Fall als nicht bestanden: Ein ungetesteter Fall ist kein Beleg für ein Release. Lief ein Fall in mehreren Umgebungen, gilt der letzte Lauf.",
     "noCriteria": "Dieser Plan hat kein Release-Gate. Bearbeiten Sie den Plan, um Schwellen festzulegen.",
@@ -1557,7 +1568,8 @@
       "minCoverage": "Minimale Anforderungsabdeckung",
       "maxFlaky": "Maximal instabile Tests",
       "percentRange": "Zwischen 0 und 100",
-      "notNegative": "Darf nicht negativ sein"
+      "notNegative": "Darf nicht negativ sein",
+      "coverageOnScope": "Abdeckung am Planumfang messen (ausgeführte geplante Testfälle) statt an Anforderungen"
     }
   },
   "compare": {

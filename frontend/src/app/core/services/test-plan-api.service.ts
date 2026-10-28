@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import {
   CreateTestPlanRequest,
   TestPlan,
+  TestPlanScope,
   TestPlanSummary,
   UpdateTestPlanRequest,
 } from '../../shared/models/test-plan.model';
@@ -39,6 +40,20 @@ export class TestPlanApiService {
 
   getSummary(projectId: string, id: string): Observable<TestPlanSummary> {
     return this.http.get<TestPlanSummary>(`${this.baseUrl(projectId)}/${id}/summary`).pipe(retryWithBackoff());
+  }
+
+  /** PRD-053 §8: the cases the plan intends to execute, with their latest result. */
+  getScope(projectId: string, id: string): Observable<TestPlanScope> {
+    return this.http.get<TestPlanScope>(`${this.baseUrl(projectId)}/${id}/scope`).pipe(retryWithBackoff());
+  }
+
+  /** At most 100 ids per call (the server's bulk limit). */
+  addToScope(projectId: string, id: string, testCaseIds: string[]): Observable<TestPlanScope> {
+    return this.http.post<TestPlanScope>(`${this.baseUrl(projectId)}/${id}/scope/bulk-add`, { testCaseIds });
+  }
+
+  removeFromScope(projectId: string, id: string, testCaseIds: string[]): Observable<TestPlanScope> {
+    return this.http.post<TestPlanScope>(`${this.baseUrl(projectId)}/${id}/scope/bulk-remove`, { testCaseIds });
   }
 
   create(projectId: string, request: CreateTestPlanRequest): Observable<TestPlan> {

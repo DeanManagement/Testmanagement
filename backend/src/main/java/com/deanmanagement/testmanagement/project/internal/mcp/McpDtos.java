@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
 import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
+import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanScopeResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.CustomFieldEntityType;
@@ -176,7 +177,11 @@ final class McpDtos {
     record PlanDetail(UUID id, String name, TestPlanStatus status, @Nullable LocalDate targetDate,
                       int totalRuns, int completedRuns, int passed, int failed, int blocked,
                       int skipped, int pending, @Nullable Double passRate, @Nullable EffortSummary effort,
-                      int executed, @Nullable Double progress) {}
+                      int executed, @Nullable Double progress, TestPlanScopeResponse.Summary scope) {}
+
+    /** @param changed how many cases were actually added or removed; ids already in that state count 0 */
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record PlanScopeChange(UUID id, String name, TestPlanScopeResponse.Summary scope, int changed) {}
 
     /** @param changed how many cases were actually added or removed; ids already in that state count 0 */
     @JsonInclude(JsonInclude.Include.NON_NULL)

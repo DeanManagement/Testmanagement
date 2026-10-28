@@ -242,6 +242,8 @@
       </div>
     }
 
+    <app-plan-scope [projectId]="projectId" [planId]="planId" [planName]="plan.name" />
+
     <app-plan-defects [projectId]="projectId" [planId]="planId" />
 
     @if (summary && summary.sessions.total > 0) {

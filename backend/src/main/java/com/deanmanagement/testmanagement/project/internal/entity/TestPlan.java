@@ -9,6 +9,8 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
@@ -20,7 +22,9 @@ import lombok.Setter;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "test_plans")
@@ -66,4 +70,17 @@ public class TestPlan extends BaseEntity {
 
     @Column(name = "gate_max_flaky")
     private Integer gateMaxFlaky;
+
+    /** PRD-053 §8: when set, the coverage criterion measures this plan's scope, not requirements. */
+    @Column(name = "gate_coverage_on_scope", nullable = false)
+    private boolean gateCoverageOnScope;
+
+    /** PRD-053 §8: the cases this plan intends to execute, whether or not a run holds them yet. */
+    @ManyToMany
+    @JoinTable(
+            name = "test_plan_cases",
+            joinColumns = @JoinColumn(name = "test_plan_id"),
+            inverseJoinColumns = @JoinColumn(name = "test_case_id")
+    )
+    private Set<TestCase> scope = new HashSet<>();
 }

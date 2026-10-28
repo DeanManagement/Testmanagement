@@ -95,3 +95,26 @@ export interface TestPlanSessionItem {
   endedAt: string | null;
   minutes: number;
 }
+
+/** PRD-053 §8: a planned case with its latest executed result across the plan's runs. */
+export interface TestPlanScopeItem {
+  testCaseId: string;
+  key: string;
+  title: string;
+  priority: string;
+  /** Absent when no run of the plan has executed the case yet. */
+  latestStatus: string | null;
+}
+
+export interface TestPlanScope {
+  summary: {
+    total: number;
+    executed: number;
+    notExecuted: number;
+    passed: number;
+    failed: number;
+    blocked: number;
+    skipped: number;
+  };
+  cases: TestPlanScopeItem[];
+}

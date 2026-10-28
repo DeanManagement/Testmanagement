@@ -6,11 +6,13 @@ export interface ReleaseGate {
   /** Percent, 0-100. */
   minCoverage: number | null;
   maxFlaky: number | null;
+  /** PRD-053 §8: minCoverage applies to the executed share of the plan's scope, not requirements. */
+  coverageOnScope?: boolean;
 }
 
 export type ReadinessVerdict = 'GO' | 'NO_GO' | 'NO_CRITERIA';
 export type CriterionOutcome = 'PASS' | 'FAIL' | 'NOT_APPLICABLE';
-export type CriterionName = 'PASS_RATE' | 'BLOCKER_BUGS' | 'COVERAGE' | 'FLAKY_TESTS';
+export type CriterionName = 'PASS_RATE' | 'BLOCKER_BUGS' | 'COVERAGE' | 'FLAKY_TESTS' | 'SCOPE_COVERAGE';
 
 export interface ReadinessCriterion {
   name: CriterionName;

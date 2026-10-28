@@ -176,6 +176,55 @@ public class TestPlanningMaintenanceTools {
     }
 
     @McpTool(
+            name = "add_cases_to_plan",
+            description = """
+                    Add test cases to a test plan's scope — the cases the plan intends to execute,
+                    whether or not a run holds them yet. Up to 100 per call. Every id must name a
+                    test case in this project; if one does not, nothing is added. A case already in
+                    scope is harmless — `changed` tells you how many were new.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.PlanScopeChange addCasesToPlan(
+            @McpToolParam(description = "Test plan UUID") UUID planId,
+            @McpToolParam(description = "UUIDs of the test cases to add") Set<UUID> testCaseIds) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        validator.validate(new BulkTestCasesRequest(testCaseIds));
+        int changed = testPlanService.addToScope(caller.projectId(), planId, testCaseIds, caller.userId());
+        return scopeChange(caller, planId, changed);
+    }
+
+    @McpTool(
+            name = "remove_cases_from_plan",
+            description = """
+                    Take test cases out of a test plan's scope, up to 100 per call. The cases, and
+                    any runs and results that hold them, are untouched. An id the scope does not
+                    hold is ignored — `changed` tells you how many were actually removed.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.PlanScopeChange removeCasesFromPlan(
+            @McpToolParam(description = "Test plan UUID") UUID planId,
+            @McpToolParam(description = "UUIDs of the test cases to remove") Set<UUID> testCaseIds) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        validator.validate(new BulkTestCasesRequest(testCaseIds));
+        int changed = testPlanService.removeFromScope(caller.projectId(), planId, testCaseIds, caller.userId());
+        return scopeChange(caller, planId, changed);
+    }
+
+    private McpDtos.PlanScopeChange scopeChange(McpCallerContext.Caller caller, UUID planId, int changed) {
+        String name = testPlanService.findById(caller.projectId(), planId).name();
+        return new McpDtos.PlanScopeChange(planId, name,
+                testPlanService.getScope(caller.projectId(), planId).summary(), changed);
+    }
+
+    @McpTool(
             name = "delete_test_plan",
             description = """
                     Permanently delete a test plan. Its test runs are kept, with their results, and

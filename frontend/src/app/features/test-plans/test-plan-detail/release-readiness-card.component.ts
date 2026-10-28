@@ -11,6 +11,7 @@ const CRITERION_LINKS: Record<CriterionName, string | null> = {
   BLOCKER_BUGS: 'bug-reports',
   COVERAGE: 'requirements',
   FLAKY_TESTS: 'dashboard',
+  SCOPE_COVERAGE: null,
 };
 
 /**
@@ -104,7 +105,7 @@ export class ReleaseReadinessCardComponent {
   }
 
   isPercent(criterion: ReadinessCriterion): boolean {
-    return criterion.name === 'PASS_RATE' || criterion.name === 'COVERAGE';
+    return criterion.name === 'PASS_RATE' || criterion.name === 'COVERAGE' || criterion.name === 'SCOPE_COVERAGE';
   }
 
   /** Percentages with up to two decimals and a % sign; counts as whole numbers; no value as an em dash. */

@@ -495,6 +495,16 @@
     "defects": {
       "title": "Defects",
       "foundIn": "found in {{run}}"
+    },
+    "scope": {
+      "title": "Scope",
+      "totals": "{{executed}} of {{total}} executed · {{notExecuted}} not executed yet",
+      "addCases": "Add cases",
+      "createRun": "Create run from unexecuted cases ({{count}})",
+      "runName": "{{plan}} – not yet executed",
+      "notExecuted": "Not executed yet",
+      "remove": "Remove from scope",
+      "empty": "No cases planned yet. Add the cases this plan is meant to cover."
     }
   },
   "priority": {
@@ -1544,7 +1554,8 @@
       "PASS_RATE": "Passed of in-scope tests",
       "BLOCKER_BUGS": "Open critical bugs",
       "COVERAGE": "Requirement coverage",
-      "FLAKY_TESTS": "Flaky tests"
+      "FLAKY_TESTS": "Flaky tests",
+      "SCOPE_COVERAGE": "Plan scope executed"
     },
     "effectiveHint": "Each test case's latest result across this plan's runs, so a failure retested and passed counts once, as a pass. Unlike the pass rate, a case not yet executed counts as not passed: an untested case is no evidence for a release. If a case ran in several environments, the latest run wins.",
     "noCriteria": "This plan has no release gate. Edit the plan to set thresholds.",
@@ -1557,7 +1568,8 @@
       "minCoverage": "Minimum requirement coverage",
       "maxFlaky": "Maximum flaky tests",
       "percentRange": "Between 0 and 100",
-      "notNegative": "Must not be negative"
+      "notNegative": "Must not be negative",
+      "coverageOnScope": "Measure coverage against the plan scope (executed planned cases) instead of requirements"
     }
   },
   "compare": {

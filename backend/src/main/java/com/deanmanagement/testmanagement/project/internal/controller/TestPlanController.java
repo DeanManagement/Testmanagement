@@ -9,6 +9,8 @@ import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
 
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.CreateTestPlanRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanScopeResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.testSuite.BulkTestCasesRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanSummaryResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.UpdateTestPlanRequest;
 import com.deanmanagement.testmanagement.project.internal.service.TestPlanService;
@@ -77,6 +79,35 @@ public class TestPlanController {
     @RequireProjectRole
     public TestPlanSummaryResponse getSummary(@PathVariable UUID projectId, @PathVariable UUID id) {
         return testPlanService.getSummary(projectId, id);
+    }
+
+    /** PRD-053 §8: the cases the plan intends to execute, with their latest result in its runs. */
+    @GetMapping("/{id}/scope")
+    @RequireProjectRole
+    public TestPlanScopeResponse getScope(@PathVariable UUID projectId, @PathVariable UUID id) {
+        return testPlanService.getScope(projectId, id);
+    }
+
+    @PostMapping("/{id}/scope/bulk-add")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestPlanScopeResponse addToScope(@PathVariable UUID projectId, @PathVariable UUID id,
+                                            @Valid @RequestBody BulkTestCasesRequest request,
+                                            Authentication authentication) {
+        testPlanService.addToScope(projectId, id, request.testCaseIds(), currentUserId(authentication));
+        return testPlanService.getScope(projectId, id);
+    }
+
+    @PostMapping("/{id}/scope/bulk-remove")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public TestPlanScopeResponse removeFromScope(@PathVariable UUID projectId, @PathVariable UUID id,
+                                                 @Valid @RequestBody BulkTestCasesRequest request,
+                                                 Authentication authentication) {
+        testPlanService.removeFromScope(projectId, id, request.testCaseIds(), currentUserId(authentication));
+        return testPlanService.getScope(projectId, id);
+    }
+
+    private static UUID currentUserId(Authentication authentication) {
+        return authentication != null ? UUID.fromString(authentication.getName()) : null;
     }
 
     @PostMapping

@@ -11,6 +11,10 @@ import com.deanmanagement.testmanagement.project.internal.dto.testplan.ReleaseGa
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanMapper;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanRunSummary;
+import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanScopeResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.readiness.ReadinessResultRow;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
+import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanSummaryResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.UpdateTestPlanRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
@@ -34,7 +38,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.ZoneOffset;
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -51,6 +61,7 @@ public class TestPlanService {
     private final ExploratorySessionRepository sessionRepository;
     private final Clock clock;
     private final TestResultRepository testResultRepository;
+    private final TestCaseRepository testCaseRepository;
 
     /**
      * Resolves an assignee who must already be a member of this project (PRD-027 §3.5).
@@ -232,7 +243,8 @@ public class TestPlanService {
                 .with("gateMinPassRate", plan.getGateMinPassRate())
                 .with("gateMaxBlockerBugs", plan.getGateMaxBlockerBugs())
                 .with("gateMinCoverage", plan.getGateMinCoverage())
-                .with("gateMaxFlaky", plan.getGateMaxFlaky());
+                .with("gateMaxFlaky", plan.getGateMaxFlaky())
+                .with("gateCoverageOnScope", plan.isGateCoverageOnScope());
     }
 
     /** Null leaves the gate alone, so a caller that only renames a plan can't switch it off (PRD-037). */
@@ -244,6 +256,7 @@ public class TestPlanService {
         plan.setGateMaxBlockerBugs(gate.maxBlockerBugs());
         plan.setGateMinCoverage(gate.minCoverage());
         plan.setGateMaxFlaky(gate.maxFlaky());
+        plan.setGateCoverageOnScope(gate.measuresScopeCoverage());
     }
 
     public List<TestPlanResponse> findByAssignee(UUID assigneeId) {
@@ -263,5 +276,89 @@ public class TestPlanService {
         // loaded them in this transaction does not flush runs pointing at a deleted plan.
         plan.getTestRuns().forEach(run -> run.setTestPlan(null));
         testPlanRepository.delete(plan);
+    }
+
+    // --- scope (PRD-053 §8) ----------------------------------------------------------------
+
+    public TestPlanScopeResponse getScope(UUID projectId, UUID planId) {
+        TestPlan plan = requirePlan(projectId, planId);
+        Map<UUID, TestResultStatus> latest = latestExecutedStatus(testResultRepository.findReadinessRows(planId));
+        List<TestPlanScopeResponse.Item> items = plan.getScope().stream()
+                .sorted(Comparator.comparing(TestCase::getKey, Comparator.nullsLast(Comparator.naturalOrder())))
+                .map(tc -> new TestPlanScopeResponse.Item(tc.getId(), tc.getKey(), tc.getTitle(), tc.getPriority(),
+                        latest.get(tc.getId())))
+                .toList();
+        return new TestPlanScopeResponse(summarize(items), items);
+    }
+
+    /** Every id must name a case in this project, or nothing is added. Returns how many were new. */
+    @Transactional
+    public int addToScope(UUID projectId, UUID planId, Set<UUID> testCaseIds, UUID userId) {
+        TestPlan plan = requirePlan(projectId, planId);
+        List<TestCase> found = testCaseRepository.findByIdInAndProjectId(testCaseIds, projectId);
+        if (found.size() != testCaseIds.size()) {
+            Set<UUID> missing = new HashSet<>(testCaseIds);
+            found.forEach(tc -> missing.remove(tc.getId()));
+            throw new ResourceNotFoundException("TestCase", missing.iterator().next());
+        }
+        int before = plan.getScope().size();
+        plan.getScope().addAll(found);
+        int added = plan.getScope().size() - before;
+        logScopeChange(projectId, userId, plan, "Added " + added + " test cases to the scope", before);
+        return added;
+    }
+
+    /** Ids the scope does not hold are ignored. Returns how many were removed. */
+    @Transactional
+    public int removeFromScope(UUID projectId, UUID planId, Set<UUID> testCaseIds, UUID userId) {
+        TestPlan plan = requirePlan(projectId, planId);
+        int before = plan.getScope().size();
+        plan.getScope().removeIf(tc -> testCaseIds.contains(tc.getId()));
+        int removed = before - plan.getScope().size();
+        logScopeChange(projectId, userId, plan, "Removed " + removed + " test cases from the scope", before);
+        return removed;
+    }
+
+    private void logScopeChange(UUID projectId, UUID userId, TestPlan plan, String detail, int sizeBefore) {
+        if (plan.getScope().size() == sizeBefore) {
+            return;
+        }
+        auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_PLAN, plan.getId(),
+                plan.getName(), detail, FieldChanges.between(
+                        new FieldChanges.Snapshot().with("scope", sizeBefore),
+                        new FieldChanges.Snapshot().with("scope", plan.getScope().size())));
+    }
+
+    private TestPlan requirePlan(UUID projectId, UUID planId) {
+        return testPlanRepository.findByIdAndProjectId(planId, projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("TestPlan", planId));
+    }
+
+    /**
+     * Each case's latest result that is not PENDING, across every parameter set: a case pending in a
+     * retest run still counts by what it last showed. A case with only pending results is absent.
+     */
+    static Map<UUID, TestResultStatus> latestExecutedStatus(Collection<ReadinessResultRow> rows) {
+        Comparator<ReadinessResultRow> newer = Comparator.comparing(ReadinessResultRow::runAt)
+                .thenComparing(ReadinessResultRow::resultUpdatedAt);
+        Map<UUID, ReadinessResultRow> latest = new HashMap<>();
+        for (ReadinessResultRow row : rows) {
+            if (row.status() != TestResultStatus.PENDING) {
+                latest.merge(row.testCaseId(), row, (a, b) -> newer.compare(a, b) >= 0 ? a : b);
+            }
+        }
+        Map<UUID, TestResultStatus> result = new HashMap<>();
+        latest.forEach((id, row) -> result.put(id, row.status()));
+        return result;
+    }
+
+    static TestPlanScopeResponse.Summary summarize(List<TestPlanScopeResponse.Item> items) {
+        Map<TestResultStatus, Integer> byStatus = new HashMap<>();
+        items.stream().filter(i -> i.latestStatus() != null)
+                .forEach(i -> byStatus.merge(i.latestStatus(), 1, Integer::sum));
+        int executed = byStatus.values().stream().mapToInt(Integer::intValue).sum();
+        return new TestPlanScopeResponse.Summary(items.size(), executed, items.size() - executed,
+                byStatus.getOrDefault(TestResultStatus.PASSED, 0), byStatus.getOrDefault(TestResultStatus.FAILED, 0),
+                byStatus.getOrDefault(TestResultStatus.BLOCKED, 0), byStatus.getOrDefault(TestResultStatus.SKIPPED, 0));
     }
 }

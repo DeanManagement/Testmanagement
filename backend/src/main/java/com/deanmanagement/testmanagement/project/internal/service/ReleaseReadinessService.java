@@ -13,6 +13,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.testplan.ReleaseGa
 import com.deanmanagement.testmanagement.project.internal.dto.testplan.TestPlanMapper;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
+import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestPlan;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResultStatus;
 import com.deanmanagement.testmanagement.project.internal.repository.BugReportRepository;
@@ -66,18 +67,23 @@ public class ReleaseReadinessService {
         TestPlan plan = testPlanRepository.findByIdAndProjectId(planId, projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("TestPlan", planId));
         ReleaseGate gate = testPlanMapper.gateOf(plan);
-        Inputs inputs = load(projectId, planId, gate);
+        Inputs inputs = load(projectId, plan, gate);
         List<Criterion> criteria = evaluate(gate, inputs);
         return new ReadinessResponse(plan.getId(), plan.getName(), verdictOf(criteria), clock.instant(), criteria,
                 inputs.counts());
     }
 
     /** Reads only what the configured criteria need: the flaky scan is project-wide and not free. */
-    private Inputs load(UUID projectId, UUID planId, ReleaseGate gate) {
-        List<ReadinessResultRow> rows = testResultRepository.findReadinessRows(planId);
+    private Inputs load(UUID projectId, TestPlan plan, ReleaseGate gate) {
+        List<ReadinessResultRow> rows = testResultRepository.findReadinessRows(plan.getId());
         long blockerBugs = gate.maxBlockerBugs() == null ? 0
                 : bugReportRepository.countByProjectIdAndPriorityAndStatusIn(projectId, BLOCKER_PRIORITY, BugReportStatus.OPEN_STATUSES);
-        BigDecimal coverage = gate.minCoverage() == null ? null : coverageOf(requirementService.coverage(projectId));
+        BigDecimal coverage = null;
+        if (gate.minCoverage() != null) {
+            coverage = gate.measuresScopeCoverage()
+                    ? scopeCoverageOf(plan.getScope().stream().map(TestCase::getId).collect(Collectors.toSet()), rows)
+                    : coverageOf(requirementService.coverage(projectId));
+        }
         long flaky = gate.maxFlaky() == null ? 0 : flakyCasesIn(rows, flakyTestService.analyse(projectId));
         return new Inputs(countLatest(rows), blockerBugs, coverage, flaky);
     }
@@ -85,6 +91,19 @@ public class ReleaseReadinessService {
     /** Null when the project has no requirements: the criterion then does not apply. */
     private static BigDecimal coverageOf(CoverageSummaryResponse coverage) {
         return coverage.totalRequirements() == 0 ? null : BigDecimal.valueOf(coverage.coveragePercent());
+    }
+
+    /**
+     * PRD-053 §8: the share of the plan's scope with an executed (not PENDING) result in its runs.
+     * Null for an empty scope: the criterion then does not apply, as coverage without requirements.
+     */
+    static BigDecimal scopeCoverageOf(Set<UUID> scope, List<ReadinessResultRow> rows) {
+        if (scope.isEmpty()) {
+            return null;
+        }
+        long executed = TestPlanService.latestExecutedStatus(rows).keySet().stream().filter(scope::contains).count();
+        return BigDecimal.valueOf(executed).multiply(HUNDRED)
+                .divide(BigDecimal.valueOf(scope.size()), PERCENT_DECIMALS, RoundingMode.HALF_UP);
     }
 
     /** A flaky case this plan never touches is not this release's problem. */
@@ -136,7 +155,8 @@ public class ReleaseReadinessService {
             criteria.add(atMost(CriterionName.BLOCKER_BUGS, inputs.blockerBugs(), gate.maxBlockerBugs()));
         }
         if (gate.minCoverage() != null) {
-            criteria.add(coverage(gate.minCoverage(), inputs.coveragePercent()));
+            criteria.add(coverage(gate.measuresScopeCoverage() ? CriterionName.SCOPE_COVERAGE : CriterionName.COVERAGE,
+                    gate.minCoverage(), inputs.coveragePercent()));
         }
         if (gate.maxFlaky() != null) {
             criteria.add(atMost(CriterionName.FLAKY_TESTS, inputs.flakyCases(), gate.maxFlaky()));
@@ -164,12 +184,12 @@ public class ReleaseReadinessService {
         return new Criterion(CriterionName.PASS_RATE, actual, threshold, meets ? Outcome.PASS : Outcome.FAIL);
     }
 
-    private static Criterion coverage(BigDecimal threshold, BigDecimal actual) {
+    private static Criterion coverage(CriterionName name, BigDecimal threshold, BigDecimal actual) {
         if (actual == null) {
-            return new Criterion(CriterionName.COVERAGE, null, threshold, Outcome.NOT_APPLICABLE);
+            return new Criterion(name, null, threshold, Outcome.NOT_APPLICABLE);
         }
         Outcome outcome = actual.compareTo(threshold) >= 0 ? Outcome.PASS : Outcome.FAIL;
-        return new Criterion(CriterionName.COVERAGE, actual.setScale(PERCENT_DECIMALS, RoundingMode.HALF_UP), threshold,
+        return new Criterion(name, actual.setScale(PERCENT_DECIMALS, RoundingMode.HALF_UP), threshold,
                 outcome);
     }
 

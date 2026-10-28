@@ -82,7 +82,8 @@ public class ReportingTools {
                     result in the plan, pending counting as not passed), BLOCKER_BUGS (open or
                     in-progress CRITICAL bugs in the project), COVERAGE (requirement coverage
                     percent; NOT_APPLICABLE without requirements), FLAKY_TESTS (flaky cases the plan
-                    executes). A value equal to its threshold passes. Find plan ids with
+                    executes), SCOPE_COVERAGE (instead of COVERAGE when the plan opted in: percent of
+                    the plan's scope executed; NOT_APPLICABLE for an empty scope). A value equal to its threshold passes. Find plan ids with
                     list_test_plans.
                     """,
             generateOutputSchema = true,
