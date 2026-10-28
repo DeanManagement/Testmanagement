@@ -144,7 +144,7 @@ final class RunReportHtml {
         for (int i = 0; i < steps.size(); i++) {
             StepResultResponse step = steps.get(i);
             sb.append("<tr><td>").append(i + 1).append("</td>")
-                    .append("<td>").append(esc(step.action())).append("</td>")
+                    .append("<td>").append(esc(step.action()).replace("\n", "<br/>")).append("</td>")
                     .append("<td class=\"").append(step.status().name().toLowerCase()).append("\">").append(step.status()).append("</td>")
                     .append("<td>").append(orNone(step.actualResult())).append("</td>");
             if (options.screenshots()) {

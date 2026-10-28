@@ -52,6 +52,16 @@ class RunReportHtmlTest {
     }
 
     @Test
+    void aMultiLineStepActionKeepsItsLineBreaksAndStaysEscapedText() {
+        StepResultResponse step = new StepResultResponse(UUID.randomUUID(), UUID.randomUUID(),
+                "**Open** the cart\n<b>Pay</b>", null, null, 0, TestResultStatus.PASSED, null, null, null, null, null, null, null);
+
+        String html = render(new RunReportOptions(true, false), result(List.of(step), "Tess"));
+
+        assertThat(html).contains("<td>**Open** the cart<br/>&lt;b&gt;Pay&lt;/b&gt;</td>");
+    }
+
+    @Test
     void withScreenshotsTheyAreEmbeddedAsImages() {
         String html = render(new RunReportOptions(false, true), result(List.of(step(0, UUID.randomUUID())), "Tess"));
 
