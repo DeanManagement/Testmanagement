@@ -123,7 +123,20 @@ final class McpDtos {
                           @Nullable Set<String> labels, @Nullable UUID folderId,
                           List<Step> steps, @Nullable Map<String, Object> customFields,
                           @Nullable Integer estimateMinutes, @Nullable Long medianActualMs,
-                          List<Attachment> attachments, List<RequirementRef> requirements) {}
+                          List<Attachment> attachments, List<RequirementRef> requirements,
+                          List<TestCaseLinkRef> links) {}
+
+    /**
+     * A link to another case, seen from this one (TM07): OUTGOING PRECONDITION means the other
+     * case runs first; INCOMING means the other case links to this one.
+     */
+    record TestCaseLinkRef(String linkType, String direction, UUID testCaseId, String key, String title) {}
+
+    /** A case's links after link_test_cases (TM07). */
+    record TestCaseLinks(List<TestCaseLinkRef> links) {}
+
+    /** How many links unlink_test_cases removed; zero when there were none. */
+    record UnlinkedTestCases(int removed) {}
 
     /** A requirement a test case is linked to (TM08); get_requirement has the rest. */
     record RequirementRef(UUID id, String externalId, String title) {}

@@ -325,6 +325,22 @@
       "choose": "Requirement",
       "link": "Link a requirement"
     },
+    "links": {
+      "title": "Linked test cases",
+      "none": "No linked test cases.",
+      "add": "Link a test case",
+      "remove": "Remove link",
+      "choose": "Test case (search by key or title)",
+      "type": "Link type",
+      "PRECONDITION": "Precondition",
+      "RELATES_TO": "Relates to",
+      "PRECONDITION_OUTGOING": "Run first",
+      "PRECONDITION_INCOMING": "Precondition for",
+      "RELATES_TO_OUTGOING": "Relates to",
+      "RELATES_TO_INCOMING": "Relates to",
+      "runFirst": "Run first",
+      "notInRun": "not in this run"
+    },
     "copy": "Copy",
     "copyTitle": "{{title}} (copy)"
   },

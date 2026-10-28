@@ -246,7 +246,7 @@
                   </span>
                 </p>
               }
-              <app-case-context [result]="result" [projectId]="projectId" />
+              <app-case-context [result]="result" [projectId]="projectId" [runResults]="run.results ?? []" />
 
               <app-attachments [url]="caseAttachmentsUrl(result.testCaseId)" [execution]="true" />
 

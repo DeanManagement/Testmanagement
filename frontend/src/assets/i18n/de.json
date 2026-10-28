@@ -325,6 +325,22 @@
       "choose": "Anforderung",
       "link": "Anforderung verknüpfen"
     },
+    "links": {
+      "title": "Verknüpfte Testfälle",
+      "none": "Keine verknüpften Testfälle.",
+      "add": "Testfall verknüpfen",
+      "remove": "Verknüpfung entfernen",
+      "choose": "Testfall (Suche nach Schlüssel oder Titel)",
+      "type": "Art der Verknüpfung",
+      "PRECONDITION": "Vorbedingung",
+      "RELATES_TO": "Steht in Beziehung zu",
+      "PRECONDITION_OUTGOING": "Zuerst ausführen",
+      "PRECONDITION_INCOMING": "Vorbedingung für",
+      "RELATES_TO_OUTGOING": "Steht in Beziehung zu",
+      "RELATES_TO_INCOMING": "Steht in Beziehung zu",
+      "runFirst": "Zuerst ausführen",
+      "notInRun": "nicht in diesem Lauf"
+    },
     "copy": "Kopieren",
     "copyTitle": "{{title}} (Kopie)"
   },

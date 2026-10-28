@@ -61,6 +61,14 @@
   .tm-markdown { color: var(--tm-text-secondary); margin: 4px 0 0; }
 }
 
+.tc-run-first {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  margin-bottom: 8px;
+  strong { color: var(--tm-text); }
+}
+
 .tc-labels {
   display: flex;
   gap: 4px;

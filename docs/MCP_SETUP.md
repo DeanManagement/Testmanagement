@@ -156,7 +156,8 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `link_issue`, `create_linked_issue`, `unlink_issue`, `reopen_test_run`, `update_bug_report`,
 `unlink_bug_report`, `update_comment`, `create_shared_step`, `update_shared_step`,
 `add_test_case_attachment`, `copy_test_case`, `insert_test_step`, `move_test_step`,
-`remove_test_step`, `add_test_cases_to_run`, `remove_test_cases_from_run`, `reorder_test_run_cases`.
+`remove_test_step`, `add_test_cases_to_run`, `remove_test_cases_from_run`, `reorder_test_run_cases`,
+`link_test_cases`, `unlink_test_cases`.
 
 **Delete** (Tester only, like the UI) — `delete_test_case`, `delete_test_case_folder`,
 `delete_test_suite`, `delete_test_plan`, `delete_test_run`, `delete_requirement`,

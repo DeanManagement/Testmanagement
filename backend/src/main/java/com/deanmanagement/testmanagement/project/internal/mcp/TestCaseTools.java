@@ -15,6 +15,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRep
 import com.deanmanagement.testmanagement.project.internal.service.CustomFieldFilterParser;
 import com.deanmanagement.testmanagement.project.internal.service.CustomFieldWriteMode;
 import com.deanmanagement.testmanagement.project.internal.service.RequirementService;
+import com.deanmanagement.testmanagement.project.internal.service.TestCaseLinkService;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
 import com.deanmanagement.testmanagement.shared.exception.ConflictException;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
@@ -58,6 +59,7 @@ public class TestCaseTools {
     private final McpWriteThrottle writeThrottle;
     private final CustomFieldFilterParser customFieldFilterParser;
     private final RequirementService requirementService;
+    private final TestCaseLinkService linkService;
 
     // --- read ------------------------------------------------------------------------------
 
@@ -128,7 +130,8 @@ public class TestCaseTools {
                     medianActualMs (median measured duration of its last 5 executions), and the
                     names of files attached to it (not their content: ask the human to open them in
                     the app when a step needs one; download_test_case_attachment fetches one), and
-                    the requirements it is linked to. Steps are
+                    the requirements it is linked to, and its links to other test cases in both
+                    directions (an OUTGOING PRECONDITION link names a case to run first). Steps are
                     as executed: a shared step's steps appear in place, each with its sharedStepId
                     and sharedStepTitle. Accepts either the case key
                     (for example PROJ-12, which is what humans quote) or its UUID.
@@ -152,6 +155,9 @@ public class TestCaseTools {
                         .toList(),
                 requirementService.findLinkedTo(caller.projectId(), response.id()).stream()
                         .map(r -> new McpDtos.RequirementRef(r.id(), r.externalId(), r.title()))
+                        .toList(),
+                linkService.list(caller.projectId(), response.id()).stream()
+                        .map(TestCaseLinkTools::toRef)
                         .toList());
     }
 

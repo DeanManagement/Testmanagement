@@ -3,6 +3,7 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { BulkEditTestCasesChanges, BulkOperationResponse, TestCaseContext, TestCaseExecution, CreateTestCaseRequest, GherkinPreview, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 import { Page } from '../../shared/models/page.model';
+import { TestCaseLink, TestCaseLinkType } from '../../shared/models/test-case-link.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
 
 @Injectable({ providedIn: 'root' })
@@ -164,5 +165,18 @@ export class TestCaseApiService {
 
   deleteStepImage(imageId: string): Observable<void> {
     return this.http.delete<void>(`/api/step-images/${imageId}`);
+  }
+
+  /** TM07: the case's links to other cases, both directions. */
+  getLinks(projectId: string, testCaseId: string): Observable<TestCaseLink[]> {
+    return this.http.get<TestCaseLink[]>(`${this.baseUrl(projectId)}/${testCaseId}/links`);
+  }
+
+  link(projectId: string, testCaseId: string, targetTestCaseId: string, linkType: TestCaseLinkType): Observable<TestCaseLink[]> {
+    return this.http.post<TestCaseLink[]>(`${this.baseUrl(projectId)}/${testCaseId}/links`, { targetTestCaseId, linkType });
+  }
+
+  unlink(projectId: string, testCaseId: string, linkId: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl(projectId)}/${testCaseId}/links/${linkId}`);
   }
 }

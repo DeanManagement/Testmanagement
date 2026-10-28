@@ -33,6 +33,14 @@
       @if (tc.description) {
         <div class="tc-description tm-markdown" data-test-id="test-case-detail-description" [innerHTML]="tc.description | markdown"></div>
       }
+      @if (runFirst().length) {
+        <div class="tc-run-first" data-test-id="test-case-detail-run-first">
+          <strong>{{ 'testCase.links.runFirst' | translate }}:</strong>
+          @for (link of runFirst(); track link.id) {
+            <a [routerLink]="['/projects', projectId, 'test-cases', link.testCaseId]">{{ link.testCaseKey }} {{ link.testCaseTitle }}</a>
+          }
+        </div>
+      }
       @if (tc.preconditions) {
         <div class="tc-preconditions" data-test-id="test-case-detail-preconditions">
           <strong>{{ 'testCase.form.preconditions' | translate }}:</strong>
@@ -90,6 +98,12 @@
         </div>
       </div>
     }
+
+    <div class="links-section tm-card" data-test-id="test-case-links-section">
+      <h3>{{ 'testCase.links.title' | translate }}</h3>
+      <app-test-case-links [projectId]="projectId" [testCaseId]="testCaseId" [canEdit]="canWrite"
+                           (linksChange)="onLinksChange($event)" />
+    </div>
 
     <div class="requirements-section tm-card" data-test-id="test-case-requirements-section">
       <h3>{{ 'requirement.title' | translate }}</h3>

@@ -1,6 +1,6 @@
 import { CaseContextComponent } from '../case-context/case-context.component';
 import { ExecutionHistoryComponent } from '../execution-history/execution-history.component';
-import { ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, inject, OnInit, signal, ViewChild } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
@@ -30,6 +30,8 @@ import { TestCaseVersionsComponent } from '../test-case-versions/test-case-versi
 import { ExecutedStep, expandSteps, sharedStepHeadingAt } from '../../../shared/utils/shared-step-groups';
 import { TestCaseParametersComponent } from '../test-case-parameters/test-case-parameters.component';
 import { TestCaseRequirementsComponent } from '../test-case-requirements/test-case-requirements.component';
+import { TestCaseLinksComponent } from '../test-case-links/test-case-links.component';
+import { preconditionLinks, TestCaseLink } from '../../../shared/models/test-case-link.model';
 
 import { EnvironmentResultsComponent } from '../environment-results/environment-results.component';
 
@@ -72,6 +74,7 @@ const MAX_TITLE_LENGTH = 255;
     TestCaseVersionsComponent,
     TestCaseParametersComponent,
     TestCaseRequirementsComponent,
+    TestCaseLinksComponent,
   ],
   templateUrl: './test-case-detail.component.html',
   styleUrl: './test-case-detail.component.scss',
@@ -98,6 +101,12 @@ export class TestCaseDetailComponent implements OnInit {
   /** TESTER and up may upload and delete attachments; viewers see them read-only. */
   canWrite = false;
   readonly statusLabelKey = statusLabelKey;
+  /** TM07: cases to run before this one, shown above the preconditions text. */
+  readonly runFirst = signal<TestCaseLink[]>([]);
+
+  onLinksChange(links: TestCaseLink[]): void {
+    this.runFirst.set(preconditionLinks(links));
+  }
   @ViewChild('versions') private versions?: TestCaseVersionsComponent;
   @ViewChild('versionsSection') private versionsSection?: ElementRef<HTMLElement>;
   get attachmentsUrl(): string {
