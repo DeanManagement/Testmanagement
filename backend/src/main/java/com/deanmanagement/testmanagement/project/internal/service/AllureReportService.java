@@ -12,11 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -60,11 +63,13 @@ public class AllureReportService {
 
         validateZipContainsIndexHtml(data);
 
-        allureReportRepository.findByTestRunId(testRunId)
-                .ifPresent(allureReportRepository::delete);
-
-        AllureReport report = new AllureReport();
-        report.setTestRun(testRun);
+        // Replaced in place (TM38): deleting the old row and inserting a new one in the same flush
+        // ran the insert first, broke the unique test_run_id and failed the commit with a 500.
+        AllureReport report = allureReportRepository.findByTestRunId(testRunId).orElseGet(() -> {
+            AllureReport created = new AllureReport();
+            created.setTestRun(testRun);
+            return created;
+        });
         report.setFileName(fileName);
         report.setData(data);
 
@@ -99,6 +104,9 @@ public class AllureReportService {
             if (entry != null && !entry.isDirectory()) {
                 byte[] content = readBounded(zipFile, entry);
                 String contentType = detectContentType(normalizedPath);
+                if ("text/html".equals(contentType)) {
+                    content = withStorageShim(content);
+                }
                 return new AllureReportFile(content, contentType);
             }
         } catch (IOException e) {
@@ -109,6 +117,41 @@ public class AllureReportService {
 
         throw new ResourceNotFoundException("File in AllureReport", filePath);
     }
+
+    /**
+     * The report runs in a sandbox without allow-same-origin (PRD-018), where touching
+     * {@code localStorage} throws. Allure 3 reads it unguarded at startup, so a default report never
+     * rendered (TM39). Allowing same-origin would hand the uploaded script the app's session; an
+     * in-memory stand-in, put first in the head so it runs before the report's own scripts, does not.
+     */
+    static byte[] withStorageShim(byte[] html) {
+        String page = new String(html, StandardCharsets.UTF_8);
+        Matcher head = HEAD_TAG.matcher(page);
+        String withShim = head.find()
+                ? page.substring(0, head.end()) + STORAGE_SHIM + page.substring(head.end())
+                : STORAGE_SHIM + page;
+        return withShim.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static final Pattern HEAD_TAG = Pattern.compile("<head(\\s[^>]*)?>", Pattern.CASE_INSENSITIVE);
+
+    private static final String STORAGE_SHIM = """
+            <script>(function () {
+              try { window.localStorage; return; } catch (sandboxed) { /* fall through to the stand-in */ }
+              function memoryStorage() {
+                var items = {};
+                return {
+                  getItem: function (k) { return Object.prototype.hasOwnProperty.call(items, k) ? items[k] : null; },
+                  setItem: function (k, v) { items[k] = String(v); },
+                  removeItem: function (k) { delete items[k]; },
+                  clear: function () { items = {}; },
+                  key: function (i) { return Object.keys(items)[i] || null; },
+                  get length() { return Object.keys(items).length; }
+                };
+              }
+              Object.defineProperty(window, 'localStorage', { value: memoryStorage() });
+              Object.defineProperty(window, 'sessionStorage', { value: memoryStorage() });
+            })();</script>""";
 
     @Transactional
     public void deleteByTestRunId(UUID testRunId) {
