@@ -40,6 +40,10 @@
             <mat-icon>swap_horiz</mat-icon>
             {{ 'bulk.updateStatus' | translate }}
           </button>
+          <button mat-stroked-button (click)="bulkEdit(selectedIds)" data-test-id="bulk-edit-btn">
+            <mat-icon>edit</mat-icon>
+            {{ 'bulk.edit.button' | translate }}
+          </button>
           <button mat-stroked-button (click)="bulkAddToSuite(selectedIds)" data-test-id="bulk-add-suite-btn">
             <mat-icon>playlist_add</mat-icon>
             {{ 'bulk.addToSuite' | translate }}

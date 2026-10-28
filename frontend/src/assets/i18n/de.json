@@ -743,7 +743,23 @@
     "deleted": "{{count}} Testfälle gelöscht.",
     "addedToSuite": "Testfälle zur Suite hinzugefügt.",
     "removedFromSuite": "Testfälle aus Suite entfernt.",
-    "hasResults": "Testfälle mit Testergebnissen können nicht gelöscht werden."
+    "hasResults": "Testfälle mit Testergebnissen können nicht gelöscht werden.",
+    "edit": {
+      "button": "Bearbeiten",
+      "title": "{{count}} Testfälle bearbeiten",
+      "hint": "Nur was du hier änderst, wird übernommen; alles andere bleibt, wie es ist.",
+      "unchanged": "Unverändert lassen",
+      "addLabels": "Labels hinzufügen",
+      "removeLabels": "Labels entfernen",
+      "folder": "Ordner",
+      "rootFolder": "Kein Ordner (Projektebene)",
+      "customField": "Benutzerdefiniertes Feld",
+      "value": "Wert",
+      "clear": "Wert leeren",
+      "emptyClears": "Leer lassen, um das Feld zu leeren.",
+      "apply": "Übernehmen",
+      "done": "{{count}} Testfälle aktualisiert."
+    }
   },
   "report": {
     "title": "Bericht",

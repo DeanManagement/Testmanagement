@@ -743,7 +743,23 @@
     "deleted": "{{count}} test cases deleted.",
     "addedToSuite": "Test cases added to suite.",
     "removedFromSuite": "Test cases removed from suite.",
-    "hasResults": "Cannot delete test cases that have test results."
+    "hasResults": "Cannot delete test cases that have test results.",
+    "edit": {
+      "button": "Edit",
+      "title": "Edit {{count}} test cases",
+      "hint": "Only what you change here is applied; everything else stays as it is.",
+      "unchanged": "Leave unchanged",
+      "addLabels": "Add labels",
+      "removeLabels": "Remove labels",
+      "folder": "Folder",
+      "rootFolder": "No folder (project root)",
+      "customField": "Custom field",
+      "value": "Value",
+      "clear": "Clear the value",
+      "emptyClears": "Leave empty to clear the field.",
+      "apply": "Apply",
+      "done": "{{count}} test cases updated."
+    }
   },
   "report": {
     "title": "Report",

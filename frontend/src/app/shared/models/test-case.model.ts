@@ -24,6 +24,18 @@ export interface TestStepRequest {
 }
 
 export type Priority = 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+
+/** TM11: what a bulk edit changes; an absent part is left alone. */
+export interface BulkEditTestCasesChanges {
+  priority?: Priority;
+  addLabels?: string[];
+  removeLabels?: string[];
+  /** With moveToFolder, a null folderId means the project root. */
+  moveToFolder?: boolean;
+  folderId?: string | null;
+  /** Keyed by field name; null clears the field. */
+  customFields?: Record<string, string | null>;
+}
 /** With a project's review switch on (PRD-033), ACTIVE means approved. */
 export type TestCaseStatus = 'DRAFT' | 'IN_REVIEW' | 'ACTIVE' | 'DEPRECATED';
 

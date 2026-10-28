@@ -4,6 +4,8 @@ import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseC
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.TestCaseExecutionResponse;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseContextService;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseCopyService;
+import com.deanmanagement.testmanagement.project.internal.service.TestCaseBulkEditService;
+import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkEditTestCasesRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.CopyTestCaseRequest;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseReviewService;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.ReviewCapabilitiesResponse;
@@ -64,6 +66,7 @@ public class TestCaseController {
     private final CustomFieldFilterParser customFieldFilterParser;
     private final TestCaseContextService contextService;
     private final TestCaseCopyService copyService;
+    private final TestCaseBulkEditService bulkEditService;
 
     @GetMapping
     @RequireProjectRole
@@ -216,6 +219,15 @@ public class TestCaseController {
                                                    Authentication authentication) {
         UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
         return testCaseService.bulkUpdateStatus(projectId, request, userId);
+    }
+
+    /** TM11: priority, labels, folder and custom fields for every selected case. */
+    @PostMapping("/bulk-edit")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BulkOperationResponse bulkEdit(@PathVariable UUID projectId,
+                                          @Valid @RequestBody BulkEditTestCasesRequest request,
+                                          Authentication authentication) {
+        return bulkEditService.edit(projectId, request, userIdOf(authentication));
     }
 
     @PostMapping("/bulk-delete")

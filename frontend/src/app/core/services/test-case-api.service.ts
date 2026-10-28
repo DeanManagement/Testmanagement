@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BulkOperationResponse, TestCaseContext, TestCaseExecution, CreateTestCaseRequest, GherkinPreview, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
+import { BulkEditTestCasesChanges, BulkOperationResponse, TestCaseContext, TestCaseExecution, CreateTestCaseRequest, GherkinPreview, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 import { Page } from '../../shared/models/page.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
 
@@ -140,6 +140,11 @@ export class TestCaseApiService {
 
   bulkUpdateStatus(projectId: string, testCaseIds: string[], status: TestCaseStatus): Observable<BulkOperationResponse> {
     return this.http.post<BulkOperationResponse>(`${this.baseUrl(projectId)}/bulk-status`, { testCaseIds, status });
+  }
+
+  /** TM11: priority, labels, folder and custom fields for every selected case, all or nothing. */
+  bulkEdit(projectId: string, testCaseIds: string[], changes: BulkEditTestCasesChanges): Observable<BulkOperationResponse> {
+    return this.http.post<BulkOperationResponse>(`${this.baseUrl(projectId)}/bulk-edit`, { testCaseIds, ...changes });
   }
 
   bulkDelete(projectId: string, testCaseIds: string[]): Observable<BulkOperationResponse> {

@@ -36,6 +36,8 @@ import { BulkStatusDialogComponent, BulkStatusDialogData } from '../bulk-status-
 import { statusLabelKey } from '../review/review-status';
 import { ProjectApiService } from '../../../core/services/project-api.service';
 import { BulkAddToSuiteDialogComponent } from '../bulk-add-to-suite-dialog/bulk-add-to-suite-dialog.component';
+import { BulkEditDialogComponent, BulkEditDialogData, BulkEditFolderOption } from '../bulk-edit-dialog/bulk-edit-dialog.component';
+import { BulkEditTestCasesChanges } from '../../../shared/models/test-case.model';
 import { FolderNameDialogComponent, FolderNameDialogData } from '../folder-name-dialog/folder-name-dialog.component';
 import { TestSuiteApiService } from '../../../core/services/test-suite-api.service';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -133,6 +135,8 @@ export class TestCaseListComponent implements OnInit {
   allPriorities: Priority[] = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'];
 
   private readonly searchChange$ = new Subject<void>();
+  /** The query the list was last loaded with, to reload it unchanged after a bulk edit. */
+  private currentQuery: TestCaseQuery | undefined;
 
   private transformer = (node: TestCaseFolder, level: number): FlatFolderNode => ({
     id: node.id,
@@ -206,6 +210,7 @@ export class TestCaseListComponent implements OnInit {
         sort: params.get('sort') ?? 'updatedAt,desc',
       };
       this.store.dispatch(TestCaseFolderActions.selectFolder({ folderId: this.selectedFolderId }));
+      this.currentQuery = query;
       this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId, query }));
     });
 
@@ -477,6 +482,33 @@ export class TestCaseListComponent implements OnInit {
     });
   }
 
+  /** TM11: priority, labels, folder and a custom field for every selected case. */
+  bulkEdit(selectedIds: string[]): void {
+    this.folders$.pipe(take(1)).subscribe((tree) => {
+      const data: BulkEditDialogData = { projectId: this.projectId, count: selectedIds.length, folders: flattenFolders(tree) };
+      this.dialog.open(BulkEditDialogComponent, { data })
+        .afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe((changes: BulkEditTestCasesChanges | undefined) => {
+          if (changes) {
+            this.applyBulkEdit(selectedIds, changes);
+          }
+        });
+    });
+  }
+
+  private applyBulkEdit(selectedIds: string[], changes: BulkEditTestCasesChanges): void {
+    this.testCaseApi.bulkEdit(this.projectId, selectedIds, changes)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
+        this.store.dispatch(TestCaseActions.deselectAllTestCases());
+        // The same page and filters: an edited case should not jump the user back to page one.
+        this.store.dispatch(TestCaseActions.loadTestCases({ projectId: this.projectId, query: this.currentQuery }));
+        this.store.dispatch(TestCaseFolderActions.loadFolders({ projectId: this.projectId }));
+        this.snackBar.open(this.translate.instant('bulk.edit.done', { count: selectedIds.length }),
+          this.translate.instant('common.close'), { duration: 4000 });
+      });
+  }
+
   deleteTestCase(testCase: TestCase): void {
     const dialogRef = this.dialog.open(ConfirmDialogComponent, {
       data: {
@@ -545,4 +577,12 @@ export class TestCaseListComponent implements OnInit {
       }
     });
   }
+}
+
+/** The folder tree as one list, parents before their children, for a folder picker. */
+function flattenFolders(folders: TestCaseFolder[], level = 0): BulkEditFolderOption[] {
+  return folders.flatMap((folder) => [
+    { id: folder.id, name: folder.name, level },
+    ...flattenFolders(folder.children ?? [], level + 1),
+  ]);
 }
