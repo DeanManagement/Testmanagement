@@ -296,7 +296,9 @@
         "examplesNotSaved": "Die Examples-Tabelle wird hier nicht gespeichert: Parametersätze verwaltest du auf der Testfallseite. Platzhalter wurden als {name} geschrieben.",
         "noSteps": "Keine Schritte gefunden. Sind die Schritte nicht auf Englisch, beginne den Text mit einer Sprachzeile wie \"# language: de\".",
         "noShared": "Gherkin kennt keine gemeinsamen Schritte. Wandle sie zuerst auf der Testfallseite in lokale Schritte um."
-      }
+      },
+      "dragStep": "Ziehen, um diesen Schritt zu verschieben",
+      "insertStepAfter": "Schritt darunter einfügen"
     },
     "detail": {
       "estimate": "Schätzung",

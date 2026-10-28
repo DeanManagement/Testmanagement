@@ -296,7 +296,9 @@
         "examplesNotSaved": "The Examples table is not saved here: manage parameter sets on the test case page. Placeholders were written as {name}.",
         "noSteps": "No steps found. If the steps are not in English, start the text with a language line such as \"# language: de\".",
         "noShared": "Gherkin has no shared steps. Convert them to local steps on the test case page first."
-      }
+      },
+      "dragStep": "Drag to reorder this step",
+      "insertStepAfter": "Insert a step below"
     },
     "detail": {
       "estimate": "Estimate",

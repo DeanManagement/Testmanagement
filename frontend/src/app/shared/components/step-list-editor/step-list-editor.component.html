@@ -1,5 +1,18 @@
+<div cdkDropList class="step-list" (cdkDropListDropped)="dropStep($event)" data-test-id="step-list">
 @for (step of steps.controls; track step; let i = $index) {
-  <div class="step-row" [formGroup]="groupAt(i)" [attr.data-test-id]="'step-row-' + i">
+  <div class="step-row" cdkDrag cdkDragLockAxis="y" [formGroup]="groupAt(i)" [attr.data-test-id]="'step-row-' + i">
+    <div class="step-row-tools">
+      <button mat-icon-button type="button" cdkDragHandle class="drag-handle"
+              [attr.aria-label]="'testCase.form.dragStep' | translate" [attr.data-test-id]="'test-case-drag-step-' + i">
+        <mat-icon>drag_indicator</mat-icon>
+      </button>
+      <button mat-icon-button type="button" (click)="insertStepAfter(i)" class="insert-step"
+              [attr.aria-label]="'testCase.form.insertStepAfter' | translate"
+              [attr.title]="'testCase.form.insertStepAfter' | translate"
+              [attr.data-test-id]="'test-case-insert-step-after-' + i">
+        <mat-icon>playlist_add</mat-icon>
+      </button>
+    </div>
     @if (isReference(i)) {
       <div class="step-fields">
         <span class="step-number">{{ i + 1 }}</span>
@@ -80,3 +93,4 @@
     }
   </div>
 }
+</div>

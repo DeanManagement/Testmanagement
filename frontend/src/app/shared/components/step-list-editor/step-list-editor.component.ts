@@ -1,4 +1,5 @@
 import { ChangeDetectorRef, Component, inject, Input } from '@angular/core';
+import { CdkDrag, CdkDragDrop, CdkDragHandle, CdkDropList } from '@angular/cdk/drag-drop';
 import { FormArray, FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
@@ -12,6 +13,7 @@ import { AuthImagePipe } from '../../pipes/auth-image.pipe';
 import { EnlargeImageDirective } from '../image-viewer/enlarge-image.directive';
 import { FieldErrorComponent } from '../field-error/field-error.component';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
+import { imagesAfterInsert, imagesAfterMove, imagesAfterRemove } from './step-image-positions';
 
 /** A step image while editing: an existing one, a file chosen but not uploaded yet, or one removed. */
 export interface StepImageState {
@@ -89,12 +91,14 @@ export function syncStepImages(api: TestCaseApiService, savedSteps: TestStep[],
     TranslateModule,
     AuthImagePipe, EnlargeImageDirective,
     FieldErrorComponent,
+    CdkDropList, CdkDrag, CdkDragHandle,
   ],
   templateUrl: './step-list-editor.component.html',
   styleUrl: './step-list-editor.component.scss',
 })
 export class StepListEditorComponent {
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly fb = inject(FormBuilder);
 
   @Input({ required: true }) steps!: FormArray;
   /** Mutated in place, so the owner keeps the same map it uploads from after saving. */
@@ -128,15 +132,31 @@ export class StepListEditorComponent {
   removeStep(index: number): void {
     this.steps.removeAt(index);
     this.steps.markAsDirty();
-    // Images are keyed by position: those after the removed step move up one.
-    const shifted = new Map<number, StepImageState>();
-    this.images.forEach((value, key) => {
-      if (key !== index) {
-        shifted.set(key > index ? key - 1 : key, value);
-      }
-    });
+    this.replaceImages(imagesAfterRemove(this.images, index));
+  }
+
+  /** TM06: a new empty step right after the one at {@code index}. */
+  insertStepAfter(index: number): void {
+    this.steps.insert(index + 1, localStepGroup(this.fb));
+    this.steps.markAsDirty();
+    this.replaceImages(imagesAfterInsert(this.images, index + 1));
+  }
+
+  /** TM06: drag and drop; each step's image moves with it. */
+  dropStep(event: CdkDragDrop<unknown>): void {
+    const { previousIndex: from, currentIndex: to } = event;
+    if (from === to) return;
+    const moved = this.steps.at(from);
+    this.steps.removeAt(from);
+    this.steps.insert(to, moved);
+    this.steps.markAsDirty();
+    this.replaceImages(imagesAfterMove(this.images, from, to));
+  }
+
+  /** In place: the owner uploads from the same map after saving. */
+  private replaceImages(next: Map<number, StepImageState>): void {
     this.images.clear();
-    shifted.forEach((value, key) => this.images.set(key, value));
+    next.forEach((value, key) => this.images.set(key, value));
   }
 
   onImageSelected(index: number, event: Event): void {

@@ -15,6 +15,8 @@ export interface TestStep {
 
 /** A step of its own, or with sharedStepId a reference to a shared step (the rest is then ignored). */
 export interface TestStepRequest {
+  /** The existing step this one is; keeps its image with it when steps move (TM06). */
+  id?: string;
   action?: string;
   expectedResult?: string;
   testData?: string;

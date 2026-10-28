@@ -187,26 +187,7 @@ public class TestCaseService {
         }
         customFieldWriter.write(tc, request.customFields(), mode);
         if (request.steps() != null) {
-            Map<Integer, StepImage> existingImages = new HashMap<>();
-            for (TestStep oldStep : tc.getSteps()) {
-                if (oldStep.getImage() != null) {
-                    StepImage img = oldStep.getImage();
-                    oldStep.setImage(null);
-                    img.setTestStep(null);
-                    existingImages.put(oldStep.getOrderIndex(), img);
-                }
-            }
-            tc.getSteps().clear();
-            List<TestStep> newSteps = buildSteps(request.steps(), tc);
-            for (TestStep newStep : newSteps) {
-                // A reference has no image of its own: the block's steps carry theirs (PRD-030).
-                StepImage img = newStep.getUsesSharedStep() == null ? existingImages.remove(newStep.getOrderIndex()) : null;
-                if (img != null) {
-                    img.setTestStep(newStep);
-                    newStep.setImage(img);
-                }
-            }
-            tc.getSteps().addAll(newSteps);
+            replaceSteps(tc, request.steps());
         }
         reviewService.afterEdit(tc, statusBefore, versionBefore, contentChanged);
 
@@ -214,6 +195,37 @@ public class TestCaseService {
         auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_CASE, tc.getId(),
                 tc.getTitle(), null, FieldChanges.between(before, snapshot(tc)));
         return testCaseMapper.toResponse(tc);
+    }
+
+    /**
+     * Replaces the case's steps, keeping each existing image with its step. When the request names
+     * step ids, an image follows its step's id wherever it moved (TM06); a request without ids keeps
+     * the older rule, image by position. A reference has no image of its own: the block's steps
+     * carry theirs (PRD-030).
+     */
+    private void replaceSteps(TestCase tc, List<TestStepRequest> requests) {
+        boolean byId = requests.stream().anyMatch(r -> r.id() != null);
+        Map<Object, StepImage> existingImages = new HashMap<>();
+        for (TestStep oldStep : tc.getSteps()) {
+            if (oldStep.getImage() != null) {
+                StepImage img = oldStep.getImage();
+                oldStep.setImage(null);
+                img.setTestStep(null);
+                existingImages.put(byId ? oldStep.getId() : oldStep.getOrderIndex(), img);
+            }
+        }
+        tc.getSteps().clear();
+        List<TestStep> newSteps = buildSteps(requests, tc);
+        for (int i = 0; i < newSteps.size(); i++) {
+            TestStep newStep = newSteps.get(i);
+            Object key = byId ? requests.get(i).id() : (Object) newStep.getOrderIndex();
+            StepImage img = newStep.getUsesSharedStep() == null && key != null ? existingImages.remove(key) : null;
+            if (img != null) {
+                img.setTestStep(newStep);
+                newStep.setImage(img);
+            }
+        }
+        tc.getSteps().addAll(newSteps);
     }
 
     /**
@@ -316,7 +328,7 @@ public class TestCaseService {
      * reference keeps the block title as its action, a readable fallback for clients that do not
      * know references; a block of another project is a 404, never silently dropped.
      */
-    private List<TestStep> buildSteps(List<TestStepRequest> stepRequests, TestCase testCase) {
+    List<TestStep> buildSteps(List<TestStepRequest> stepRequests, TestCase testCase) {
         if (stepRequests == null) return new ArrayList<>();
         List<TestStep> steps = new ArrayList<>();
         for (int i = 0; i < stepRequests.size(); i++) {

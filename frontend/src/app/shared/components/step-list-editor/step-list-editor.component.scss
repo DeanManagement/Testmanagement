@@ -1,5 +1,33 @@
 .step-row {
   margin-bottom: 16px;
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  background: var(--tm-surface, inherit);
+
+  > :last-child {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.step-row-tools {
+  display: flex;
+  flex-direction: column;
+  color: var(--tm-text-secondary);
+}
+
+.drag-handle {
+  cursor: grab;
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.3;
+}
+
+.cdk-drag-animating,
+.step-list.cdk-drop-list-dragging .step-row:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .step-content {

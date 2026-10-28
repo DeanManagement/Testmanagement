@@ -265,10 +265,11 @@ export class TestCaseFormComponent implements OnInit, HasUnsavedChanges {
     this.saving = true;
 
     const labels = splitLabels(this.form.value.labels ?? '');
-    const steps: TestStepRequest[] = this.steps.value.map((s: { action: string; expectedResult: string; testData: string; sharedStepId: string | null }) =>
+    // A local step's id lets the server keep its image with it wherever it was moved (TM06).
+    const steps: TestStepRequest[] = this.steps.value.map((s: { id: string | null; action: string; expectedResult: string; testData: string; sharedStepId: string | null }) =>
       s.sharedStepId
         ? { sharedStepId: s.sharedStepId }
-        : { action: s.action, expectedResult: s.expectedResult, testData: s.testData || undefined });
+        : { id: s.id ?? undefined, action: s.action, expectedResult: s.expectedResult, testData: s.testData || undefined });
 
     const request = {
       title: this.form.value.title!,

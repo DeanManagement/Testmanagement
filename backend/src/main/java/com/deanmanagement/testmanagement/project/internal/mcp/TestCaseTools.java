@@ -219,7 +219,8 @@ public class TestCaseTools {
                     keeps its current value. To CLEAR a text field pass an empty string ""; to clear
                     labels or steps pass an empty array.
                     Pass steps only if you mean to replace the whole ordered list — doing so
-                    discards any screenshots a human attached to steps that no longer exist.
+                    discards any screenshots a human attached to steps that no longer exist. To
+                    change one step use insert_test_step, move_test_step or remove_test_step.
                     customFields: keyed by field NAME, not id; only the names you pass change, and
                     a null value clears that field.
                     """,
