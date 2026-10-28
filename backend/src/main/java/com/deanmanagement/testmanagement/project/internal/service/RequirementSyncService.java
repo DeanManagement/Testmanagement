@@ -16,6 +16,7 @@ import com.deanmanagement.testmanagement.project.internal.issuetracker.AzureDevO
 import com.deanmanagement.testmanagement.project.internal.issuetracker.TrackerWorkItem;
 import com.deanmanagement.testmanagement.project.internal.repository.RequirementRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.RequirementSyncConfigRepository;
+import com.deanmanagement.testmanagement.shared.exception.ConflictException;
 import com.deanmanagement.testmanagement.shared.exception.UpstreamServiceException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -33,6 +34,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * One-way requirement sync from the project's issue tracker (TM19, PRD-053 §5 step 3). The tracker
@@ -113,6 +115,21 @@ public class RequirementSyncService {
      * run works before sync is enabled, so the settings can be previewed first.
      */
     public RequirementSyncResultResponse sync(UUID projectId, boolean dryRun, UUID actorId) {
+        // ponytail: in-process guard, one backend instance; a DB lock if the backend ever scales out.
+        if (!running.add(projectId)) {
+            throw new ConflictException("A requirement sync is already running for this project");
+        }
+        try {
+            return syncOnce(projectId, dryRun, actorId);
+        } finally {
+            running.remove(projectId);
+        }
+    }
+
+    /** A manual and a scheduled sync at once would race on the requirements' unique external id. */
+    private final Set<UUID> running = ConcurrentHashMap.newKeySet();
+
+    private RequirementSyncResultResponse syncOnce(UUID projectId, boolean dryRun, UUID actorId) {
         RequirementSyncConfig config = syncConfigRepository.findByProjectId(projectId)
                 .filter(c -> dryRun || c.isEnabled())
                 .orElseThrow(() -> new IllegalArgumentException("Requirement sync is not enabled for this project"));
