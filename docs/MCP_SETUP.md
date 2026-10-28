@@ -155,7 +155,8 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `create_parameter_set`, `update_parameter_set`, `trigger_pipeline`, `refresh_pipeline_run`,
 `link_issue`, `create_linked_issue`, `unlink_issue`, `reopen_test_run`, `update_bug_report`,
 `unlink_bug_report`, `update_comment`, `create_shared_step`, `update_shared_step`,
-`add_test_case_attachment`.
+`add_test_case_attachment`, `copy_test_case`, `insert_test_step`, `move_test_step`,
+`remove_test_step`, `add_test_cases_to_run`, `remove_test_cases_from_run`, `reorder_test_run_cases`.
 
 **Delete** (Tester only, like the UI) — `delete_test_case`, `delete_test_case_folder`,
 `delete_test_suite`, `delete_test_plan`, `delete_test_run`, `delete_requirement`,
@@ -175,6 +176,12 @@ a filter on `search_test_cases`) are keyed by field **name**, not id. Call `list
 first for the names, types and options; an unknown name is refused with the valid ones listed.
 On update only the names you pass change, and a `null` value clears that field. A field marked
 required never blocks an agent.
+
+**One step at a time** — `insert_test_step`, `move_test_step` and `remove_test_step` change a
+single step and leave the others, and the images a human attached to them, untouched; prefer them
+to resending the whole list with `update_test_case`. Their positions are 1-based in the case's own
+step list, where a shared step counts as one step. `copy_test_case` makes a new `DRAFT` case from an
+existing one, steps, images and attachments included.
 
 **Shared steps** — `get_test_case` returns the steps as a tester executes them: a shared step's
 steps appear in place, each with `sharedStepId` and `sharedStepTitle`. To use a shared step in
@@ -230,6 +237,11 @@ The one sequence you cannot infer from the tool list. An agent that runs tests i
    Results still pending are reported back, not refused.
 4. **`create_bug_report`** for a real defect, passing the `resultId` from step 2 as `testResultId`
    so the bug is reachable from the failure that produced it.
+
+While a run is `PLANNED` or `IN_PROGRESS`, **`add_test_cases_to_run`** and
+**`remove_test_cases_from_run`** change which cases it holds, and **`reorder_test_run_cases`** sets
+the order they are executed in (`get_test_run` lists results in that order, each with its
+`position`). A case with a recorded result is not removed; only a human can discard a result.
 
 To re-test after a fix, **`clone_test_run`** opens a fresh `PLANNED` run with the same cases.
 **`reopen_test_run`** reopens a completed or aborted run instead, with a required reason that lands
