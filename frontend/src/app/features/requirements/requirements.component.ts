@@ -23,12 +23,14 @@ import {
   ConfirmDialogData,
 } from '../../shared/components/confirm-dialog/confirm-dialog.component';
 import {
+  CoverageStatus,
   CoverageSummary,
   Requirement,
   SaveRequirementRequest,
   TraceabilityRow,
 } from '../../shared/models/requirement.model';
 import { TestCase } from '../../shared/models/test-case.model';
+import { RequirementSortColumn, viewRequirements } from './requirement-view';
 
 /**
  * Requirements, the traceability matrix and the coverage summary on one screen (PRD-014 §3.4).
@@ -69,6 +71,7 @@ export class RequirementsComponent implements OnInit {
   projectId = '';
   requirements: Requirement[] = [];
   matrix: TraceabilityRow[] = [];
+  private rowsById = new Map<string, TraceabilityRow>();
   coverage: CoverageSummary | null = null;
   testCases: TestCase[] = [];
   loading = true;
@@ -83,6 +86,24 @@ export class RequirementsComponent implements OnInit {
   /** Which requirement's link picker is open, and what is selected in it. */
   linkingId: string | null = null;
   linkSelection = '';
+
+  readonly coverageStatuses: CoverageStatus[] = ['PASSED', 'FAILED', 'BLOCKED', 'SKIPPED', 'UNTESTED', 'UNCOVERED'];
+  searchQuery = '';
+  coverageFilter: CoverageStatus | '' = '';
+  sortColumn: RequirementSortColumn = 'externalId';
+  sortDirection: 'asc' | 'desc' = 'asc';
+
+  get visibleRequirements(): Requirement[] {
+    return viewRequirements(this.requirements, this.rowsById, {
+      query: this.searchQuery,
+      coverage: this.coverageFilter,
+      sort: { active: this.sortColumn, direction: this.sortDirection },
+    });
+  }
+
+  toggleSortDirection(): void {
+    this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+  }
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id')
@@ -107,6 +128,7 @@ export class RequirementsComponent implements OnInit {
         next: ({ requirements, matrix, coverage }) => {
           this.requirements = requirements.content;
           this.matrix = matrix;
+          this.rowsById = new Map(matrix.map((row) => [row.requirementId, row]));
           this.coverage = coverage;
           this.loading = false;
           this.cdr.markForCheck();
@@ -248,7 +270,7 @@ export class RequirementsComponent implements OnInit {
   }
 
   rowFor(requirementId: string): TraceabilityRow | undefined {
-    return this.matrix.find((r) => r.requirementId === requirementId);
+    return this.rowsById.get(requirementId);
   }
 
   private notify(key: string): void {

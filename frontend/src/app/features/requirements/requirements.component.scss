@@ -201,3 +201,15 @@
 }
 
 .cell-unlink { flex-shrink: 0; }
+
+.requirement-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .search-field {
+    flex: 1 1 240px;
+  }
+}

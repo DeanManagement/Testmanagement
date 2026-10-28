@@ -1262,7 +1262,16 @@
       "SKIPPED": "Verknüpfte Tests wurden übersprungen.",
       "UNTESTED": "Ein Test ist verknüpft, wurde aber nie ausgeführt — die Anforderung ist damit noch nicht belegt.",
       "UNCOVERED": "Dieser Anforderung ist kein Testfall zugeordnet."
-    }
+    },
+    "search": "Nach ID oder Titel suchen",
+    "coverageFilter": "Abdeckung",
+    "allStatuses": "Alle",
+    "sortBy": "Sortieren nach",
+    "sortDirection": {
+      "asc": "Aufsteigend",
+      "desc": "Absteigend"
+    },
+    "noMatches": "Keine Anforderungen entsprechen diesen Filtern."
   },
   "parameter": {
     "title": "Parameter",

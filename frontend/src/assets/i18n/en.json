@@ -1262,7 +1262,16 @@
       "SKIPPED": "Linked tests were skipped.",
       "UNTESTED": "A test is linked but has never been executed, so nothing proves this requirement yet.",
       "UNCOVERED": "No test case is linked to this requirement."
-    }
+    },
+    "search": "Search by ID or title",
+    "coverageFilter": "Coverage",
+    "allStatuses": "All",
+    "sortBy": "Sort by",
+    "sortDirection": {
+      "asc": "Ascending",
+      "desc": "Descending"
+    },
+    "noMatches": "No requirements match these filters."
   },
   "parameter": {
     "title": "Parameters",
