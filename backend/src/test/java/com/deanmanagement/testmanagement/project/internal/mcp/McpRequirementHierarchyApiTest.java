@@ -41,7 +41,7 @@ class McpRequirementHierarchyApiTest extends McpToolApiTestSupport {
         requirementTools.linkTestCasesToRequirement(login, List.of(loginCase.id()));
         requirementTools.linkTestCasesToRequirement(logout, List.of(logoutCase.id()));
         McpDtos.CreatedTestRun run = runOf(loginCase, logoutCase);
-        resultRecordingTools.recordTestResult(run.key(), TestResultStatus.PASSED, loginCase.id(), null, null, null, null, null);
+        resultRecordingTools.recordTestResult(run.key(), TestResultStatus.PASSED, loginCase.id(), null, null, null, null, null, null);
         testRunWriteTools.completeTestRun(run.key(), null, null);
 
         assertThat(coverageOf("STORY-1")).isEqualTo(CoverageStatus.PASSED.name());

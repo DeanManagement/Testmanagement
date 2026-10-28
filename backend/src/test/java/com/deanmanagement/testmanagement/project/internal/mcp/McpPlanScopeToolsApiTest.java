@@ -77,7 +77,7 @@ class McpPlanScopeToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Run", null, Set.of(pay.id(), browse.id()),
                 null, planId);
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.FAILED, pay.id(), null, null, null,
-                null, null);
+                null, null, null);
 
         TestPlanScopeResponse scope = testPlanService.getScope(project.getId(), planId);
 
@@ -134,7 +134,7 @@ class McpPlanScopeToolsApiTest extends McpToolApiTestSupport {
         planningMaintenanceTools.addCasesToPlan(planId, Set.of(pay.id(), browse.id()));
         McpDtos.CreatedTestRun run = testRunWriteTools.createTestRun("Run", null, Set.of(pay.id()), null, planId);
         resultRecordingTools.recordTestResult(run.id().toString(), TestResultStatus.PASSED, pay.id(), null, null, null,
-                null, null);
+                null, null, null);
 
         ReadinessResponse readiness = readinessService.readiness(project.getId(), planId);
 
