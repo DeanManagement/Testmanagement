@@ -5,7 +5,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse
 import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
 import com.deanmanagement.testmanagement.project.internal.dto.report.RunReportOptions;
 import com.deanmanagement.testmanagement.project.internal.dto.report.TestRunReportResponse;
-import com.deanmanagement.testmanagement.project.internal.entity.Screenshot;
+import com.deanmanagement.testmanagement.project.internal.entity.Attachment;
 
 import java.time.Instant;
 import java.time.format.DateTimeFormatter;
@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 
 /**
  * The run report as XHTML for the PDF renderer (PRD-048): who ran each case, when, against which
- * version, and on request each step with its outcome and screenshot. A report that is evidence
+ * version, and on request each step with its outcome and evidence. A report that is evidence
  * must say who executed what, not only whether it passed.
  */
 final class RunReportHtml {
@@ -29,26 +29,29 @@ final class RunReportHtml {
     /** Beyond this the PDF says how many were left out; a big run would otherwise be hundreds of MB. */
     static final int MAX_SCREENSHOTS = 200;
     /** The PDF renderer draws these; WebP it does not. */
-    private static final Set<String> EMBEDDABLE = Set.of("image/png", "image/jpeg", "image/gif");
+    static final Set<String> EMBEDDABLE = Set.of("image/png", "image/jpeg", "image/gif");
     private static final String NONE = "-";
     private static final String UNKNOWN_USER = "Unknown user";
 
     private final TestRunReportResponse report;
     private final Map<UUID, List<AttachmentSummary>> attachments;
     private final RunReportOptions options;
-    private final Function<UUID, Optional<Screenshot>> screenshots;
+    /** Each step result's evidence (TM05), by step result id; the bytes are read only to embed. */
+    private final Map<UUID, List<AttachmentSummary>> evidence;
+    private final Function<UUID, Optional<Attachment>> files;
     private final DateTimeFormatter dateFormat;
     private final StringBuilder sb = new StringBuilder();
     private int embedded;
     private int leftOut;
 
     RunReportHtml(TestRunReportResponse report, Map<UUID, List<AttachmentSummary>> attachments,
-                  RunReportOptions options, Function<UUID, Optional<Screenshot>> screenshots,
-                  DateTimeFormatter dateFormat) {
+                  RunReportOptions options, Map<UUID, List<AttachmentSummary>> evidence,
+                  Function<UUID, Optional<Attachment>> files, DateTimeFormatter dateFormat) {
         this.report = report;
         this.attachments = attachments;
         this.options = options;
-        this.screenshots = screenshots;
+        this.evidence = evidence;
+        this.files = files;
         this.dateFormat = dateFormat;
     }
 
@@ -140,7 +143,7 @@ final class RunReportHtml {
         List<StepResultResponse> steps = result.stepResults().stream()
                 .sorted(Comparator.comparingInt(StepResultResponse::orderIndex)).toList();
         sb.append("<tr><td></td><td colspan=\"7\">\n<table class=\"steps\">\n<tr><th>#</th><th>Action</th><th>Status</th>")
-                .append("<th>Actual result</th>").append(options.screenshots() ? "<th>Screenshot</th>" : "").append("</tr>\n");
+                .append("<th>Actual result</th>").append(options.screenshots() ? "<th>Evidence</th>" : "").append("</tr>\n");
         for (int i = 0; i < steps.size(); i++) {
             StepResultResponse step = steps.get(i);
             sb.append("<tr><td>").append(i + 1).append("</td>")
@@ -148,24 +151,32 @@ final class RunReportHtml {
                     .append("<td class=\"").append(step.status().name().toLowerCase()).append("\">").append(step.status()).append("</td>")
                     .append("<td>").append(orNone(step.actualResult())).append("</td>");
             if (options.screenshots()) {
-                sb.append("<td>").append(screenshot(step.screenshotId())).append("</td>");
+                sb.append("<td>").append(evidenceOf(step.id())).append("</td>");
             }
             sb.append("</tr>\n");
         }
         sb.append("</table>\n</td></tr>\n");
     }
 
-    /** The execution screenshot, embedded while under the cap; never the step's reference image. */
-    private String screenshot(UUID screenshotId) {
-        if (screenshotId == null) {
-            return "";
+    /**
+     * A step's execution evidence: images embedded while under the cap, other files by name; never
+     * the step's reference image.
+     */
+    private String evidenceOf(UUID stepResultId) {
+        StringBuilder cell = new StringBuilder();
+        for (AttachmentSummary file : evidence.getOrDefault(stepResultId, List.of())) {
+            cell.append(EMBEDDABLE.contains(file.contentType().toLowerCase()) ? image(file) : esc(file.fileName()))
+                    .append("<br/>");
         }
+        return cell.toString();
+    }
+
+    private String image(AttachmentSummary file) {
         if (embedded >= MAX_SCREENSHOTS) {
             leftOut++;
             return "(see the app)";
         }
-        return screenshots.apply(screenshotId)
-                .filter(shot -> shot.getContentType() != null && EMBEDDABLE.contains(shot.getContentType().toLowerCase()))
+        return files.apply(file.id())
                 .map(shot -> {
                     embedded++;
                     return "<img class=\"screenshot\" src=\"data:" + shot.getContentType() + ";base64,"

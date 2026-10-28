@@ -14,7 +14,6 @@ public record StepResultResponse(
         int orderIndex,
         TestResultStatus status,
         String actualResult,
-        UUID screenshotId,
         UUID stepImageId,
         /* PRD-030: the shared block this step belongs to, null for a case's own step. Consecutive
            steps with the same title are one block, shown under one heading. */
@@ -28,9 +27,9 @@ public record StepResultResponse(
         String customStatusName
 ) {
     public StepResultResponse(UUID id, UUID testStepId, String action, String expectedResult, String testData,
-                              int orderIndex, TestResultStatus status, String actualResult, UUID screenshotId,
+                              int orderIndex, TestResultStatus status, String actualResult,
                               UUID stepImageId, Instant createdAt, Instant updatedAt, UUID createdBy, UUID updatedBy) {
-        this(id, testStepId, action, expectedResult, testData, orderIndex, status, actualResult, screenshotId,
+        this(id, testStepId, action, expectedResult, testData, orderIndex, status, actualResult,
                 stepImageId, null, createdAt, updatedAt, createdBy, updatedBy, null, null);
     }
 }

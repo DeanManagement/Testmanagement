@@ -26,6 +26,7 @@ import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundExcept
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseFolderRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestStepRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -37,6 +38,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -62,6 +64,8 @@ public class TestCaseService {
     private final CustomFieldValueWriter customFieldWriter;
     private final SharedStepService sharedStepService;
     private final AttachmentService attachmentService;
+    private final StepAttachmentService stepAttachmentService;
+    private final TestStepRepository testStepRepository;
 
     public Page<TestCaseResponse> findByProject(UUID projectId, TestCaseListFilter filter, Pageable pageable) {
         Set<UUID> folderIds = null;
@@ -186,12 +190,15 @@ public class TestCaseService {
             tc.setEstimateMinutes(request.estimateMinutes() == 0 ? null : request.estimateMinutes());
         }
         customFieldWriter.write(tc, request.customFields(), mode);
-        if (request.steps() != null) {
-            replaceSteps(tc, request.steps());
-        }
+        StepFileMoves stepFiles = request.steps() == null ? null : replaceSteps(tc, request.steps());
         reviewService.afterEdit(tc, statusBefore, versionBefore, contentChanged);
 
         tc = testCaseRepository.save(tc);
+        if (stepFiles != null && !stepFiles.parked().isEmpty()) {
+            // The new step rows must exist before their files point at them.
+            testCaseRepository.flush();
+            stepAttachmentService.unparkStepFiles(stepFiles.parked(), successorsIn(tc, stepFiles));
+        }
         auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_CASE, tc.getId(),
                 tc.getTitle(), null, FieldChanges.between(before, snapshot(tc)));
         return testCaseMapper.toResponse(tc);
@@ -201,10 +208,19 @@ public class TestCaseService {
      * Replaces the case's steps, keeping each existing image with its step. When the request names
      * step ids, an image follows its step's id wherever it moved (TM06); a request without ids keeps
      * the older rule, image by position. A reference has no image of its own: the block's steps
-     * carry theirs (PRD-030).
+     * carry theirs (PRD-030). A step's attached files (TM05) follow the same rule; they are parked on
+     * the case first, since deleting the old step rows would otherwise take them along.
      */
-    private void replaceSteps(TestCase tc, List<TestStepRequest> requests) {
+    private StepFileMoves replaceSteps(TestCase tc, List<TestStepRequest> requests) {
         boolean byId = requests.stream().anyMatch(r -> r.id() != null);
+        Map<Object, UUID> oldStepIds = new HashMap<>();
+        for (TestStep oldStep : tc.getSteps()) {
+            if (oldStep.getUsesSharedStep() == null) {
+                oldStepIds.put(byId ? oldStep.getId() : oldStep.getOrderIndex(), oldStep.getId());
+            }
+        }
+        // Before any step or image changes: parking is a bulk update, which flushes what is pending.
+        Map<UUID, List<UUID>> parked = stepAttachmentService.parkStepFiles(tc, List.copyOf(oldStepIds.values()));
         Map<Object, StepImage> existingImages = new HashMap<>();
         for (TestStep oldStep : tc.getSteps()) {
             if (oldStep.getImage() != null) {
@@ -216,16 +232,40 @@ public class TestCaseService {
         }
         tc.getSteps().clear();
         List<TestStep> newSteps = buildSteps(requests, tc);
+        Map<UUID, Integer> successors = new HashMap<>();
         for (int i = 0; i < newSteps.size(); i++) {
             TestStep newStep = newSteps.get(i);
             Object key = byId ? requests.get(i).id() : (Object) newStep.getOrderIndex();
-            StepImage img = newStep.getUsesSharedStep() == null && key != null ? existingImages.remove(key) : null;
+            if (newStep.getUsesSharedStep() != null || key == null) {
+                continue;
+            }
+            StepImage img = existingImages.remove(key);
             if (img != null) {
                 img.setTestStep(newStep);
                 newStep.setImage(img);
             }
+            UUID oldStepId = oldStepIds.remove(key);
+            if (oldStepId != null) {
+                successors.put(oldStepId, newStep.getOrderIndex());
+            }
         }
         tc.getSteps().addAll(newSteps);
+        return new StepFileMoves(parked, successors);
+    }
+
+    /**
+     * Where the files of replaced steps go once the new steps are saved (TM05): by position, since
+     * saving merges the new steps into managed copies and the request's instances stay unsaved.
+     */
+    private record StepFileMoves(Map<UUID, List<UUID>> parked, Map<UUID, Integer> successorPositions) {
+    }
+
+    private static Map<UUID, TestStep> successorsIn(TestCase saved, StepFileMoves moves) {
+        Map<Integer, TestStep> byPosition = new HashMap<>();
+        saved.getSteps().forEach(step -> byPosition.put(step.getOrderIndex(), step));
+        Map<UUID, TestStep> successors = new HashMap<>();
+        moves.successorPositions().forEach((oldStepId, position) -> successors.put(oldStepId, byPosition.get(position)));
+        return successors;
     }
 
     /**
@@ -391,10 +431,11 @@ public class TestCaseService {
         List<TestStep> ordered = new ArrayList<>(tc.getSteps().stream()
                 .sorted(Comparator.comparingInt(TestStep::getOrderIndex)).toList());
         int at = ordered.indexOf(reference);
-        List<TestStep> copies = block.getSteps().stream()
+        Map<TestStep, TestStep> copyOf = new LinkedHashMap<>();
+        block.getSteps().stream()
                 .sorted(Comparator.comparingInt(TestStep::getOrderIndex))
-                .map(source -> copyStep(source, tc))
-                .toList();
+                .forEach(source -> copyOf.put(source, copyStep(source, tc)));
+        List<TestStep> copies = List.copyOf(copyOf.values());
         ordered.remove(at);
         ordered.addAll(at, copies);
         for (int i = 0; i < ordered.size(); i++) {
@@ -406,7 +447,12 @@ public class TestCaseService {
         tc.getSteps().sort(Comparator.comparingInt(TestStep::getOrderIndex));
         reviewService.afterEdit(tc, statusBefore, versionBefore, false);
 
+        // Persisted before the case is saved: saving merges, which would list managed copies of these
+        // instead, and the files below must point at the steps the case keeps.
+        testStepRepository.saveAll(copies);
         TestCase saved = testCaseRepository.save(tc);
+        // The copies take the block steps' files too (TM05), as they took their images.
+        stepAttachmentService.copyStepFiles(projectId, copyOf, userId);
         auditService.log(projectId, userId, AuditAction.UPDATED, AuditEntityType.TEST_CASE,
                 saved.getId(), saved.getTitle(), "Converted shared step \"" + block.getTitle() + "\" to local steps");
         return testCaseMapper.toResponse(saved);

@@ -5,7 +5,7 @@ import { Store } from '@ngrx/store';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateService } from '@ngx-translate/core';
 import { of } from 'rxjs';
-import { catchError, concatMap, map, mergeMap, tap, withLatestFrom } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap, withLatestFrom } from 'rxjs/operators';
 import { TestRunApiService } from '../../core/services/test-run-api.service';
 import { TestRunActions } from './test-run.actions';
 import { selectTestRunProjectId } from './test-run.selectors';
@@ -160,35 +160,6 @@ export class TestRunEffects {
       withLatestFrom(this.store.select(selectTestRunProjectId)),
       map(([{ runId }, projectId]) =>
         TestRunActions.loadTestRun({ projectId: projectId!, id: runId })
-      )
-    )
-  );
-
-  uploadScreenshot$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(TestRunActions.uploadScreenshot),
-      // One at a time: parallel uploads for the same step used to race into duplicate rows.
-      concatMap(({ runId, resultId, stepResultId, file }) =>
-        this.testRunApi.uploadScreenshot(stepResultId, file).pipe(
-          map(({ id }) => TestRunActions.uploadScreenshotSuccess({ runId, resultId, stepResultId, screenshotId: id })),
-          catchError((error) =>
-            of(TestRunActions.uploadScreenshotFailure({ error: error.message }))
-          )
-        )
-      )
-    )
-  );
-
-  deleteScreenshot$ = createEffect(() =>
-    this.actions$.pipe(
-      ofType(TestRunActions.deleteScreenshot),
-      mergeMap(({ runId, resultId, stepResultId, screenshotId }) =>
-        this.testRunApi.deleteScreenshot(screenshotId).pipe(
-          map(() => TestRunActions.deleteScreenshotSuccess({ runId, resultId, stepResultId })),
-          catchError((error) =>
-            of(TestRunActions.deleteScreenshotFailure({ error: error.message }))
-          )
-        )
       )
     )
   );

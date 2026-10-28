@@ -219,6 +219,9 @@ The **Attachments** card on the case page holds the files a tester needs to carr
 sample invoice to upload, a CSV to import, a spec PDF, an expected-output image. Testers and admins
 choose **Attach file**, drop files onto the card, or paste a screenshot anywhere on the page; viewers
 can list and download. Bug reports have the same card ([Attachments on bug reports](#attachments-on-bug-reports)).
+A document that belongs to one step goes on that step instead: each saved step in the editor has
+its own **Attach file**, and the file shows at that step on the case page and in every run (a shared
+step's files in every case that uses it). Reordering or rewording steps keeps each file with its step.
 
 - **Allowed:** PNG, JPEG, GIF and WebP images, PDF, ZIP, Word/Excel/PowerPoint (.docx, .xlsx,
   .pptx), and text files (.txt, .log, .csv, .json, .xml). The file's content must match its type:
@@ -744,8 +747,9 @@ outcome per step and an overall outcome:
 | **Blocked** | Could not be executed — environment down, dependency broken |
 | **Skipped** | Deliberately not executed this time |
 
-Record what actually happened in **Actual Result**, and attach a screenshot per step with **Add
-Screenshot**. Reference images from the test case are shown inline for comparison.
+Record what actually happened in **Actual Result**, and attach evidence per step with **Attach file**:
+several screenshots, logs or documents, each up to 10 MB. Reference images from the test case are
+shown inline for comparison, and files attached to a step in the test case are listed beside it.
 
 Setting a case to **Passed** or **Skipped** while some of its steps are still pending asks whether
 to give those steps the same outcome. **Yes** sets only the pending ones; steps you already

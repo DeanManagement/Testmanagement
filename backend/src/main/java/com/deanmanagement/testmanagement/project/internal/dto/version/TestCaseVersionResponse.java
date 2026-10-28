@@ -35,10 +35,17 @@ public record TestCaseVersionResponse(
             String action,
             String expectedResult,
             String testData,
-            String sharedStepTitle
+            String sharedStepTitle,
+            /* TM05: names of the files on the step, never their bytes; null when none or not recorded. */
+            List<String> attachments
     ) {
         public StepSnapshot(int orderIndex, String action, String expectedResult, String testData) {
-            this(orderIndex, action, expectedResult, testData, null);
+            this(orderIndex, action, expectedResult, testData, null, null);
+        }
+
+        public StepSnapshot(int orderIndex, String action, String expectedResult, String testData,
+                            String sharedStepTitle) {
+            this(orderIndex, action, expectedResult, testData, sharedStepTitle, null);
         }
     }
 }

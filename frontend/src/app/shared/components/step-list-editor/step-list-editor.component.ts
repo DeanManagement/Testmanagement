@@ -12,6 +12,7 @@ import { TestStep } from '../../models/test-case.model';
 import { AuthImagePipe } from '../../pipes/auth-image.pipe';
 import { EnlargeImageDirective } from '../image-viewer/enlarge-image.directive';
 import { FieldErrorComponent } from '../field-error/field-error.component';
+import { AttachmentsComponent } from '../attachments/attachments.component';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { imagesAfterInsert, imagesAfterMove, imagesAfterRemove } from './step-image-positions';
 
@@ -91,6 +92,7 @@ export function syncStepImages(api: TestCaseApiService, savedSteps: TestStep[],
     TranslateModule,
     AuthImagePipe, EnlargeImageDirective,
     FieldErrorComponent,
+    AttachmentsComponent,
     CdkDropList, CdkDrag, CdkDragHandle,
   ],
   templateUrl: './step-list-editor.component.html',
@@ -103,8 +105,10 @@ export class StepListEditorComponent {
   @Input({ required: true }) steps!: FormArray;
   /** Mutated in place, so the owner keeps the same map it uploads from after saving. */
   @Input({ required: true }) images!: Map<number, StepImageState>;
-  /** For the "edit shared step" link; empty where references cannot occur. */
+  /** For the "edit shared step" link and a saved step's files (TM05); without it no files show. */
   @Input() projectId = '';
+
+  private readonly testCaseApi = inject(TestCaseApiService);
 
   private readonly expanded = new WeakSet<object>();
 
@@ -181,6 +185,11 @@ export class StepListEditorComponent {
       this.images.delete(index);
     }
     this.steps.markAsDirty();
+  }
+
+  // ponytail: each saved step lists its own files, one request per step; batch if long cases feel slow.
+  stepFilesUrl(stepId: string): string {
+    return this.testCaseApi.stepAttachmentsUrl(this.projectId, stepId);
   }
 
   imagePreview(index: number): string | undefined {

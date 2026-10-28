@@ -100,7 +100,6 @@ public abstract class TestRunMapper {
     @Mapping(target = "testData", expression = "java(stepResult.getTestStep() != null ? stepResult.getTestStep().getTestData() : stepResult.getStepTestData())")
     @Mapping(target = "orderIndex", expression = "java(orderIndexOf(stepResult))")
     @Mapping(target = "sharedStepTitle", source = "testStep.sharedStep.title")
-    @Mapping(target = "screenshotId", source = "screenshot.id")
     @Mapping(target = "customStatusId", source = "customStatus.id")
     @Mapping(target = "customStatusName", source = "customStatus.name")
     @Mapping(target = "stepImageId", expression = "java(stepResult.getTestStep() != null && stepResult.getTestStep().getImage() != null ? stepResult.getTestStep().getImage().getId() : null)")

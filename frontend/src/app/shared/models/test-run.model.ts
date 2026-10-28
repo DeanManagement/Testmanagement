@@ -13,7 +13,6 @@ export interface StepResult {
   orderIndex: number;
   status: TestResultStatus;
   actualResult: string;
-  screenshotId: string | null;
   stepImageId: string | null;
   /** PRD-030: the shared step this step came from; consecutive steps with one title are one block. */
   sharedStepTitle?: string | null;

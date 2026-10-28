@@ -18,13 +18,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.UUID;
 
 /**
  * Copies a test case (TM09): its wording, steps with their images and shared-step references, labels,
- * folder, custom fields, parameter sets and attachments. The copy is a new case of its own — a new
- * key, DRAFT, no approval, no history, no results and no requirement links, since none of those
- * were earned by the copy.
+ * folder, custom fields, parameter sets and attachments, its steps' files included (TM05). The copy
+ * is a new case of its own — a new key, DRAFT, no approval, no history, no results and no
+ * requirement links, since none of those were earned by the copy.
  */
 @Service
 @RequiredArgsConstructor
@@ -38,6 +40,7 @@ public class TestCaseCopyService {
     private final TestCaseParameterSetRepository parameterSetRepository;
     private final ProjectSequenceService projectSequenceService;
     private final AttachmentService attachmentService;
+    private final StepAttachmentService stepAttachmentService;
     private final AuditService auditService;
     private final TestCaseMapper testCaseMapper;
 
@@ -58,13 +61,16 @@ public class TestCaseCopyService {
         copy.setEstimateMinutes(source.getEstimateMinutes());
         copy.setLabels(new HashSet<>(source.getLabels()));
         copy.setFolder(source.getFolder());
-        source.getSteps().forEach(step -> copy.getSteps().add(copyStep(step, copy)));
+        Map<TestStep, TestStep> stepCopies = new LinkedHashMap<>();
+        source.getSteps().forEach(step -> stepCopies.put(step, copyStep(step, copy)));
+        copy.getSteps().addAll(stepCopies.values());
         source.getCustomFieldValues().forEach(value -> copy.getCustomFieldValues().add(copyValue(value, copy)));
         copy.setKey(source.getProject().getKey() + "-" + projectSequenceService.nextTestCaseNumber(projectId));
 
         TestCase saved = testCaseRepository.save(copy);
         copyParameterSets(source.getId(), saved.getId());
         attachmentService.copyTestCaseAttachments(projectId, source, saved, userId);
+        stepAttachmentService.copyStepFiles(projectId, stepCopies, userId);
         auditService.log(projectId, userId, AuditAction.CREATED, AuditEntityType.TEST_CASE,
                 saved.getId(), saved.getTitle(), "Copied from " + source.getKey());
         return testCaseMapper.toResponse(saved);

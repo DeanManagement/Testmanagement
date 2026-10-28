@@ -2,7 +2,7 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
-import com.deanmanagement.testmanagement.project.internal.entity.Screenshot;
+import com.deanmanagement.testmanagement.project.internal.entity.Attachment;
 import com.deanmanagement.testmanagement.project.internal.entity.StepResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
@@ -12,7 +12,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
-import com.deanmanagement.testmanagement.project.internal.repository.ScreenshotRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.AttachmentRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.StepResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
@@ -20,6 +20,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepo
 import com.deanmanagement.testmanagement.project.internal.repository.TestStepRepository;
 import com.deanmanagement.testmanagement.user.User;
 import com.deanmanagement.testmanagement.user.internal.repository.UserRepository;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -70,12 +71,13 @@ class MediaContentTypeApiTest {
     @Autowired
     private StepResultRepository stepResultRepository;
     @Autowired
-    private ScreenshotRepository screenshotRepository;
+    private AttachmentRepository attachmentRepository;
 
     private String admin;
     private UUID stepId;
     private UUID stepResultId;
     private StepResult stepResult;
+    private String evidenceUrl;
 
     @BeforeEach
     void setUp() {
@@ -125,26 +127,25 @@ class MediaContentTypeApiTest {
         stepResult.setStatus(TestResultStatus.PENDING);
         stepResult = stepResultRepository.save(stepResult);
         stepResultId = stepResult.getId();
+        evidenceUrl = "/api/projects/" + project.getId() + "/step-results/" + stepResultId + "/attachments";
     }
 
     @Test
-    void screenshotUpload_rejectsHtmlContentType() throws Exception {
+    void evidenceUpload_rejectsHtmlContentType() throws Exception {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "evil.html", "text/html", "<script>alert(1)</script>".getBytes());
-        mockMvc.perform(multipart("/api/screenshots")
+        mockMvc.perform(multipart(evidenceUrl)
                         .file(file)
-                        .param("stepResultId", stepResultId.toString())
                         .with(user(admin)))
                 .andExpect(status().isBadRequest());
     }
 
     @Test
-    void screenshotUpload_rejectsSvgContentType() throws Exception {
+    void evidenceUpload_rejectsSvgContentType() throws Exception {
         MockMultipartFile file = new MockMultipartFile(
                 "file", "evil.svg", "image/svg+xml", "<svg onload=alert(1)/>".getBytes());
-        mockMvc.perform(multipart("/api/screenshots")
+        mockMvc.perform(multipart(evidenceUrl)
                         .file(file)
-                        .param("stepResultId", stepResultId.toString())
                         .with(user(admin)))
                 .andExpect(status().isBadRequest());
     }
@@ -161,18 +162,17 @@ class MediaContentTypeApiTest {
     }
 
     @Test
-    void screenshotUpload_acceptsPngAndServesItInlineWithHardeningHeaders() throws Exception {
+    void evidenceUpload_acceptsPngAndServesItInlineWithHardeningHeaders() throws Exception {
         MockMultipartFile file = new MockMultipartFile(
-                "file", "shot.png", "image/png", new byte[] {1, 2, 3});
-        MvcResult created = mockMvc.perform(multipart("/api/screenshots")
+                "file", "shot.png", "image/png", new byte[] {(byte) 0x89, 'P', 'N', 'G', 1, 2, 3});
+        MvcResult created = mockMvc.perform(multipart(evidenceUrl)
                         .file(file)
-                        .param("stepResultId", stepResultId.toString())
                         .with(user(admin)))
                 .andExpect(status().isCreated())
                 .andReturn();
-        String id = created.getResponse().getContentAsString().replaceAll(".*\"([0-9a-f-]{36})\".*", "$1");
+        String id = JsonPath.read(created.getResponse().getContentAsString(), "$.id");
 
-        MvcResult res = mockMvc.perform(get("/api/screenshots/{id}", id).with(user(admin)))
+        MvcResult res = mockMvc.perform(get(evidenceUrl + "/{id}", id).with(user(admin)))
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Content-Type-Options", "nosniff"))
                 .andExpect(header().string("Content-Security-Policy", "sandbox"))
@@ -184,14 +184,16 @@ class MediaContentTypeApiTest {
     @Test
     void legacyUnsafeStoredContentType_isServedAsOctetStreamAttachment() throws Exception {
         // Simulates a row created before the upload allowlist existed.
-        Screenshot legacy = new Screenshot();
+        Attachment legacy = new Attachment();
         legacy.setStepResult(stepResult);
         legacy.setFileName("evil.html");
         legacy.setContentType("text/html");
         legacy.setData("<script>alert(1)</script>".getBytes());
-        UUID id = screenshotRepository.save(legacy).getId();
+        legacy.setSizeBytes(legacy.getData().length);
+        legacy.setSha256("0".repeat(64));
+        UUID id = attachmentRepository.save(legacy).getId();
 
-        MvcResult res = mockMvc.perform(get("/api/screenshots/{id}", id).with(user(admin)))
+        MvcResult res = mockMvc.perform(get(evidenceUrl + "/{id}", id).with(user(admin)))
                 .andExpect(status().isOk())
                 .andExpect(header().string("X-Content-Type-Options", "nosniff"))
                 .andExpect(header().string("Content-Security-Policy", "sandbox"))

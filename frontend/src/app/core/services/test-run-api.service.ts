@@ -1,7 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpEventType, HttpParams, HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
-import { filter, map, tap } from 'rxjs/operators';
+import { HttpClient, HttpParams } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import {
   CompletionInfo,
   CreateTestRunRequest,
@@ -16,13 +15,13 @@ import {
   StepResult,
 } from '../../shared/models/test-run.model';
 import { Page } from '../../shared/models/page.model';
+import { Attachment } from '../../shared/models/test-case.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
 import { RunComparison } from '../../shared/models/run-comparison.model';
 
 @Injectable({ providedIn: 'root' })
 export class TestRunApiService {
   private readonly http = inject(HttpClient);
-  readonly uploadProgress$ = new BehaviorSubject<number>(0);
 
   private baseUrl(projectId: string): string {
     return `/api/projects/${projectId}/test-runs`;
@@ -134,39 +133,20 @@ export class TestRunApiService {
       { resultIds, status, cascadeSteps, customStatusId });
   }
 
-  uploadScreenshot(stepResultId: string, file: File): Observable<{ id: string }> {
-    const formData = new FormData();
-    formData.append('stepResultId', stepResultId);
-    formData.append('file', file);
-
-    this.uploadProgress$.next(0);
-
-    return this.http.post<{ id: string }>('/api/screenshots', formData, {
-      reportProgress: true,
-      observe: 'events',
-    }).pipe(
-      tap((event) => {
-        if (event.type === HttpEventType.UploadProgress && event.total) {
-          this.uploadProgress$.next(Math.round((100 * event.loaded) / event.total));
-        }
-      }),
-      filter((event) => event.type === HttpEventType.Response),
-      map((event) => (event as HttpResponse<{ id: string }>).body!)
-    );
-  }
-
-  deleteScreenshot(screenshotId: string): Observable<void> {
-    return this.http.delete<void>(`/api/screenshots/${screenshotId}`);
-  }
-
   /** PRD-048: with each result's steps, and their screenshots embedded. */
   downloadReportPdf(projectId: string, id: string, options: { steps: boolean; screenshots: boolean }): Observable<Blob> {
     const params = { steps: String(options.steps), screenshots: String(options.screenshots) };
     return this.http.get(`${this.baseUrl(projectId)}/${id}/report/pdf`, { params, responseType: 'blob' }).pipe(retryWithBackoff());
   }
 
-  getScreenshotUrl(screenshotId: string): string {
-    return `/api/screenshots/${screenshotId}`;
+  /** TM05: a step result's evidence files, the collection {@link AttachmentApiService} works on. */
+  evidenceUrl(projectId: string, stepResultId: string): string {
+    return `/api/projects/${projectId}/step-results/${stepResultId}/attachments`;
+  }
+
+  /** TM05: the run's evidence and the files on every step it executes, in one call. */
+  getRunStepAttachments(projectId: string, runId: string): Observable<Attachment[]> {
+    return this.http.get<Attachment[]>(`${this.baseUrl(projectId)}/${runId}/step-attachments`);
   }
 
   uploadAllureReport(projectId: string, testRunKey: string, file: File): Observable<{ id: string }> {

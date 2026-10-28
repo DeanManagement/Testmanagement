@@ -22,6 +22,8 @@ export interface TestCaseVersionStep {
   testData: string | null;
   /** PRD-030: the shared step it came from; absent in versions saved before shared steps. */
   sharedStepTitle?: string | null;
+  /** TM05: names of the files on the step; absent when it had none. */
+  attachments?: string[] | null;
 }
 
 export interface TestCaseVersionSummary {

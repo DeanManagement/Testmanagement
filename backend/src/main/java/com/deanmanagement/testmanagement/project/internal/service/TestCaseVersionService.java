@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
 import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
 import com.deanmanagement.testmanagement.project.internal.dto.version.TestCaseVersionResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.version.TestCaseVersionSummary;
@@ -21,6 +22,7 @@ import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 
 /**
@@ -39,6 +41,7 @@ public class TestCaseVersionService {
     private final TestCaseVersionRepository versionRepository;
     private final TestCaseRepository testCaseRepository;
     private final ObjectMapper objectMapper;
+    private final StepAttachmentService stepAttachmentService;
 
     /**
      * Captures the case's current state and advances its version counter. Called from
@@ -151,13 +154,17 @@ public class TestCaseVersionService {
      * The steps as a tester would have executed them (PRD-030): shared blocks expanded, each step
      * numbered in the expanded list and tagged with its block's title.
      */
-    private static List<TestCaseVersionResponse.StepSnapshot> snapshotsOf(List<TestStep> caseSteps) {
+    private List<TestCaseVersionResponse.StepSnapshot> snapshotsOf(List<TestStep> caseSteps) {
         List<StepExpansion.ExpandedStep> expanded = StepExpansion.expand(caseSteps);
+        Map<UUID, List<AttachmentSummary>> files = stepAttachmentService.summariesByTestStep(expanded.stream()
+                .map(e -> e.step().getId()).filter(Objects::nonNull).toList());
         List<TestCaseVersionResponse.StepSnapshot> snapshots = new ArrayList<>();
         for (int i = 0; i < expanded.size(); i++) {
             TestStep s = expanded.get(i).step();
+            List<AttachmentSummary> onStep = s.getId() == null ? null : files.get(s.getId());
             snapshots.add(new TestCaseVersionResponse.StepSnapshot(i, s.getAction(), s.getExpectedResult(),
-                    s.getTestData(), expanded.get(i).block() == null ? null : expanded.get(i).block().getTitle()));
+                    s.getTestData(), expanded.get(i).block() == null ? null : expanded.get(i).block().getTitle(),
+                    onStep == null ? null : onStep.stream().map(AttachmentSummary::fileName).toList()));
         }
         return snapshots;
     }

@@ -1,7 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import { BulkEditTestCasesChanges, BulkOperationResponse, TestCaseContext, TestCaseExecution, CreateTestCaseRequest, GherkinPreview, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
+import { Attachment, BulkEditTestCasesChanges, BulkOperationResponse, TestCaseContext, TestCaseExecution, CreateTestCaseRequest, GherkinPreview, ImportResult, ReviewCapabilities, TestCase, TestCaseQuery, TestCaseStatus, UpdateTestCaseRequest } from '../../shared/models/test-case.model';
 import { Page } from '../../shared/models/page.model';
 import { TestCaseLink, TestCaseLinkType } from '../../shared/models/test-case-link.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
@@ -78,6 +78,16 @@ export class TestCaseApiService {
   /** The collection {@link AttachmentApiService} works on (PRD-044). */
   attachmentsUrl(projectId: string, testCaseId: string): string {
     return `${this.baseUrl(projectId)}/${testCaseId}/attachments`;
+  }
+
+  /** TM05: a test step's files; works for a shared step's steps too. */
+  stepAttachmentsUrl(projectId: string, testStepId: string): string {
+    return `/api/projects/${projectId}/test-steps/${testStepId}/attachments`;
+  }
+
+  /** TM05: the files on every step the case executes, each naming its step. */
+  getStepAttachments(projectId: string, testCaseId: string): Observable<Attachment[]> {
+    return this.http.get<Attachment[]>(`${this.baseUrl(projectId)}/${testCaseId}/step-attachments`);
   }
 
   /** PRD-050: who made the case, its folder path and the suites that include it. */

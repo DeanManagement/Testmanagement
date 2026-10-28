@@ -16,6 +16,8 @@ import com.deanmanagement.testmanagement.project.internal.service.CustomFieldFil
 import com.deanmanagement.testmanagement.project.internal.service.CustomFieldWriteMode;
 import com.deanmanagement.testmanagement.project.internal.service.RequirementService;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseLinkService;
+import com.deanmanagement.testmanagement.project.internal.service.StepAttachmentService;
+import com.deanmanagement.testmanagement.project.internal.service.StepExpansion;
 import com.deanmanagement.testmanagement.project.internal.service.TestCaseService;
 import com.deanmanagement.testmanagement.shared.exception.ConflictException;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
@@ -60,6 +62,7 @@ public class TestCaseTools {
     private final CustomFieldFilterParser customFieldFilterParser;
     private final RequirementService requirementService;
     private final TestCaseLinkService linkService;
+    private final StepAttachmentService stepAttachmentService;
 
     // --- read ------------------------------------------------------------------------------
 
@@ -129,7 +132,8 @@ public class TestCaseTools {
                     One test case in full, including its ordered steps, its estimateMinutes and
                     medianActualMs (median measured duration of its last 5 executions), and the
                     names of files attached to it (not their content: ask the human to open them in
-                    the app when a step needs one; download_test_case_attachment fetches one), and
+                    the app when a step needs one; download_test_case_attachment fetches one; a file on a
+                    step carries that step's stepNumber), and
                     the requirements it is linked to, and its links to other test cases in both
                     directions (an OUTGOING PRECONDITION link names a case to run first). Steps are
                     as executed: a shared step's steps appear in place, each with its sharedStepId
@@ -150,9 +154,9 @@ public class TestCaseTools {
                 response.folderId(),
                 response.steps() == null ? List.of() : executedSteps(response.steps()),
                 response.customFields(), response.estimateMinutes(), response.medianActualMs(),
-                response.attachments().stream()
-                        .map(a -> new McpDtos.Attachment(a.id(), a.fileName(), a.contentType(), a.sizeBytes()))
-                        .toList(),
+                Stream.concat(response.attachments().stream()
+                                .map(a -> new McpDtos.Attachment(a.id(), a.fileName(), a.contentType(), a.sizeBytes())),
+                        stepFiles(caller.projectId(), testCase)).toList(),
                 requirementService.findLinkedTo(caller.projectId(), response.id()).stream()
                         .map(r -> new McpDtos.RequirementRef(r.id(), r.externalId(), r.title()))
                         .toList(),
@@ -169,6 +173,14 @@ public class TestCaseTools {
                         : s.expandedSteps().stream().map(b -> new McpDtos.Step(b.action(), b.expectedResult(),
                                 b.testData(), s.sharedStepId(), s.sharedStepTitle())))
                 .toList();
+    }
+
+    /** The files on the case's steps (TM05), each with the step's number as {@link #executedSteps} counts. */
+    private Stream<McpDtos.Attachment> stepFiles(UUID projectId, TestCase testCase) {
+        List<UUID> stepIds = StepExpansion.expandedSteps(testCase.getSteps()).stream().map(s -> s.getId()).toList();
+        return stepAttachmentService.listOnStepsOfCase(projectId, testCase.getId()).stream()
+                .map(a -> new McpDtos.Attachment(a.id(), a.fileName(), a.contentType(), a.sizeBytes(),
+                        stepIds.indexOf(a.testStepId()) + 1));
     }
 
     // --- write -----------------------------------------------------------------------------
@@ -224,8 +236,9 @@ public class TestCaseTools {
                     Update a test case. Only the fields you pass are changed; anything you omit
                     keeps its current value. To CLEAR a text field pass an empty string ""; to clear
                     labels or steps pass an empty array.
-                    Pass steps only if you mean to replace the whole ordered list — doing so
-                    discards any screenshots a human attached to steps that no longer exist. To
+                    Pass steps only if you mean to replace the whole ordered list — each step's
+                    image and files stay with the step at the same position, and a step that no
+                    longer exists loses them. To
                     change one step use insert_test_step, move_test_step or remove_test_step.
                     customFields: keyed by field NAME, not id; only the names you pass change, and
                     a null value clears that field.

@@ -247,42 +247,8 @@ app-step-spec-card {
   margin-bottom: 8px;
 }
 
-.step-screenshot {
+.step-evidence {
   margin-top: 4px;
-}
-
-.screenshot-preview {
-  position: relative;
-  display: inline-block;
-}
-
-.screenshot-preview--readonly {
-  margin-top: 8px;
-}
-
-.screenshot-thumb {
-  max-width: 200px;
-  max-height: 150px;
-  border-radius: 4px;
-  border: 1px solid var(--tm-border, #e0e0e0);
-  object-fit: cover;
-  cursor: pointer;
-}
-
-.screenshot-delete {
-  position: absolute;
-  top: -8px;
-  right: -8px;
-  background: var(--tm-danger, #f44336) !important;
-  color: #fff !important;
-  width: 24px;
-  height: 24px;
-
-  ::ng-deep .mat-icon {
-    font-size: 16px;
-    width: 16px;
-    height: 16px;
-  }
 }
 
 .upload-btn {

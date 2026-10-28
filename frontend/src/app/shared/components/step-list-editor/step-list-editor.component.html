@@ -89,6 +89,15 @@
             }
           </div>
         </div>
+        @if (projectId) {
+          <div class="step-files" [attr.data-test-id]="'test-case-step-files-' + i">
+            @if (step.value.id) {
+              <app-attachments [url]="stepFilesUrl(step.value.id)" [canEdit]="true" [compact]="true" [acceptPaste]="false" />
+            } @else {
+              <p class="section-hint">{{ 'attachment.stepSaveFirst' | translate }}</p>
+            }
+          </div>
+        }
       </div>
     }
   </div>

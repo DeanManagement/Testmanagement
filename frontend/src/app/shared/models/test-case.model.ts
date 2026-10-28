@@ -79,6 +79,9 @@ export interface Attachment {
   id: string;
   testCaseId: string | null;
   bugReportId: string | null;
+  /** TM05: set on a file of a test step, or on a step result's evidence. */
+  testStepId?: string | null;
+  stepResultId?: string | null;
   fileName: string;
   contentType: string;
   sizeBytes: number;

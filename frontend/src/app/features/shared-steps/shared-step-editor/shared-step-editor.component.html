@@ -32,7 +32,7 @@
             {{ 'testCase.form.addStep' | translate }}
           </button>
         </div>
-        <app-step-list-editor [steps]="steps" [images]="stepImages" />
+        <app-step-list-editor [steps]="steps" [images]="stepImages" [projectId]="projectId" />
 
         <div class="actions">
           @if (sharedStepId) {

@@ -2,7 +2,7 @@ package com.deanmanagement.testmanagement.project.internal.controller;
 
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
-import com.deanmanagement.testmanagement.project.internal.entity.Screenshot;
+import com.deanmanagement.testmanagement.project.internal.entity.Attachment;
 import com.deanmanagement.testmanagement.project.internal.entity.StepImage;
 import com.deanmanagement.testmanagement.project.internal.entity.StepResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
@@ -13,7 +13,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRunStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.TestStep;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
-import com.deanmanagement.testmanagement.project.internal.repository.ScreenshotRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.AttachmentRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.StepImageRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.StepResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
@@ -70,12 +70,12 @@ class MediaCacheHeadersApiTest {
     @Autowired
     private StepResultRepository stepResultRepository;
     @Autowired
-    private ScreenshotRepository screenshotRepository;
+    private AttachmentRepository attachmentRepository;
 
     private String admin;
     private String outsider;
     private UUID stepImageId;
-    private UUID screenshotId;
+    private String screenshotUrl;
 
     @BeforeEach
     void setUp() {
@@ -128,12 +128,15 @@ class MediaCacheHeadersApiTest {
         stepResult.setStatus(TestResultStatus.PENDING);
         stepResult = stepResultRepository.save(stepResult);
 
-        Screenshot screenshot = new Screenshot();
+        Attachment screenshot = new Attachment();
         screenshot.setStepResult(stepResult);
         screenshot.setFileName("shot.png");
         screenshot.setContentType("image/png");
         screenshot.setData(new byte[] {4, 5, 6});
-        screenshotId = screenshotRepository.save(screenshot).getId();
+        screenshot.setSizeBytes(3);
+        screenshot.setSha256("0".repeat(64));
+        screenshotUrl = "/api/projects/" + project.getId() + "/step-results/" + stepResult.getId()
+                + "/attachments/" + attachmentRepository.save(screenshot).getId();
     }
 
     private String saveUser(boolean systemAdmin) {
@@ -147,7 +150,7 @@ class MediaCacheHeadersApiTest {
 
     @Test
     void screenshot_cacheControlIsPrivateNotPublic() throws Exception {
-        MvcResult res = mockMvc.perform(get("/api/screenshots/{id}", screenshotId).with(user(admin)))
+        MvcResult res = mockMvc.perform(get(screenshotUrl).with(user(admin)))
                 .andExpect(status().isOk())
                 .andExpect(header().exists("ETag"))
                 .andReturn();
@@ -177,7 +180,7 @@ class MediaCacheHeadersApiTest {
         assertThat(stepImage.getResponse().getContentAsByteArray()).isEqualTo(new byte[] {1, 2, 3});
         assertThat(stepImage.getResponse().getHeader("Content-Length")).isEqualTo("3");
 
-        MvcResult screenshot = mockMvc.perform(get("/api/screenshots/{id}", screenshotId).with(user(admin)))
+        MvcResult screenshot = mockMvc.perform(get(screenshotUrl).with(user(admin)))
                 .andExpect(status().isOk())
                 .andReturn();
         assertThat(screenshot.getResponse().getHeader("Content-Length"))
@@ -186,12 +189,12 @@ class MediaCacheHeadersApiTest {
 
     @Test
     void screenshot_etagRevalidationStillReturns304() throws Exception {
-        MvcResult first = mockMvc.perform(get("/api/screenshots/{id}", screenshotId).with(user(admin)))
+        MvcResult first = mockMvc.perform(get(screenshotUrl).with(user(admin)))
                 .andExpect(status().isOk())
                 .andReturn();
         String etag = first.getResponse().getHeader("ETag");
 
-        mockMvc.perform(get("/api/screenshots/{id}", screenshotId)
+        mockMvc.perform(get(screenshotUrl)
                         .header("If-None-Match", etag)
                         .with(user(admin)))
                 .andExpect(status().isNotModified());
@@ -199,7 +202,7 @@ class MediaCacheHeadersApiTest {
 
     @Test
     void anonymous_cannotFetchImages() throws Exception {
-        mockMvc.perform(get("/api/screenshots/{id}", screenshotId))
+        mockMvc.perform(get(screenshotUrl))
                 .andExpect(status().is4xxClientError());
         mockMvc.perform(get("/api/step-images/{id}", stepImageId))
                 .andExpect(status().is4xxClientError());
@@ -207,7 +210,7 @@ class MediaCacheHeadersApiTest {
 
     @Test
     void nonMember_cannotFetchImages() throws Exception {
-        mockMvc.perform(get("/api/screenshots/{id}", screenshotId).with(user(outsider)))
+        mockMvc.perform(get(screenshotUrl).with(user(outsider)))
                 .andExpect(status().isForbidden());
         mockMvc.perform(get("/api/step-images/{id}", stepImageId).with(user(outsider)))
                 .andExpect(status().isForbidden());

@@ -27,19 +27,29 @@ import static org.assertj.core.api.Assertions.assertThat;
  * duplicate therefore stayed invisible until a production container tried to boot — which is
  * precisely what happened with two V38s. This test reads the files directly, so it does not care
  * which database is in play.
+ *
+ * <p>Only one vendor directory loads at a time, so a vendor migration may have a twin of the same
+ * version in the other vendor directory (V77: the same copy in each dialect).
  */
 class MigrationVersionsTest {
 
     private static final Pattern VERSIONED = Pattern.compile("^V(\\d+)__.*\\.sql$");
 
-    private static final List<String> LOCATIONS =
-            List.of("db/migration", "db/specific/postgresql", "db/specific/h2");
+    private static final List<List<String>> TIMELINES = List.of(
+            List.of("db/migration", "db/specific/postgresql"),
+            List.of("db/migration", "db/specific/h2"));
 
     @Test
     void everyMigrationVersionIsUniqueAcrossAllLocations() throws Exception {
+        for (List<String> timeline : TIMELINES) {
+            assertUnique(timeline);
+        }
+    }
+
+    private static void assertUnique(List<String> locations) throws Exception {
         Map<String, List<String>> byVersion = new LinkedHashMap<>();
 
-        for (String location : LOCATIONS) {
+        for (String location : locations) {
             for (Path file : listFiles(location)) {
                 Matcher matcher = VERSIONED.matcher(file.getFileName().toString());
                 if (matcher.matches()) {

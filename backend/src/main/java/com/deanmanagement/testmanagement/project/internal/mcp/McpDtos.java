@@ -152,9 +152,15 @@ final class McpDtos {
 
     /**
      * Metadata only (PRD-044 §3.8); the bytes come from download_test_case_attachment (TM13), so a
-     * list of cases does not drag every file into the agent's context.
+     * list of cases does not drag every file into the agent's context. {@code stepNumber}: the step
+     * (numbered as get_test_case lists them) a file is attached to (TM05); absent for the case's own files.
      */
-    record Attachment(UUID id, String fileName, String contentType, long sizeBytes) {}
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record Attachment(UUID id, String fileName, String contentType, long sizeBytes, @Nullable Integer stepNumber) {
+        Attachment(UUID id, String fileName, String contentType, long sizeBytes) {
+            this(id, fileName, contentType, sizeBytes, null);
+        }
+    }
 
     /** A custom field definition (PRD-035); agents write values keyed by {@code name}. */
     @JsonInclude(JsonInclude.Include.NON_NULL)

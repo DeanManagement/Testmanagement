@@ -32,7 +32,7 @@ describe('TestRunReportComponent', () => {
       providers: [
         provideRouter([]),
         provideNoopAnimations(),
-        { provide: TestRunApiService, useValue: { getReport: () => of(report), downloadReportPdf, getScreenshotUrl: () => '' } },
+        { provide: TestRunApiService, useValue: { getReport: () => of(report), downloadReportPdf, getRunStepAttachments: () => of([]), evidenceUrl: () => '' } },
         {
           provide: ActivatedRoute,
           useValue: {

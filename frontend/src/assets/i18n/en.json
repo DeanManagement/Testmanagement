@@ -1694,7 +1694,8 @@
     "uploadFailed": "The file could not be uploaded.",
     "count": "{{count}} attachment(s)",
     "queued": "attached when saved",
-    "screenshotsCopied": "The {{count}} step screenshot(s) of this result will be attached.",
+    "screenshotsCopied": "The {{count}} step evidence file(s) of this result will be attached.",
+    "stepSaveFirst": "Save first to attach files to this new step.",
     "uploadsFailed": "The bug was saved, but these files could not be attached: {{names}}"
   },
   "metrics": {

@@ -12,7 +12,6 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatInputModule } from '@angular/material/input';
-import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatMenuModule } from '@angular/material/menu';
 import { MatDividerModule } from '@angular/material/divider';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
@@ -29,6 +28,8 @@ import {
 import { ProjectResultStatus } from '../../../shared/models/result-status.model';
 import { ResultStatusApiService } from '../../../core/services/result-status-api.service';
 import { optionKey, selectedKey, statusLabelKey, statusOptions } from '../../../shared/utils/result-status-options';
+import { Attachment } from '../../../shared/models/test-case.model';
+import { groupFiles, NO_FILES } from '../../../shared/utils/step-files';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { AuthService } from '../../../core/services/auth.service';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
@@ -52,8 +53,6 @@ import { Comment } from '../../../shared/models/comment.model';
 import { CommentListComponent } from '../../../shared/components/comment-list/comment-list.component';
 import { CommentFormComponent } from '../../../shared/components/comment-form/comment-form.component';
 import { KeyboardShortcutsDialogComponent } from '../keyboard-shortcuts-dialog/keyboard-shortcuts-dialog.component';
-import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
-import { EnlargeImageDirective } from '../../../shared/components/image-viewer/enlarge-image.directive';
 import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 import { failuresOf, isFailure, worstFirst } from '../../../shared/utils/test-result-triage';
 import { StepSpecCardComponent } from '../../../shared/components/step-spec-card/step-spec-card.component';
@@ -94,7 +93,6 @@ import { sharedStepHeadingAt } from '../../../shared/utils/shared-step-groups';
     MatSelectModule,
     MatFormFieldModule,
     MatInputModule,
-    MatProgressBarModule,
     MatMenuModule,
     MatDividerModule,
     MatCheckboxModule,
@@ -103,7 +101,6 @@ import { sharedStepHeadingAt } from '../../../shared/utils/shared-step-groups';
     MatTooltipModule,
     CommentListComponent,
     CommentFormComponent,
-    AuthImagePipe, EnlargeImageDirective,
     StepSpecCardComponent,
     EntityHistoryComponent,
     WatchToggleComponent,
@@ -202,7 +199,6 @@ export class TestRunDetailComponent implements OnInit {
   /** TESTER and up may link, create and unlink issues; viewers see them read-only. */
   canLinkIssues = false;
   linkedBugReports$: Observable<import('../../../shared/models/bug-report.model').BugReport[]> = of([]);
-  uploadProgress$ = this.testRunApi.uploadProgress$;
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
@@ -234,6 +230,7 @@ export class TestRunDetailComponent implements OnInit {
         });
       this.store.dispatch(TestRunActions.loadTestRun({ projectId: this.projectId, id: this.runId }));
       this.testRun$ = this.store.select(selectTestRunById(this.runId));
+      this.loadRunFiles();
       this.testRun$.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(run => {
         this.currentRun = run;
         if (run) {
@@ -586,41 +583,45 @@ export class TestRunDetailComponent implements OnInit {
     );
   }
 
-  onScreenshotUpload(resultId: string, stepResultId: string, event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (file) {
-      this.store.dispatch(
-        TestRunActions.uploadScreenshot({
-          runId: this.runId,
-          resultId,
-          stepResultId,
-          file,
-        })
-      );
-    }
-    input.value = '';
+  /** TM05: the run's evidence by step result, and the files on its steps by step; one request. */
+  readonly evidence = signal(new Map<string, Attachment[]>());
+  readonly stepFiles = signal(new Map<string, Attachment[]>());
+
+  private loadRunFiles(): void {
+    this.testRunApi.getRunStepAttachments(this.projectId, this.runId)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (files) => {
+          this.evidence.set(groupFiles(files, 'stepResultId'));
+          this.stepFiles.set(groupFiles(files, 'testStepId'));
+        },
+        error: () => undefined,
+      });
   }
 
-  deleteScreenshot(resultId: string, step: StepResult): void {
-    if (step.screenshotId) {
-      this.store.dispatch(
-        TestRunActions.deleteScreenshot({
-          runId: this.runId,
-          resultId,
-          stepResultId: step.id,
-          screenshotId: step.screenshotId,
-        })
-      );
-    }
+  evidenceOf(stepResultId: string): readonly Attachment[] {
+    return this.evidence().get(stepResultId) ?? NO_FILES;
+  }
+
+  evidenceUrl(stepResultId: string): string {
+    return this.testRunApi.evidenceUrl(this.projectId, stepResultId);
+  }
+
+  /** Kept current, so "report bug" counts the files the server will copy. */
+  onEvidenceChange(stepResultId: string, files: Attachment[]): void {
+    this.evidence.update((map) => new Map(map).set(stepResultId, files));
+  }
+
+  stepFilesOf(testStepId: string): readonly Attachment[] {
+    return this.stepFiles().get(testStepId) ?? NO_FILES;
+  }
+
+  stepFilesUrl(testStepId: string): string {
+    return this.testCaseApi.stepAttachmentsUrl(this.projectId, testStepId);
   }
 
   caseAttachmentsUrl(testCaseId: string): string {
     return this.testCaseApi.attachmentsUrl(this.projectId, testCaseId);
-  }
-
-  getScreenshotUrl(screenshotId: string): string {
-    return this.testRunApi.getScreenshotUrl(screenshotId);
   }
 
   getStepImageUrl(imageId: string): string {
@@ -905,7 +906,7 @@ export class TestRunDetailComponent implements OnInit {
         stepsToReproduce: step ? this.translate.instant('bugReport.fromStep', { number, action: step.action }) : undefined,
         actualBehavior: step?.actualResult || undefined,
         // PRD-051: the server copies these onto the bug; the form says so beforehand.
-        screenshots: this.sortedSteps(result).filter((s) => s.screenshotId).length || undefined,
+        screenshots: this.sortedSteps(result).reduce((sum, s) => sum + this.evidenceOf(s.id).length, 0) || undefined,
       },
     });
   }

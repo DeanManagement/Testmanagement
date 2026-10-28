@@ -149,8 +149,8 @@ public class BugReportService {
         auditService.log(projectId, userId, AuditAction.CREATED,
                 AuditEntityType.BUG_REPORT, bugReport.getId(), label(bugReport), null);
         if (bugReport.getTestResult() != null) {
-            // PRD-051 §3.4: the failure's step screenshots come along as the bug's evidence.
-            attachmentService.copyScreenshots(projectId, bugReport, bugReport.getTestResult().getId(), userId);
+            // PRD-051 §3.4: the failure's step evidence comes along as the bug's.
+            attachmentService.copyEvidence(projectId, bugReport, bugReport.getTestResult().getId(), userId);
         }
 
         Map<String, Object> data = new LinkedHashMap<>();

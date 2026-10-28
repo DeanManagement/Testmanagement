@@ -126,10 +126,11 @@
                         @if (step.actualResult) {
                           <span class="step-actual">→ {{ step.actualResult }}</span>
                         }
-                        @if (showScreenshots && step.screenshotId) {
-                          <img class="step-shot" [src]="screenshotUrl(step.screenshotId) | authImage" loading="lazy"
-                               [appEnlarge]="screenshotUrl(step.screenshotId)"
-                               [alt]="'stepResult.screenshot' | translate" />
+                        @if (showScreenshots) {
+                          @for (shot of shotsOf(step.id); track shot.id) {
+                            <img class="step-shot" [src]="shotUrl(step.id, shot) | authImage" loading="lazy"
+                                 [appEnlarge]="shotUrl(step.id, shot)" [alt]="shot.fileName" />
+                          }
                         }
                       </li>
                     }

@@ -18,6 +18,10 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { AuthImagePipe } from '../../../shared/pipes/auth-image.pipe';
 import { EnlargeImageDirective } from '../../../shared/components/image-viewer/enlarge-image.directive';
 import { worstFirst } from '../../../shared/utils/test-result-triage';
+import { Attachment } from '../../../shared/models/test-case.model';
+import { groupFiles, NO_FILES } from '../../../shared/utils/step-files';
+
+const IMAGE_TYPES = new Set(['image/png', 'image/jpeg', 'image/gif', 'image/webp']);
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { ThemeService } from '../../../core/services/theme.service';
 import { applyChartDefaults } from '../../../core/utils/chart-theme';
@@ -86,6 +90,15 @@ export class TestRunReportComponent implements OnInit {
           this.cdr.detectChanges();
           this.renderChart();
         });
+      this.testRunApi.getRunStepAttachments(this.projectId, this.runId)
+        .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe({
+          next: (files) => {
+            this.shots = groupFiles(files.filter((f) => IMAGE_TYPES.has(f.contentType)), 'stepResultId');
+            this.cdr.detectChanges();
+          },
+          error: () => undefined,
+        });
     }
     // Relabel the chart when the UI language changes.
     this.translate.onLangChange
@@ -120,8 +133,15 @@ export class TestRunReportComponent implements OnInit {
     return [...result.stepResults].sort((a, b) => a.orderIndex - b.orderIndex);
   }
 
-  screenshotUrl(screenshotId: string): string {
-    return this.testRunApi.getScreenshotUrl(screenshotId);
+  /** TM05: the image evidence of each step result, by its id; documents show only in the run view. */
+  private shots = new Map<string, Attachment[]>();
+
+  shotsOf(stepResultId: string): readonly Attachment[] {
+    return this.shots.get(stepResultId) ?? NO_FILES;
+  }
+
+  shotUrl(stepResultId: string, shot: Attachment): string {
+    return `${this.testRunApi.evidenceUrl(this.projectId, stepResultId)}/${shot.id}`;
   }
 
   private renderChart(): void {

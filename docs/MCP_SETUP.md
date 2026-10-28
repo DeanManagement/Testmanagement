@@ -342,8 +342,11 @@ Delete tools return `{type, id, name}` naming what was removed.
   description says. Before this version it returned cases with any of them.
 - **Bulk creates are per-item.** Read the per-item `CREATED` / `SKIPPED` / `ERROR` outcomes; a
   partial result is normal, not a failure. `dryRun: true` shows what would happen.
-- **Replacing a case's steps discards screenshots** attached to steps that no longer exist. Omit
-  `steps` unless you mean to rewrite them.
+- **Replacing a case's steps keeps images and files by position**: a step that no longer exists
+  loses them. Omit `steps` unless you mean to rewrite them.
+- **Files on a step**: `add_test_case_attachment` takes an optional `stepNumber` (from 1, as
+  `get_test_case` numbers the steps); `get_test_case` lists a step's files with their `stepNumber`,
+  and `download_test_case_attachment` / `delete_test_case_attachment` take them like the case's own.
 - **Executing a run costs one write per test case.** A 50-case run is 52 writes against a budget of
   120 a minute. If you run larger suites through an agent, raise `MCP_MAX_WRITES_PER_MINUTE` — a run
   refused half-way leaves a half-recorded run.
@@ -354,7 +357,7 @@ Delete tools return `{type, id, name}` naming what was removed.
 - **Screenshots go on the bug.** `add_bug_report_attachment` takes the file as `contentBase64`, at
   most 2 MB decoded, with its `fileName` and `contentType`; the bytes must match the type, and SVG
   and HTML are refused. A bug filed with a `testResultId` already carries that result's step
-  screenshots, so do not attach them again. `get_bug_report` lists `attachments` (id, name, type,
+  evidence files, so do not attach them again. `get_bug_report` lists `attachments` (id, name, type,
   size); there is no download tool.
 - **Pass rates are passed of executed results** in `get_project_dashboard`, `get_test_plan` and
   `get_test_suite_report`: pending results are not counted, and a

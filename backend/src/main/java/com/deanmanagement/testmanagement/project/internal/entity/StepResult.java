@@ -2,7 +2,6 @@ package com.deanmanagement.testmanagement.project.internal.entity;
 
 import com.deanmanagement.testmanagement.shared.BaseEntity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,7 +9,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -68,9 +66,6 @@ public class StepResult extends BaseEntity {
      */
     @Column(name = "position")
     private Integer position;
-
-    @OneToOne(mappedBy = "stepResult", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Screenshot screenshot;
 
     /** Links the step and keeps a copy of its text, so the result still reads after the step is gone. */
     public void setTestStep(TestStep testStep) {

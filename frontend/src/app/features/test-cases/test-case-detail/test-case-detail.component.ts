@@ -16,7 +16,8 @@ import { filter, switchMap, take } from 'rxjs/operators';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { TestCaseActions } from '../../../store/test-case/test-case.actions';
 import { selectTestCaseById } from '../../../store/test-case/test-case.selectors';
-import { TestCase } from '../../../shared/models/test-case.model';
+import { Attachment, TestCase } from '../../../shared/models/test-case.model';
+import { groupFiles, NO_FILES } from '../../../shared/utils/step-files';
 import { TestCaseApiService } from '../../../core/services/test-case-api.service';
 import { CommentActions } from '../../../store/comment/comment.actions';
 import { selectCommentsForEntity, selectCommentsLoading } from '../../../store/comment/comment.selectors';
@@ -117,6 +118,26 @@ export class TestCaseDetailComponent implements OnInit {
     return this.testCaseApi.getStepImageUrl(imageId);
   }
 
+  /** TM05: each step's files, by step id; fetched once per case, not once per step. */
+  readonly stepFiles = signal(new Map<string, Attachment[]>());
+
+  stepFilesOf(stepId: string): readonly Attachment[] {
+    return this.stepFiles().get(stepId) ?? NO_FILES;
+  }
+
+  stepFilesUrl(stepId: string): string {
+    return this.testCaseApi.stepAttachmentsUrl(this.projectId, stepId);
+  }
+
+  private loadStepFiles(): void {
+    this.testCaseApi.getStepAttachments(this.projectId, this.testCaseId)
+      .pipe(take(1), takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (files) => this.stepFiles.set(groupFiles(files, 'testStepId')),
+        error: () => this.stepFiles.set(new Map()),
+      });
+  }
+
   readonly headingAt = sharedStepHeadingAt;
   private expandedFor: { testCase: TestCase; steps: ExecutedStep[] } | null = null;
 
@@ -140,6 +161,7 @@ export class TestCaseDetailComponent implements OnInit {
     ).subscribe((testCase) => {
       this.store.dispatch(TestCaseActions.updateTestCaseSuccess({ testCase }));
       this.versions?.reload();
+      this.loadStepFiles();
     });
   }
 
@@ -156,6 +178,7 @@ export class TestCaseDetailComponent implements OnInit {
     if (this.projectId && this.testCaseId) {
       this.store.dispatch(TestCaseActions.loadTestCase({ projectId: this.projectId, id: this.testCaseId }));
       this.testCase$ = this.store.select(selectTestCaseById(this.testCaseId));
+      this.loadStepFiles();
       this.projectApi.getById(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
         .subscribe((project) => {
           this.reviewRequired = project.reviewRequired;

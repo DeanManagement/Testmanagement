@@ -206,6 +206,40 @@ describe('AttachmentsComponent', () => {
       expect(component.queued()).toEqual([]);
     });
   });
+
+  describe('for one step (TM05)', () => {
+    beforeEach(() => {
+      fixture = TestBed.createComponent(AttachmentsComponent);
+      component = fixture.componentInstance;
+      fixture.componentRef.setInput('url', url);
+      fixture.componentRef.setInput('canEdit', true);
+      fixture.componentRef.setInput('acceptPaste', false);
+      fixture.componentRef.setInput('preloaded', [attachment('a1')]);
+      fixture.detectChanges();
+    });
+
+    it('shows the list its parent fetched without fetching it again', () => {
+      http.expectNone(url);
+      expect(fixture.nativeElement.querySelectorAll('.attachment-row').length).toBe(1);
+    });
+
+    it('leaves a pasted file to the page', () => {
+      document.dispatchEvent(paste([new File(['a'], 'a.png', { type: 'image/png' })]));
+
+      http.expectNone(url);
+      expect(component.attachments().length).toBe(1);
+    });
+
+    it('reports the list after an upload', () => {
+      const emitted: string[][] = [];
+      component.listChange.subscribe((list) => emitted.push(list.map((a) => a.id)));
+
+      component.addFiles([new File(['%PDF-'], 'spec.pdf', { type: 'application/pdf' })]);
+      http.expectOne(url).flush(attachment('a2', 'spec.pdf'));
+
+      expect(emitted).toEqual([['a1', 'a2']]);
+    });
+  });
 });
 
 /** A paste event carrying files, which jsdom's ClipboardEvent cannot be constructed with. */

@@ -63,8 +63,19 @@ export class AttachmentsComponent implements OnChanges {
   @Input() canEdit = false;
   /** In the run execution view: read-only, collapsed, hidden when there is nothing attached. */
   @Input() execution = false;
+  /**
+   * TM05: the list as the parent already fetched it (one call for every step of a case or run);
+   * null makes the component fetch its own.
+   */
+  @Input() preloaded: readonly Attachment[] | null = null;
+  /** Off where several lists share a page (one per step), so a paste does not land in the first. */
+  @Input() acceptPaste = true;
+  /** One step's files: the upload button and the list, without the drop hint or an empty note. */
+  @Input() compact = false;
   /** Files waiting for the owner to be saved; emitted on every change. */
   @Output() readonly queuedChange = new EventEmitter<File[]>();
+  /** The stored list after each upload or delete, for a parent that keeps a count. */
+  @Output() readonly listChange = new EventEmitter<Attachment[]>();
 
   readonly attachments = signal<Attachment[]>([]);
   readonly queued = signal<File[]>([]);
@@ -78,6 +89,13 @@ export class AttachmentsComponent implements OnChanges {
   private readonly waiting: File[] = [];
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (this.preloaded) {
+      if (changes['preloaded']) {
+        this.attachments.set([...this.preloaded]);
+        this.loaded.set(true);
+      }
+      return;
+    }
     if (changes['url'] && this.url) {
       this.load(this.url);
     }
@@ -123,7 +141,7 @@ export class AttachmentsComponent implements OnChanges {
   @HostListener('document:paste', ['$event'])
   onPaste(event: ClipboardEvent): void {
     const files = Array.from(event.clipboardData?.files ?? []);
-    if (!this.canEdit || this.execution || !files.length || event.defaultPrevented) {
+    if (!this.canEdit || this.execution || !this.acceptPaste || !files.length || event.defaultPrevented) {
       return;
     }
     event.preventDefault();
@@ -186,6 +204,7 @@ export class AttachmentsComponent implements OnChanges {
     const twin = this.attachments().find((a) => a.sha256 === attachment.sha256);
     this.duplicateOf.set(twin?.fileName ?? null);
     this.attachments.update((list) => [...list, attachment]);
+    this.listChange.emit(this.attachments());
     this.progress.set(null);
   }
 
@@ -215,7 +234,10 @@ export class AttachmentsComponent implements OnChanges {
       switchMap(() => this.api.delete(url, attachment.id)),
       take(1),
       takeUntilDestroyed(this.destroyRef),
-    ).subscribe(() => this.attachments.update((list) => list.filter((a) => a.id !== attachment.id)));
+    ).subscribe(() => {
+      this.attachments.update((list) => list.filter((a) => a.id !== attachment.id));
+      this.listChange.emit(this.attachments());
+    });
   }
 
   isImage(attachment: Attachment): boolean {

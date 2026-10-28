@@ -135,34 +135,6 @@ export const testRunReducer = createReducer(
     error,
   })),
 
-  on(TestRunActions.uploadScreenshotSuccess, (state, { runId, resultId, stepResultId, screenshotId }) => {
-    const run = state.entities[runId];
-    if (!run) return state;
-    return testRunAdapter.upsertOne(
-      updateStepInRun(run, resultId, stepResultId, (sr) => ({ ...sr, screenshotId })),
-      state
-    );
-  }),
-
-  on(TestRunActions.uploadScreenshotFailure, (state, { error }) => ({
-    ...state,
-    error,
-  })),
-
-  on(TestRunActions.deleteScreenshotSuccess, (state, { runId, resultId, stepResultId }) => {
-    const run = state.entities[runId];
-    if (!run) return state;
-    return testRunAdapter.upsertOne(
-      updateStepInRun(run, resultId, stepResultId, (sr) => ({ ...sr, screenshotId: null })),
-      state
-    );
-  }),
-
-  on(TestRunActions.deleteScreenshotFailure, (state, { error }) => ({
-    ...state,
-    error,
-  })),
-
   on(TestRunActions.cloneTestRunSuccess, (state, { testRun }) =>
     testRunAdapter.addOne(testRun, state)
   ),

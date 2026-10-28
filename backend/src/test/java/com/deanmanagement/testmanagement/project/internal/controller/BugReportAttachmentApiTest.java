@@ -5,7 +5,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
-import com.deanmanagement.testmanagement.project.internal.entity.Screenshot;
+import com.deanmanagement.testmanagement.project.internal.entity.Attachment;
 import com.deanmanagement.testmanagement.project.internal.entity.StepResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCaseStatus;
@@ -17,7 +17,6 @@ import com.deanmanagement.testmanagement.project.internal.repository.AttachmentR
 import com.deanmanagement.testmanagement.project.internal.repository.AuditEntryRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
-import com.deanmanagement.testmanagement.project.internal.repository.ScreenshotRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.StepResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
@@ -86,8 +85,6 @@ class BugReportAttachmentApiTest {
     private TestResultRepository testResultRepository;
     @Autowired
     private StepResultRepository stepResultRepository;
-    @Autowired
-    private ScreenshotRepository screenshotRepository;
     @Autowired
     private AttachmentRepository attachmentRepository;
     @Autowired
@@ -257,9 +254,9 @@ class BugReportAttachmentApiTest {
         UUID filed = fileBug(project, "Payment fails", result.getId());
         String copied = sha(filed);
 
-        Screenshot original = screenshotRepository.findByTestResultId(result.getId()).getFirst();
+        Attachment original = attachmentRepository.findEvidenceOfResult(result.getId()).getFirst();
         original.setData(new byte[]{(byte) 0x89, 'P', 'N', 'G', 1, 2, 3, 4});
-        screenshotRepository.saveAndFlush(original);
+        attachmentRepository.saveAndFlush(original);
 
         assertThat(sha(filed)).isEqualTo(copied);
     }
@@ -301,12 +298,14 @@ class BugReportAttachmentApiTest {
             step.setPosition(i);
             step.setStatus(TestResultStatus.FAILED);
             step = stepResultRepository.save(step);
-            Screenshot shot = new Screenshot();
+            Attachment shot = new Attachment();
             shot.setStepResult(step);
             shot.setFileName("shot.png");
             shot.setContentType("image/png");
+            shot.setSizeBytes(PNG.length);
+            shot.setSha256("0".repeat(64));
             shot.setData(PNG);
-            screenshotRepository.save(shot);
+            attachmentRepository.save(shot);
         }
         return result;
     }

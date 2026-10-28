@@ -4,7 +4,6 @@ import com.deanmanagement.testmanagement.project.internal.dto.TestResultResponse
 import com.deanmanagement.testmanagement.project.internal.dto.attachment.AttachmentSummary;
 import com.deanmanagement.testmanagement.project.internal.dto.report.RunReportOptions;
 import com.deanmanagement.testmanagement.project.internal.dto.report.TestRunReportResponse;
-import com.deanmanagement.testmanagement.project.internal.repository.ScreenshotRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.testSuite.TestSuiteReportResponse;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
@@ -31,7 +30,7 @@ public class PdfReportService {
     private final TestSuiteService testSuiteService;
     private final ProjectRepository projectRepository;
     private final AttachmentService attachmentService;
-    private final ScreenshotRepository screenshotRepository;
+    private final StepAttachmentService stepAttachmentService;
 
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter
             .ofPattern("yyyy-MM-dd HH:mm")
@@ -41,7 +40,7 @@ public class PdfReportService {
         return generateTestRunReport(projectId, testRunId, RunReportOptions.RESULTS_ONLY);
     }
 
-    /** With steps and screenshots on request (PRD-048); screenshots are read from the database. */
+    /** With steps and their evidence on request (PRD-048, TM05); evidence is read from the database. */
     public byte[] generateTestRunReport(UUID projectId, UUID testRunId, RunReportOptions options) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project", projectId));
@@ -49,7 +48,8 @@ public class PdfReportService {
 
         String html = new RunReportHtml(report,
                 attachmentNames(report.results().stream().map(TestResultResponse::testCaseId).toList()),
-                options, screenshotRepository::findById, DATE_FMT)
+                options, options.screenshots() ? evidenceByStepResult(projectId, testRunId) : Map.of(),
+                stepAttachmentService::findById, DATE_FMT)
                 .build(project.getName(), CSS);
         return renderPdf(html);
     }
@@ -67,6 +67,13 @@ public class PdfReportService {
     /** File names per case, never bytes (PRD-044 §3.6): the report says a file exists, not what is in it. */
     private Map<UUID, List<AttachmentSummary>> attachmentNames(List<UUID> testCaseIds) {
         return attachmentService.summariesByTestCase(testCaseIds.stream().filter(Objects::nonNull).toList());
+    }
+
+    /** The run's evidence files (TM05), by step result; without the documents on its steps. */
+    private Map<UUID, List<AttachmentSummary>> evidenceByStepResult(UUID projectId, UUID testRunId) {
+        return stepAttachmentService.listForRun(projectId, testRunId).stream()
+                .filter(a -> a.stepResultId() != null)
+                .collect(Collectors.groupingBy(AttachmentSummary::stepResultId));
     }
 
     private static void appendAttachments(StringBuilder sb, List<AttachmentSummary> attachments) {

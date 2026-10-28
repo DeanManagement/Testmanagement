@@ -1694,7 +1694,8 @@
     "uploadFailed": "Die Datei konnte nicht hochgeladen werden.",
     "count": "{{count}} Anhang/Anhänge",
     "queued": "wird beim Speichern angehängt",
-    "screenshotsCopied": "Die {{count}} Schritt-Screenshot(s) dieses Ergebnisses werden angehängt.",
+    "screenshotsCopied": "Die {{count}} Nachweisdatei(en) der Schritte dieses Ergebnisses werden angehängt.",
+    "stepSaveFirst": "Zuerst speichern, um diesem neuen Schritt Dateien anzuhängen.",
     "uploadsFailed": "Der Fehler wurde gespeichert, diese Dateien konnten aber nicht angehängt werden: {{names}}"
   },
   "metrics": {

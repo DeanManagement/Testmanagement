@@ -199,6 +199,9 @@ export class TestCaseVersionsComponent implements OnChanges {
     if (step.testData) {
       parts.push(`(${step.testData})`);
     }
+    if (step.attachments?.length) {
+      parts.push(`· ${step.attachments.join(', ')}`);
+    }
     return parts.join(' ');
   }
 }

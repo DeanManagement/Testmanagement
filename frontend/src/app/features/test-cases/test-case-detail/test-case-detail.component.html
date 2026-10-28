@@ -93,6 +93,8 @@
                 [testData]="step.testData"
                 [imageUrl]="step.imageId ? getStepImageUrl(step.imageId) : null">
               </app-step-spec-card>
+              <app-attachments [url]="stepFilesUrl(step.id)" [preloaded]="stepFilesOf(step.id)" [execution]="true"
+                               [attr.data-test-id]="'test-case-step-files-' + i" />
             </div>
           }
         </div>

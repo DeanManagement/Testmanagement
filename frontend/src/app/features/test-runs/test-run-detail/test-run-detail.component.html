@@ -302,6 +302,9 @@
                         [testData]="step.testData"
                         [imageUrl]="step.stepImageId ? getStepImageUrl(step.stepImageId) : null">
                       </app-step-spec-card>
+                      @if (step.testStepId) {
+                        <app-attachments [url]="stepFilesUrl(step.testStepId)" [preloaded]="stepFilesOf(step.testStepId)" [execution]="true" />
+                      }
                       <div class="step-inputs">
                         <mat-form-field appearance="outline" class="step-status-select">
                           <mat-label>{{ 'testCase.form.status' | translate }}</mat-label>
@@ -319,26 +322,9 @@
                             rows="2"></textarea>
                         </mat-form-field>
                       </div>
-                      <div class="step-screenshot">
-                        @if (step.screenshotId) {
-                          <div class="screenshot-preview">
-                            <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" loading="lazy"
-                                 [appEnlarge]="getScreenshotUrl(step.screenshotId)" />
-                            <button mat-icon-button class="screenshot-delete" (click)="deleteScreenshot(result.id, step)"
-                                    [attr.aria-label]="'a11y.deleteScreenshot' | translate">
-                              <mat-icon>close</mat-icon>
-                            </button>
-                          </div>
-                        } @else {
-                          <button mat-stroked-button class="upload-btn" (click)="focusFileInput.click()">
-                            <mat-icon>add_a_photo</mat-icon>
-                            {{ 'stepResult.addScreenshot' | translate }}
-                          </button>
-                          <input #focusFileInput type="file" accept="image/*" hidden (change)="onScreenshotUpload(result.id, step.id, $event)" />
-                          @if ((uploadProgress$ | async)! > 0 && (uploadProgress$ | async)! < 100) {
-                              <mat-progress-bar mode="determinate" [value]="(uploadProgress$ | async)"></mat-progress-bar>
-                          }
-                        }
+                      <div class="step-evidence" [attr.data-test-id]="'step-evidence-' + step.id">
+                        <app-attachments [url]="evidenceUrl(step.id)" [preloaded]="evidenceOf(step.id)" [canEdit]="true"
+                                         [compact]="true" [acceptPaste]="false" (listChange)="onEvidenceChange(step.id, $event)" />
                       </div>
                     </div>
                   }
@@ -527,18 +513,16 @@
                           [testData]="step.testData"
                           [imageUrl]="step.stepImageId ? getStepImageUrl(step.stepImageId) : null">
                         </app-step-spec-card>
+                        @if (step.testStepId) {
+                          <app-attachments [url]="stepFilesUrl(step.testStepId)" [preloaded]="stepFilesOf(step.testStepId)" [execution]="true" />
+                        }
                         @if (step.actualResult) {
                           <div class="step-actual-readonly">
                             <span class="spec-label">{{ 'stepResult.actualResult' | translate }}</span>
                             <span class="spec-text">{{ step.actualResult }}</span>
                           </div>
                         }
-                        @if (step.screenshotId) {
-                          <div class="screenshot-preview screenshot-preview--readonly">
-                            <img [src]="getScreenshotUrl(step.screenshotId) | authImage" alt="Screenshot" class="screenshot-thumb" loading="lazy"
-                                 [appEnlarge]="getScreenshotUrl(step.screenshotId)" />
-                          </div>
-                        }
+                        <app-attachments [url]="evidenceUrl(step.id)" [preloaded]="evidenceOf(step.id)" [execution]="true" />
                       </div>
                     }
                   </div>

@@ -30,7 +30,7 @@
     </details>
   }
 } @else {
-  <div class="attachments-card" [class.dragging]="dragging()"
+  <div class="attachments-card" [class.dragging]="dragging()" [class.compact]="compact"
        (dragover)="canEdit && onDragOver($event)" (dragleave)="dragging.set(false)" (drop)="onDrop($event)">
     @if (canEdit) {
       <div class="attachment-upload">
@@ -40,7 +40,9 @@
           {{ 'attachment.upload' | translate }}
         </button>
         <input #fileInput type="file" multiple hidden (change)="onFileSelected($event)" data-test-id="attachment-input" />
-        <span class="section-hint">{{ 'attachment.dropHint' | translate }}</span>
+        @if (!compact) {
+          <span class="section-hint">{{ 'attachment.dropHint' | translate }}</span>
+        }
       </div>
     }
     @if (progress() !== null) {
@@ -69,7 +71,7 @@
     }
     @if (attachments().length) {
       <ng-container [ngTemplateOutlet]="list" />
-    } @else if (loaded()) {
+    } @else if (loaded() && !compact) {
       <p class="section-hint" data-test-id="attachment-empty">{{ 'attachment.empty' | translate }}</p>
     }
   </div>
