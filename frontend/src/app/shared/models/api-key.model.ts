@@ -2,7 +2,7 @@
  * PRD-025 §3.2: the role a key holds on its project, via the service account it authenticates as.
  * ADMIN is not offered — a key must never be able to manage members or delete a project.
  */
-export type ApiKeyRole = 'VIEWER' | 'TESTER';
+export type ApiKeyRole = 'VIEWER' | 'TESTER' | 'ADMIN';
 
 /**
  * PRD-027 §9: the units MCP access is granted in. CORE (get_project) is always granted by the

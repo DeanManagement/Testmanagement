@@ -585,6 +585,7 @@
       "role": "Role",
       "roleTester": "Tester (can create and edit)",
       "roleViewer": "Viewer (read only)",
+      "roleAdmin": "Admin (can also change project settings)",
       "roleHint": "The key acts as a service account with this role on the project.",
       "toolGroups": "MCP tools",
       "toolGroupsAll": "All tools",

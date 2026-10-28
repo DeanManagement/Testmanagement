@@ -585,6 +585,7 @@
       "role": "Rolle",
       "roleTester": "Tester (kann erstellen und bearbeiten)",
       "roleViewer": "Betrachter (nur lesen)",
+      "roleAdmin": "Admin (kann auch Projekteinstellungen ändern)",
       "roleHint": "Der Schlüssel agiert als Dienstkonto mit dieser Rolle im Projekt.",
       "toolGroups": "MCP-Tools",
       "toolGroupsAll": "Alle Tools",

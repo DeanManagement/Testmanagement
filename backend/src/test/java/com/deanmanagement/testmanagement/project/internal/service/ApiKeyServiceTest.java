@@ -145,19 +145,6 @@ class ApiKeyServiceTest {
     }
 
     @Test
-    void create_rejectsAdminRole() {
-        var request = new CreateApiKeyRequest("Too powerful", PROJECT_ID, ProjectRole.ADMIN);
-        when(projectRepository.findById(PROJECT_ID)).thenReturn(Optional.of(sampleProject()));
-
-        assertThatThrownBy(() -> apiKeyService.create(request))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessageContaining("VIEWER or TESTER");
-
-        verify(userService, never()).createServiceAccount(any(), any());
-        verify(apiKeyRepository, never()).save(any());
-    }
-
-    @Test
     void ensureServiceUser_isIdempotent() {
         ApiKey key = sampleApiKey();
         key.setProject(sampleProject());

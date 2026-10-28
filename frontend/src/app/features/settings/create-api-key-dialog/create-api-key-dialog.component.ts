@@ -50,6 +50,7 @@ import { ProjectApiService } from '../../../core/services/project-api.service';
           <mat-select [(ngModel)]="role" required data-test-id="api-key-role-select">
             <mat-option value="TESTER">{{ 'settings.apiKeys.roleTester' | translate }}</mat-option>
             <mat-option value="VIEWER">{{ 'settings.apiKeys.roleViewer' | translate }}</mat-option>
+            <mat-option value="ADMIN">{{ 'settings.apiKeys.roleAdmin' | translate }}</mat-option>
           </mat-select>
           <mat-hint>{{ 'settings.apiKeys.roleHint' | translate }}</mat-hint>
         </mat-form-field>

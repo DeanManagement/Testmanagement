@@ -202,9 +202,8 @@ class ApiKeyServiceUserApiTest {
     }
 
     @Test
-    void adminRoleIsRefusedForKeys() {
-        assertThat(catchThrowableOf(() -> createKey("too-powerful", ProjectRole.ADMIN)))
-                .isInstanceOf(IllegalArgumentException.class);
+    void aKeyCanHoldAdmin() {
+        assertThat(createKey("project-admin-agent", ProjectRole.ADMIN).role()).isEqualTo(ProjectRole.ADMIN);
     }
 
     private ProjectAccessService accessService() {

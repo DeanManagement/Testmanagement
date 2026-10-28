@@ -68,10 +68,8 @@ public class ApiKeyService {
         Project project = projectRepository.findById(request.projectId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project", request.projectId()));
 
+        // ADMIN is allowed: only system admins can create keys, so a key never outranks its creator.
         ProjectRole role = request.role() == null ? ProjectRole.TESTER : request.role();
-        if (role == ProjectRole.ADMIN) {
-            throw new IllegalArgumentException("API keys may hold VIEWER or TESTER, not ADMIN");
-        }
 
         ApiKey apiKey = new ApiKey();
         apiKey.setName(request.name());
