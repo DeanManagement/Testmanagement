@@ -59,8 +59,9 @@ public class TestRunReadTools {
                     The project's environments, e.g. staging or Chrome · Production. The
                     environment of create_test_run, update_test_run, clone_test_run,
                     create_bug_report and update_bug_report must be one of these names (case and
-                    surrounding spaces do not matter): an unknown name is refused, since only a
-                    project administrator adds environments. Archived environments are left out.
+                    surrounding spaces do not matter): an unknown name is refused. New ones are added
+                    with create_environment, which needs an ADMIN key. Archived environments are left
+                    out.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))

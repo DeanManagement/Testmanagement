@@ -104,6 +104,18 @@ public class McpCallerContext {
      * a confusing "unknown tool". What does shape the list is the key's tool groups: see
      * {@link #requireAllowed}.
      */
+    /** Project settings (environments, custom fields) need ADMIN, as they do in the UI. */
+    @Transactional(readOnly = true)
+    public Caller requireAdmin() {
+        Caller caller = require();
+        if (!caller.role().satisfies(ProjectRole.ADMIN)) {
+            throw new McpToolException("This API key holds " + caller.role() + " on project "
+                    + caller.projectKey() + ". Changing project settings requires ADMIN — ask an "
+                    + "administrator to re-create the key with that role.");
+        }
+        return caller;
+    }
+
     @Transactional(readOnly = true)
     public Caller requireWriter() {
         Caller caller = require();

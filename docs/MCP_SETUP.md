@@ -159,6 +159,11 @@ key used on any other `/api/` path answers with a hint pointing back here, rathe
 `remove_test_step`, `add_test_cases_to_run`, `remove_test_cases_from_run`, `reorder_test_run_cases`,
 `link_test_cases`, `unlink_test_cases`, `assign_test_run_cases`.
 
+**Project settings** (ADMIN keys only, like the settings pages) — `create_environment`,
+`update_environment` (rename, describe, archive / restore), `create_custom_field`,
+`update_custom_field` (rename, replace options, required, archive / restore). A key may hold
+VIEWER, TESTER or ADMIN; only system admins create keys.
+
 **Delete** (Tester only, like the UI) — `delete_test_case`, `delete_test_case_folder`,
 `delete_test_suite`, `delete_test_plan`, `delete_test_run`, `delete_requirement`,
 `delete_parameter_set`, `delete_shared_step`, `delete_test_case_attachment`, `delete_bug_report`,
@@ -299,7 +304,7 @@ them:
   `create_bug_report`, until a project administrator has configured a tracker.
 
 **Bug reports are off by default.** `create_bug_report` refuses until a project administrator
-enables them in the project's settings; an API key cannot, since that needs the `ADMIN` role.
+enables them in the project's settings; there is no MCP tool for that switch.
 
 ### What the tools return
 
