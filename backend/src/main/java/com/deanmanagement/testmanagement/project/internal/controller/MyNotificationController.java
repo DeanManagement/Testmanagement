@@ -69,7 +69,7 @@ public class MyNotificationController {
 
     @PutMapping("/notification-preferences")
     public List<NotificationPreferenceDto> updatePreferences(Authentication authentication,
-                                                             @Valid @RequestBody List<NotificationPreferenceDto> prefs) {
+                                                             @RequestBody List<@Valid NotificationPreferenceDto> prefs) {
         UUID userId = UUID.fromString(authentication.getName());
         return notificationService.updatePreferences(userId, prefs);
     }

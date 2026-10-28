@@ -7,7 +7,7 @@ import java.util.List;
 import java.util.UUID;
 
 public record ReorderFoldersRequest(
-        @NotEmpty @Valid List<FolderOrder> folders
+        @NotEmpty List<@Valid FolderOrder> folders
 ) {
     public record FolderOrder(
             UUID id,

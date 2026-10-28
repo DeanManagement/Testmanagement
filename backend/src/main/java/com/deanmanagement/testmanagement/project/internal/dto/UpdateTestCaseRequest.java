@@ -24,7 +24,7 @@ public record UpdateTestCaseRequest(
         Priority priority,
         TestCaseStatus status,
         Set<String> labels,
-        @Valid List<TestStepRequest> steps,
+        List<@Valid TestStepRequest> steps,
         /* PRD-035: keyed by field name; see CustomFieldValueWriter for null and clearing rules. */
         Map<String, Object> customFields,
         /* PRD-036: null leaves the estimate alone; 0 clears it. */

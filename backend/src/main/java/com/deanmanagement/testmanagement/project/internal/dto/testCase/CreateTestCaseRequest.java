@@ -22,7 +22,7 @@ public record CreateTestCaseRequest(
         @NotNull Priority priority,
         @NotNull TestCaseStatus status,
         Set<String> labels,
-        @Valid List<TestStepRequest> steps,
+        List<@Valid TestStepRequest> steps,
         UUID folderId,
         /* PRD-035: keyed by field name; see CustomFieldValueWriter for null and clearing rules. */
         Map<String, Object> customFields,

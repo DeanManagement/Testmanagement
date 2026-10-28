@@ -11,6 +11,6 @@ import java.util.List;
 public record SaveSharedStepRequest(
         @NotBlank @Size(max = 255) String title,
         String description,
-        @NotNull @Valid List<SharedStepStepRequest> steps
+        @NotNull List<@Valid SharedStepStepRequest> steps
 ) {
 }
