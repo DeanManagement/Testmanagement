@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.repository.spec;
 
 import com.deanmanagement.testmanagement.project.internal.dto.filter.TestCaseListFilter;
+import com.deanmanagement.testmanagement.project.internal.entity.Requirement;
 import com.deanmanagement.testmanagement.project.internal.entity.TestCase;
 import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.Predicate;
@@ -69,6 +70,15 @@ public final class TestCaseSpecifications {
 
             if (filter.updatedAfter() != null) {
                 predicates.add(cb.greaterThanOrEqualTo(root.get("updatedAt"), filter.updatedAfter()));
+            }
+
+            if (filter.requirementId() != null) {
+                Subquery<Integer> sub = query.subquery(Integer.class);
+                Root<Requirement> requirement = sub.from(Requirement.class);
+                Join<Requirement, TestCase> linked = requirement.join("testCases");
+                sub.select(cb.literal(1));
+                sub.where(cb.equal(requirement.get("id"), filter.requirementId()), cb.equal(linked, root));
+                predicates.add(cb.exists(sub));
             }
 
             predicates.addAll(CustomFieldSpecifications.matchAll(query, cb, root, "testCase", filter.customFields()));

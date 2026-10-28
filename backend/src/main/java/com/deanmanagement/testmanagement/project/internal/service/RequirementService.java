@@ -13,6 +13,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.repository.RequirementRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.spec.LikePatterns;
 import com.deanmanagement.testmanagement.shared.exception.DuplicateKeyException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -54,8 +56,33 @@ public class RequirementService {
                 .map(RequirementService::toResponse);
     }
 
+    /** Requirements whose external id or title contains {@code query}, ignoring case; blank lists all. */
+    public Page<RequirementResponse> list(UUID projectId, String query, Pageable pageable) {
+        if (query == null || query.isBlank()) {
+            return list(projectId, pageable);
+        }
+        return requirementRepository.search(projectId, LikePatterns.containing(query.trim()), pageable)
+                .map(RequirementService::toResponse);
+    }
+
     public RequirementResponse get(UUID projectId, UUID id) {
         return toResponse(require(projectId, id));
+    }
+
+    /** By UUID or by the exact external id (e.g. REQ-14), only within the project. */
+    public RequirementResponse get(UUID projectId, String idOrExternalId) {
+        String reference = idOrExternalId == null ? "" : idOrExternalId.trim();
+        return requirementRepository.findByProjectIdAndExternalId(projectId, reference)
+                .or(() -> parseUuid(reference).flatMap(id -> requirementRepository.findByIdAndProjectId(id, projectId)))
+                .map(RequirementService::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("Requirement", reference));
+    }
+
+    /** The requirements the test case is linked to, ordered by external id. */
+    public List<RequirementResponse> findLinkedTo(UUID projectId, UUID testCaseId) {
+        return requirementRepository.findLinkedTo(projectId, testCaseId).stream()
+                .map(RequirementService::toResponse)
+                .toList();
     }
 
     @Transactional
@@ -224,6 +251,14 @@ public class RequirementService {
     private Requirement require(UUID projectId, UUID id) {
         return requirementRepository.findByIdAndProjectId(id, projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Requirement", id));
+    }
+
+    private static Optional<UUID> parseUuid(String value) {
+        try {
+            return Optional.of(UUID.fromString(value));
+        } catch (IllegalArgumentException notAUuid) {
+            return Optional.empty();
+        }
     }
 
     private static RequirementResponse toResponse(Requirement requirement) {

@@ -259,6 +259,9 @@ public class TestPlanService {
                 .orElseThrow(() -> new ResourceNotFoundException("TestPlan", id));
         auditService.log(projectId, userId, AuditAction.DELETED,
                 AuditEntityType.TEST_PLAN, plan.getId(), plan.getName(), null);
+        // The runs stay (the FK is ON DELETE SET NULL). Detached here too, so a caller that already
+        // loaded them in this transaction does not flush runs pointing at a deleted plan.
+        plan.getTestRuns().forEach(run -> run.setTestPlan(null));
         testPlanRepository.delete(plan);
     }
 }

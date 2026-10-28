@@ -22,8 +22,16 @@ public record TestCaseListFilter(
         boolean rootOnly,
         Instant updatedAfter,
         /* PRD-035: each must match; see CustomFieldCriterion. */
-        List<CustomFieldCriterion> customFields
+        List<CustomFieldCriterion> customFields,
+        /* Only cases linked to this requirement (TM08). */
+        UUID requirementId
 ) {
+    public TestCaseListFilter(String q, List<TestCaseStatus> status, List<Priority> priority, List<String> label,
+                              UUID folderId, boolean includeSubfolders, boolean rootOnly, Instant updatedAfter,
+                              List<CustomFieldCriterion> customFields) {
+        this(q, status, priority, label, folderId, includeSubfolders, rootOnly, updatedAfter, customFields, null);
+    }
+
     public TestCaseListFilter(String q, List<TestCaseStatus> status, List<Priority> priority, List<String> label,
                               UUID folderId, boolean includeSubfolders, boolean rootOnly, Instant updatedAfter) {
         this(q, status, priority, label, folderId, includeSubfolders, rootOnly, updatedAfter, List.of());

@@ -47,6 +47,9 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class TestCaseService {
 
+    /** How many blocking runs a refused delete names before it abbreviates. */
+    private static final int MAX_RUNS_NAMED = 10;
+
     private final TestCaseRepository testCaseRepository;
     private final TestCaseFolderRepository folderRepository;
     private final ProjectRepository projectRepository;
@@ -246,10 +249,14 @@ public class TestCaseService {
      */
     private void refuseDeleteWithResults(Set<UUID> testCaseIds) {
         List<String> runKeys = testResultRepository.findRunKeysByTestCaseIdIn(testCaseIds);
-        if (!runKeys.isEmpty()) {
-            throw new ConflictException("Test cases with results cannot be deleted. Results exist in test runs: "
-                    + String.join(", ", runKeys) + ". Delete those runs first, or set the test case to DEPRECATED.");
+        if (runKeys.isEmpty()) {
+            return;
         }
+        String shown = String.join(", ", runKeys.subList(0, Math.min(runKeys.size(), MAX_RUNS_NAMED)))
+                + (runKeys.size() > MAX_RUNS_NAMED ? ", …" : "");
+        throw new ConflictException("Test cases with results cannot be deleted. Results exist in "
+                + runKeys.size() + " test run(s): " + shown
+                + ". Delete those runs first, or set the test case to DEPRECATED to retire it and keep its history.");
     }
 
     @Transactional
