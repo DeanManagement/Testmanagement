@@ -105,15 +105,7 @@ public class McpCallerContext {
                 + " — ask an administrator to issue a key that includes the group you need.");
     }
 
-    /**
-     * Resolves the caller for a write tool, refusing a VIEWER key.
-     *
-     * <p>Roles do not shape the tool list — a VIEWER key still sees the write tools, and so can
-     * still <em>call</em> one. It gets this error, which names the role it would need, rather than
-     * a confusing "unknown tool". What does shape the list is the key's tool groups: see
-     * {@link #requireAllowed}.
-     */
-    /** Project settings (environments, custom fields) need ADMIN, as they do in the UI. */
+    /** Project settings and configuration (environments, custom fields, webhooks, tracker) need ADMIN, as in the UI. */
     @Transactional(readOnly = true)
     public Caller requireAdmin() {
         Caller caller = require();
@@ -125,6 +117,14 @@ public class McpCallerContext {
         return caller;
     }
 
+    /**
+     * Resolves the caller for a write tool, refusing a VIEWER key.
+     *
+     * <p>Roles do not shape the tool list — a VIEWER key still sees the write tools, and so can
+     * still <em>call</em> one. It gets this error, which names the role it would need, rather than
+     * a confusing "unknown tool". What does shape the list is the key's tool groups: see
+     * {@link #requireAllowed}.
+     */
     @Transactional(readOnly = true)
     public Caller requireWriter() {
         Caller caller = require();
