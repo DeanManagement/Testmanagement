@@ -174,6 +174,7 @@ refuses it until `detach_bug_report_issue`.
 `change_bug_report_status` takes `customStatus`, one of the project's own statuses by name
 (`list_bug_statuses` lists them with the category each counts as and where each may go next). A
 move the project's transition rules do not allow is refused with the allowed statuses listed.
+`list_bug_reports` filters by them too, with `customStatus` names.
 A tool that fails for an internal reason returns a generic message; the details are in the server
 log and the key's activity.
 

@@ -142,6 +142,7 @@ function filterParams(query: BugReportQuery): HttpParams {
   (query.assignee ?? []).forEach((a) => (params = params.append('assignee', a)));
   (query.reporter ?? []).forEach((r) => (params = params.append('reporter', r)));
   (query.label ?? []).forEach((l) => (params = params.append('label', l)));
+  (query.statusId ?? []).forEach((id) => (params = params.append('statusId', id)));
   if (query.testResultId) params = params.set('testResultId', query.testResultId);
   if (query.environmentId) params = params.set('environmentId', query.environmentId);
   if (query.testRunId) params = params.set('testRunId', query.testRunId);

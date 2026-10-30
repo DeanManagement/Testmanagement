@@ -161,6 +161,7 @@ public class BugReportTools {
                     triaged; NEW, OPEN and IN_PROGRESS still need work.
                     priority: LOW | MEDIUM | HIGH | CRITICAL.
                     assignee: a member's email, "none" for unassigned, or "me".
+                    customStatus: names of the project's own statuses (list_bug_statuses).
                     Summaries only — call get_bug_report for reproduction steps.
                     """,
             generateOutputSchema = true,
@@ -176,13 +177,22 @@ public class BugReportTools {
             @McpToolParam(description = "Zero-based page number, default 0", required = false)
             Integer page,
             @McpToolParam(description = "Page size, default 50, max 200", required = false)
-            Integer size) {
+            Integer size,
+            @McpToolParam(description = "Only bugs in these project statuses, by name", required = false)
+            List<String> customStatus) {
 
         var caller = callerContext.require();
+        List<UUID> statusIds = customStatus == null ? List.of() : customStatus.stream()
+                .map(name -> bugStatusService.findActiveByName(caller.projectId(), name)
+                        .orElseThrow(() -> new McpToolException("No bug status named '" + name + "'. This project has: "
+                                + bugStatusService.describeActive(caller.projectId())))
+                        .getId())
+                .toList();
         boolean unassigned = UNASSIGNED.equalsIgnoreCase(assignee);
         List<UUID> assigneeIds = assignee == null || assignee.isBlank() || unassigned ? List.of()
                 : List.of("me".equalsIgnoreCase(assignee) ? caller.userId() : memberByEmail(caller.projectId(), assignee).getId());
-        var filter = new BugReportFilter(query, status, priority, assigneeIds, unassigned, null, null);
+        var filter = new BugReportFilter(query, status, priority, assigneeIds, unassigned, null, null,
+                List.of(), null, null, null, List.of(), statusIds);
         int pageNumber = page == null || page < 0 ? 0 : page;
         int pageSize = size == null || size < 1 ? PageableUtils.DEFAULT_SIZE : Math.min(size, PageableUtils.MAX_SIZE);
 

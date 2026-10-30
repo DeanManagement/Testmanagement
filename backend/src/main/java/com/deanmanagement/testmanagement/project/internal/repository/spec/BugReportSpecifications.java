@@ -51,6 +51,9 @@ public final class BugReportSpecifications {
             if (filter.status() != null && !filter.status().isEmpty()) {
                 predicates.add(root.get("status").in(filter.status()));
             }
+            if (filter.statusIds() != null && !filter.statusIds().isEmpty()) {
+                predicates.add(root.get("customStatus").get("id").in(filter.statusIds()));
+            }
             if (filter.priority() != null && !filter.priority().isEmpty()) {
                 predicates.add(root.get("priority").in(filter.priority()));
             }

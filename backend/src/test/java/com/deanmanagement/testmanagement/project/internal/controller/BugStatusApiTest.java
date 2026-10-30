@@ -153,6 +153,19 @@ class BugStatusApiTest {
         }
 
         @Test
+        void theListFiltersByProjectStatus() throws Exception {
+            addStatus("Ready for retest", "RESOLVED");
+            String waiting = fileBug();
+            fileBug();
+            moveTo(waiting, statusId("Ready for retest"), "").andExpect(status().isOk());
+
+            mockMvc.perform(get(url("/bug-reports?statusId=" + statusId("Ready for retest"))).with(user(tester)))
+                    .andExpect(jsonPath("$.content[*].id", contains(waiting)));
+            mockMvc.perform(get(url("/bug-reports?status=NEW")).with(user(tester)))
+                    .andExpect(jsonPath("$.page.totalElements").value(1));
+        }
+
+        @Test
         void theLastActiveStatusOfACategoryCannotBeArchived() throws Exception {
             mockMvc.perform(put(url("/bug-statuses/" + statusId("Closed"))).with(user(admin))
                             .contentType(MediaType.APPLICATION_JSON).content("{\"archived\":true}"))

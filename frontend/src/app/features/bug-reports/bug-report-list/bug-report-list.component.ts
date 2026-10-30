@@ -126,7 +126,10 @@ export class BugReportListComponent implements OnInit {
 
   viewMode: ViewMode = 'list';
   searchTerm = '';
+  /** Categories, as dashboards and My queue link with them. */
   statusFilter: BugReportStatus[] = [];
+  /** TM47: the project's own statuses picked in the filter. */
+  statusIdFilter: string[] = [];
   priorityFilter: Priority[] = [];
   assigneeFilter: string[] = [];
   /** TM48 */
@@ -186,6 +189,7 @@ export class BugReportListComponent implements OnInit {
     this.viewMode = params.get('view') === 'kanban' ? 'kanban' : 'list';
     this.searchTerm = params.get('q') ?? '';
     this.statusFilter = params.getAll('status') as BugReportStatus[];
+    this.statusIdFilter = params.getAll('statusId');
     this.priorityFilter = params.getAll('priority') as Priority[];
     this.assigneeFilter = params.getAll('assignee');
     this.environmentFilter = params.get('environmentId') ?? '';
@@ -201,6 +205,7 @@ export class BugReportListComponent implements OnInit {
     this.currentQuery = {
       q: this.searchTerm || undefined,
       status: this.statusFilter,
+      statusId: this.statusIdFilter,
       priority: this.priorityFilter,
       assignee: this.assigneeFilter,
       environmentId: this.environmentFilter || undefined,
@@ -236,7 +241,8 @@ export class BugReportListComponent implements OnInit {
   }
 
   get hasFilters(): boolean {
-    return !!this.searchTerm || this.statusFilter.length > 0 || this.priorityFilter.length > 0
+    return !!this.searchTerm || this.statusFilter.length > 0 || this.statusIdFilter.length > 0
+      || this.priorityFilter.length > 0
       || this.assigneeFilter.length > 0 || !!this.environmentFilter || this.reporterFilter.length > 0
       || !!this.testRunFilter || this.labelFilter.length > 0 || !!this.createdFrom || !!this.createdTo;
   }
@@ -251,6 +257,7 @@ export class BugReportListComponent implements OnInit {
     this.navigate({
       q: this.searchTerm || null,
       status: this.statusFilter.length ? this.statusFilter : null,
+      statusId: this.statusIdFilter.length ? this.statusIdFilter : null,
       priority: this.priorityFilter.length ? this.priorityFilter : null,
       assignee: this.assigneeFilter.length ? this.assigneeFilter : null,
       environmentId: this.environmentFilter || null,
@@ -264,8 +271,25 @@ export class BugReportListComponent implements OnInit {
   }
 
   clearFilters(): void {
-    this.navigate({ q: null, status: null, priority: null, assignee: null, environmentId: null, reporter: null,
+    this.navigate({ q: null, status: null, statusId: null, priority: null, assignee: null, environmentId: null, reporter: null,
       testRunId: null, label: null, createdFrom: null, createdTo: null, page: null });
+  }
+
+  /**
+   * TM47: what the status filter shows as picked: the statuses named, and for a category link
+   * (status=NEW from a dashboard) every status of that category.
+   */
+  get pickedStatusIds(): string[] {
+    return this.bugStatuses
+      .filter((s) => this.statusIdFilter.includes(s.id) || this.statusFilter.includes(s.category))
+      .map((s) => s.id);
+  }
+
+  /** Picking in the filter replaces a category link with the statuses picked. */
+  onStatusIdsPicked(ids: string[]): void {
+    this.statusIdFilter = ids;
+    this.statusFilter = [];
+    this.applyFilters();
   }
 
   /** TM48: the whole filtered list, not just this page. */

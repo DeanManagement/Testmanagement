@@ -10,7 +10,8 @@ import java.util.UUID;
 
 /**
  * The bug list's query parameters, shared by the list and its CSV export (TM48). {@code assignee}
- * takes user ids, {@code none} and {@code me}; {@code reporter} user ids; dates are ISO days.
+ * takes user ids, {@code none} and {@code me}; {@code reporter} user ids; dates are ISO days;
+ * {@code status} categories and {@code statusId} the project's own statuses (TM47).
  */
 public record BugReportListParams(
         String q,
@@ -23,7 +24,9 @@ public record BugReportListParams(
         UUID testRunId,
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdFrom,
         @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdTo,
-        List<String> label
+        List<String> label,
+        /* TM47: project status ids; status filters by category. */
+        List<UUID> statusId
 ) {
     private static final String UNASSIGNED = "none";
     private static final String ME = "me";
@@ -37,7 +40,7 @@ public record BugReportListParams(
                 .toList();
         return new BugReportFilter(q, status, priority, assigneeIds, assignees.contains(UNASSIGNED), testResultId,
                 environmentId, reporter == null ? List.of() : reporter, testRunId, createdFrom, createdTo,
-                label == null ? List.of() : label);
+                label == null ? List.of() : label, statusId == null ? List.of() : statusId);
     }
 
     private static UUID parseUserId(String value) {

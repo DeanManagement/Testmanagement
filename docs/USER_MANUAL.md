@@ -1113,8 +1113,9 @@ with Enter.
 The **Bug Reports** list is built for going through many bugs at once:
 
 - **Search** matches the key, the title and every text field.
-- **Filter** by status, priority, assignee, environment, reporter, test run, label and the date
-  range it was reported in. The assignee filter has *Me* and *Unassigned* entries, and several
+- **Filter** by status (the project's own statuses, see below), priority, assignee, environment,
+  reporter, test run, label and the date range it was reported in. A link from a dashboard that
+  filters by a category shows all statuses of that category as picked. The assignee filter has *Me* and *Unassigned* entries, and several
   choices combine: *Me* plus *Unassigned* shows both. The test-run filter finds bugs found in the
   run or linked to one of its results.
 - **Sort** by any column. Filters, sort order and page are in the URL, so bookmark or share a view.

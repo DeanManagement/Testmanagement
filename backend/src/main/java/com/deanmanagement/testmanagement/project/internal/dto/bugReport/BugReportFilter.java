@@ -28,12 +28,14 @@ public record BugReportFilter(
         LocalDate createdFrom,
         LocalDate createdTo,
         /* TM49/TM48: has any of these labels. */
-        List<String> labels
+        List<String> labels,
+        /* TM47: in one of these project statuses; status above filters by category. */
+        List<UUID> statusIds
 ) {
     public BugReportFilter(String q, List<BugReportStatus> status, List<Priority> priority, List<UUID> assigneeIds,
                            boolean includeUnassigned, UUID testResultId, UUID environmentId) {
         this(q, status, priority, assigneeIds, includeUnassigned, testResultId, environmentId,
-                List.of(), null, null, null, List.of());
+                List.of(), null, null, null, List.of(), List.of());
     }
 
     public static BugReportFilter none() {

@@ -37,11 +37,19 @@
     </mat-form-field>
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>{{ 'bugReport.form.status' | translate }}</mat-label>
-      <mat-select multiple [(ngModel)]="statusFilter" (selectionChange)="applyFilters()" data-test-id="bug-report-status-filter">
-        @for (s of allStatuses; track s) {
-          <mat-option [value]="s">{{ 'bugReport.status.' + s | translate }}</mat-option>
-        }
-      </mat-select>
+      @if (bugStatuses.length > 0) {
+        <mat-select multiple [value]="pickedStatusIds" (selectionChange)="onStatusIdsPicked($event.value)" data-test-id="bug-report-status-filter">
+          @for (s of bugStatuses; track s.id) {
+            <mat-option [value]="s.id">{{ s.name }}</mat-option>
+          }
+        </mat-select>
+      } @else {
+        <mat-select multiple [(ngModel)]="statusFilter" (selectionChange)="applyFilters()" data-test-id="bug-report-status-filter">
+          @for (s of allStatuses; track s) {
+            <mat-option [value]="s">{{ 'bugReport.status.' + s | translate }}</mat-option>
+          }
+        </mat-select>
+      }
     </mat-form-field>
     <mat-form-field appearance="outline" subscriptSizing="dynamic">
       <mat-label>{{ 'bugReport.form.priority' | translate }}</mat-label>

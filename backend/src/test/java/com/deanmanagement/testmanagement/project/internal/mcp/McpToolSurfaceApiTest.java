@@ -1263,7 +1263,7 @@ class McpToolSurfaceApiTest {
                 BugResolution.FIXED, null, null);
 
         McpDtos.BugPage open = bugReportTools.listBugReports(null, List.of(BugReportStatus.NEW), null,
-                null, null, null);
+                null, null, null, null);
 
         assertThat(open.totalElements()).isEqualTo(1);
         assertThat(open.bugReports()).singleElement()
@@ -1318,7 +1318,7 @@ class McpToolSurfaceApiTest {
                 human.getEmail().toUpperCase());
 
         assertThat(assigned.assigned()).isEqualTo(2);
-        assertThat(bugReportTools.listBugReports(null, null, null, human.getEmail(), null, null).totalElements())
+        assertThat(bugReportTools.listBugReports(null, null, null, human.getEmail(), null, null, null).totalElements())
                 .isEqualTo(2);
         bugReportTools.assignBugReports(List.of(a.key()), "none");
         assertThat(bugReportTools.getBugReport(a.key()).assigneeName()).isNull();

@@ -12,8 +12,9 @@ import { BugReportApiService } from '../../../core/services/bug-report-api.servi
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { EnvironmentApiService } from '../../../core/services/environment-api.service';
 import { TestRunApiService } from '../../../core/services/test-run-api.service';
+import { BugStatusApiService } from '../../../core/services/bug-status-api.service';
 import { selectAuthUser } from '../../../store/auth/auth.selectors';
-import { BugReport, ChangeBugStatusRequest } from '../../../shared/models/bug-report.model';
+import { BugReport, BugStatus, ChangeBugStatusRequest } from '../../../shared/models/bug-report.model';
 import { initialBugReportState } from '../../../store/bug-report/bug-report.state';
 
 /** PRD-045: the list reads its filters from the URL, and bulk actions and drops go through the API. */
@@ -25,6 +26,12 @@ describe('BugReportListComponent', () => {
   let dialogResult: ChangeBugStatusRequest | undefined;
 
   const bug = { id: 'b1', key: 'P-BUG-1', status: 'NEW' } as BugReport;
+  const STATUSES = [
+    { id: 'new', name: 'New', color: '#000000', category: 'NEW', position: 0, archived: false, allowedTargetIds: [] },
+    { id: 'triage', name: 'Triage', color: '#000000', category: 'NEW', position: 1, archived: false, allowedTargetIds: [] },
+    { id: 'retest', name: 'Ready for retest', color: '#000000', category: 'RESOLVED', position: 0, archived: false,
+      allowedTargetIds: [] },
+  ] as BugStatus[];
 
   beforeEach(() => {
     TestBed.resetTestingModule();
@@ -44,6 +51,7 @@ describe('BugReportListComponent', () => {
         { provide: BugReportApiService, useValue: { bulkUpdate, bulkDelete: vi.fn(() => of({})), getLabels: () => of([]) } },
         { provide: EnvironmentApiService, useValue: { getAll: () => of([]) } },
         { provide: TestRunApiService, useValue: { getAll: () => of({ content: [] }) } },
+        { provide: BugStatusApiService, useValue: { getAll: () => of(STATUSES) } },
         {
           provide: ProjectMemberApiService,
           useValue: { getByProject: () => of([{ userId: 'me', role: 'TESTER', displayName: 'Me' }]) },
@@ -72,7 +80,7 @@ describe('BugReportListComponent', () => {
 
     expect(store.dispatch).toHaveBeenCalledWith(BugReportActions.loadBugReports({
       projectId: 'p1',
-      query: { q: 'crash', status: ['NEW', 'OPEN'], priority: [], assignee: ['none'], reporter: [], label: [],
+      query: { q: 'crash', status: ['NEW', 'OPEN'], statusId: [], priority: [], assignee: ['none'], reporter: [], label: [],
         environmentId: undefined, testRunId: undefined, createdFrom: undefined, createdTo: undefined,
         page: 2, size: 50, sort: 'key,asc' },
     }));
@@ -87,6 +95,25 @@ describe('BugReportListComponent', () => {
     expect(store.dispatch).toHaveBeenCalledWith(expect.objectContaining({ query: expect.objectContaining({
       reporter: ['u1'], testRunId: 'r1', label: ['ui', 'api'], createdFrom: '2026-10-01', createdTo: '2026-10-31',
     }) }));
+  });
+
+  it('shows a category link from a dashboard as all statuses of that category', () => {
+    queryParams.next(convertToParamMap({ status: 'NEW' }));
+
+    const list = create();
+
+    expect(list.pickedStatusIds).toEqual(['new', 'triage']);
+  });
+
+  it('replaces a category link with the statuses picked in the filter', () => {
+    queryParams.next(convertToParamMap({ status: 'NEW' }));
+    const list = create();
+
+    list.onStatusIdsPicked(['retest']);
+
+    expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({
+      queryParams: expect.objectContaining({ status: null, statusId: ['retest'], page: null }),
+    }));
   });
 
   it('loads the whole filter onto the board', () => {
@@ -107,7 +134,7 @@ describe('BugReportListComponent', () => {
     list.applyFilters();
 
     expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({
-      queryParams: { q: null, status: ['CLOSED'], priority: null, assignee: ['me'], environmentId: null,
+      queryParams: { q: null, status: ['CLOSED'], statusId: null, priority: null, assignee: ['me'], environmentId: null,
         reporter: null, testRunId: null, label: ['ui'], createdFrom: '2026-10-01', createdTo: null, page: null },
     }));
   });

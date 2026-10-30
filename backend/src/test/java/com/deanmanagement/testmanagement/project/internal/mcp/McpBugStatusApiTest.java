@@ -10,6 +10,8 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -55,6 +57,15 @@ class McpBugStatusApiTest extends McpToolApiTestSupport {
                 null, "Ready for retest"))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("counts as RESOLVED");
+    }
+
+    @Test
+    void bugsAreListedByProjectStatusName() {
+        bugReportTools.changeBugReportStatus(bug.key(), null, "fix deployed", null, null, "Ready for retest");
+        bugReportTools.createBugReport("Another", Priority.LOW, null, null, null, null, null, null, null, null, null);
+
+        assertThat(bugReportTools.listBugReports(null, null, null, null, null, null, List.of("Ready for retest")).bugReports())
+                .extracting(McpDtos.BugSummary::key).containsExactly(bug.key());
     }
 
     @Test

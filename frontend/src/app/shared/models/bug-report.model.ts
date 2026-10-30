@@ -129,6 +129,8 @@ export interface BugReportQuery {
   createdFrom?: string;
   createdTo?: string;
   label?: string[];
+  /** TM47: the project's own statuses; status filters by category. */
+  statusId?: string[];
   page?: number;
   size?: number;
   sort?: string;
