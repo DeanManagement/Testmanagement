@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -224,6 +225,22 @@ class IssueStateRefresherTest {
         assertThat(callCount.get()).isEqualTo(1);
         assertThat(configRepository.findById(config.getId()).orElseThrow().getLastError())
                 .contains("rejected the configured access token");
+    }
+
+    @Test
+    void aDeletedIssueMarksItsLinkUnknownAndTheBatchGoesOn() {
+        UUID first = linkOnRunWithStatus(TestRunStatus.IN_PROGRESS, "POLL-R7");
+        UUID second = linkOnRunWithStatus(TestRunStatus.IN_PROGRESS, "POLL-R8");
+        responseCode.set(404);
+
+        refresher.refreshProject(config);
+
+        // Every link was asked about: one missing issue says nothing about the others.
+        assertThat(callCount.get()).isEqualTo(2);
+        assertThat(issueLinkRepository.findAllById(List.of(first, second)))
+                .allSatisfy(link -> assertThat(link.getState()).isEqualTo(IssueState.UNKNOWN));
+        // Nor does it say the tracker is broken.
+        assertThat(configRepository.findById(config.getId()).orElseThrow().getLastError()).isNull();
     }
 
     @Test

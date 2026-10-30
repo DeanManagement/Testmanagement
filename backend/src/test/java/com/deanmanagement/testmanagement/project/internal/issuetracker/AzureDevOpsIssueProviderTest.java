@@ -126,6 +126,15 @@ class AzureDevOpsIssueProviderTest {
     }
 
     @Test
+    void aDeletedWorkItemIsNotFoundRatherThanAMissingProject() {
+        server.respond(Response.json(404, "{\"message\":\"TF401232: Work item 41 does not exist\"}"));
+
+        assertThatThrownBy(() -> provider.get(config, "41"))
+                .isInstanceOf(IssueNotFoundException.class)
+                .hasMessageContaining("41");
+    }
+
+    @Test
     void stateComesFromItsCategoryInACustomProcess() {
         server.respond(Response.json(workItem(1, "Binned")), Response.json(CUSTOM_STATES));
         assertThat(provider.get(config, "1").state()).isEqualTo(IssueState.CLOSED);

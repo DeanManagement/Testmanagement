@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.issuetracker;
 
 import com.deanmanagement.testmanagement.project.internal.entity.IssueLink;
+import com.deanmanagement.testmanagement.project.internal.entity.IssueState;
 import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerConfig;
 import com.deanmanagement.testmanagement.project.internal.repository.IssueLinkRepository;
 import com.deanmanagement.testmanagement.project.internal.service.IssueTrackerConfigService;
@@ -66,6 +67,12 @@ public class IssueStateRefresher {
                 link.setStateCheckedAt(Instant.now());
                 issueLinkRepository.save(link);
                 refreshed++;
+            } catch (IssueNotFoundException e) {
+                // Deleted on the tracker: this link's state is unknowable now, the others are fine.
+                log.info("Issue link {} points at an issue that no longer exists: {}", link.getId(), e.getMessage());
+                link.setState(IssueState.UNKNOWN);
+                link.setStateCheckedAt(Instant.now());
+                issueLinkRepository.save(link);
             } catch (UpstreamServiceException e) {
                 // Auth failure or rate limiting affects every link on this project equally, so the
                 // batch stops here instead of repeating the same rejected call dozens of times.

@@ -99,7 +99,7 @@ public class GitHubIssueProvider extends HttpIssueProviderSupport implements Iss
     @Override
     public Issue get(DecryptedConfig config, String externalId) {
         String number = issueNumber(externalId);
-        JsonNode node = getJson(config, issueUrl(config, number));
+        JsonNode node = getIssueJson(config, issueUrl(config, number), externalId);
         // GET /issues/{n} answers for pull requests as well, and one must never be linked as a defect.
         if (isPullRequest(node)) {
             throw new UpstreamServiceException("#" + number + " is a pull request, not an issue");

@@ -119,8 +119,8 @@ public class AzureDevOpsIssueProvider extends HttpIssueProviderSupport implement
     @Override
     public Issue get(DecryptedConfig config, String externalId) {
         String id = issueNumber(externalId);
-        return toIssue(config, getJson(config, base(config) + "/_apis/wit/workitems/" + id + "?fields=" + FIELDS
-                + version(config, "&")));
+        return toIssue(config, getIssueJson(config, base(config) + "/_apis/wit/workitems/" + id + "?fields=" + FIELDS
+                + version(config, "&"), externalId));
     }
 
     /**

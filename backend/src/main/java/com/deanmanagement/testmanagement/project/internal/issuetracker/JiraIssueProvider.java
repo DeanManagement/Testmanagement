@@ -141,7 +141,7 @@ public class JiraIssueProvider extends HttpIssueProviderSupport implements Issue
 
     @Override
     public Issue get(DecryptedConfig config, String externalId) {
-        return toIssue(config, getJson(config, issueUrl(config, externalId.trim())));
+        return toIssue(config, getIssueJson(config, issueUrl(config, externalId.trim()), externalId.trim()));
     }
 
     @Override

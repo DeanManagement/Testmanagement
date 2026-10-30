@@ -81,7 +81,7 @@ public class ForgejoIssueProvider extends HttpIssueProviderSupport implements Is
     @Override
     public Issue get(DecryptedConfig config, String externalId) {
         String index = issueNumber(externalId);
-        return toIssue(config, getJson(config, repoApi(config) + "/issues/" + encodePath(index)));
+        return toIssue(config, getIssueJson(config, repoApi(config) + "/issues/" + encodePath(index), externalId));
     }
 
     @Override

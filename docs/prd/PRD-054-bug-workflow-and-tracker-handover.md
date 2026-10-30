@@ -184,11 +184,9 @@ edits of tracker-owned fields (`RequirementService.refuseSyncedFieldChanges`).
 - **Token lacks permission / wrong work item type:** the provider throws
   `UpstreamServiceException` (existing messages for 401/403 and for the type); nothing is stored,
   the UI shows the message, `configService.recordError` notes it.
-- **Work item deleted remotely:** today the ADO `get` uses `getJson`, whose 404 throws "project
-  not found" — and the refresher then *stops the whole project's batch*. That is an existing defect
-  for result links too. Fix first: ADO `get` uses `getJsonIfFound`; a missing item sets the link
-  state to UNKNOWN with "work item no longer exists", leaves the bug status alone, unlocks status
-  editing and offers Detach.
+- **Work item deleted remotely:** a provider's `get` now throws `IssueNotFoundException` on a 404
+  and the poller marks just that link UNKNOWN (fixed separately, for all providers). For a bug
+  link that leaves the bug status alone, unlocks status editing and offers Detach.
 - **Work item moved to another ADO project:** `followIfMoved` adopts the new id; its duplicate
   check must look at `bug_report_id` for bug links.
 - **Tracker switched to another provider:** the link keeps its provider and is skipped by the
@@ -234,6 +232,5 @@ other links. The same works through `hand_over_bug_report`.
 
 ## Suggested order
 
-Fix the deleted-work-item poll defect (§2.3) on its own first — it affects existing result links.
-Then TM50 for Azure DevOps without TM47 (category mapping only), since it removes the duplicate
+The deleted-work-item poll defect (§2.3) is fixed. Then TM50 for Azure DevOps without TM47 (category mapping only), since it removes the duplicate
 bookkeeping SN does today; then TM47, adding the state mapping table as its last step.

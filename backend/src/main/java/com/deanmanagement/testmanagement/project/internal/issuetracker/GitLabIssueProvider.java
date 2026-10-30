@@ -72,7 +72,7 @@ public class GitLabIssueProvider extends HttpIssueProviderSupport implements Iss
     @Override
     public Issue get(DecryptedConfig config, String externalId) {
         String iid = issueNumber(externalId);
-        return toIssue(config, getJson(config, projectApi(config) + "/issues/" + encodePath(iid)));
+        return toIssue(config, getIssueJson(config, projectApi(config) + "/issues/" + encodePath(iid), externalId));
     }
 
     @Override

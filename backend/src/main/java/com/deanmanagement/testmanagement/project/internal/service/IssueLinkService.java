@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.entity.IssueState;
+import com.deanmanagement.testmanagement.project.internal.issuetracker.IssueNotFoundException;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.CreateIssueLinkRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueLinkResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueSearchResponse;
@@ -147,6 +149,11 @@ public class IssueLinkService {
                             providerRegistry.require(config.getProvider()).get(decrypted, link.getExternalId()));
                     link.setState(issue.state());
                     link.setTitle(truncate(issue.title(), 500));
+                    link.setStateCheckedAt(Instant.now());
+                    issueLinkRepository.save(link);
+                } catch (IssueNotFoundException e) {
+                    // Deleted on the tracker; the result's other links still refresh.
+                    link.setState(IssueState.UNKNOWN);
                     link.setStateCheckedAt(Instant.now());
                     issueLinkRepository.save(link);
                 } catch (RuntimeException e) {

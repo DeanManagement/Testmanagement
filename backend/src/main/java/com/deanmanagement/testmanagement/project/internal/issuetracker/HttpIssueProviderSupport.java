@@ -76,6 +76,16 @@ abstract class HttpIssueProviderSupport {
         return send(request(config, url).GET().build(), config);
     }
 
+    /**
+     * Looks one issue up. A 404 here means that issue is gone, not that the project is: the
+     * project was checked when the tracker was saved, and {@link #getJson} would report it as
+     * missing and stop every later lookup in the poll.
+     */
+    protected JsonNode getIssueJson(IssueTrackerProvider.DecryptedConfig config, String url, String reference) {
+        return getJsonIfFound(config, url).orElseThrow(() -> new IssueNotFoundException(providerName() + " issue "
+                + reference + " no longer exists, or the token cannot see it"));
+    }
+
     protected JsonNode postJson(IssueTrackerProvider.DecryptedConfig config, String url, Map<String, Object> payload) {
         HttpRequest httpRequest = request(config, url)
                 .header("Content-Type", "application/json")
