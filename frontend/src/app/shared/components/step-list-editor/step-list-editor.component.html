@@ -55,12 +55,12 @@
           <span class="step-number">{{ i + 1 }}</span>
           <mat-form-field appearance="outline" class="step-action">
             <mat-label>{{ 'testCase.form.action' | translate }}</mat-label>
-            <input matInput formControlName="action" [attr.data-test-id]="'test-case-step-action-' + i" />
+            <textarea matInput formControlName="action" rows="2" [attr.data-test-id]="'test-case-step-action-' + i"></textarea>
             <mat-error><app-field-error [control]="step.get('action')!" /></mat-error>
           </mat-form-field>
           <mat-form-field appearance="outline" class="step-expected">
             <mat-label>{{ 'testCase.form.expectedResult' | translate }}</mat-label>
-            <input matInput formControlName="expectedResult" [attr.data-test-id]="'test-case-step-expected-' + i" />
+            <textarea matInput formControlName="expectedResult" rows="2" [attr.data-test-id]="'test-case-step-expected-' + i"></textarea>
           </mat-form-field>
           <button mat-icon-button type="button" (click)="removeStep(i)" class="remove-step" [attr.data-test-id]="'test-case-remove-step-' + i" [attr.aria-label]="'Remove step ' + (i + 1)">
             <mat-icon>close</mat-icon>

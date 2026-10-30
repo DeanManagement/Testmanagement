@@ -31,6 +31,17 @@ describe('StepListEditorComponent', () => {
     return fixture;
   }
 
+  it('should keep the line breaks of a multi-line action and expected result', async () => {
+    const steps = fb.array([localStepGroup(fb, { action: 'Open page\nSign in', expectedResult: 'Shown\nLogged in' })]);
+    const fixture = render(steps);
+    await fixture.whenStable();
+    const el = fixture.nativeElement as HTMLElement;
+
+    const action = el.querySelector('[data-test-id="test-case-step-action-0"]') as HTMLTextAreaElement;
+    const expected = el.querySelector('[data-test-id="test-case-step-expected-0"]') as HTMLTextAreaElement;
+    expect([action.value, expected.value]).toEqual(['Open page\nSign in', 'Shown\nLogged in']);
+  });
+
   it('should show a reference as one collapsed row that expands read-only', () => {
     const steps = fb.array([localStepGroup(fb, { action: 'Reset' }),
       referenceStepGroup(fb, 'login', 'Log in', [blockStep('Open page'), blockStep('Sign in')])]);
