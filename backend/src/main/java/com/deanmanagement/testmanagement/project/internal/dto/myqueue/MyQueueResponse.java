@@ -67,6 +67,8 @@ public record MyQueueResponse(
             String projectKey,
             String projectName,
             BugReportStatus status,
+            /* TM47: the project's own status name; null for a bug without one. */
+            String statusName,
             Instant updatedAt
     ) {}
 

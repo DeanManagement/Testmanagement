@@ -60,6 +60,7 @@ public class WatchedItemsService {
                 plan.getId(),
                 plan.getName(),
                 plan.getStatus().name(),
+                null,
                 plan.getProject().getId(),
                 watcher.getCreatedAt()
         );
@@ -71,6 +72,7 @@ public class WatchedItemsService {
                 run.getId(),
                 run.getName(),
                 run.getStatus().name(),
+                null,
                 run.getProject().getId(),
                 watcher.getCreatedAt()
         );
@@ -82,6 +84,7 @@ public class WatchedItemsService {
                 bug.getId(),
                 bug.getTitle(),
                 bug.getStatus().name(),
+                bug.getCustomStatus() != null ? bug.getCustomStatus().getName() : null,
                 bug.getProject().getId(),
                 watcher.getCreatedAt()
         );

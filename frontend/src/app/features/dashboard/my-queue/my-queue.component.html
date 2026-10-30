@@ -101,7 +101,9 @@
                     <span class="project-key">{{ item.projectKey }}</span>
                     <span class="item-title">{{ item.title }}</span>
                   </a>
-                  <span class="meta">{{ item.updatedAt | localizedDate }}</span>
+                  <span class="meta" data-test-id="my-queue-bug-status">
+                    {{ item.statusName ?? ('bugReport.status.' + item.status | translate) }} · {{ item.updatedAt | localizedDate }}
+                  </span>
                 </li>
               }
             </ul>

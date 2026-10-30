@@ -54,6 +54,8 @@ export interface StaleBugReportItem {
   projectKey: string;
   projectName: string;
   status: BugReportStatus;
+  /** TM47: the project's own status name; null for a bug without one. */
+  statusName?: string | null;
   updatedAt: string;
 }
 

@@ -47,6 +47,7 @@ class BugStatusApiTest {
     @Autowired private ProjectRepository projectRepository;
     @Autowired private ProjectMemberRepository memberRepository;
     @Autowired private BugStatusService bugStatusService;
+    @Autowired private jakarta.persistence.EntityManager entityManager;
 
     private String admin;
     private String tester;
@@ -177,6 +178,38 @@ class BugStatusApiTest {
             mockMvc.perform(post(url("/bug-statuses")).with(user(tester)).contentType(MediaType.APPLICATION_JSON)
                             .content("{\"name\":\"Mine\",\"color\":\"#0ea5e9\",\"category\":\"OPEN\"}"))
                     .andExpect(status().isForbidden());
+        }
+    }
+
+    /** The project status name shows wherever a bug is listed for a person. */
+    @Nested
+    class StatusNameElsewhere {
+
+        @Test
+        void watchedItemsShowTheProjectStatusName() throws Exception {
+            addStatus("Ready for retest", "RESOLVED");
+            String bug = fileBug();
+            moveTo(bug, statusId("Ready for retest"), "").andExpect(status().isOk());
+            mockMvc.perform(post("/api/watchers").with(user(tester)).contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"entityType\":\"BUG_REPORT\",\"entityId\":\"" + bug + "\"}"));
+
+            mockMvc.perform(get("/api/watchers/my-items").with(user(tester)))
+                    .andExpect(jsonPath("$[0].status").value("RESOLVED"))
+                    .andExpect(jsonPath("$[0].statusName").value("Ready for retest"));
+        }
+
+        @Test
+        void myQueueShowsAStaleBugsProjectStatusName() throws Exception {
+            String bug = fileBug();
+            entityManager.flush();
+            entityManager.createNativeQuery("UPDATE bug_reports SET updated_at = :old WHERE id = :id")
+                    .setParameter("old", java.sql.Timestamp.from(java.time.Instant.now().minus(java.time.Duration.ofDays(30))))
+                    .setParameter("id", UUID.fromString(bug))
+                    .executeUpdate();
+            entityManager.clear();
+
+            mockMvc.perform(get("/api/me/queue").with(user(tester)))
+                    .andExpect(jsonPath("$.staleBugReports[0].statusName").value("New"));
         }
     }
 

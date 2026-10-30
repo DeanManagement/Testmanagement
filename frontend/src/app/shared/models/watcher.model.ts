@@ -10,6 +10,8 @@ export interface WatchedItem {
   entityId: string;
   name: string;
   status: string;
+  /** TM47: a bug's own status name; null for plans, runs and bugs without one. */
+  statusName?: string | null;
   projectId: string;
   watchedAt: string;
 }

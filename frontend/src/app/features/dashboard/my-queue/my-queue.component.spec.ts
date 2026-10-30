@@ -77,6 +77,18 @@ describe('MyQueueComponent', () => {
     expect(fixture.nativeElement.querySelector('[data-test-id="my-queue"]')).toBeNull();
   });
 
+  it('shows a stale bug by its project status name, or its category without one', async () => {
+    const stale = { title: 'Crash', projectId: 'p', projectKey: 'P', projectName: 'Proj', updatedAt: '2026-10-01T00:00:00Z' };
+    await respondWith({ ...EMPTY, staleBugReports: [
+      { ...stale, id: 'b1', status: 'RESOLVED', statusName: 'Ready for retest' },
+      { ...stale, id: 'b2', status: 'OPEN', statusName: null },
+    ] });
+
+    const statuses = [...fixture.nativeElement.querySelectorAll('[data-test-id="my-queue-bug-status"]')]
+      .map((el: Element) => el.textContent?.trim().split(' · ')[0]);
+    expect(statuses).toEqual(['Ready for retest', 'bugReport.status.OPEN']);
+  });
+
   it('lists cases awaiting my review', async () => {
     await respondWith({
       ...EMPTY,

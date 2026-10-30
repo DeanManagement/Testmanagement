@@ -105,6 +105,7 @@ public class MyQueueService {
                         b.getProject().getKey(),
                         b.getProject().getName(),
                         b.getStatus(),
+                        b.getCustomStatus() != null ? b.getCustomStatus().getName() : null,
                         b.getUpdatedAt()))
                 .toList();
 

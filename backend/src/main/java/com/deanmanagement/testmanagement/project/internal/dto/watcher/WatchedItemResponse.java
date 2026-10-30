@@ -10,6 +10,8 @@ public record WatchedItemResponse(
         UUID entityId,
         String name,
         String status,
+        /* TM47: a bug's own status name; null for plans, runs and bugs without one. */
+        String statusName,
         UUID projectId,
         Instant watchedAt
 ) {}
