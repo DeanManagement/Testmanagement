@@ -5,7 +5,10 @@ import com.deanmanagement.testmanagement.project.internal.dto.comment.CommentRes
 import com.deanmanagement.testmanagement.project.internal.dto.comment.CreateCommentRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.comment.UpdateCommentRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.CommentEntityType;
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectMember;
+import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
+import com.deanmanagement.testmanagement.project.internal.service.BugReportService;
 import com.deanmanagement.testmanagement.project.internal.service.CommentService;
 import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
 /**
  * The discussion thread on a test case or on one result of a run.
@@ -34,6 +38,8 @@ public class CommentTools {
     private final McpCallerContext callerContext;
     private final CommentService commentService;
     private final TestCaseRepository testCaseRepository;
+    private final ProjectMemberRepository projectMemberRepository;
+    private final BugReportService bugReportService;
     private final McpWriteThrottle writeThrottle;
     private final McpValidator validator;
 
@@ -42,9 +48,9 @@ public class CommentTools {
     @McpTool(
             name = "list_comments",
             description = """
-                    The discussion on a test case, or on one result of a test run, oldest first.
-                    Pass exactly one of testCaseIdOrKey or resultId (the result's id from
-                    get_test_run).
+                    The discussion on a test case, a bug report, or one result of a test run,
+                    oldest first. Pass exactly one of testCaseIdOrKey, bugIdOrKey or resultId (the
+                    result's id from get_test_run).
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
@@ -53,10 +59,12 @@ public class CommentTools {
             @McpToolParam(description = "Test case key (PROJ-12) or UUID", required = false)
             String testCaseIdOrKey,
             @McpToolParam(description = "Result UUID from get_test_run", required = false)
-            UUID resultId) {
+            UUID resultId,
+            @McpToolParam(description = "Bug report key (PROJ-BUG-3) or UUID", required = false)
+            String bugIdOrKey) {
 
         var caller = callerContext.require();
-        Target target = target(caller.projectId(), testCaseIdOrKey, resultId);
+        Target target = target(caller.projectId(), testCaseIdOrKey, resultId, bugIdOrKey);
         List<McpDtos.Comment> comments =
                 commentService.findByEntity(caller.projectId(), target.type(), target.id()).stream()
                         .map(CommentTools::toComment)
@@ -67,9 +75,11 @@ public class CommentTools {
     @McpTool(
             name = "add_comment",
             description = """
-                    Add a comment to the discussion on a test case, or on one result of a test run
-                    — for a question or a note to the humans on the project. Max 2000 characters.
-                    Pass exactly one of testCaseIdOrKey or resultId.
+                    Add a comment to the discussion on a test case, a bug report, or one result of
+                    a test run — for a question or a note to the humans on the project. Max 2000
+                    characters. Pass exactly one of testCaseIdOrKey, bugIdOrKey or resultId.
+                    On a bug report, mention takes the emails of project members to notify; the
+                    bug's watchers are notified either way.
                     To record what you observed while executing, use the comment argument of
                     record_test_result instead; that is the result's evidence, this is the thread.
                     """,
@@ -81,15 +91,21 @@ public class CommentTools {
             @McpToolParam(description = "Test case key (PROJ-12) or UUID", required = false)
             String testCaseIdOrKey,
             @McpToolParam(description = "Result UUID from get_test_run", required = false)
-            UUID resultId) {
+            UUID resultId,
+            @McpToolParam(description = "Bug report key (PROJ-BUG-3) or UUID", required = false)
+            String bugIdOrKey,
+            @McpToolParam(description = "Bug reports only: emails of project members to notify", required = false)
+            List<String> mention) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
 
-        var request = new CreateCommentRequest(content);
+        List<UUID> mentioned = mention == null ? null
+                : mention.stream().map(email -> memberByEmail(caller.projectId(), email)).toList();
+        var request = new CreateCommentRequest(content, mentioned);
         validator.validate(request);
 
-        Target target = target(caller.projectId(), testCaseIdOrKey, resultId);
+        Target target = target(caller.projectId(), testCaseIdOrKey, resultId, bugIdOrKey);
         return toComment(commentService.create(caller.projectId(), target.type(), target.id(),
                 request, caller.userId()));
     }
@@ -145,10 +161,15 @@ public class CommentTools {
         }
     }
 
-    private Target target(UUID projectId, String testCaseIdOrKey, UUID resultId) {
+    private Target target(UUID projectId, String testCaseIdOrKey, UUID resultId, String bugIdOrKey) {
         boolean hasTestCase = testCaseIdOrKey != null && !testCaseIdOrKey.isBlank();
-        if (hasTestCase == (resultId != null)) {
-            throw new McpToolException("Pass exactly one of testCaseIdOrKey or resultId.");
+        boolean hasBug = bugIdOrKey != null && !bugIdOrKey.isBlank();
+        long given = Stream.of(hasTestCase, resultId != null, hasBug).filter(Boolean::booleanValue).count();
+        if (given != 1) {
+            throw new McpToolException("Pass exactly one of testCaseIdOrKey, bugIdOrKey or resultId.");
+        }
+        if (hasBug) {
+            return new Target(CommentEntityType.BUG_REPORT, bugReportService.findById(projectId, bugIdOrKey).id());
         }
         if (hasTestCase) {
             return new Target(CommentEntityType.TEST_CASE,
@@ -157,6 +178,16 @@ public class CommentTools {
         }
         // CommentService checks the result belongs to this project and reports not-found otherwise.
         return new Target(CommentEntityType.TEST_RESULT, resultId);
+    }
+
+    private UUID memberByEmail(UUID projectId, String email) {
+        return projectMemberRepository.findByProjectId(projectId).stream()
+                .map(ProjectMember::getUser)
+                .filter(u -> u.getEmail().equalsIgnoreCase(email.trim()))
+                .findFirst()
+                .orElseThrow(() -> new McpToolException("No member of this project has the email " + email
+                        + ". Only project members can be mentioned."))
+                .getId();
     }
 
     private static McpDtos.Comment toComment(CommentResponse comment) {

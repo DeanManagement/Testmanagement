@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -50,9 +51,26 @@ public class NotificationDispatcher {
         if (watchable == null || entityId == null) {
             return;
         }
+        notifyWatchers(projectId, actorId, action, watchable, entityId, entityName, Set.of());
+    }
 
-        List<UUID> candidateIds = watcherRepository.findByEntityTypeAndEntityId(watchable, entityId).stream()
+    /** Notifies the object's watchers, except {@code excluded} (e.g. those already told about it otherwise). */
+    public void notifyWatchers(UUID projectId, UUID actorId, AuditAction action, WatchableEntityType entityType,
+                               UUID entityId, String entityName, Set<UUID> excluded) {
+        List<UUID> watcherIds = watcherRepository.findByEntityTypeAndEntityId(entityType, entityId).stream()
                 .map(EntityWatcher::getUserId)
+                .filter(userId -> !excluded.contains(userId))
+                .toList();
+        notifyUsers(projectId, actorId, action, entityType, entityId, entityName, watcherIds);
+    }
+
+    /**
+     * Notifies these users about the object whether or not they watch it — a comment's mentions
+     * (TM44). Membership, preferences and de-duplication apply as for watchers.
+     */
+    public void notifyUsers(UUID projectId, UUID actorId, AuditAction action, WatchableEntityType watchable,
+                            UUID entityId, String entityName, Collection<UUID> userIds) {
+        List<UUID> candidateIds = userIds.stream()
                 .filter(userId -> !userId.equals(actorId)) // never notify the actor of their own action
                 .distinct()
                 .toList();

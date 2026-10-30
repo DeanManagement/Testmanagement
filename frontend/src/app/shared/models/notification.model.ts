@@ -1,6 +1,6 @@
 export type NotificationAction =
   | 'CREATED' | 'UPDATED' | 'DELETED' | 'STATUS_CHANGED'
-  | 'COMPLETED' | 'REOPENED' | 'CLONED' | 'MOVED';
+  | 'COMPLETED' | 'REOPENED' | 'CLONED' | 'MOVED' | 'COMMENTED' | 'MENTIONED';
 
 export type WatchableEntityType = 'TEST_PLAN' | 'TEST_RUN' | 'BUG_REPORT';
 
@@ -23,5 +23,5 @@ export interface NotificationPreference {
 }
 
 export const NOTIFICATION_ACTIONS: NotificationAction[] = [
-  'CREATED', 'UPDATED', 'DELETED', 'STATUS_CHANGED', 'COMPLETED', 'REOPENED', 'CLONED', 'MOVED',
+  'CREATED', 'UPDATED', 'DELETED', 'STATUS_CHANGED', 'COMPLETED', 'REOPENED', 'CLONED', 'MOVED', 'COMMENTED', 'MENTIONED',
 ];

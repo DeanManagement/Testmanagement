@@ -8,6 +8,13 @@
   width: 100%;
 }
 
+.mention-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: -8px;
+}
+
 .comment-form-actions {
   display: flex;
   justify-content: flex-end;

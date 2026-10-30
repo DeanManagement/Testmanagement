@@ -8,5 +8,9 @@ public enum AuditAction {
     COMPLETED,
     REOPENED,
     CLONED,
-    MOVED
+    MOVED,
+    /** Notification only (TM44): someone commented on a watched bug. Comments are audited as COMMENT CREATED. */
+    COMMENTED,
+    /** Notification only (TM44): someone named this user in a comment. */
+    MENTIONED
 }

@@ -26,7 +26,9 @@
         "COMPLETED": "Abgeschlossen",
         "REOPENED": "Wiedereröffnet",
         "CLONED": "Geklont",
-        "MOVED": "Verschoben"
+        "MOVED": "Verschoben",
+        "COMMENTED": "Kommentiert",
+        "MENTIONED": "Erwähnt"
       }
     }
   },
@@ -684,7 +686,9 @@
       "COMPLETED": "{{user}} hat {{object}} abgeschlossen",
       "REOPENED": "{{user}} hat {{object}} wiedereröffnet",
       "CLONED": "{{user}} hat {{object}} geklont",
-      "MOVED": "{{user}} hat {{object}} verschoben"
+      "MOVED": "{{user}} hat {{object}} verschoben",
+      "COMMENTED": "{{user}} hat kommentiert: {{bare}}",
+      "MENTIONED": "{{user}} hat Sie erwähnt: {{bare}}"
     },
     "named": "{{type}} «{{name}}»",
     "export": "Als CSV exportieren",
@@ -708,7 +712,9 @@
       "COMPLETED": "Abgeschlossen",
       "REOPENED": "Wieder geöffnet",
       "CLONED": "Kopiert",
-      "MOVED": "Verschoben"
+      "MOVED": "Verschoben",
+      "COMMENTED": "Kommentiert",
+      "MENTIONED": "Erwähnt"
     },
     "fields": {
       "title": "Titel",
@@ -839,7 +845,8 @@
     "save": "Speichern",
     "cancel": "Abbrechen",
     "edited": "bearbeitet",
-    "charCount": "{{count}} / {{max}}"
+    "charCount": "{{count}} / {{max}}",
+    "mentionHint": "Mit @ jemanden erwähnen"
   },
   "bugReport": {
     "list": {

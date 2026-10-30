@@ -8,6 +8,9 @@ import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType
 import com.deanmanagement.testmanagement.project.internal.entity.Comment;
 import com.deanmanagement.testmanagement.project.internal.entity.CommentEntityType;
 import com.deanmanagement.testmanagement.project.internal.entity.ProjectRole;
+import com.deanmanagement.testmanagement.project.internal.entity.WatchableEntityType;
+import com.deanmanagement.testmanagement.project.internal.notification.NotificationDispatcher;
+import com.deanmanagement.testmanagement.project.internal.repository.BugReportRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.CommentRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
@@ -17,10 +20,14 @@ import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundExcept
 import com.deanmanagement.testmanagement.user.User;
 import com.deanmanagement.testmanagement.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -28,9 +35,13 @@ import java.util.UUID;
 @Transactional(readOnly = true)
 public class CommentService {
 
+    private static final Logger log = LoggerFactory.getLogger(CommentService.class);
+
     private final CommentRepository commentRepository;
     private final TestCaseRepository testCaseRepository;
     private final TestResultRepository testResultRepository;
+    private final BugReportRepository bugReportRepository;
+    private final NotificationDispatcher notificationDispatcher;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserService userService;
     private final AuditService auditService;
@@ -45,7 +56,8 @@ public class CommentService {
     @Transactional
     public CommentResponse create(UUID projectId, CommentEntityType entityType, UUID entityId,
                                   CreateCommentRequest request, UUID userId) {
-        validateEntityBelongsToProject(projectId, entityType, entityId);
+        CommentPlace place = placeOf(projectId, entityType, entityId);
+        Set<UUID> mentioned = requireMentionable(projectId, entityType, request);
 
         Comment comment = new Comment();
         comment.setContent(request.content());
@@ -56,8 +68,40 @@ public class CommentService {
         comment = commentRepository.save(comment);
 
         audit(projectId, userId, AuditAction.CREATED, comment);
+        if (entityType == CommentEntityType.BUG_REPORT) {
+            notifyAboutBugComment(projectId, userId, entityId, place.name(), mentioned);
+        }
 
         return toResponse(comment);
+    }
+
+    /** Mentions are members of this project, and only on bug reports: the one commented type people watch. */
+    private Set<UUID> requireMentionable(UUID projectId, CommentEntityType entityType, CreateCommentRequest request) {
+        Set<UUID> mentioned = new HashSet<>(request.mentions());
+        if (mentioned.isEmpty()) {
+            return mentioned;
+        }
+        if (entityType != CommentEntityType.BUG_REPORT) {
+            throw new IllegalArgumentException("Mentions are only supported in bug report comments");
+        }
+        Set<UUID> members = projectMemberRepository.findMemberUserIds(projectId, mentioned);
+        mentioned.stream().filter(id -> !members.contains(id)).findFirst().ifPresent(outsider -> {
+            throw new IllegalArgumentException("User " + outsider + " is not a member of this project");
+        });
+        return mentioned;
+    }
+
+    /** Mentioned people hear about it as a mention, the bug's other watchers as a comment (TM44). */
+    private void notifyAboutBugComment(UUID projectId, UUID actorId, UUID bugId, String bugName, Set<UUID> mentioned) {
+        // Like AuditService: a notification problem never fails the comment.
+        try {
+            notificationDispatcher.notifyUsers(projectId, actorId, AuditAction.MENTIONED,
+                    WatchableEntityType.BUG_REPORT, bugId, bugName, mentioned);
+            notificationDispatcher.notifyWatchers(projectId, actorId, AuditAction.COMMENTED,
+                    WatchableEntityType.BUG_REPORT, bugId, bugName, mentioned);
+        } catch (RuntimeException e) {
+            log.warn("Comment notifications failed for bug report {}: {}", bugId, e.getMessage());
+        }
     }
 
     @Transactional
@@ -136,6 +180,12 @@ public class CommentService {
                 var run = testResult.getTestRun();
                 yield new CommentPlace(new AuditParent(AuditEntityType.TEST_RUN, run.getId()),
                         run.getName() + " · " + testResult.getTestCase().getTitle());
+            }
+            case BUG_REPORT -> {
+                var bug = bugReportRepository.findByIdAndProjectIdWithDetails(entityId, projectId)
+                        .orElseThrow(() -> new ResourceNotFoundException("BugReport", entityId));
+                yield new CommentPlace(new AuditParent(AuditEntityType.BUG_REPORT, bug.getId()),
+                        BugReportService.label(bug));
             }
         };
     }

@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Base64;
+import java.util.List;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -23,6 +24,7 @@ class McpBugMaintenanceToolsApiTest extends McpToolApiTestSupport {
     @Autowired private BugReportTools bugReportTools;
     @Autowired private BugReportMaintenanceTools maintenanceTools;
     @Autowired private ProjectService projectService;
+    @Autowired private CommentTools commentTools;
 
     private McpDtos.BugDetail bug;
 
@@ -44,6 +46,22 @@ class McpBugMaintenanceToolsApiTest extends McpToolApiTestSupport {
         assertThat(updated.priority()).isEqualTo(Priority.CRITICAL);
         assertThat(updated.stepsToReproduce()).isEqualTo("1. Pay");
         assertThat(updated.environment()).isEqualTo("staging");
+    }
+
+    @Test
+    void aBugHasADiscussion() {
+        commentTools.addComment("Reproduced on staging", null, null, bug.key(), null);
+
+        assertThat(commentTools.listComments(null, null, bug.key()).comments())
+                .extracting(McpDtos.Comment::content).containsExactly("Reproduced on staging");
+    }
+
+    @Test
+    void mentioningSomeoneWhoIsNotAMemberIsRefused() {
+        assertThatThrownBy(() -> commentTools.addComment("Please look", null, null, bug.key(),
+                List.of("nobody@test.local")))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("nobody@test.local");
     }
 
     @Test

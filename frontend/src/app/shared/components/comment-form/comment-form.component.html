@@ -5,9 +5,26 @@
       [(ngModel)]="content"
       [maxlength]="maxLength"
       rows="3"
+      (input)="onInput()"
+      (keydown)="onKeydown($event)"
       data-test-id="comment-textarea"></textarea>
+    @if (mentionCandidates.length > 0) {
+      <mat-hint>{{ 'comment.mentionHint' | translate }}</mat-hint>
+    }
     <mat-hint align="end">{{ content.length }} / {{ maxLength }}</mat-hint>
   </mat-form-field>
+  @if (suggestions.length > 0) {
+    <div class="mention-suggestions" role="listbox" [attr.aria-label]="'comment.mentionHint' | translate" data-test-id="comment-mention-suggestions">
+      @for (candidate of suggestions; track candidate.userId) {
+        <button mat-button type="button" role="option"
+          (mousedown)="$event.preventDefault()"
+          (click)="pick(candidate)"
+          [attr.data-test-id]="'comment-mention-' + candidate.userId">
+          {{ candidate.displayName }}
+        </button>
+      }
+    </div>
+  }
   <div class="comment-form-actions">
     @if (isEditing) {
       <button mat-stroked-button (click)="onCancel()" data-test-id="comment-cancel-btn">

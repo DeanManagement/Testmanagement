@@ -1,4 +1,4 @@
-export type CommentEntityType = 'TEST_CASE' | 'TEST_RESULT';
+export type CommentEntityType = 'TEST_CASE' | 'TEST_RESULT' | 'BUG_REPORT';
 
 export interface Comment {
   id: string;
@@ -15,6 +15,14 @@ export interface Comment {
 
 export interface CreateCommentRequest {
   content: string;
+  /** Project members to notify; bug report comments only (TM44). */
+  mentionedUserIds?: string[];
+}
+
+/** Someone the comment form offers after an "@". */
+export interface MentionCandidate {
+  userId: string;
+  displayName: string;
 }
 
 export interface UpdateCommentRequest {

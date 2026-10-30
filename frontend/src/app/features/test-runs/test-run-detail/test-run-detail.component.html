@@ -429,13 +429,13 @@
                   <app-comment-form
                     [initialContent]="editingComment.content"
                     [isEditing]="true"
-                    (submitComment)="saveEditComment($event)"
+                    (submitComment)="saveEditComment($event.content)"
                     (cancelEdit)="cancelEditComment()"
                   ></app-comment-form>
                 } @else {
                   <app-comment-form
                     #addCommentForm
-                    (submitComment)="addResultComment($event)"
+                    (submitComment)="addResultComment($event.content)"
                   ></app-comment-form>
                 }
               </div>

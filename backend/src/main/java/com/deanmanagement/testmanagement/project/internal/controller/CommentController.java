@@ -71,6 +71,25 @@ public class CommentController {
         return commentService.create(projectId, CommentEntityType.TEST_RESULT, resultId, request, userId);
     }
 
+    @GetMapping("/bug-reports/{bugReportId}/comments")
+    @RequireProjectRole
+    public List<CommentResponse> getBugReportComments(@PathVariable UUID projectId,
+                                                      @PathVariable UUID bugReportId) {
+        return commentService.findByEntity(projectId, CommentEntityType.BUG_REPORT, bugReportId);
+    }
+
+    /** Open to viewers too (TM44): a bug's discussion is where stakeholders ask and decide. */
+    @PostMapping("/bug-reports/{bugReportId}/comments")
+    @RequireProjectRole
+    @ResponseStatus(HttpStatus.CREATED)
+    public CommentResponse createBugReportComment(@PathVariable UUID projectId,
+                                                  @PathVariable UUID bugReportId,
+                                                  @Valid @RequestBody CreateCommentRequest request,
+                                                  Authentication authentication) {
+        UUID userId = authentication != null ? UUID.fromString(authentication.getName()) : null;
+        return commentService.create(projectId, CommentEntityType.BUG_REPORT, bugReportId, request, userId);
+    }
+
     @PutMapping("/comments/{commentId}")
     @RequireProjectRole
     public CommentResponse updateComment(@PathVariable UUID projectId,

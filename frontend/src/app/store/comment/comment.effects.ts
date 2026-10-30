@@ -2,10 +2,11 @@ import { Injectable, inject } from '@angular/core';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TranslateService } from '@ngx-translate/core';
-import { of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 import { CommentApiService } from '../../core/services/comment-api.service';
 import { CommentActions } from './comment.actions';
+import { Comment, CommentEntityType, CreateCommentRequest } from '../../shared/models/comment.model';
 
 @Injectable()
 export class CommentEffects {
@@ -18,10 +19,7 @@ export class CommentEffects {
     this.actions$.pipe(
       ofType(CommentActions.loadComments),
       mergeMap(({ projectId, entityType, entityId, runId }) => {
-        const request$ = entityType === 'TEST_CASE'
-          ? this.commentApi.getTestCaseComments(projectId, entityId)
-          : this.commentApi.getTestResultComments(projectId, runId!, entityId);
-        return request$.pipe(
+        return this.fetchComments(projectId, entityType, entityId, runId).pipe(
           map((comments) => CommentActions.loadCommentsSuccess({ comments })),
           catchError((error) =>
             of(CommentActions.loadCommentsFailure({ error: error.message }))
@@ -35,10 +33,7 @@ export class CommentEffects {
     this.actions$.pipe(
       ofType(CommentActions.createComment),
       mergeMap(({ projectId, entityType, entityId, request, runId }) => {
-        const request$ = entityType === 'TEST_CASE'
-          ? this.commentApi.createTestCaseComment(projectId, entityId, request)
-          : this.commentApi.createTestResultComment(projectId, runId!, entityId, request);
-        return request$.pipe(
+        return this.postComment(projectId, entityType, entityId, request, runId).pipe(
           map((comment) => CommentActions.createCommentSuccess({ comment })),
           catchError((error) =>
             of(CommentActions.createCommentFailure({ error: error.message }))
@@ -93,4 +88,27 @@ export class CommentEffects {
       ),
     { dispatch: false }
   );
+
+  private fetchComments(projectId: string, entityType: CommentEntityType, entityId: string, runId?: string): Observable<Comment[]> {
+    switch (entityType) {
+      case 'TEST_CASE':
+        return this.commentApi.getTestCaseComments(projectId, entityId);
+      case 'TEST_RESULT':
+        return this.commentApi.getTestResultComments(projectId, runId!, entityId);
+      case 'BUG_REPORT':
+        return this.commentApi.getBugReportComments(projectId, entityId);
+    }
+  }
+
+  private postComment(projectId: string, entityType: CommentEntityType, entityId: string,
+                      request: CreateCommentRequest, runId?: string): Observable<Comment> {
+    switch (entityType) {
+      case 'TEST_CASE':
+        return this.commentApi.createTestCaseComment(projectId, entityId, request);
+      case 'TEST_RESULT':
+        return this.commentApi.createTestResultComment(projectId, runId!, entityId, request);
+      case 'BUG_REPORT':
+        return this.commentApi.createBugReportComment(projectId, entityId, request);
+    }
+  }
 }

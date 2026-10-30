@@ -213,9 +213,9 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
 
-        commentTools.addComment("Is the SSO path in scope?", login.key(), null);
+        commentTools.addComment("Is the SSO path in scope?", login.key(), null, null, null);
 
-        McpDtos.CommentList thread = commentTools.listComments(login.key(), null);
+        McpDtos.CommentList thread = commentTools.listComments(login.key(), null, null);
         assertThat(thread.total()).isEqualTo(1);
         assertThat(thread.comments().getFirst().content()).isEqualTo("Is the SSO path in scope?");
     }
@@ -227,28 +227,28 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         McpDtos.CreatedTestRun run = runOf(login);
         UUID resultId = testRunReadTools.getTestRun(run.key(), null).results().getFirst().id();
 
-        commentTools.addComment("Flaky on staging only", null, resultId);
+        commentTools.addComment("Flaky on staging only", null, resultId, null, null);
 
-        assertThat(commentTools.listComments(null, resultId).total()).isEqualTo(1);
-        assertThat(commentTools.listComments(login.key(), null).total()).isZero();
+        assertThat(commentTools.listComments(null, resultId, null).total()).isEqualTo(1);
+        assertThat(commentTools.listComments(login.key(), null, null).total()).isZero();
     }
 
     @Test
     void anAgentCanEditAndDeleteItsOwnComment() {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
-        UUID commentId = commentTools.addComment("Draft question", login.key(), null).id();
+        UUID commentId = commentTools.addComment("Draft question", login.key(), null, null, null).id();
 
         assertThat(commentTools.updateComment(commentId, "Final question").content()).isEqualTo("Final question");
         commentTools.deleteComment(commentId);
-        assertThat(commentTools.listComments(login.key(), null).total()).isZero();
+        assertThat(commentTools.listComments(login.key(), null, null).total()).isZero();
     }
 
     @Test
     void someoneElsesCommentCannotBeEditedOrDeleted() {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
-        UUID commentId = commentTools.addComment("Mine", login.key(), null).id();
+        UUID commentId = commentTools.addComment("Mine", login.key(), null, null, null).id();
         authenticateAs(project, ProjectRole.TESTER);
 
         assertThatThrownBy(() -> commentTools.updateComment(commentId, "Yours now"))
@@ -256,7 +256,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
                 .hasMessageContaining("Only comments");
         assertThatThrownBy(() -> commentTools.deleteComment(commentId))
                 .isInstanceOf(McpToolException.class);
-        assertThat(commentTools.listComments(login.key(), null).comments().getFirst().content()).isEqualTo("Mine");
+        assertThat(commentTools.listComments(login.key(), null, null).comments().getFirst().content()).isEqualTo("Mine");
     }
 
     // --- environments (TM34) ---------------------------------------------------------------
@@ -284,10 +284,10 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
 
-        assertThatThrownBy(() -> commentTools.addComment("hi", null, null))
+        assertThatThrownBy(() -> commentTools.addComment("hi", null, null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("exactly one");
-        assertThatThrownBy(() -> commentTools.addComment("hi", login.key(), UUID.randomUUID()))
+        assertThatThrownBy(() -> commentTools.addComment("hi", login.key(), UUID.randomUUID(), null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("exactly one");
     }
@@ -297,7 +297,7 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
 
-        assertThatThrownBy(() -> commentTools.addComment(" ", login.key(), null))
+        assertThatThrownBy(() -> commentTools.addComment(" ", login.key(), null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("content");
     }
@@ -311,9 +311,9 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
         SecurityContextHolder.clearContext();
         authenticateAs(project, ProjectRole.TESTER);
 
-        assertThatThrownBy(() -> commentTools.addComment("hello", null, foreignResult))
+        assertThatThrownBy(() -> commentTools.addComment("hello", null, foreignResult, null, null))
                 .isInstanceOf(ResourceNotFoundException.class);
-        assertThatThrownBy(() -> commentTools.listComments(null, foreignResult))
+        assertThatThrownBy(() -> commentTools.listComments(null, foreignResult, null))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -321,12 +321,12 @@ class McpRunMaintenanceToolsApiTest extends McpToolApiTestSupport {
     void aViewerKeyCanReadCommentsButNotAddThem() {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.CreatedTestCase login = createCase("Login");
-        commentTools.addComment("note", login.key(), null);
+        commentTools.addComment("note", login.key(), null, null, null);
         SecurityContextHolder.clearContext();
         authenticateAs(project, ProjectRole.VIEWER);
 
-        assertThat(commentTools.listComments(login.key(), null).total()).isEqualTo(1);
-        assertThatThrownBy(() -> commentTools.addComment("nope", login.key(), null))
+        assertThat(commentTools.listComments(login.key(), null, null).total()).isEqualTo(1);
+        assertThatThrownBy(() -> commentTools.addComment("nope", login.key(), null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("TESTER");
     }

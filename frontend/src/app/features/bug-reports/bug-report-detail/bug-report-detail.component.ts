@@ -25,6 +25,8 @@ import { EntityHistoryComponent } from '../../../shared/components/entity-histor
 import { AttachmentsComponent } from '../../../shared/components/attachments/attachments.component';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
 import { selectAuthUser } from '../../../store/auth/auth.selectors';
+import { MentionCandidate } from '../../../shared/models/comment.model';
+import { BugReportCommentsComponent } from '../bug-report-comments/bug-report-comments.component';
 
 @Component({
   selector: 'app-bug-report-detail',
@@ -36,6 +38,7 @@ import { selectAuthUser } from '../../../store/auth/auth.selectors';
     AsyncPipe,
     LocalizedDatePipe,
     MarkdownPipe,
+    BugReportCommentsComponent,
     LowerCasePipe,
     RouterLink,
     MatCardModule,
@@ -63,6 +66,10 @@ export class BugReportDetailComponent implements OnInit {
   readonly statuses = ALL_BUG_STATUSES;
   /** TESTER and up may attach and remove files; viewers see them read-only. */
   readonly canWrite = signal(false);
+  readonly currentUserId = signal<string | null>(null);
+  /** Project or system admin: may delete anyone's comment. */
+  readonly isAdmin = signal(false);
+  readonly mentionCandidates = signal<MentionCandidate[]>([]);
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
@@ -90,6 +97,11 @@ export class BugReportDetailComponent implements OnInit {
         next: ([members, user]) => {
           const role = members.find((m) => m.userId === user?.id)?.role;
           this.canWrite.set(!!user && (user.systemAdmin || role === 'ADMIN' || role === 'TESTER'));
+          this.currentUserId.set(user?.id ?? null);
+          this.isAdmin.set(!!user && (user.systemAdmin || role === 'ADMIN'));
+          this.mentionCandidates.set(members
+            .filter((m) => m.userId !== user?.id)
+            .map((m) => ({ userId: m.userId, displayName: m.displayName })));
         },
         error: () => undefined,
       });

@@ -24,6 +24,14 @@ export class CommentApiService {
     return this.http.post<Comment>(`/api/projects/${projectId}/test-runs/${runId}/results/${resultId}/comments`, request);
   }
 
+  getBugReportComments(projectId: string, bugReportId: string): Observable<Comment[]> {
+    return this.http.get<Comment[]>(`/api/projects/${projectId}/bug-reports/${bugReportId}/comments`).pipe(retryWithBackoff());
+  }
+
+  createBugReportComment(projectId: string, bugReportId: string, request: CreateCommentRequest): Observable<Comment> {
+    return this.http.post<Comment>(`/api/projects/${projectId}/bug-reports/${bugReportId}/comments`, request);
+  }
+
   update(projectId: string, commentId: string, request: UpdateCommentRequest): Observable<Comment> {
     return this.http.put<Comment>(`/api/projects/${projectId}/comments/${commentId}`, request);
   }
