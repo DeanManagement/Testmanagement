@@ -144,7 +144,7 @@ its `source`, `sourceUrl` and `lastSyncedAt`; `update_requirement` refuses its s
 `list_environments`, `get_project_dashboard`, `list_flaky_tests`, `get_release_readiness`,
 `get_test_suite_report`,
 `list_pipeline_workflows`, `list_pipeline_runs`, `get_pipeline_run`, `list_issue_links`,
-`list_exploratory_sessions`, `get_exploratory_session`.
+`list_exploratory_sessions`, `get_exploratory_session`, `get_bug_report_relations`.
 
 **Write** (Tester only) — `create_test_case`, `update_test_case`, `create_test_cases_bulk`,
 `create_test_suite`, `create_test_plan`, `create_test_case_folder`,
@@ -161,7 +161,14 @@ its `source`, `sourceUrl` and `lastSyncedAt`; `update_requirement` refuses its s
 `remove_test_step`, `add_test_cases_to_run`, `remove_test_cases_from_run`, `reorder_test_run_cases`,
 `link_test_cases`, `unlink_test_cases`, `assign_test_run_cases`, `create_exploratory_session`,
 `update_exploratory_session`, `start_exploratory_session`, `complete_exploratory_session`,
-`abort_exploratory_session`, `add_session_note`.
+`abort_exploratory_session`, `add_session_note`, `relate_bug_report`, `unrelate_bug_report`.
+
+`list_comments` and `add_comment` take `bugIdOrKey` for a bug report's discussion; on a bug,
+`add_comment` takes `mention` (member emails) to notify people. `update_bug_report` also sets
+`labels` and the `foundInPlan` / `fixedInPlan` test plans. `relate_bug_report` links a bug by hand
+to a test case, a requirement, or another bug (`BLOCKS`, `BLOCKED_BY`, `RELATES_TO`).
+A tool that fails for an internal reason returns a generic message; the details are in the server
+log and the key's activity.
 
 **Project settings** (ADMIN keys only, like the settings pages) — `create_environment`,
 `update_environment` (rename, describe, archive / restore), `create_custom_field`,

@@ -1113,9 +1113,14 @@ with Enter.
 The **Bug Reports** list is built for going through many bugs at once:
 
 - **Search** matches the key, the title and every text field.
-- **Filter** by status, priority and assignee. The assignee filter has *Me* and *Unassigned*
-  entries, and several choices combine: *Me* plus *Unassigned* shows both.
+- **Filter** by status, priority, assignee, environment, reporter, test run, label and the date
+  range it was reported in. The assignee filter has *Me* and *Unassigned* entries, and several
+  choices combine: *Me* plus *Unassigned* shows both. The test-run filter finds bugs found in the
+  run or linked to one of its results.
 - **Sort** by any column. Filters, sort order and page are in the URL, so bookmark or share a view.
+- **Saved filters** work as on the test-case list: save the current filters under a name, for
+  yourself or shared with the project.
+- **Export CSV** downloads every bug the filters match (not just the page), up to 10,000 rows.
 - **Select** bugs with the checkboxes (the header box selects the page), then **Assign**, change
   the **Priority** or **Status**, or **Delete** them in one step. A change applies to all of them
   or, if one of them can't be changed, to none.
@@ -1123,6 +1128,27 @@ The **Bug Reports** list is built for going through many bugs at once:
 The **board** view shows one lane per status, filtered like the list. Each card shows the key, the
 assignee's initials and how many days ago the bug was reported. It shows at most 200 bugs, the
 newest first; filter to see the rest.
+
+### Writing and linking a bug report
+
+Description, steps to reproduce, expected and actual behaviour use **Markdown**, as test cases do:
+**bold**, lists, tables and links show formatted on the bug's page.
+
+A bug can carry **labels** (comma-separated in the form, like on test cases) and two test plans:
+**Found in**, the plan whose testing found it, and **Fixed in**, the plan the fix ships in, so the
+retest can be planned there. Deleting a plan keeps the bug and clears the field.
+
+The **Links** section on a bug's page links it by hand, by key, to test cases, to requirements
+and to other bug reports: *Blocks*, *Is blocked by* or *Relates to*. A requirement lists its open
+bugs on the Requirements page. Where the bug showed up in runs is linked separately, from the run.
+
+### Comments on bug reports
+
+Every bug has a **Comments** section, open to all project members including viewers, so
+stakeholders can ask, answer and record decisions there. Edit or delete your own comments; project
+admins can delete any. Type **@** to mention a project member: they are notified (*Mentioned you*),
+and the bug's watchers are notified of every new comment (*Commented*). Both can be turned off
+per channel in the notification settings.
 
 ### Bug report template
 
