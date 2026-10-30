@@ -27,7 +27,7 @@
             {{ 'priority.' + bug.priority | translate }}
           </span>
           <span class="badge badge--{{ bug.status | lowercase }}" data-test-id="bug-report-detail-status">
-            {{ 'bugReport.status.' + bug.status | translate }}
+            {{ bug.customStatusName ?? ('bugReport.status.' + bug.status | translate) }}
           </span>
           @if (bug.resolution) {
             <span class="resolution" data-test-id="bug-report-detail-resolution">
@@ -95,11 +95,20 @@
       <div class="status-change">
         <mat-form-field appearance="outline" class="status-select">
           <mat-label>{{ 'bugReport.form.status' | translate }}</mat-label>
-          <mat-select [value]="bug.status" [disabled]="trackerLinked()" (selectionChange)="onStatusChange(bug, $event.value)" data-test-id="bug-report-detail-status-select">
-            @for (s of statuses; track s) {
-              <mat-option [value]="s">{{ 'bugReport.status.' + s | translate }}</mat-option>
-            }
-          </mat-select>
+          @if (bugStatuses().length > 0) {
+            <mat-select [value]="currentStatus(bug)?.id" [disabled]="trackerLinked()"
+              (selectionChange)="onProjectStatusChange(bug, $event.value)" data-test-id="bug-report-detail-status-select">
+              @for (s of statusOptions(bug); track s.id) {
+                <mat-option [value]="s.id">{{ s.name }}</mat-option>
+              }
+            </mat-select>
+          } @else {
+            <mat-select [value]="bug.status" [disabled]="trackerLinked()" (selectionChange)="onStatusChange(bug, $event.value)" data-test-id="bug-report-detail-status-select">
+              @for (s of statuses; track s) {
+                <mat-option [value]="s">{{ 'bugReport.status.' + s | translate }}</mat-option>
+              }
+            </mat-select>
+          }
           @if (trackerLinked()) {
             <mat-hint>{{ 'bugReport.tracker.statusLocked' | translate }}</mat-hint>
           }

@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.project.internal.entity.ProjectBugStatus;
 import com.deanmanagement.testmanagement.shared.exception.ConflictException;
 import com.deanmanagement.testmanagement.project.internal.repository.IssueLinkRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ExploratorySessionRepository;
@@ -74,6 +75,7 @@ public class BugReportService {
     private final AttachmentService attachmentService;
     private final TestPlanRepository testPlanRepository;
     private final IssueLinkRepository issueLinkRepository;
+    private final BugStatusService bugStatusService;
 
     /** Every bug of the project, unpaged: for duplicate checks, not for display. */
     public List<BugReportResponse> findByProject(UUID projectId) {
@@ -122,6 +124,7 @@ public class BugReportService {
         bugReport.setPriority(request.priority());
         // New bugs wait for triage (PRD-045); OPEN means someone has confirmed it.
         bugReport.setStatus(BugReportStatus.NEW);
+        bugStatusService.firstOf(projectId, BugReportStatus.NEW).ifPresent(bugReport::setCustomStatus);
         bugReport.setProject(project);
         bugReport.setKey(project.getKey() + "-BUG-" + projectSequenceService.nextBugNumber(projectId));
         customFieldWriter.write(bugReport, request.customFields(), mode);
@@ -231,20 +234,24 @@ public class BugReportService {
             throw new ConflictException(bugReport.getKey() + "'s status follows work item " + link.getExternalId()
                     + " in the issue tracker. Change it there, or detach the work item first.");
         });
+        ProjectBugStatus target = bugStatusService.resolveTarget(projectId, request.statusId(), request.status());
+        BugReportStatus category = target != null ? target.getCategory() : request.status();
+        bugStatusService.requireTransition(projectId, bugReport, target);
         BugResolution resolution = request.resolution();
-        if (request.status() == BugReportStatus.CLOSED && resolution == null) {
+        if (category == BugReportStatus.CLOSED && resolution == null) {
             throw new IllegalArgumentException("Closing a bug needs a resolution: "
                     + Arrays.toString(BugResolution.values()));
         }
-        if (resolution != null && request.status().isOpen()) {
-            throw new IllegalArgumentException("A bug in status " + request.status()
+        if (resolution != null && category.isOpen()) {
+            throw new IllegalArgumentException("A bug in status " + category
                     + " has no resolution; only RESOLVED and CLOSED take one");
         }
         BugReport duplicateOf = resolveDuplicateTarget(projectId, bugReport, resolution, request.duplicateOfId());
 
         FieldChanges.Snapshot before = snapshot(bugReport);
-        trackResolution(bugReport, request.status());
-        bugReport.setStatus(request.status());
+        trackResolution(bugReport, category);
+        bugReport.setStatus(category);
+        bugReport.setCustomStatus(target);
         bugReport.setResolution(resolution);
         bugReport.setDuplicateOf(duplicateOf);
 
@@ -265,6 +272,8 @@ public class BugReportService {
         FieldChanges.Snapshot before = snapshot(bugReport);
         trackResolution(bugReport, status);
         bugReport.setStatus(status);
+        // The tracker only knows the category (TM47): the bug lands on that category's first status.
+        bugReport.setCustomStatus(bugStatusService.firstOf(bugReport.getProject().getId(), status).orElse(null));
         bugReport.setResolution(resolution);
         if (resolution != BugResolution.DUPLICATE) {
             bugReport.setDuplicateOf(null);
@@ -354,7 +363,7 @@ public class BugReportService {
                 .with("expectedBehavior", bug.getExpectedBehavior())
                 .with("actualBehavior", bug.getActualBehavior())
                 .with("priority", bug.getPriority())
-                .with("status", bug.getStatus())
+                .with("status", bug.getCustomStatus() != null ? bug.getCustomStatus().getName() : bug.getStatus())
                 .with("resolution", bug.getResolution())
                 .with("duplicateOf", bug.getDuplicateOf() == null ? null : bug.getDuplicateOf().getKey())
                 .with("assignee", bug.getAssignee())

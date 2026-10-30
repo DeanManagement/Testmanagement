@@ -16,7 +16,10 @@ import { combineLatest, Observable, of } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { selectBugReportByIdOrKey } from '../../../store/bug-report/bug-report.selectors';
-import { ALL_BUG_STATUSES, BugReport, BugReportLink, BugReportStatus, ChangeBugStatusRequest } from '../../../shared/models/bug-report.model';
+import {
+  ALL_BUG_STATUSES, BugReport, BugReportLink, BugReportStatus, BugStatus, ChangeBugStatusRequest, sortBugStatuses, statusOf,
+} from '../../../shared/models/bug-report.model';
+import { BugStatusApiService } from '../../../core/services/bug-status-api.service';
 import { BugReportApiService } from '../../../core/services/bug-report-api.service';
 import { ChangeBugStatusDialogComponent, ChangeBugStatusDialogData } from '../change-bug-status-dialog/change-bug-status-dialog.component';
 import { WatchToggleComponent } from '../../../shared/components/watch-toggle/watch-toggle.component';
@@ -62,6 +65,7 @@ export class BugReportDetailComponent implements OnInit {
   private readonly dialog = inject(MatDialog);
   private readonly bugReportApi = inject(BugReportApiService);
   private readonly memberApi = inject(ProjectMemberApiService);
+  private readonly bugStatusApi = inject(BugStatusApiService);
   private readonly destroyRef = inject(DestroyRef);
 
   projectId = '';
@@ -76,6 +80,8 @@ export class BugReportDetailComponent implements OnInit {
   readonly mentionCandidates = signal<MentionCandidate[]>([]);
   /** TM50: the status follows an Azure DevOps work item and is not changed here. */
   readonly trackerLinked = signal(false);
+  /** TM47: the project's active statuses; empty falls back to the fixed categories. */
+  readonly bugStatuses = signal<BugStatus[]>([]);
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
@@ -89,6 +95,8 @@ export class BugReportDetailComponent implements OnInit {
     });
     if (this.projectId) {
       this.loadRole();
+      this.bugStatusApi.getAll(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef))
+        .subscribe({ next: (statuses) => this.bugStatuses.set(sortBugStatuses(statuses)), error: () => undefined });
     }
   }
 
@@ -118,11 +126,36 @@ export class BugReportDetailComponent implements OnInit {
       });
   }
 
+  /** TM47: the bug's project status. */
+  currentStatus(bug: BugReport): BugStatus | undefined {
+    return statusOf(bug, this.bugStatuses());
+  }
+
+  /** The bug's status and the ones the project lets it move to. */
+  statusOptions(bug: BugReport): BugStatus[] {
+    const current = this.currentStatus(bug);
+    if (!current) {
+      return this.bugStatuses();
+    }
+    return sortBugStatuses(this.bugStatuses().filter((s) => s.id === current.id || current.allowedTargetIds.includes(s.id)));
+  }
+
+  onProjectStatusChange(bug: BugReport, statusId: string): void {
+    const target = this.bugStatuses().find((s) => s.id === statusId);
+    if (target && target.id !== this.currentStatus(bug)?.id) {
+      this.askForStatus(bug, target.category, target);
+    }
+  }
+
   onStatusChange(bug: BugReport, newStatus: BugReportStatus): void {
     if (newStatus === bug.status) return;
+    this.askForStatus(bug, newStatus);
+  }
 
+  private askForStatus(bug: BugReport, newStatus: BugReportStatus, target?: BugStatus): void {
     const dialogRef = this.dialog.open(ChangeBugStatusDialogComponent, {
-      data: { projectId: this.projectId, currentStatus: bug.status, newStatus, bugIds: [bug.id] } as ChangeBugStatusDialogData,
+      data: { projectId: this.projectId, currentStatus: bug.status, newStatus, bugIds: [bug.id],
+        newStatusId: target?.id, newStatusName: target?.name } as ChangeBugStatusDialogData,
     });
 
     dialogRef.afterClosed().pipe(take(1), takeUntilDestroyed(this.destroyRef))

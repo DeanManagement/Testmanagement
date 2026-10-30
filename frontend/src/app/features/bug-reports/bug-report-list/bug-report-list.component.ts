@@ -35,10 +35,13 @@ import {
   BugReport,
   BugReportQuery,
   BugReportStatus,
+  BugStatus,
   BulkUpdateBugReportsRequest,
   ChangeBugStatusRequest,
   Priority,
+  sortBugStatuses,
 } from '../../../shared/models/bug-report.model';
+import { BugStatusApiService } from '../../../core/services/bug-status-api.service';
 import { ProjectMember } from '../../../shared/models/project-member.model';
 import { BugReportApiService } from '../../../core/services/bug-report-api.service';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
@@ -107,6 +110,7 @@ export class BugReportListComponent implements OnInit {
   private readonly memberApi = inject(ProjectMemberApiService);
   private readonly environmentApi = inject(EnvironmentApiService);
   private readonly testRunApi = inject(TestRunApiService);
+  private readonly bugStatusApi = inject(BugStatusApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -135,6 +139,8 @@ export class BugReportListComponent implements OnInit {
   environments: ProjectEnvironment[] = [];
   testRuns: TestRun[] = [];
   labels: string[] = [];
+  /** TM47: the project's active statuses, for the board and the bulk menu. */
+  bugStatuses: BugStatus[] = [];
   exporting = false;
   sortActive = 'createdAt';
   sortDirection: 'asc' | 'desc' = 'desc';
@@ -163,8 +169,10 @@ export class BugReportListComponent implements OnInit {
       this.environmentApi.getAll(this.projectId),
       this.testRunApi.getAll(this.projectId, { size: RUN_CHOICES, sort: 'createdAt,desc' }),
       this.api.getLabels(this.projectId),
+      this.bugStatusApi.getAll(this.projectId),
     ]).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
-      next: ([environments, runs, labels]) => {
+      next: ([environments, runs, labels, statuses]) => {
+        this.bugStatuses = sortBugStatuses(statuses);
         this.environments = environments;
         this.testRuns = runs.content;
         this.labels = labels;
@@ -318,16 +326,16 @@ export class BugReportListComponent implements OnInit {
   // ---- changes --------------------------------------------------------------------------------
 
   /** A drop only asks; cancelling leaves the card in its lane, since nothing moved it yet. */
-  onStatusDrop({ bug, newStatus }: BugStatusDrop): void {
-    this.askForStatus(newStatus, [bug.id], bug.status).subscribe((request) =>
+  onStatusDrop({ bug, newStatus, newStatusId, newStatusName }: BugStatusDrop): void {
+    this.askForStatus(newStatus, [bug.id], bug.status, newStatusId, newStatusName).subscribe((request) =>
       this.store.dispatch(BugReportActions.changeBugReportStatus({ projectId: this.projectId, id: bug.id, request })));
   }
 
-  bulkStatus(status: BugReportStatus): void {
+  bulkStatus(status: BugReportStatus, projectStatus?: BugStatus): void {
     const ids = [...this.selected()];
-    this.askForStatus(status, ids).subscribe((request) =>
-      this.runBulk({ ids, status, reason: request.reason, resolution: request.resolution,
-        duplicateOfId: request.duplicateOfId }));
+    this.askForStatus(status, ids, undefined, projectStatus?.id, projectStatus?.name).subscribe((request) =>
+      this.runBulk({ ids, status, statusId: projectStatus?.id ?? null, reason: request.reason,
+        resolution: request.resolution, duplicateOfId: request.duplicateOfId }));
   }
 
   bulkAssign(assignee: string | null): void {
@@ -361,10 +369,10 @@ export class BugReportListComponent implements OnInit {
     ).subscribe({ next: () => this.afterBulk(), error: (err: HttpErrorResponse) => this.bulkFailed(err) });
   }
 
-  private askForStatus(newStatus: BugReportStatus, bugIds: string[], currentStatus?: BugReportStatus)
-    : Observable<ChangeBugStatusRequest> {
+  private askForStatus(newStatus: BugReportStatus, bugIds: string[], currentStatus?: BugReportStatus,
+                       newStatusId?: string, newStatusName?: string): Observable<ChangeBugStatusRequest> {
     return this.dialog.open(ChangeBugStatusDialogComponent, {
-      data: { projectId: this.projectId, newStatus, currentStatus, bugIds } as ChangeBugStatusDialogData,
+      data: { projectId: this.projectId, newStatus, currentStatus, bugIds, newStatusId, newStatusName } as ChangeBugStatusDialogData,
     }).afterClosed().pipe(
       filter((request): request is ChangeBugStatusRequest => !!request),
       take(1),

@@ -69,6 +69,10 @@ export interface BugReport {
   foundInPlanName: string | null;
   fixedInPlanId: string | null;
   fixedInPlanName: string | null;
+  /** TM47: the project's own status; status stays its category. */
+  customStatusId: string | null;
+  customStatusName: string | null;
+  customStatusColor: string | null;
 }
 
 export interface CreateBugReportRequest {
@@ -132,6 +136,8 @@ export interface BugReportQuery {
 
 export interface ChangeBugStatusRequest {
   status: BugReportStatus;
+  /** TM47: the project's own status; decides the category on the server. */
+  statusId?: string | null;
   reason: string;
   resolution?: BugResolution | null;
   duplicateOfId?: string | null;
@@ -147,6 +153,8 @@ export interface BulkUpdateBugReportsRequest {
   resolution?: BugResolution | null;
   duplicateOfId?: string | null;
   reason?: string;
+  /** TM47 */
+  statusId?: string | null;
 }
 
 /** A further occurrence of a bug (PRD-047). */
@@ -196,4 +204,32 @@ export interface BugReportRelations {
   testCases: BugLinkedItem[];
   requirements: BugLinkedItem[];
   relations: BugRelation[];
+}
+
+/** TM47: a project's own bug status, counting as one of the fixed categories. */
+export interface BugStatus {
+  id: string;
+  name: string;
+  color: string;
+  category: BugReportStatus;
+  position: number;
+  archived: boolean;
+  /** Active statuses a bug in this one may move to. */
+  allowedTargetIds: string[];
+}
+
+export interface BugStatusTransition {
+  fromStatusId: string;
+  toStatusId: string;
+}
+
+/** Board and menu order: by category, then the project's own order within it. */
+export function sortBugStatuses(statuses: BugStatus[]): BugStatus[] {
+  return [...statuses].sort((a, b) => ALL_BUG_STATUSES.indexOf(a.category) - ALL_BUG_STATUSES.indexOf(b.category)
+    || a.position - b.position || a.name.localeCompare(b.name));
+}
+
+/** The status a bug is in: its own, or for a bug without one, its category's first. */
+export function statusOf(bug: BugReport, statuses: BugStatus[]): BugStatus | undefined {
+  return statuses.find((s) => s.id === bug.customStatusId) ?? sortBugStatuses(statuses).find((s) => s.category === bug.status);
 }

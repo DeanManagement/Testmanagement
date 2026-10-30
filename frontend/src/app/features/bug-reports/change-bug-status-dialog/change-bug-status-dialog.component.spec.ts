@@ -12,7 +12,7 @@ import { BugReport, BugReportStatus } from '../../../shared/models/bug-report.mo
 describe('ChangeBugStatusDialogComponent', () => {
   let close: ReturnType<typeof vi.fn>;
 
-  function create(newStatus: BugReportStatus): ChangeBugStatusDialogComponent {
+  function create(newStatus: BugReportStatus, newStatusId?: string): ChangeBugStatusDialogComponent {
     TestBed.resetTestingModule();
     close = vi.fn();
     TestBed.configureTestingModule({
@@ -20,7 +20,7 @@ describe('ChangeBugStatusDialogComponent', () => {
       providers: [
         provideNoopAnimations(),
         { provide: MatDialogRef, useValue: { close } },
-        { provide: MAT_DIALOG_DATA, useValue: { projectId: 'p1', newStatus, bugIds: ['b1'] } as ChangeBugStatusDialogData },
+        { provide: MAT_DIALOG_DATA, useValue: { projectId: 'p1', newStatus, newStatusId, bugIds: ['b1'] } as ChangeBugStatusDialogData },
         { provide: BugReportApiService, useValue: { getAll: () => of({ content: [] }) } },
       ],
     });
@@ -55,7 +55,18 @@ describe('ChangeBugStatusDialogComponent', () => {
     dialog.onConfirm();
 
     expect(dialog.showsResolution).toBe(false);
-    expect(close).toHaveBeenCalledWith({ status: 'OPEN', reason: 'still happens', resolution: null, duplicateOfId: null });
+    expect(close).toHaveBeenCalledWith({ status: 'OPEN', statusId: null, reason: 'still happens', resolution: null,
+      duplicateOfId: null });
+  });
+
+  it('sends the project status picked, asking for a resolution by its category', () => {
+    const dialog = create('RESOLVED', 'retest');
+    dialog.reason = 'fix deployed';
+
+    dialog.onConfirm();
+
+    expect(dialog.showsResolution).toBe(true);
+    expect(close).toHaveBeenCalledWith(expect.objectContaining({ status: 'RESOLVED', statusId: 'retest' }));
   });
 
   it('sends the duplicate target with the request', () => {

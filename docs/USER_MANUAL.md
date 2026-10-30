@@ -1158,6 +1158,24 @@ handed over; title, texts, labels and assignee stay editable but are not sent to
 deleted there, the bug keeps its last status and shows the work item as no longer found. One
 work item belongs to one bug: close the others as duplicates of it.
 
+### Bug statuses and transitions
+
+Under **Project Settings → Bug statuses** a project Admin names the statuses bugs move through,
+e.g. *Ready for retest*. Each counts as one of the fixed categories (New, Open, In progress,
+Resolved, Closed), which is what reports, My queue and the release gate count, so adding a
+status changes no numbers. Statuses can be renamed, recoloured, reordered and archived; the last
+active status of a category can't be archived.
+
+The **Allowed transitions** grid restricts which status may follow which. With nothing ticked,
+any move is allowed. Once something is ticked, only those moves are: the bug's status menu and the
+board offer only them, and the board refuses a card dropped on a lane it may not enter. The rules
+apply to everyone, admins included; to make an exception, change the rules. The page warns about
+an open status a bug could not leave. A status always may stay as it is, and the resolution still
+goes with the category: closing asks for one, Resolved takes one optionally.
+
+A new bug starts in the first New status. A bug handed over to Azure DevOps moves by the work
+item's state and lands on the first status of the matching category, regardless of the rules.
+
 ### Comments on bug reports
 
 Every bug has a **Comments** section, open to all project members including viewers, so

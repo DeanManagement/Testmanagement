@@ -55,6 +55,9 @@ class ProjectServiceTest {
     @Mock
     private ProjectResultStatusService resultStatusService;
 
+    @Mock
+    private BugStatusService bugStatusService;
+
     @InjectMocks
     private ProjectService projectService;
 

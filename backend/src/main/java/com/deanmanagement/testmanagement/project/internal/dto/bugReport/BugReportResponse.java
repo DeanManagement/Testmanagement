@@ -58,6 +58,10 @@ public record BugReportResponse(
         UUID foundInPlanId,
         String foundInPlanName,
         UUID fixedInPlanId,
-        String fixedInPlanName
+        String fixedInPlanName,
+        /* TM47: the project's own status; status stays its category. */
+        UUID customStatusId,
+        String customStatusName,
+        String customStatusColor
 ) {
 }

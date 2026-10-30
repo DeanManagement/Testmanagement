@@ -1242,7 +1242,7 @@ class McpToolSurfaceApiTest {
         McpDtos.BugDetail first = bugReportTools.createBugReport("Zahlung wirft 500",
                 Priority.HIGH, null, null, null, null, null, null, null, null, null);
         bugReportTools.changeBugReportStatus(first.key(), BugReportStatus.CLOSED,
-                "In 2.3 behoben und nachgeprüft", BugResolution.FIXED, null);
+                "In 2.3 behoben und nachgeprüft", BugResolution.FIXED, null, null);
 
         McpDtos.BugDetail regression = bugReportTools.createBugReport("Zahlung wirft 500",
                 Priority.HIGH, null, null, null, null, null, null, null, null, null);
@@ -1260,7 +1260,7 @@ class McpToolSurfaceApiTest {
         McpDtos.BugDetail closed = bugReportTools.createBugReport("Behobener Fehler", Priority.LOW,
                 null, null, null, null, null, null, null, null, null);
         bugReportTools.changeBugReportStatus(closed.key(), BugReportStatus.CLOSED, "nachgeprüft",
-                BugResolution.FIXED, null);
+                BugResolution.FIXED, null, null);
 
         McpDtos.BugPage open = bugReportTools.listBugReports(null, List.of(BugReportStatus.NEW), null,
                 null, null, null);
@@ -1278,7 +1278,7 @@ class McpToolSurfaceApiTest {
                 null, null, null, null, null, null, null, null);
 
         assertThatThrownBy(() ->
-                bugReportTools.changeBugReportStatus(bug.key(), BugReportStatus.RESOLVED, "  ", null, null))
+                bugReportTools.changeBugReportStatus(bug.key(), BugReportStatus.RESOLVED, "  ", null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("reason");
     }
@@ -1375,7 +1375,7 @@ class McpToolSurfaceApiTest {
                 null, null, null, null, null, null);
 
         McpDtos.BugDetail closed = bugReportTools.changeBugReportStatus(copy.key(), BugReportStatus.CLOSED,
-                "derselbe Absturz", BugResolution.DUPLICATE, original.key());
+                "derselbe Absturz", BugResolution.DUPLICATE, original.key(), null);
 
         assertThat(closed.resolution()).isEqualTo(BugResolution.DUPLICATE);
         assertThat(closed.duplicateOfKey()).isEqualTo(original.key());

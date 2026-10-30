@@ -1810,5 +1810,22 @@
     "add": "Status hinzufügen",
     "reorder": "Zum Sortieren ziehen",
     "activeHint": "Archivierte Status bleiben bei bisherigen Ergebnissen erhalten, können aber nicht mehr gewählt werden"
+  },
+  "bugStatusSettings": {
+    "title": "Fehlerstatus",
+    "description": "Die Status, die Fehlermeldungen durchlaufen, und welcher auf welchen folgen darf. Jeder zählt als eine feste Kategorie, mit der Berichte und das Release-Gate rechnen.",
+    "manage": "Fehlerstatus verwalten",
+    "name": "Name",
+    "category": "Zählt als",
+    "color": "Farbe",
+    "add": "Status hinzufügen",
+    "reorder": "Zum Sortieren ziehen",
+    "activeHint": "Archivierte Status bleiben an den Fehlermeldungen, werden aber nicht mehr angeboten",
+    "transitions": "Erlaubte Übergänge",
+    "transitionsOpen": "Nichts angekreuzt: Jeder Status darf auf jeden folgen. Kreuzen Sie die erlaubten Übergänge an, dann gelten nur diese.",
+    "transitionsRestricted": "Nur die angekreuzten Übergänge sind erlaubt. Eine Fehlermeldung darf immer in ihrem Status bleiben.",
+    "fromTo": "Von ↓ / nach →",
+    "deadEnds": "Kein Weg hinaus aus: {{names}}. Fehlermeldungen in diesen Status kommen nur weiter, wenn die Regeln geändert werden.",
+    "allowAny": "Jeden Übergang erlauben"
   }
 }

@@ -21,7 +21,15 @@ public record BulkUpdateBugReportsRequest(
         BugReportStatus status,
         BugResolution resolution,
         UUID duplicateOfId,
-        String reason
+        String reason,
+        /* TM47: the project's own status; wins over status. */
+        UUID statusId
 ) {
+    public BulkUpdateBugReportsRequest(List<UUID> ids, UUID assigneeId, Boolean clearAssignee, Priority priority,
+                                       BugReportStatus status, BugResolution resolution, UUID duplicateOfId,
+                                       String reason) {
+        this(ids, assigneeId, clearAssignee, priority, status, resolution, duplicateOfId, reason, null);
+    }
+
     public static final int MAX_IDS = 100;
 }

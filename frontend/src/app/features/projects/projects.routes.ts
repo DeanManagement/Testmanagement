@@ -7,6 +7,7 @@ import { ProjectDashboardComponent } from './project-dashboard/project-dashboard
 import { WebhookSettingsComponent } from '../webhooks/webhook-settings.component';
 import { EnvironmentSettingsComponent } from '../environments/environment-settings.component';
 import { ResultStatusSettingsComponent } from '../result-statuses/result-status-settings.component';
+import { BugStatusSettingsComponent } from '../bug-statuses/bug-status-settings.component';
 import { CustomFieldSettingsComponent } from '../custom-fields/custom-field-settings.component';
 import { IssueTrackerSettingsComponent } from '../issue-tracker/issue-tracker-settings.component';
 import { RequirementsComponent } from '../requirements/requirements.component';
@@ -22,6 +23,7 @@ export const projectsRoutes: Routes = [
   { path: ':id/webhooks', component: WebhookSettingsComponent },
   { path: ':id/environments', component: EnvironmentSettingsComponent },
   { path: ':id/result-statuses', component: ResultStatusSettingsComponent },
+  { path: ':id/bug-statuses', component: BugStatusSettingsComponent },
   { path: ':id/custom-fields', component: CustomFieldSettingsComponent },
   { path: ':id/issue-tracker', component: IssueTrackerSettingsComponent },
   { path: ':id/requirements', component: RequirementsComponent },

@@ -40,9 +40,9 @@ public class BugReportBulkService {
         requireSomeChange(request);
         List<BugReport> bugs = requireAll(projectId, request.ids());
         User assignee = resolveAssignee(projectId, request);
-        ChangeBugStatusRequest statusChange = request.status() == null ? null
+        ChangeBugStatusRequest statusChange = request.status() == null && request.statusId() == null ? null
                 : new ChangeBugStatusRequest(request.status(), requireReason(request.reason()),
-                        request.resolution(), request.duplicateOfId());
+                        request.resolution(), request.duplicateOfId(), request.statusId());
 
         for (BugReport bug : bugs) {
             if (statusChange != null) {
@@ -102,7 +102,7 @@ public class BugReportBulkService {
 
     private static void requireSomeChange(BulkUpdateBugReportsRequest request) {
         boolean changes = request.assigneeId() != null || Boolean.TRUE.equals(request.clearAssignee())
-                || request.priority() != null || request.status() != null;
+                || request.priority() != null || request.status() != null || request.statusId() != null;
         if (!changes) {
             throw new IllegalArgumentException("Nothing to change: give an assignee, a priority or a status");
         }

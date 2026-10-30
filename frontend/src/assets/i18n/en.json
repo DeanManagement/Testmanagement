@@ -1810,5 +1810,22 @@
     "add": "Add status",
     "reorder": "Drag to reorder",
     "activeHint": "Archived statuses are kept on past results but can no longer be picked"
+  },
+  "bugStatusSettings": {
+    "title": "Bug statuses",
+    "description": "The statuses bugs move through and which may follow which. Each counts as one fixed category, which reports and the release gate use.",
+    "manage": "Manage bug statuses",
+    "name": "Name",
+    "category": "Counts as",
+    "color": "Colour",
+    "add": "Add status",
+    "reorder": "Drag to reorder",
+    "activeHint": "Archived statuses are kept on bugs that have them but are no longer offered",
+    "transitions": "Allowed transitions",
+    "transitionsOpen": "Nothing ticked: any status may follow any other. Tick the moves to allow, and only those are allowed.",
+    "transitionsRestricted": "Only the ticked moves are allowed. A bug may always stay in its status.",
+    "fromTo": "From ↓ / to →",
+    "deadEnds": "No way out of: {{names}}. Bugs in these statuses can only move on once the rules change.",
+    "allowAny": "Allow any transition"
   }
 }

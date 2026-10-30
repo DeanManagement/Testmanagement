@@ -1,12 +1,17 @@
 <div class="kanban-board" data-test-id="bug-kanban">
-  @for (lane of lanes; track lane.status) {
-    <div class="kanban-lane" cdkDropList [id]="'lane-' + lane.status" [cdkDropListData]="lane.bugs"
+  @for (lane of lanes; track lane.id) {
+    <div class="kanban-lane" cdkDropList [id]="'lane-' + lane.id" [cdkDropListData]="lane.bugs"
          [cdkDropListConnectedTo]="laneIds" [cdkDropListDisabled]="!canWrite"
-         (cdkDropListDropped)="onDrop($event, lane.status)"
-         role="region" [attr.aria-label]="'bugReport.status.' + lane.status | translate"
-         [attr.data-test-id]="'kanban-lane-' + lane.status">
+         [cdkDropListEnterPredicate]="lane.canEnter"
+         (cdkDropListDropped)="onDrop($event, lane)"
+         role="region" [attr.aria-label]="lane.status?.name ?? ('bugReport.status.' + lane.category | translate)"
+         [attr.data-test-id]="'kanban-lane-' + (lane.status?.name ?? lane.category)">
       <div class="kanban-lane-header">
-        <span class="badge badge--{{ lane.status | lowercase }}">{{ 'bugReport.status.' + lane.status | translate }}</span>
+        @if (lane.status) {
+          <span class="badge status-badge" [style.background-color]="lane.status.color">{{ lane.status.name }}</span>
+        } @else {
+          <span class="badge badge--{{ lane.category | lowercase }}">{{ 'bugReport.status.' + lane.category | translate }}</span>
+        }
         <span class="kanban-lane-count">{{ lane.bugs.length }}</span>
       </div>
       @for (bug of lane.bugs; track bug.id) {

@@ -1,0 +1,23 @@
+.container { max-width: 900px; margin: 0 auto; padding: 1.5rem; }
+.page-header { display: flex; align-items: center; gap: 0.75rem; }
+.hint { color: var(--tm-text-secondary); margin: 0.25rem 0 1.25rem; }
+.tm-card { border: 1px solid var(--tm-border); border-radius: 12px; padding: 1rem 1.25rem; margin-bottom: 1rem;
+  background: var(--tm-surface); }
+.add-card { display: flex; align-items: center; flex-wrap: wrap; gap: 0.75rem; }
+.grow { flex: 1 1 14rem; }
+.row { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0; background: var(--tm-surface); }
+.row + .row { border-top: 1px solid var(--tm-border); }
+.row.archived .name { color: var(--tm-text-secondary); text-decoration: line-through; }
+.drag-handle { cursor: grab; color: var(--tm-text-secondary); }
+.name { flex: 1; min-width: 0; font: inherit; color: inherit; background: transparent; border: 1px solid transparent;
+  border-radius: 6px; padding: 4px 6px; }
+.name:hover, .name:focus { border-color: var(--tm-border); }
+input[type='color'] { width: 32px; height: 32px; padding: 0; border: none; background: none; cursor: pointer; }
+.cdk-drag-placeholder { opacity: 0.3; }
+h2 { font-size: 1.1rem; margin: 0; }
+.grid-scroll { overflow-x: auto; }
+.grid { border-collapse: collapse; }
+.grid th, .grid td { padding: 4px 8px; text-align: center; white-space: nowrap; }
+.grid th[scope='row'] { text-align: left; }
+.warning { display: flex; align-items: center; gap: 6px; color: var(--tm-warning, #b45309); }
+.actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 0.75rem; }

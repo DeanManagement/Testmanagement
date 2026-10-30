@@ -1,0 +1,94 @@
+<div class="container">
+  <div class="page-header">
+    <a mat-button [routerLink]="['/projects', projectId]" data-test-id="bug-status-back">
+      <mat-icon>arrow_back</mat-icon>{{ 'common.back' | translate }}
+    </a>
+    <h1>{{ 'bugStatusSettings.title' | translate }}</h1>
+  </div>
+  <p class="hint">{{ 'bugStatusSettings.description' | translate }}</p>
+
+  <form class="tm-card add-card" (ngSubmit)="add()">
+    <mat-form-field appearance="outline" class="grow" subscriptSizing="dynamic">
+      <mat-label>{{ 'bugStatusSettings.name' | translate }}</mat-label>
+      <input matInput name="newName" [(ngModel)]="newName" maxlength="100" data-test-id="bug-status-new-name">
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'bugStatusSettings.category' | translate }}</mat-label>
+      <mat-select name="newCategory" [(ngModel)]="newCategory" data-test-id="bug-status-new-category">
+        @for (c of categories; track c) {
+          <mat-option [value]="c">{{ 'bugReport.status.' + c | translate }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <input type="color" name="newColor" [(ngModel)]="newColor" [attr.aria-label]="'bugStatusSettings.color' | translate">
+    <button mat-flat-button type="submit" [disabled]="!newName.trim()" data-test-id="bug-status-add-btn">
+      <mat-icon>add</mat-icon>{{ 'bugStatusSettings.add' | translate }}
+    </button>
+  </form>
+
+  <div class="tm-card list" cdkDropList (cdkDropListDropped)="drop($event)" data-test-id="bug-status-list">
+    @for (s of statuses; track s.id) {
+      <div class="row" cdkDrag [class.archived]="s.archived" data-test-id="bug-status-row">
+        <mat-icon class="drag-handle" cdkDragHandle [attr.aria-label]="'bugStatusSettings.reorder' | translate">drag_indicator</mat-icon>
+        <input type="color" [value]="s.color" (change)="save(s, { color: $any($event.target).value })"
+               [attr.aria-label]="'bugStatusSettings.color' | translate">
+        <input class="name" [value]="s.name" maxlength="100" (change)="rename(s, $any($event.target).value)"
+               [attr.aria-label]="'bugStatusSettings.name' | translate" data-test-id="bug-status-name">
+        <span class="badge badge--{{ s.category.toLowerCase() }} badge--small">{{ 'bugReport.status.' + s.category | translate }}</span>
+        <mat-slide-toggle [checked]="!s.archived" (change)="save(s, { archived: !$event.checked })"
+                          [matTooltip]="'bugStatusSettings.activeHint' | translate"
+                          data-test-id="bug-status-active-toggle"></mat-slide-toggle>
+      </div>
+    }
+  </div>
+
+  <div class="tm-card" data-test-id="bug-status-transitions">
+    <h2>{{ 'bugStatusSettings.transitions' | translate }}</h2>
+    <p class="hint">
+      {{ (restricted ? 'bugStatusSettings.transitionsRestricted' : 'bugStatusSettings.transitionsOpen') | translate }}
+    </p>
+    <div class="grid-scroll">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th scope="col">{{ 'bugStatusSettings.fromTo' | translate }}</th>
+            @for (to of activeStatuses; track to.id) {
+              <th scope="col">{{ to.name }}</th>
+            }
+          </tr>
+        </thead>
+        <tbody>
+          @for (from of activeStatuses; track from.id) {
+            <tr>
+              <th scope="row">{{ from.name }}</th>
+              @for (to of activeStatuses; track to.id) {
+                <td>
+                  @if (from.id !== to.id) {
+                    <mat-checkbox [checked]="isAllowed(from, to)" (change)="toggle(from, to)"
+                                  [attr.aria-label]="from.name + ' → ' + to.name"
+                                  [attr.data-test-id]="'bug-transition-' + from.name + '-' + to.name"></mat-checkbox>
+                  }
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    @if (deadEnds.length > 0) {
+      <p class="warning" role="status" data-test-id="bug-status-dead-ends">
+        <mat-icon>warning</mat-icon>
+        {{ 'bugStatusSettings.deadEnds' | translate: { names: deadEnds.map(s => s.name).join(', ') } }}
+      </p>
+    }
+    <div class="actions">
+      <button mat-button type="button" (click)="allowAny()" [disabled]="!restricted" data-test-id="bug-transitions-allow-any">
+        {{ 'bugStatusSettings.allowAny' | translate }}
+      </button>
+      <button mat-flat-button type="button" (click)="saveTransitions()" [disabled]="!transitionsChanged"
+              data-test-id="bug-transitions-save">
+        {{ 'common.save' | translate }}
+      </button>
+    </div>
+  </div>
+</div>

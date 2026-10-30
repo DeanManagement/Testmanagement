@@ -137,8 +137,12 @@
         <mat-icon>swap_horiz</mat-icon>{{ 'bugReport.form.status' | translate }}
       </button>
       <mat-menu #statusMenu="matMenu">
-        @for (s of allStatuses; track s) {
-          <button mat-menu-item (click)="bulkStatus(s)">{{ 'bugReport.status.' + s | translate }}</button>
+        @for (s of bugStatuses; track s.id) {
+          <button mat-menu-item (click)="bulkStatus(s.category, s)">{{ s.name }}</button>
+        } @empty {
+          @for (s of allStatuses; track s) {
+            <button mat-menu-item (click)="bulkStatus(s)">{{ 'bugReport.status.' + s | translate }}</button>
+          }
         }
       </mat-menu>
       <button mat-stroked-button class="delete-btn" (click)="bulkDelete()" data-test-id="bug-bulk-delete">
@@ -181,7 +185,7 @@
       @if (page && page.totalElements > reports.length) {
         <p class="kanban-truncated" role="status">{{ 'bugReport.list.kanbanTruncated' | translate: { shown: reports.length, total: page.totalElements } }}</p>
       }
-      <app-bug-report-kanban [projectId]="projectId" [reports]="reports" [selectedIds]="selected()" [canWrite]="canWrite"
+      <app-bug-report-kanban [projectId]="projectId" [reports]="reports" [statuses]="bugStatuses" [selectedIds]="selected()" [canWrite]="canWrite"
                              (statusDrop)="onStatusDrop($event)" (selectionToggle)="toggle($event)" />
     } @else {
       <div class="table-scroll">
@@ -231,7 +235,7 @@
             <th mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'bugReport.form.status' | translate }}</th>
             <td mat-cell *matCellDef="let bug">
               <span class="badge badge--{{ bug.status | lowercase }}" data-test-id="bug-report-status-badge">
-                {{ 'bugReport.status.' + bug.status | translate }}
+                {{ bug.customStatusName ?? ('bugReport.status.' + bug.status | translate) }}
               </span>
               @if (bug.resolution) {
                 <span class="resolution">{{ 'bugReport.resolution.' + bug.resolution | translate }}</span>

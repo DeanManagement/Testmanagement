@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.dto.bugstatus.BugStatusResponse;
+import com.deanmanagement.testmanagement.project.internal.service.BugStatusService;
 import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.ChangeBugStatusRequest;
@@ -32,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -55,6 +58,7 @@ public class BugReportTools {
 
     private final McpCallerContext callerContext;
     private final BugReportService bugReportService;
+    private final BugStatusService bugStatusService;
     private final McpWriteThrottle writeThrottle;
     private final McpValidator validator;
     private final BugReportBulkService bulkService;
@@ -187,7 +191,7 @@ public class BugReportTools {
         List<McpDtos.BugSummary> summaries = result.getContent().stream()
                 .map(b -> new McpDtos.BugSummary(b.id(), b.key(), b.title(), b.status(), b.resolution(),
                         b.priority(), b.environment(), b.testResultId(), b.testCaseTitle(), b.testRunId(),
-                        b.testRunName(), b.assigneeName()))
+                        b.testRunName(), b.assigneeName(), b.customStatusName()))
                 .toList();
         return new McpDtos.BugPage(summaries, pageNumber, pageSize, result.getTotalElements(), result.hasNext());
     }
@@ -206,6 +210,27 @@ public class BugReportTools {
     }
 
     @McpTool(
+            name = "list_bug_statuses",
+            description = """
+                    The project's own bug statuses, each with the category it counts as (NEW, OPEN,
+                    IN_PROGRESS, RESOLVED, CLOSED) and the statuses a bug in it may move to next.
+                    Pass a name as customStatus to change_bug_report_status.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
+    @Transactional(readOnly = true)
+    public McpDtos.BugStatusList listBugStatuses() {
+        var caller = callerContext.require();
+        var statuses = bugStatusService.list(caller.projectId(), false);
+        Map<UUID, String> names = statuses.stream()
+                .collect(Collectors.toMap(BugStatusResponse::id, BugStatusResponse::name));
+        return new McpDtos.BugStatusList(statuses.stream()
+                .map(s -> new McpDtos.BugStatus(s.name(), s.category(),
+                        s.allowedTargetIds().stream().map(names::get).toList()))
+                .toList());
+    }
+
+    @McpTool(
             name = "change_bug_report_status",
             description = """
                     Move a bug report to a new status.
@@ -218,23 +243,40 @@ public class BugReportTools {
                     "OLD -> NEW: reason" — say what you verified, not just that you changed it.
                     Use this rather than filing a second bug when something you already reported
                     turns out to be fixed or not a defect.
+                    customStatus names one of the project's own statuses (list_bug_statuses) and
+                    then decides the category; status may be omitted. The project may only allow
+                    some moves; a refused one lists the allowed statuses.
                     """,
             generateOutputSchema = true,
             annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
     @Transactional
     public McpDtos.BugDetail changeBugReportStatus(
             @McpToolParam(description = "Bug key (PROJ-BUG-12) or UUID") String idOrKey,
-            @McpToolParam(description = "New status") BugReportStatus status,
+            @McpToolParam(description = "New status category; optional with customStatus", required = false)
+            BugReportStatus status,
             @McpToolParam(description = "Why it is changing") String reason,
             @McpToolParam(description = "Why it is closed or resolved", required = false) BugResolution resolution,
             @McpToolParam(description = "With DUPLICATE: key or UUID of the original bug", required = false)
-            String duplicateOf) {
+            String duplicateOf,
+            @McpToolParam(description = "The project's own status by name, e.g. \"Ready for retest\"",
+                    required = false) String customStatus) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
-        if (status == null) {
-            throw new McpToolException("status is required: NEW, OPEN, IN_PROGRESS, RESOLVED or CLOSED.");
+        boolean named = customStatus != null && !customStatus.isBlank();
+        if (status == null && !named) {
+            throw new McpToolException("Pass status (NEW, OPEN, IN_PROGRESS, RESOLVED or CLOSED) or customStatus.");
         }
+        UUID statusId = !named ? null : bugStatusService.findActiveByName(caller.projectId(), customStatus)
+                .map(found -> {
+                    if (status != null && found.getCategory() != status) {
+                        throw new McpToolException("'" + found.getName() + "' counts as " + found.getCategory()
+                                + ", not " + status + ". Omit status or pass " + found.getCategory() + ".");
+                    }
+                    return found.getId();
+                })
+                .orElseThrow(() -> new McpToolException("No bug status named '" + customStatus + "'. This project has: "
+                        + bugStatusService.describeActive(caller.projectId())));
         if (reason == null || reason.isBlank()) {
             throw new McpToolException("reason is required — it is what the audit log records "
                     + "about this change.");
@@ -243,7 +285,7 @@ public class BugReportTools {
             UUID id = bugReportService.findById(caller.projectId(), idOrKey).id();
             UUID duplicateOfId = duplicateOf == null || duplicateOf.isBlank() ? null
                     : bugReportService.findById(caller.projectId(), duplicateOf).id();
-            var request = new ChangeBugStatusRequest(status, reason, resolution, duplicateOfId);
+            var request = new ChangeBugStatusRequest(status, reason, resolution, duplicateOfId, statusId);
             validator.validate(request);
             return bugReportService.changeStatus(caller.projectId(), id, request, caller.userId());
         }));
@@ -440,7 +482,7 @@ public class BugReportTools {
                 b.assigneeName(), b.reporterName(), b.stepNumber(),
                 b.links().stream().map(l -> new McpDtos.BugOccurrence(l.testResultId(), l.testRunKey(),
                         l.testCaseKey(), l.stepNumber())).toList(),
-                attachments, b.labels(), b.foundInPlanName(), b.fixedInPlanName());
+                attachments, b.labels(), b.foundInPlanName(), b.fixedInPlanName(), b.customStatusName());
     }
 
     private static McpDtos.Attachment attachment(AttachmentSummary a) {

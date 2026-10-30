@@ -25,7 +25,11 @@ const DUPLICATE_SUGGESTIONS = 10;
 
 export interface ChangeBugStatusDialogData {
   projectId: string;
+  /** The category: decides whether a resolution is asked for. */
   newStatus: BugReportStatus;
+  /** TM47: the project's own status picked, sent along so the server lands the bug on it. */
+  newStatusId?: string;
+  newStatusName?: string;
   /** Absent for a bulk change, where the bugs may start from different statuses. */
   currentStatus?: BugReportStatus;
   /** The bugs being changed, so none is offered as its own duplicate. */
@@ -56,7 +60,7 @@ export interface ChangeBugStatusDialogData {
         @if (data.currentStatus) {
           {{ 'bugReport.status.' + data.currentStatus | translate }} &rarr;
         }
-        {{ 'bugReport.status.' + data.newStatus | translate }}
+        {{ data.newStatusName ?? ('bugReport.status.' + data.newStatus | translate) }}
       </p>
       @if (showsResolution) {
         <mat-form-field appearance="outline" class="full-width">
@@ -156,6 +160,7 @@ export class ChangeBugStatusDialogComponent {
   onConfirm(): void {
     const request: ChangeBugStatusRequest = {
       status: this.data.newStatus,
+      statusId: this.data.newStatusId ?? null,
       reason: this.reason.trim(),
       resolution: this.showsResolution ? this.resolution : null,
       duplicateOfId: this.resolution === 'DUPLICATE' ? this.duplicateOf?.id ?? null : null,

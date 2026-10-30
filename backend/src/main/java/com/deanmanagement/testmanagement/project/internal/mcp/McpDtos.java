@@ -368,7 +368,8 @@ final class McpDtos {
                       @Nullable BugResolution resolution, Priority priority,
                       @Nullable String environment, @Nullable UUID testResultId,
                       @Nullable String testCaseTitle, @Nullable UUID testRunId,
-                      @Nullable String testRunName, @Nullable String assigneeName) {}
+                      @Nullable String testRunName, @Nullable String assigneeName,
+                      @Nullable String customStatus) {}
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
     record BugPage(List<BugSummary> bugReports, int page, int size, long totalElements,
@@ -384,7 +385,13 @@ final class McpDtos {
                      @Nullable String testRunName, @Nullable String assigneeName,
                      @Nullable String reporterName, @Nullable Integer stepNumber,
                      List<BugOccurrence> occurrences, List<Attachment> attachments,
-                     Set<String> labels, @Nullable String foundInPlanName, @Nullable String fixedInPlanName) {}
+                     Set<String> labels, @Nullable String foundInPlanName, @Nullable String fixedInPlanName,
+                     @Nullable String customStatus) {}
+
+    /** TM47: one of the project's bug statuses, with the statuses a bug in it may move to. */
+    record BugStatus(String name, BugReportStatus category, List<String> allowedNext) {}
+
+    record BugStatusList(List<BugStatus> statuses) {}
 
     /** Where else the bug showed up (PRD-047); the found-in result is on the bug itself. */
     @JsonInclude(JsonInclude.Include.NON_NULL)

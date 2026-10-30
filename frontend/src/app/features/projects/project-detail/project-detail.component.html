@@ -170,6 +170,16 @@
       </div>
       <div class="setting-item">
         <div class="setting-info">
+          <h4>{{ 'bugStatusSettings.title' | translate }}</h4>
+          <p class="setting-description">{{ 'bugStatusSettings.description' | translate }}</p>
+        </div>
+        <a mat-stroked-button [routerLink]="['/projects', project.id, 'bug-statuses']" data-test-id="project-settings-bug-statuses-link">
+          <mat-icon>account_tree</mat-icon>
+          {{ 'bugStatusSettings.manage' | translate }}
+        </a>
+      </div>
+      <div class="setting-item">
+        <div class="setting-info">
           <h4>{{ 'customField.title' | translate }}</h4>
           <p class="setting-description">{{ 'customField.description' | translate }}</p>
         </div>

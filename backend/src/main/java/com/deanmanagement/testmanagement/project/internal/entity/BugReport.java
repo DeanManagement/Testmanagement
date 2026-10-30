@@ -58,9 +58,16 @@ public class BugReport extends BaseEntity {
     @Column(nullable = false, length = 20)
     private Priority priority;
 
+    /** The category every metric reads; kept in step with {@link #customStatus} by {@link #setCustomStatus}. */
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private BugReportStatus status;
+
+    /** TM47: the project's own status, counting as {@link #status}. Null only on bugs made outside the services. */
+    @Setter(lombok.AccessLevel.NONE)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "custom_status_id")
+    private ProjectBugStatus customStatus;
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
@@ -153,5 +160,13 @@ public class BugReport extends BaseEntity {
     public void assignEnvironment(ProjectEnvironment environment) {
         this.projectEnvironment = environment;
         this.environment = environment != null ? environment.getName() : null;
+    }
+
+    /** Sets the project status and with it the category; null keeps the category as it is. */
+    public void setCustomStatus(ProjectBugStatus customStatus) {
+        this.customStatus = customStatus;
+        if (customStatus != null) {
+            this.status = customStatus.getCategory();
+        }
     }
 }

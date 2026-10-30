@@ -144,7 +144,7 @@ its `source`, `sourceUrl` and `lastSyncedAt`; `update_requirement` refuses its s
 `list_environments`, `get_project_dashboard`, `list_flaky_tests`, `get_release_readiness`,
 `get_test_suite_report`,
 `list_pipeline_workflows`, `list_pipeline_runs`, `get_pipeline_run`, `list_issue_links`,
-`list_exploratory_sessions`, `get_exploratory_session`, `get_bug_report_relations`.
+`list_exploratory_sessions`, `get_exploratory_session`, `get_bug_report_relations`, `list_bug_statuses`.
 
 **Write** (Tester only) — `create_test_case`, `update_test_case`, `create_test_cases_bulk`,
 `create_test_suite`, `create_test_plan`, `create_test_case_folder`,
@@ -171,6 +171,9 @@ to a test case, a requirement, or another bug (`BLOCKS`, `BLOCKED_BY`, `RELATES_
 `hand_over_bug_report` files an Azure DevOps work item from a bug (or links an existing one with
 `existingWorkItemId`); the bug's status then follows the work item and `change_bug_report_status`
 refuses it until `detach_bug_report_issue`.
+`change_bug_report_status` takes `customStatus`, one of the project's own statuses by name
+(`list_bug_statuses` lists them with the category each counts as and where each may go next). A
+move the project's transition rules do not allow is refused with the allowed statuses listed.
 A tool that fails for an internal reason returns a generic message; the details are in the server
 log and the key's activity.
 

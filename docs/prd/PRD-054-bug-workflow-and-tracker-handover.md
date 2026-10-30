@@ -14,6 +14,11 @@ TM49 and TM46, so this starts at V99.
 
 ## 1. Configurable bug workflow (TM47) — L
 
+**Status: implemented (V100).** Open question 1 was decided as "binding for everyone": admins
+change the rules rather than bypass them. Deviations: list filters stay per category (no
+`statusId=` filter yet); the Watched items page and My queue still show the category; editing
+statuses over MCP is not offered (`list_bug_statuses` is read-only).
+
 **Problem.** Bug statuses (`BugReportStatus`: NEW, OPEN, IN_PROGRESS, RESOLVED, CLOSED) and
 resolutions (`BugResolution`, six values) are fixed, and any status can follow any other. Result
 statuses became configurable in TM24 (`0a69e3a`); bug statuses did not. Teams coming from Jira
