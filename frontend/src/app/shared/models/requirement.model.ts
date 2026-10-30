@@ -31,6 +31,8 @@ export interface Requirement {
   source: string | null;
   sourceUrl: string | null;
   lastSyncedAt: string | null;
+  /** TM46: bugs linked to it by hand that are still open. */
+  openBugs: { id: string; key: string; title: string; status: string }[];
 }
 
 /** TM19: requirement sync settings (Azure DevOps; `query` is WIQL). */

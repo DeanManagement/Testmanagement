@@ -14,7 +14,11 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportBulkService;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportLinkService;
+import com.deanmanagement.testmanagement.project.internal.service.BugReportRelationService;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportLinksResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.LinkBugReportRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.LinkItemRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.RelateBugReportRequest;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportService;
 import com.deanmanagement.testmanagement.shared.PageableUtils;
 import org.springframework.data.domain.Page;
@@ -52,6 +56,7 @@ public class BugReportController {
     private final BugReportService bugReportService;
     private final BugReportBulkService bulkService;
     private final BugReportLinkService linkService;
+    private final BugReportRelationService relationService;
 
     /**
      * The bug list (PRD-045 §3.2). {@code assignee} takes user ids, {@code none} for unassigned and
@@ -113,6 +118,58 @@ public class BugReportController {
     public BugReportResponse unlink(@PathVariable UUID projectId, @PathVariable String idOrKey,
                                     @PathVariable UUID linkId, Authentication authentication) {
         return linkService.unlink(projectId, idOrKey, linkId, actor(authentication));
+    }
+
+    /** TM46: test cases, requirements and other bugs linked by hand. */
+    @GetMapping("/{idOrKey}/relations")
+    @RequireProjectRole
+    public BugReportLinksResponse relations(@PathVariable UUID projectId, @PathVariable String idOrKey) {
+        return relationService.links(projectId, idOrKey);
+    }
+
+    @PostMapping("/{idOrKey}/relations/test-cases")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BugReportLinksResponse linkTestCase(@PathVariable UUID projectId, @PathVariable String idOrKey,
+                                               @Valid @RequestBody LinkItemRequest request,
+                                               Authentication authentication) {
+        return relationService.linkTestCase(projectId, idOrKey, request.reference(), actor(authentication));
+    }
+
+    @DeleteMapping("/{idOrKey}/relations/test-cases/{testCase}")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BugReportLinksResponse unlinkTestCase(@PathVariable UUID projectId, @PathVariable String idOrKey,
+                                                 @PathVariable String testCase, Authentication authentication) {
+        return relationService.unlinkTestCase(projectId, idOrKey, testCase, actor(authentication));
+    }
+
+    @PostMapping("/{idOrKey}/relations/requirements")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BugReportLinksResponse linkRequirement(@PathVariable UUID projectId, @PathVariable String idOrKey,
+                                                  @Valid @RequestBody LinkItemRequest request,
+                                                  Authentication authentication) {
+        return relationService.linkRequirement(projectId, idOrKey, request.reference(), actor(authentication));
+    }
+
+    @DeleteMapping("/{idOrKey}/relations/requirements/{requirement}")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BugReportLinksResponse unlinkRequirement(@PathVariable UUID projectId, @PathVariable String idOrKey,
+                                                    @PathVariable String requirement, Authentication authentication) {
+        return relationService.unlinkRequirement(projectId, idOrKey, requirement, actor(authentication));
+    }
+
+    @PostMapping("/{idOrKey}/relations/bugs")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BugReportLinksResponse relate(@PathVariable UUID projectId, @PathVariable String idOrKey,
+                                         @Valid @RequestBody RelateBugReportRequest request,
+                                         Authentication authentication) {
+        return relationService.relate(projectId, idOrKey, request, actor(authentication));
+    }
+
+    @DeleteMapping("/{idOrKey}/relations/bugs/{relationId}")
+    @RequireProjectRole(ProjectRole.TESTER)
+    public BugReportLinksResponse unrelate(@PathVariable UUID projectId, @PathVariable String idOrKey,
+                                           @PathVariable UUID relationId, Authentication authentication) {
+        return relationService.unrelate(projectId, idOrKey, relationId, actor(authentication));
     }
 
     @PostMapping("/bulk-delete")

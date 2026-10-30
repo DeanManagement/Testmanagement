@@ -162,3 +162,30 @@ export interface DefectDashboard {
   openByPriority: Record<Priority, number>;
   trend: { weekStart: string; created: number; resolved: number }[];
 }
+
+/** TM46: how two bug reports relate. BLOCKED_BY exists only in the UI: it is the other bug's BLOCKS. */
+export type BugRelationType = 'BLOCKS' | 'RELATES_TO';
+
+export interface BugLinkedItem {
+  id: string;
+  /** A test case's key or a requirement's external id. */
+  key: string;
+  title: string;
+}
+
+export interface BugRelation {
+  id: string;
+  type: BugRelationType;
+  /** False when the other bug is the subject, e.g. it blocks this one. */
+  outgoing: boolean;
+  bugId: string;
+  bugKey: string;
+  bugTitle: string;
+  bugStatus: BugReportStatus;
+}
+
+export interface BugReportRelations {
+  testCases: BugLinkedItem[];
+  requirements: BugLinkedItem[];
+  relations: BugRelation[];
+}

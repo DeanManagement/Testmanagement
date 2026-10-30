@@ -2,15 +2,7 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import {
-  BugReport,
-  BugReportQuery,
-  BulkUpdateBugReportsRequest,
-  ChangeBugStatusRequest,
-  CreateBugReportRequest,
-  DefectDashboard,
-  UpdateBugReportRequest,
-} from '../../shared/models/bug-report.model';
+import { BugReport, BugReportQuery, BulkUpdateBugReportsRequest, ChangeBugStatusRequest, CreateBugReportRequest, DefectDashboard, UpdateBugReportRequest, BugRelationType, BugReportRelations } from '../../shared/models/bug-report.model';
 import { Page } from '../../shared/models/page.model';
 import { BulkOperationResponse } from '../../shared/models/test-case.model';
 import { retryWithBackoff } from '../utils/retry-strategy';
@@ -77,6 +69,28 @@ export class BugReportApiService {
 
   unlink(projectId: string, idOrKey: string, linkId: string): Observable<BugReport> {
     return this.http.delete<BugReport>(`${this.baseUrl(projectId)}/${idOrKey}/links/${linkId}`);
+  }
+
+  /** TM46: test cases, requirements and bugs linked by hand. */
+  getRelations(projectId: string, idOrKey: string): Observable<BugReportRelations> {
+    return this.http.get<BugReportRelations>(`${this.baseUrl(projectId)}/${idOrKey}/relations`);
+  }
+
+  /** {@code kind}: 'test-cases' or 'requirements'; {@code reference} a key, external id or UUID. */
+  linkItem(projectId: string, idOrKey: string, kind: 'test-cases' | 'requirements', reference: string): Observable<BugReportRelations> {
+    return this.http.post<BugReportRelations>(`${this.baseUrl(projectId)}/${idOrKey}/relations/${kind}`, { reference });
+  }
+
+  unlinkItem(projectId: string, idOrKey: string, kind: 'test-cases' | 'requirements', reference: string): Observable<BugReportRelations> {
+    return this.http.delete<BugReportRelations>(`${this.baseUrl(projectId)}/${idOrKey}/relations/${kind}/${encodeURIComponent(reference)}`);
+  }
+
+  relate(projectId: string, idOrKey: string, relatedBug: string, type: BugRelationType): Observable<BugReportRelations> {
+    return this.http.post<BugReportRelations>(`${this.baseUrl(projectId)}/${idOrKey}/relations/bugs`, { relatedBug, type });
+  }
+
+  unrelate(projectId: string, idOrKey: string, relationId: string): Observable<BugReportRelations> {
+    return this.http.delete<BugReportRelations>(`${this.baseUrl(projectId)}/${idOrKey}/relations/bugs/${relationId}`);
   }
 
   /** Bugs found in, or linked to, the plan's runs. */

@@ -259,6 +259,15 @@
             }
             <app-custom-fields-display [values]="requirement.customFields" />
 
+            @if (requirement.openBugs.length) {
+              <div class="open-bugs" [attr.data-test-id]="'requirement-open-bugs-' + requirement.externalId">
+                <span class="open-bugs-label">{{ 'requirement.openBugs' | translate }}:</span>
+                @for (bug of requirement.openBugs; track bug.id) {
+                  <a [routerLink]="['/projects', projectId, 'bug-reports', bug.id]" [matTooltip]="bug.title">{{ bug.key }}</a>
+                }
+              </div>
+            }
+
             @if (linkingId === requirement.id) {
               <div class="link-picker" [attr.data-test-id]="'requirement-link-picker-' + requirement.externalId">
                 <mat-form-field appearance="outline">

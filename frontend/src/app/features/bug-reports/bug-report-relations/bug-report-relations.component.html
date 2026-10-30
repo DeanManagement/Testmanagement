@@ -1,0 +1,91 @@
+<div class="relation-group" data-test-id="bug-relations-test-cases">
+  <h4>{{ 'bugReport.relations.testCases' | translate }}</h4>
+  @for (item of relations().testCases; track item.id) {
+    <div class="relation-row">
+      <a [routerLink]="['/projects', projectId(), 'test-cases', item.id]">{{ item.key }}</a>
+      <span class="relation-title">{{ item.title }}</span>
+      @if (canEdit()) {
+        <button mat-icon-button (click)="removeItem('test-cases', item.id)" [attr.aria-label]="'bugReport.relations.unlink' | translate">
+          <mat-icon>link_off</mat-icon>
+        </button>
+      }
+    </div>
+  } @empty {
+    <p class="relation-empty">{{ 'bugReport.relations.none' | translate }}</p>
+  }
+  @if (canEdit()) {
+    <div class="relation-add">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'bugReport.relations.testCaseKey' | translate }}</mat-label>
+        <input matInput [(ngModel)]="testCaseRef" (keydown.enter)="addItem('test-cases')" data-test-id="bug-relations-test-case-input" />
+      </mat-form-field>
+      <button mat-stroked-button (click)="addItem('test-cases')" [disabled]="!testCaseRef.trim()">{{ 'bugReport.relations.link' | translate }}</button>
+    </div>
+  }
+</div>
+
+<div class="relation-group" data-test-id="bug-relations-requirements">
+  <h4>{{ 'bugReport.relations.requirements' | translate }}</h4>
+  @for (item of relations().requirements; track item.id) {
+    <div class="relation-row">
+      <a [routerLink]="['/projects', projectId(), 'requirements']">{{ item.key }}</a>
+      <span class="relation-title">{{ item.title }}</span>
+      @if (canEdit()) {
+        <button mat-icon-button (click)="removeItem('requirements', item.id)" [attr.aria-label]="'bugReport.relations.unlink' | translate">
+          <mat-icon>link_off</mat-icon>
+        </button>
+      }
+    </div>
+  } @empty {
+    <p class="relation-empty">{{ 'bugReport.relations.none' | translate }}</p>
+  }
+  @if (canEdit()) {
+    <div class="relation-add">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'bugReport.relations.requirementId' | translate }}</mat-label>
+        <input matInput [(ngModel)]="requirementRef" (keydown.enter)="addItem('requirements')" data-test-id="bug-relations-requirement-input" />
+      </mat-form-field>
+      <button mat-stroked-button (click)="addItem('requirements')" [disabled]="!requirementRef.trim()">{{ 'bugReport.relations.link' | translate }}</button>
+    </div>
+  }
+</div>
+
+<div class="relation-group" data-test-id="bug-relations-bugs">
+  <h4>{{ 'bugReport.relations.bugs' | translate }}</h4>
+  @for (relation of relations().relations; track relation.id) {
+    <div class="relation-row">
+      <span class="relation-type">{{ relationLabel(relation) | translate }}</span>
+      <a [routerLink]="['/projects', projectId(), 'bug-reports', relation.bugId]">{{ relation.bugKey }}</a>
+      <span class="relation-title">{{ relation.bugTitle }}</span>
+      <span class="relation-status">{{ 'bugReport.status.' + relation.bugStatus | translate }}</span>
+      @if (canEdit()) {
+        <button mat-icon-button (click)="removeRelation(relation)" [attr.aria-label]="'bugReport.relations.unlink' | translate">
+          <mat-icon>link_off</mat-icon>
+        </button>
+      }
+    </div>
+  } @empty {
+    <p class="relation-empty">{{ 'bugReport.relations.none' | translate }}</p>
+  }
+  @if (canEdit()) {
+    <div class="relation-add">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'bugReport.relations.type' | translate }}</mat-label>
+        <mat-select [(ngModel)]="relationChoice" data-test-id="bug-relations-type">
+          @for (choice of relationChoices; track choice) {
+            <mat-option [value]="choice">{{ 'bugReport.relations.' + choice | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'bugReport.relations.bugKey' | translate }}</mat-label>
+        <input matInput [(ngModel)]="bugRef" (keydown.enter)="addRelation()" data-test-id="bug-relations-bug-input" />
+      </mat-form-field>
+      <button mat-stroked-button (click)="addRelation()" [disabled]="!bugRef.trim()">{{ 'bugReport.relations.link' | translate }}</button>
+    </div>
+  }
+</div>
+
+@if (error(); as message) {
+  <p class="relation-error" role="alert">{{ message | translate }}</p>
+}

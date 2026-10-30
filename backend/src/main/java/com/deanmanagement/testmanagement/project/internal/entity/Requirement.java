@@ -87,4 +87,8 @@ public class Requirement extends BaseEntity {
             joinColumns = @JoinColumn(name = "requirement_id"),
             inverseJoinColumns = @JoinColumn(name = "test_case_id"))
     private Set<TestCase> testCases = new HashSet<>();
+
+    /** TM46: bugs linked to it by hand; the owning side is {@link BugReport#getLinkedRequirements()}. */
+    @ManyToMany(mappedBy = "linkedRequirements", fetch = FetchType.LAZY)
+    private Set<BugReport> bugReports = new HashSet<>();
 }

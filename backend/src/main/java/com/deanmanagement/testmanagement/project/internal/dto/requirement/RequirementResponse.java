@@ -1,5 +1,6 @@
 package com.deanmanagement.testmanagement.project.internal.dto.requirement;
 
+import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerProviderType;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.RequirementStatus;
@@ -26,8 +27,13 @@ public record RequirementResponse(
         /* TM19: the tracker it is synced from (null when local), its work item, and the last sync. */
         IssueTrackerProviderType source,
         String sourceUrl,
-        Instant lastSyncedAt
+        Instant lastSyncedAt,
+        /* TM46: the bugs linked to it that are still open, by key. */
+        List<OpenBug> openBugs
 ) {
     public record LinkedTestCase(UUID id, String key, String title) {
+    }
+
+    public record OpenBug(UUID id, String key, String title, BugReportStatus status) {
     }
 }

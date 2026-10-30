@@ -941,6 +941,23 @@
       "seenAgain": "seen again",
       "occurrences": "Also seen in",
       "unlink": "Remove this occurrence"
+    },
+    "relations": {
+      "title": "Links",
+      "testCases": "Test cases",
+      "requirements": "Requirements",
+      "bugs": "Bug reports",
+      "none": "None linked.",
+      "testCaseKey": "Test case key, e.g. SN-12",
+      "requirementId": "Requirement ID",
+      "bugKey": "Bug key, e.g. SN-BUG-3",
+      "type": "Relation",
+      "link": "Link",
+      "unlink": "Remove link",
+      "failed": "The link could not be saved.",
+      "BLOCKS": "Blocks",
+      "BLOCKED_BY": "Is blocked by",
+      "RELATES_TO": "Relates to"
     }
   },
   "myBugs": {
@@ -1394,7 +1411,8 @@
       "button": "Export CSV",
       "allRuns": "Latest results of all runs",
       "byPlan": "Only the runs of a test plan:"
-    }
+    },
+    "openBugs": "Open bugs"
   },
   "requirementSync": {
     "title": "Requirement sync from Azure DevOps",

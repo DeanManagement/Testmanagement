@@ -27,6 +27,7 @@ import { ProjectMemberApiService } from '../../../core/services/project-member-a
 import { selectAuthUser } from '../../../store/auth/auth.selectors';
 import { MentionCandidate } from '../../../shared/models/comment.model';
 import { BugReportCommentsComponent } from '../bug-report-comments/bug-report-comments.component';
+import { BugReportRelationsComponent } from '../bug-report-relations/bug-report-relations.component';
 
 @Component({
   selector: 'app-bug-report-detail',
@@ -39,6 +40,7 @@ import { BugReportCommentsComponent } from '../bug-report-comments/bug-report-co
     LocalizedDatePipe,
     MarkdownPipe,
     BugReportCommentsComponent,
+    BugReportRelationsComponent,
     LowerCasePipe,
     RouterLink,
     MatCardModule,

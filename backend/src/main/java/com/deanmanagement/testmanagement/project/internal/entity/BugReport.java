@@ -12,6 +12,8 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
@@ -129,6 +131,20 @@ public class BugReport extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "fixed_in_plan_id")
     private TestPlan fixedInPlan;
+
+    /** TM46: linked by hand, besides the case of the found-in result. */
+    @ManyToMany
+    @JoinTable(name = "bug_report_test_cases",
+            joinColumns = @JoinColumn(name = "bug_report_id"),
+            inverseJoinColumns = @JoinColumn(name = "test_case_id"))
+    private Set<TestCase> linkedTestCases = new HashSet<>();
+
+    /** TM46 */
+    @ManyToMany
+    @JoinTable(name = "bug_report_requirements",
+            joinColumns = @JoinColumn(name = "bug_report_id"),
+            inverseJoinColumns = @JoinColumn(name = "requirement_id"))
+    private Set<Requirement> linkedRequirements = new HashSet<>();
 
     /** PRD-035. Lazy; the global batch fetch size keeps list pages to one query per page. */
     @OneToMany(mappedBy = "bugReport", cascade = CascadeType.ALL, orphanRemoval = true)

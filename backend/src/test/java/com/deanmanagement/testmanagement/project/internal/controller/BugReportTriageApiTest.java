@@ -402,6 +402,102 @@ class BugReportTriageApiTest {
         }
     }
 
+    /** TM46: links made by hand to test cases, requirements and other bugs. */
+    @Nested
+    class ManualLinks {
+
+        @Test
+        void aBugLinksToATestCaseAndARequirementByKey() throws Exception {
+            create("/test-cases", "{\"title\":\"Login\",\"priority\":\"MEDIUM\",\"status\":\"DRAFT\"}");
+            create("/requirements", "{\"externalId\":\"REQ-1\",\"title\":\"Sign in\"}");
+            UUID bug = id(file(projectId, "Login fails"));
+
+            relate(bug, "/test-cases", "{\"reference\":\"TRI-1\"}").andExpect(status().isOk());
+            relate(bug, "/requirements", "{\"reference\":\"REQ-1\"}")
+                    .andExpect(jsonPath("$.testCases[0].key").value("TRI-1"))
+                    .andExpect(jsonPath("$.requirements[0].key").value("REQ-1"));
+        }
+
+        @Test
+        void aRequirementShowsItsOpenBugsOnly() throws Exception {
+            UUID requirement = id(create("/requirements", "{\"externalId\":\"REQ-1\",\"title\":\"Sign in\"}"));
+            UUID open = id(file(projectId, "Still broken"));
+            UUID fixed = id(file(projectId, "Was broken"));
+            relate(open, "/requirements", "{\"reference\":\"REQ-1\"}");
+            relate(fixed, "/requirements", "{\"reference\":\"REQ-1\"}");
+            changeStatus(fixed, "{\"status\":\"CLOSED\",\"reason\":\"done\",\"resolution\":\"FIXED\"}")
+                    .andExpect(status().isOk());
+
+            mockMvc.perform(get("/api/projects/" + projectId + "/requirements/" + requirement).with(user(viewer)))
+                    .andExpect(jsonPath("$.openBugs[*].title", contains("Still broken")));
+        }
+
+        @Test
+        void aBlockingBugReadsAsBlockedByFromTheOtherSide() throws Exception {
+            UUID blocker = id(file(projectId, "Database down"));
+            UUID blocked = id(file(projectId, "Checkout fails"));
+
+            relate(blocker, "/bugs", "{\"relatedBug\":\"TRI-BUG-2\",\"type\":\"BLOCKS\"}")
+                    .andExpect(jsonPath("$.relations[0].outgoing").value(true));
+            mockMvc.perform(get(url(projectId) + "/" + blocked + "/relations").with(user(viewer)))
+                    .andExpect(jsonPath("$.relations[0].type").value("BLOCKS"))
+                    .andExpect(jsonPath("$.relations[0].outgoing").value(false))
+                    .andExpect(jsonPath("$.relations[0].bugKey").value("TRI-BUG-1"));
+        }
+
+        @Test
+        void relatingTheSameBugsTwiceEitherWayKeepsOneRelation() throws Exception {
+            UUID first = id(file(projectId, "A"));
+            UUID second = id(file(projectId, "B"));
+
+            relate(first, "/bugs", "{\"relatedBug\":\"TRI-BUG-2\",\"type\":\"RELATES_TO\"}");
+            relate(second, "/bugs", "{\"relatedBug\":\"TRI-BUG-1\",\"type\":\"RELATES_TO\"}")
+                    .andExpect(jsonPath("$.relations", hasSize(1)));
+        }
+
+        @Test
+        void aBugCannotBeRelatedToItself() throws Exception {
+            UUID bug = id(file(projectId, "A"));
+
+            mockMvc.perform(post(url(projectId) + "/" + bug + "/relations/bugs").with(user(tester))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"relatedBug\":\"TRI-BUG-1\",\"type\":\"RELATES_TO\"}"))
+                    .andExpect(status().isBadRequest());
+        }
+
+        @Test
+        void aTestCaseOfAnotherProjectIsNotFound() throws Exception {
+            UUID bug = id(file(projectId, "A"));
+            mockMvc.perform(post("/api/projects/" + otherProjectId + "/test-cases").with(user(tester))
+                    .contentType(MediaType.APPLICATION_JSON).content("{\"title\":\"Theirs\",\"priority\":\"LOW\",\"status\":\"DRAFT\"}"));
+
+            mockMvc.perform(post(url(projectId) + "/" + bug + "/relations/test-cases").with(user(tester))
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"reference\":\"OTB-1\"}"))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void aViewerCannotLink() throws Exception {
+            UUID bug = id(file(projectId, "A"));
+            create("/requirements", "{\"externalId\":\"REQ-1\",\"title\":\"Sign in\"}");
+
+            mockMvc.perform(post(url(projectId) + "/" + bug + "/relations/requirements").with(user(viewer))
+                            .contentType(MediaType.APPLICATION_JSON).content("{\"reference\":\"REQ-1\"}"))
+                    .andExpect(status().isForbidden());
+        }
+
+        private ResultActions create(String path, String body) throws Exception {
+            return mockMvc.perform(post("/api/projects/" + projectId + path).with(user(tester))
+                            .contentType(MediaType.APPLICATION_JSON).content(body))
+                    .andExpect(status().isCreated());
+        }
+
+        private ResultActions relate(UUID bug, String kind, String body) throws Exception {
+            return mockMvc.perform(post(url(projectId) + "/" + bug + "/relations" + kind).with(user(tester))
+                    .contentType(MediaType.APPLICATION_JSON).content(body));
+        }
+    }
+
     // ---- helpers --------------------------------------------------------------------------------
 
     private ResultActions file(UUID project, String title) throws Exception {

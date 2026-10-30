@@ -195,6 +195,11 @@
         <app-attachments [url]="attachmentsUrl(bug)" [canEdit]="canWrite()" />
       </div>
 
+      <div class="detail-section tm-card" data-test-id="bug-report-relations">
+        <h3>{{ 'bugReport.relations.title' | translate }}</h3>
+        <app-bug-report-relations [projectId]="projectId" [bugId]="bug.id" [bugKey]="bug.key" [canEdit]="canWrite()" />
+      </div>
+
       <div class="detail-section tm-card" data-test-id="bug-report-comments">
         <h3>{{ 'comment.title' | translate }}</h3>
         <app-bug-report-comments

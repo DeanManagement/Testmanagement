@@ -1,0 +1,39 @@
+.relation-group {
+  margin-bottom: 16px;
+
+  h4 {
+    margin: 0 0 8px;
+  }
+}
+
+.relation-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+}
+
+.relation-type,
+.relation-status,
+.relation-empty {
+  color: var(--tm-text-secondary);
+}
+
+.relation-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.relation-add {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.relation-error {
+  color: var(--tm-danger, #c62828);
+}

@@ -5,6 +5,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.requirement.Requir
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.SaveRequirementRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.TraceabilityRowResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.requirement.TraceabilityRowResponse.CoverageStatus;
+import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditAction;
 import com.deanmanagement.testmanagement.project.internal.entity.AuditEntityType;
 import com.deanmanagement.testmanagement.project.internal.dto.customField.CustomFieldValueMaps;
@@ -468,6 +469,12 @@ public class RequirementService {
                 requirement.getUpdatedAt(),
                 requirement.getSource(),
                 requirement.getSourceUrl(),
-                requirement.getLastSyncedAt());
+                requirement.getLastSyncedAt(),
+                requirement.getBugReports().stream()
+                        .filter(bug -> bug.getStatus().isOpen())
+                        .sorted(Comparator.comparing(BugReport::getKey))
+                        .map(bug -> new RequirementResponse.OpenBug(bug.getId(), bug.getKey(), bug.getTitle(),
+                                bug.getStatus()))
+                        .toList());
     }
 }

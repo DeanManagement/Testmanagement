@@ -7,6 +7,10 @@ import com.deanmanagement.testmanagement.project.internal.entity.McpToolGroup;
 import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportAttachmentService;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportLinkService;
+import com.deanmanagement.testmanagement.project.internal.service.BugReportRelationService;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportLinksResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.RelateBugReportRequest;
+import com.deanmanagement.testmanagement.project.internal.entity.BugRelationType;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.mcp.annotation.McpTool;
@@ -14,6 +18,7 @@ import org.springframework.ai.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.UUID;
@@ -37,6 +42,7 @@ public class BugReportMaintenanceTools {
     private final McpCallerContext callerContext;
     private final BugReportService bugReportService;
     private final BugReportLinkService linkService;
+    private final BugReportRelationService relationService;
     private final BugReportAttachmentService attachmentService;
     private final McpEnvironmentGuard environmentGuard;
     private final McpWriteThrottle writeThrottle;
@@ -194,6 +200,111 @@ public class BugReportMaintenanceTools {
             return current;
         }
         return requested.isBlank() ? null : requested;
+    }
+
+
+    @McpTool(
+            name = "get_bug_report_relations",
+            description = """
+                    The test cases, requirements and other bug reports a bug is linked to by hand
+                    (relations: BLOCKS or RELATES_TO; outgoing=false means the other bug blocks
+                    this one). Where the bug showed up in runs is in get_bug_report instead.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(readOnlyHint = true, destructiveHint = false))
+    @Transactional(readOnly = true)
+    public BugReportLinksResponse getBugReportRelations(
+            @McpToolParam(description = "Bug key (PROJ-BUG-12) or UUID") String idOrKey) {
+        var caller = callerContext.require();
+        return relationService.links(caller.projectId(), idOrKey);
+    }
+
+    @McpTool(
+            name = "relate_bug_report",
+            description = """
+                    Link a bug report by hand to a test case, a requirement, or another bug report.
+                    Pass exactly one of testCase (key or UUID), requirement (external id or UUID)
+                    or relatedBug (bug key or UUID); with relatedBug also pass relation: BLOCKS
+                    (this bug blocks relatedBug), BLOCKED_BY or RELATES_TO. Idempotent.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public BugReportLinksResponse relateBugReport(
+            @McpToolParam(description = "Bug key (PROJ-BUG-12) or UUID") String idOrKey,
+            @McpToolParam(description = "Test case key or UUID", required = false) String testCase,
+            @McpToolParam(description = "Requirement external id or UUID", required = false) String requirement,
+            @McpToolParam(description = "Other bug key or UUID", required = false) String relatedBug,
+            @McpToolParam(description = "BLOCKS, BLOCKED_BY or RELATES_TO; with relatedBug only",
+                    required = false) String relation) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        requireExactlyOne(testCase, requirement, relatedBug);
+        return BugReportTools.enabled(() -> {
+            if (isGiven(testCase)) {
+                return relationService.linkTestCase(caller.projectId(), idOrKey, testCase, caller.userId());
+            }
+            if (isGiven(requirement)) {
+                return relationService.linkRequirement(caller.projectId(), idOrKey, requirement, caller.userId());
+            }
+            if (relation == null) {
+                throw new McpToolException("relation is required with relatedBug: BLOCKS, BLOCKED_BY or RELATES_TO.");
+            }
+            return switch (relation.strip().toUpperCase()) {
+                case "BLOCKS" -> relationService.relate(caller.projectId(), idOrKey,
+                        new RelateBugReportRequest(relatedBug, BugRelationType.BLOCKS), caller.userId());
+                case "RELATES_TO" -> relationService.relate(caller.projectId(), idOrKey,
+                        new RelateBugReportRequest(relatedBug, BugRelationType.RELATES_TO), caller.userId());
+                case "BLOCKED_BY" -> {
+                    relationService.relate(caller.projectId(), relatedBug,
+                            new RelateBugReportRequest(idOrKey, BugRelationType.BLOCKS), caller.userId());
+                    yield relationService.links(caller.projectId(), idOrKey);
+                }
+                default -> throw new McpToolException("Unknown relation '" + relation
+                        + "'. Use BLOCKS, BLOCKED_BY or RELATES_TO.");
+            };
+        });
+    }
+
+    @McpTool(
+            name = "unrelate_bug_report",
+            description = """
+                    Remove a link made with relate_bug_report. Pass exactly one of testCase,
+                    requirement or relationId (the id of a relation from get_bug_report_relations).
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public BugReportLinksResponse unrelateBugReport(
+            @McpToolParam(description = "Bug key (PROJ-BUG-12) or UUID") String idOrKey,
+            @McpToolParam(description = "Test case key or UUID", required = false) String testCase,
+            @McpToolParam(description = "Requirement external id or UUID", required = false) String requirement,
+            @McpToolParam(description = "Relation UUID from get_bug_report_relations", required = false)
+            UUID relationId) {
+
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        requireExactlyOne(testCase, requirement, relationId == null ? null : relationId.toString());
+        return BugReportTools.enabled(() -> {
+            if (isGiven(testCase)) {
+                return relationService.unlinkTestCase(caller.projectId(), idOrKey, testCase, caller.userId());
+            }
+            if (isGiven(requirement)) {
+                return relationService.unlinkRequirement(caller.projectId(), idOrKey, requirement, caller.userId());
+            }
+            return relationService.unrelate(caller.projectId(), idOrKey, relationId, caller.userId());
+        });
+    }
+
+    private static boolean isGiven(String value) {
+        return value != null && !value.isBlank();
+    }
+
+    private static void requireExactlyOne(String... targets) {
+        if (Arrays.stream(targets).filter(BugReportMaintenanceTools::isGiven).count() != 1) {
+            throw new McpToolException("Pass exactly one target: testCase, requirement, or the other bug.");
+        }
     }
 
     /** Absent keeps the current plan, "" clears it, anything else must be a plan UUID. */

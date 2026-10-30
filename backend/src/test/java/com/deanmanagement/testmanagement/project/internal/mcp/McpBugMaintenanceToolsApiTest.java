@@ -65,6 +65,26 @@ class McpBugMaintenanceToolsApiTest extends McpToolApiTestSupport {
     }
 
     @Test
+    void aBugBlockedByAnotherListsTheBlockerAsIncoming() {
+        McpDtos.BugDetail blocker = bugReportTools.createBugReport("Database down", Priority.CRITICAL, null, null,
+                null, null, null, null, null, null, null);
+
+        var relations = maintenanceTools.relateBugReport(bug.key(), null, null, blocker.key(), "blocked_by");
+
+        assertThat(relations.relations()).singleElement().satisfies(relation -> {
+            assertThat(relation.bugKey()).isEqualTo(blocker.key());
+            assertThat(relation.outgoing()).isFalse();
+        });
+    }
+
+    @Test
+    void relatingNeedsExactlyOneTarget() {
+        assertThatThrownBy(() -> maintenanceTools.relateBugReport(bug.key(), "PROJ-1", "REQ-1", null, null))
+                .isInstanceOf(McpToolException.class)
+                .hasMessageContaining("exactly one");
+    }
+
+    @Test
     void anUpdateWithNothingIsRefused() {
         assertThatThrownBy(() -> maintenanceTools.updateBugReport(bug.key(), null, null, null, null, null,
                 null, null, null, null, null))

@@ -941,6 +941,23 @@
       "seenAgain": "erneut aufgetreten",
       "occurrences": "Auch aufgetreten in",
       "unlink": "Dieses Auftreten entfernen"
+    },
+    "relations": {
+      "title": "Verknüpfungen",
+      "testCases": "Testfälle",
+      "requirements": "Anforderungen",
+      "bugs": "Fehlermeldungen",
+      "none": "Keine verknüpft.",
+      "testCaseKey": "Testfall-Schlüssel, z.B. SN-12",
+      "requirementId": "Anforderungs-ID",
+      "bugKey": "Fehler-Schlüssel, z.B. SN-BUG-3",
+      "type": "Beziehung",
+      "link": "Verknüpfen",
+      "unlink": "Verknüpfung entfernen",
+      "failed": "Die Verknüpfung konnte nicht gespeichert werden.",
+      "BLOCKS": "Blockiert",
+      "BLOCKED_BY": "Wird blockiert von",
+      "RELATES_TO": "Verwandt mit"
     }
   },
   "myBugs": {
@@ -1394,7 +1411,8 @@
       "button": "CSV exportieren",
       "allRuns": "Neueste Ergebnisse aller Läufe",
       "byPlan": "Nur die Läufe eines Testplans:"
-    }
+    },
+    "openBugs": "Offene Fehlermeldungen"
   },
   "requirementSync": {
     "title": "Anforderungen aus Azure DevOps synchronisieren",
