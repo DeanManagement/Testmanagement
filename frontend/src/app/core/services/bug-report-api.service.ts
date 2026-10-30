@@ -16,16 +16,20 @@ export class BugReportApiService {
   }
 
   getAll(projectId: string, query: BugReportQuery = {}): Observable<Page<BugReport>> {
-    let params = new HttpParams();
-    if (query.q) params = params.set('q', query.q);
-    (query.status ?? []).forEach((s) => (params = params.append('status', s)));
-    (query.priority ?? []).forEach((p) => (params = params.append('priority', p)));
-    (query.assignee ?? []).forEach((a) => (params = params.append('assignee', a)));
-    if (query.testResultId) params = params.set('testResultId', query.testResultId);
+    let params = filterParams(query);
     if (query.page != null) params = params.set('page', String(query.page));
     if (query.size != null) params = params.set('size', String(query.size));
-    if (query.sort) params = params.set('sort', query.sort);
     return this.http.get<Page<BugReport>>(this.baseUrl(projectId), { params }).pipe(retryWithBackoff());
+  }
+
+  /** TM48: every bug the filter matches, as CSV, in the list's sort order. */
+  exportCsv(projectId: string, query: BugReportQuery): Observable<Blob> {
+    return this.http.get(`${this.baseUrl(projectId)}/export.csv`, { params: filterParams(query), responseType: 'blob' });
+  }
+
+  /** TM49: labels already used on the project's bugs. */
+  getLabels(projectId: string): Observable<string[]> {
+    return this.http.get<string[]>(`${this.baseUrl(projectId)}/labels`);
   }
 
   /** By UUID or by key (PROJ-BUG-12). */
@@ -109,4 +113,21 @@ export class BugReportApiService {
   getAssignedToMe(): Observable<BugReport[]> {
     return this.http.get<BugReport[]>('/api/bug-reports/assigned-to-me').pipe(retryWithBackoff());
   }
+}
+
+function filterParams(query: BugReportQuery): HttpParams {
+  let params = new HttpParams();
+  if (query.q) params = params.set('q', query.q);
+  (query.status ?? []).forEach((s) => (params = params.append('status', s)));
+  (query.priority ?? []).forEach((p) => (params = params.append('priority', p)));
+  (query.assignee ?? []).forEach((a) => (params = params.append('assignee', a)));
+  (query.reporter ?? []).forEach((r) => (params = params.append('reporter', r)));
+  (query.label ?? []).forEach((l) => (params = params.append('label', l)));
+  if (query.testResultId) params = params.set('testResultId', query.testResultId);
+  if (query.environmentId) params = params.set('environmentId', query.environmentId);
+  if (query.testRunId) params = params.set('testRunId', query.testRunId);
+  if (query.createdFrom) params = params.set('createdFrom', query.createdFrom);
+  if (query.createdTo) params = params.set('createdTo', query.createdTo);
+  if (query.sort) params = params.set('sort', query.sort);
+  return params;
 }

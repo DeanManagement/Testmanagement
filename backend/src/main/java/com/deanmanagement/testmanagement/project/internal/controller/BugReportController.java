@@ -6,12 +6,9 @@ import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugRepor
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.ChangeBugStatusRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.CreateBugReportRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.UpdateBugReportRequest;
-import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportFilter;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BulkDeleteBugReportsRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BulkUpdateBugReportsRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.testCase.BulkOperationResponse;
-import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
-import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportBulkService;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportLinkService;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportRelationService;
@@ -43,6 +40,15 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.UUID;
+import java.nio.charset.StandardCharsets;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.MediaType;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ContentDisposition;
+import org.springframework.data.web.SortDefault;
+import org.springframework.data.domain.Sort;
+import com.deanmanagement.testmanagement.project.internal.service.BugReportExportService;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportListParams;
 
 @RestController
 @RequestMapping("/api/projects/{projectId}/bug-reports")
@@ -50,38 +56,36 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class BugReportController {
 
-    private static final String UNASSIGNED = "none";
-    private static final String ME = "me";
-
     private final BugReportService bugReportService;
     private final BugReportBulkService bulkService;
     private final BugReportLinkService linkService;
     private final BugReportRelationService relationService;
+    private final BugReportExportService exportService;
 
     /**
-     * The bug list (PRD-045 §3.2). {@code assignee} takes user ids, {@code none} for unassigned and
-     * {@code me}; a bug matching any of them is included. Sortable by key, title, priority, status,
-     * assignee, createdAt and updatedAt.
+     * The bug list (PRD-045 §3.2), filtered as {@link BugReportListParams} describes. Sortable by
+     * key, title, priority, status, assignee, createdAt and updatedAt.
      */
     @GetMapping
     @RequireProjectRole
-    public Page<BugReportResponse> findAll(@PathVariable UUID projectId,
-                                           @RequestParam(required = false) String q,
-                                           @RequestParam(required = false) List<BugReportStatus> status,
-                                           @RequestParam(required = false) List<Priority> priority,
-                                           @RequestParam(required = false) List<String> assignee,
-                                           @RequestParam(required = false) UUID testResultId,
-                                           @RequestParam(required = false) UUID environmentId,
+    public Page<BugReportResponse> findAll(@PathVariable UUID projectId, BugReportListParams params,
                                            @PageableDefault(size = PageableUtils.DEFAULT_SIZE) Pageable pageable,
                                            Authentication authentication) {
-        List<String> assignees = assignee == null ? List.of() : assignee;
-        List<UUID> assigneeIds = assignees.stream()
-                .filter(a -> !UNASSIGNED.equals(a))
-                .map(a -> ME.equals(a) ? actor(authentication) : parseUserId(a))
-                .toList();
-        BugReportFilter filter = new BugReportFilter(q, status, priority, assigneeIds,
-                assignees.contains(UNASSIGNED), testResultId, environmentId);
-        return bugReportService.search(projectId, filter, pageable);
+        return bugReportService.search(projectId, params.toFilter(actor(authentication)), pageable);
+    }
+
+    /** TM48: the filtered list, every page, in the list's sort order. */
+    @GetMapping("/export.csv")
+    @RequireProjectRole
+    public ResponseEntity<byte[]> exportCsv(@PathVariable UUID projectId, BugReportListParams params,
+                                            @SortDefault(sort = "createdAt", direction = Sort.Direction.DESC) Sort sort,
+                                            Authentication authentication) {
+        byte[] csv = exportService.exportCsv(projectId, params.toFilter(actor(authentication)), sort);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment().filename("bug-reports.csv").build().toString())
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csv);
     }
 
     /** Labels already used on this project's bugs, for the form's autocomplete (TM49). */
@@ -186,14 +190,6 @@ public class BugReportController {
 
     private static UUID actor(Authentication authentication) {
         return authentication != null ? UUID.fromString(authentication.getName()) : null;
-    }
-
-    private static UUID parseUserId(String value) {
-        try {
-            return UUID.fromString(value);
-        } catch (IllegalArgumentException e) {
-            throw new IllegalArgumentException("assignee must be a user id, 'none' or 'me', not '" + value + "'");
-        }
     }
 
     @PostMapping

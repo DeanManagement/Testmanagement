@@ -498,6 +498,61 @@ class BugReportTriageApiTest {
         }
     }
 
+    /** TM48: more filters, saved filters and the CSV export. */
+    @Nested
+    class FiltersAndExport {
+
+        @Test
+        void filtersByReporter() throws Exception {
+            file(projectId, "Mine");
+            mockMvc.perform(post(url(projectId)).with(user(admin)).contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"title\":\"Theirs\",\"priority\":\"LOW\"}")).andExpect(status().isCreated());
+
+            list("reporter=" + admin).andExpect(jsonPath("$.content[*].title", contains("Theirs")));
+        }
+
+        @Test
+        void filtersByLabel() throws Exception {
+            fileWith(projectId, "{\"title\":\"UI\",\"priority\":\"LOW\",\"labels\":[\"ui\",\"web\"]}");
+            fileWith(projectId, "{\"title\":\"API\",\"priority\":\"LOW\",\"labels\":[\"api\"]}");
+
+            list("label=ui&label=web").andExpect(jsonPath("$.content[*].title", contains("UI")));
+        }
+
+        @Test
+        void filtersByCreationDay() throws Exception {
+            file(projectId, "Today");
+            String today = java.time.LocalDate.now(java.time.ZoneOffset.UTC).toString();
+            String tomorrow = java.time.LocalDate.now(java.time.ZoneOffset.UTC).plusDays(1).toString();
+
+            list("createdFrom=" + today + "&createdTo=" + today).andExpect(jsonPath("$.page.totalElements").value(1));
+            list("createdFrom=" + tomorrow).andExpect(jsonPath("$.page.totalElements").value(0));
+        }
+
+        @Test
+        void theExportHoldsTheFilteredBugs() throws Exception {
+            fileWith(projectId, "{\"title\":\"High one\",\"priority\":\"HIGH\"}");
+            fileWith(projectId, "{\"title\":\"=cmd()\",\"priority\":\"LOW\"}");
+
+            String csv = mockMvc.perform(get(url(projectId) + "/export.csv?priority=LOW").with(user(viewer)))
+                    .andExpect(status().isOk())
+                    .andReturn().getResponse().getContentAsString();
+
+            assertThat(csv).startsWith("key,title,status").contains("TRI-BUG-2", "'=cmd()").doesNotContain("High one");
+        }
+
+        @Test
+        void aBugFilterCanBeSavedAndSharedInTheProject() throws Exception {
+            mockMvc.perform(post("/api/projects/" + projectId + "/saved-filters").with(user(tester))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"name\":\"Blockers\",\"view\":\"BUG_REPORTS\",\"queryString\":\"priority=CRITICAL\",\"shared\":true}"))
+                    .andExpect(status().isCreated());
+
+            mockMvc.perform(get("/api/projects/" + projectId + "/saved-filters?view=BUG_REPORTS").with(user(viewer)))
+                    .andExpect(jsonPath("$[*].name", contains("Blockers")));
+        }
+    }
+
     // ---- helpers --------------------------------------------------------------------------------
 
     private ResultActions file(UUID project, String title) throws Exception {

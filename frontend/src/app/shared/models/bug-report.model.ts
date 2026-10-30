@@ -117,6 +117,14 @@ export interface BugReportQuery {
   priority?: Priority[];
   assignee?: string[];
   testResultId?: string;
+  /** TM48 */
+  environmentId?: string;
+  reporter?: string[];
+  testRunId?: string;
+  /** ISO days, inclusive. */
+  createdFrom?: string;
+  createdTo?: string;
+  label?: string[];
   page?: number;
   size?: number;
   sort?: string;

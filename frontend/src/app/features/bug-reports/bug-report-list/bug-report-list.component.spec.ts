@@ -10,6 +10,8 @@ import { BugReportListComponent } from './bug-report-list.component';
 import { BugReportActions } from '../../../store/bug-report/bug-report.actions';
 import { BugReportApiService } from '../../../core/services/bug-report-api.service';
 import { ProjectMemberApiService } from '../../../core/services/project-member-api.service';
+import { EnvironmentApiService } from '../../../core/services/environment-api.service';
+import { TestRunApiService } from '../../../core/services/test-run-api.service';
 import { selectAuthUser } from '../../../store/auth/auth.selectors';
 import { BugReport, ChangeBugStatusRequest } from '../../../shared/models/bug-report.model';
 import { initialBugReportState } from '../../../store/bug-report/bug-report.state';
@@ -39,7 +41,9 @@ describe('BugReportListComponent', () => {
           selectors: [{ selector: selectAuthUser, value: { id: 'me', systemAdmin: false } }],
         }),
         { provide: Router, useValue: { navigate } },
-        { provide: BugReportApiService, useValue: { bulkUpdate, bulkDelete: vi.fn(() => of({})) } },
+        { provide: BugReportApiService, useValue: { bulkUpdate, bulkDelete: vi.fn(() => of({})), getLabels: () => of([]) } },
+        { provide: EnvironmentApiService, useValue: { getAll: () => of([]) } },
+        { provide: TestRunApiService, useValue: { getAll: () => of({ content: [] }) } },
         {
           provide: ProjectMemberApiService,
           useValue: { getByProject: () => of([{ userId: 'me', role: 'TESTER', displayName: 'Me' }]) },
@@ -68,8 +72,21 @@ describe('BugReportListComponent', () => {
 
     expect(store.dispatch).toHaveBeenCalledWith(BugReportActions.loadBugReports({
       projectId: 'p1',
-      query: { q: 'crash', status: ['NEW', 'OPEN'], priority: [], assignee: ['none'], page: 2, size: 50, sort: 'key,asc' },
+      query: { q: 'crash', status: ['NEW', 'OPEN'], priority: [], assignee: ['none'], reporter: [], label: [],
+        environmentId: undefined, testRunId: undefined, createdFrom: undefined, createdTo: undefined,
+        page: 2, size: 50, sort: 'key,asc' },
     }));
+  });
+
+  it('reads the reporter, run, label and date filters from the URL', () => {
+    queryParams.next(convertToParamMap({ reporter: 'u1', testRunId: 'r1', label: ['ui', 'api'],
+      createdFrom: '2026-10-01', createdTo: '2026-10-31' }));
+
+    create();
+
+    expect(store.dispatch).toHaveBeenCalledWith(expect.objectContaining({ query: expect.objectContaining({
+      reporter: ['u1'], testRunId: 'r1', label: ['ui', 'api'], createdFrom: '2026-10-01', createdTo: '2026-10-31',
+    }) }));
   });
 
   it('loads the whole filter onto the board', () => {
@@ -84,11 +101,14 @@ describe('BugReportListComponent', () => {
     const list = create();
     list.statusFilter = ['CLOSED'];
     list.assigneeFilter = ['me'];
+    list.labelFilter = ['ui'];
+    list.createdFrom = '2026-10-01';
 
     list.applyFilters();
 
     expect(navigate).toHaveBeenCalledWith([], expect.objectContaining({
-      queryParams: { q: null, status: ['CLOSED'], priority: null, assignee: ['me'], page: null },
+      queryParams: { q: null, status: ['CLOSED'], priority: null, assignee: ['me'], environmentId: null,
+        reporter: null, testRunId: null, label: ['ui'], createdFrom: '2026-10-01', createdTo: null, page: null },
     }));
   });
 

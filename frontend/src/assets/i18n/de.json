@@ -863,7 +863,14 @@
       "viewKanban": "Board",
       "ageDays": "{{days}} T",
       "ageTooltip": "Tage seit der Meldung",
-      "kanbanTruncated": "Das Board zeigt die neuesten {{shown}} von {{total}} Fehlern. Filtere, um die übrigen zu sehen."
+      "kanbanTruncated": "Das Board zeigt die neuesten {{shown}} von {{total}} Fehlern. Filtere, um die übrigen zu sehen.",
+      "any": "Alle",
+      "reporter": "Gemeldet von",
+      "testRun": "Testlauf",
+      "createdFrom": "Gemeldet ab",
+      "createdTo": "Gemeldet bis",
+      "exportCsv": "CSV exportieren",
+      "exportFailed": "Der Export ist fehlgeschlagen."
     },
     "form": {
       "createTitle": "Fehler melden",

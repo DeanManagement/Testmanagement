@@ -6,12 +6,16 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugReportLink;
 import jakarta.persistence.criteria.CriteriaBuilder;
 import jakarta.persistence.criteria.CriteriaQuery;
 import jakarta.persistence.criteria.Expression;
+import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import jakarta.persistence.criteria.Root;
 import jakarta.persistence.criteria.Subquery;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -59,6 +63,21 @@ public final class BugReportSpecifications {
             if (filter.environmentId() != null) {
                 predicates.add(cb.equal(root.get("projectEnvironment").get("id"), filter.environmentId()));
             }
+            if (filter.reporterIds() != null && !filter.reporterIds().isEmpty()) {
+                predicates.add(root.get("createdBy").in(filter.reporterIds()));
+            }
+            if (filter.testRunId() != null) {
+                predicates.add(foundInOrLinkedToRun(root, query, cb, filter.testRunId()));
+            }
+            if (filter.createdFrom() != null) {
+                predicates.add(cb.greaterThanOrEqualTo(root.get("createdAt"), startOf(filter.createdFrom())));
+            }
+            if (filter.createdTo() != null) {
+                predicates.add(cb.lessThan(root.get("createdAt"), startOf(filter.createdTo().plusDays(1))));
+            }
+            if (filter.labels() != null && !filter.labels().isEmpty()) {
+                predicates.add(hasAnyLabel(root, query, cb, filter.labels()));
+            }
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }
@@ -71,6 +90,30 @@ public final class BugReportSpecifications {
         linked.select(link.get("id")).where(cb.equal(link.get("bugReport"), root),
                 cb.equal(link.get("testResult").get("id"), testResultId));
         return cb.or(cb.equal(root.get("testResult").get("id"), testResultId), cb.exists(linked));
+    }
+
+    /** TM48: the run it was found in, or a run one of its later occurrences belongs to. */
+    private static Predicate foundInOrLinkedToRun(Root<BugReport> root, CriteriaQuery<?> query, CriteriaBuilder cb,
+                                                  UUID testRunId) {
+        Subquery<UUID> linked = query.subquery(UUID.class);
+        Root<BugReportLink> link = linked.from(BugReportLink.class);
+        linked.select(link.get("id")).where(cb.equal(link.get("bugReport"), root),
+                cb.equal(link.get("testResult").get("testRun").get("id"), testRunId));
+        return cb.or(cb.equal(root.get("testRun").get("id"), testRunId), cb.exists(linked));
+    }
+
+    /** A subquery rather than a join, so a bug with two matching labels is still one row. */
+    private static Predicate hasAnyLabel(Root<BugReport> root, CriteriaQuery<?> query, CriteriaBuilder cb,
+                                         List<String> labels) {
+        Subquery<UUID> labelled = query.subquery(UUID.class);
+        Root<BugReport> same = labelled.from(BugReport.class);
+        Join<BugReport, String> label = same.join("labels");
+        labelled.select(same.get("id")).where(cb.equal(same, root), label.in(labels));
+        return cb.exists(labelled);
+    }
+
+    private static Instant startOf(LocalDate day) {
+        return day.atStartOfDay(ZoneOffset.UTC).toInstant();
     }
 
     private static Predicate matchesText(Root<BugReport> root, CriteriaBuilder cb, String q) {

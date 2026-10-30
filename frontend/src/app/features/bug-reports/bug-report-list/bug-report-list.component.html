@@ -17,6 +17,11 @@
           <mat-icon>view_kanban</mat-icon>
         </mat-button-toggle>
       </mat-button-toggle-group>
+      <app-saved-filters-menu [projectId]="projectId" view="BUG_REPORTS" />
+      <button mat-stroked-button (click)="exportCsv()" [disabled]="exporting" data-test-id="bug-report-export">
+        <mat-icon>download</mat-icon>
+        {{ 'bugReport.list.exportCsv' | translate }}
+      </button>
       <a mat-flat-button [routerLink]="['/projects', projectId, 'bug-reports', 'new']" class="create-btn" data-test-id="bug-report-create-btn">
         <mat-icon>add</mat-icon>
         {{ 'bugReport.list.create' | translate }}
@@ -55,6 +60,50 @@
           <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
         }
       </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'bugReport.form.environment' | translate }}</mat-label>
+      <mat-select [(ngModel)]="environmentFilter" (selectionChange)="applyFilters()" data-test-id="bug-report-environment-filter">
+        <mat-option value="">{{ 'bugReport.list.any' | translate }}</mat-option>
+        @for (environment of environments; track environment.id) {
+          <mat-option [value]="environment.id">{{ environment.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'bugReport.list.reporter' | translate }}</mat-label>
+      <mat-select multiple [(ngModel)]="reporterFilter" (selectionChange)="applyFilters()" data-test-id="bug-report-reporter-filter">
+        @for (member of members; track member.userId) {
+          <mat-option [value]="member.userId">{{ member.displayName }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'bugReport.list.testRun' | translate }}</mat-label>
+      <mat-select [(ngModel)]="testRunFilter" (selectionChange)="applyFilters()" data-test-id="bug-report-run-filter">
+        <mat-option value="">{{ 'bugReport.list.any' | translate }}</mat-option>
+        @for (run of testRuns; track run.id) {
+          <mat-option [value]="run.id">{{ run.name }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+    @if (labels.length > 0) {
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'bugReport.form.labels' | translate }}</mat-label>
+        <mat-select multiple [(ngModel)]="labelFilter" (selectionChange)="applyFilters()" data-test-id="bug-report-label-filter">
+          @for (label of labels; track label) {
+            <mat-option [value]="label">{{ label }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    }
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="date-field">
+      <mat-label>{{ 'bugReport.list.createdFrom' | translate }}</mat-label>
+      <input matInput type="date" [(ngModel)]="createdFrom" (change)="applyFilters()" data-test-id="bug-report-created-from" />
+    </mat-form-field>
+    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="date-field">
+      <mat-label>{{ 'bugReport.list.createdTo' | translate }}</mat-label>
+      <input matInput type="date" [(ngModel)]="createdTo" (change)="applyFilters()" data-test-id="bug-report-created-to" />
     </mat-form-field>
     @if (hasFilters) {
       <button mat-button type="button" (click)="clearFilters()" data-test-id="bug-report-clear-filters">

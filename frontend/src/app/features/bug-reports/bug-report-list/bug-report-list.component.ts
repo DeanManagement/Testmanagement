@@ -46,6 +46,12 @@ import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
 import { ConfirmDialogComponent, ConfirmDialogData } from '../../../shared/components/confirm-dialog/confirm-dialog.component';
 import { ChangeBugStatusDialogComponent, ChangeBugStatusDialogData } from '../change-bug-status-dialog/change-bug-status-dialog.component';
 import { BugReportKanbanComponent, BugStatusDrop } from '../bug-report-kanban/bug-report-kanban.component';
+import { SavedFiltersMenuComponent } from '../../../shared/components/saved-filters/saved-filters-menu.component';
+import { EnvironmentApiService } from '../../../core/services/environment-api.service';
+import { TestRunApiService } from '../../../core/services/test-run-api.service';
+import { ProjectEnvironment } from '../../../shared/models/environment.model';
+import { TestRun } from '../../../shared/models/test-run.model';
+import { saveFile } from '../../../shared/utils/save-file';
 
 const DEFAULT_PAGE_SIZE = 50;
 /** The board shows every bug of the filter; the API's largest page. */
@@ -53,6 +59,8 @@ const KANBAN_PAGE_SIZE = 200;
 const DEFAULT_SORT = 'createdAt,desc';
 const SEARCH_DEBOUNCE_MS = 300;
 const SNACK_MS = 3000;
+/** The most recent runs offered in the run filter. */
+const RUN_CHOICES = 100;
 
 type ViewMode = 'list' | 'kanban';
 
@@ -82,6 +90,7 @@ type ViewMode = 'list' | 'kanban';
     MatPaginatorModule,
     MatProgressSpinnerModule,
     MatSortModule,
+    SavedFiltersMenuComponent,
     TranslateModule,
   ],
   templateUrl: './bug-report-list.component.html',
@@ -96,6 +105,8 @@ export class BugReportListComponent implements OnInit {
   private readonly translate = inject(TranslateService);
   private readonly api = inject(BugReportApiService);
   private readonly memberApi = inject(ProjectMemberApiService);
+  private readonly environmentApi = inject(EnvironmentApiService);
+  private readonly testRunApi = inject(TestRunApiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -114,6 +125,17 @@ export class BugReportListComponent implements OnInit {
   statusFilter: BugReportStatus[] = [];
   priorityFilter: Priority[] = [];
   assigneeFilter: string[] = [];
+  /** TM48 */
+  environmentFilter = '';
+  reporterFilter: string[] = [];
+  testRunFilter = '';
+  labelFilter: string[] = [];
+  createdFrom = '';
+  createdTo = '';
+  environments: ProjectEnvironment[] = [];
+  testRuns: TestRun[] = [];
+  labels: string[] = [];
+  exporting = false;
   sortActive = 'createdAt';
   sortDirection: 'asc' | 'desc' = 'desc';
 
@@ -133,6 +155,23 @@ export class BugReportListComponent implements OnInit {
     this.searchChange$.pipe(debounceTime(SEARCH_DEBOUNCE_MS), takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.applyFilters());
     this.loadMembersAndRole();
+    this.loadFilterChoices();
+  }
+
+  private loadFilterChoices(): void {
+    combineLatest([
+      this.environmentApi.getAll(this.projectId),
+      this.testRunApi.getAll(this.projectId, { size: RUN_CHOICES, sort: 'createdAt,desc' }),
+      this.api.getLabels(this.projectId),
+    ]).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: ([environments, runs, labels]) => {
+        this.environments = environments;
+        this.testRuns = runs.content;
+        this.labels = labels;
+        this.cdr.detectChanges();
+      },
+      error: () => undefined,
+    });
   }
 
   private readQuery(params: ParamMap): void {
@@ -141,6 +180,12 @@ export class BugReportListComponent implements OnInit {
     this.statusFilter = params.getAll('status') as BugReportStatus[];
     this.priorityFilter = params.getAll('priority') as Priority[];
     this.assigneeFilter = params.getAll('assignee');
+    this.environmentFilter = params.get('environmentId') ?? '';
+    this.reporterFilter = params.getAll('reporter');
+    this.testRunFilter = params.get('testRunId') ?? '';
+    this.labelFilter = params.getAll('label');
+    this.createdFrom = params.get('createdFrom') ?? '';
+    this.createdTo = params.get('createdTo') ?? '';
     const sort = params.get('sort') ?? DEFAULT_SORT;
     this.sortActive = sort.split(',')[0];
     this.sortDirection = sort.split(',')[1] === 'asc' ? 'asc' : 'desc';
@@ -150,6 +195,12 @@ export class BugReportListComponent implements OnInit {
       status: this.statusFilter,
       priority: this.priorityFilter,
       assignee: this.assigneeFilter,
+      environmentId: this.environmentFilter || undefined,
+      reporter: this.reporterFilter,
+      testRunId: this.testRunFilter || undefined,
+      label: this.labelFilter,
+      createdFrom: this.createdFrom || undefined,
+      createdTo: this.createdTo || undefined,
       page: kanban ? 0 : Number(params.get('page') ?? 0),
       size: kanban ? KANBAN_PAGE_SIZE : Number(params.get('size') ?? DEFAULT_PAGE_SIZE),
       sort,
@@ -178,7 +229,8 @@ export class BugReportListComponent implements OnInit {
 
   get hasFilters(): boolean {
     return !!this.searchTerm || this.statusFilter.length > 0 || this.priorityFilter.length > 0
-      || this.assigneeFilter.length > 0;
+      || this.assigneeFilter.length > 0 || !!this.environmentFilter || this.reporterFilter.length > 0
+      || !!this.testRunFilter || this.labelFilter.length > 0 || !!this.createdFrom || !!this.createdTo;
   }
 
   // ---- URL ------------------------------------------------------------------------------------
@@ -193,12 +245,36 @@ export class BugReportListComponent implements OnInit {
       status: this.statusFilter.length ? this.statusFilter : null,
       priority: this.priorityFilter.length ? this.priorityFilter : null,
       assignee: this.assigneeFilter.length ? this.assigneeFilter : null,
+      environmentId: this.environmentFilter || null,
+      reporter: this.reporterFilter.length ? this.reporterFilter : null,
+      testRunId: this.testRunFilter || null,
+      label: this.labelFilter.length ? this.labelFilter : null,
+      createdFrom: this.createdFrom || null,
+      createdTo: this.createdTo || null,
       page: null,
     });
   }
 
   clearFilters(): void {
-    this.navigate({ q: null, status: null, priority: null, assignee: null, page: null });
+    this.navigate({ q: null, status: null, priority: null, assignee: null, environmentId: null, reporter: null,
+      testRunId: null, label: null, createdFrom: null, createdTo: null, page: null });
+  }
+
+  /** TM48: the whole filtered list, not just this page. */
+  exportCsv(): void {
+    this.exporting = true;
+    this.api.exportCsv(this.projectId, this.currentQuery).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (csv) => {
+        this.exporting = false;
+        saveFile(csv, 'bug-reports.csv');
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.exporting = false;
+        this.snackBar.open(this.translate.instant('bugReport.list.exportFailed'), undefined, { duration: SNACK_MS });
+        this.cdr.detectChanges();
+      },
+    });
   }
 
   onSearchInput(): void {

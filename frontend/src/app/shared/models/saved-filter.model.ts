@@ -1,5 +1,5 @@
 /** The list a saved filter belongs to (PRD-053 §3). */
-export type SavedFilterView = 'TEST_CASES';
+export type SavedFilterView = 'TEST_CASES' | 'BUG_REPORTS';
 
 export interface SavedFilter {
   id: string;

@@ -863,7 +863,14 @@
       "viewKanban": "Board",
       "ageDays": "{{days}} d",
       "ageTooltip": "Days since it was reported",
-      "kanbanTruncated": "The board shows the newest {{shown}} of {{total}} bugs. Filter to see the rest."
+      "kanbanTruncated": "The board shows the newest {{shown}} of {{total}} bugs. Filter to see the rest.",
+      "any": "Any",
+      "reporter": "Reported by",
+      "testRun": "Test run",
+      "createdFrom": "Reported from",
+      "createdTo": "Reported until",
+      "exportCsv": "Export CSV",
+      "exportFailed": "The export failed."
     },
     "form": {
       "createTitle": "Report Bug",
