@@ -4,6 +4,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { AsyncPipe, LowerCasePipe } from '@angular/common';
 import { LocalizedDatePipe } from '../../../shared/pipes/localized-date.pipe';
+import { MarkdownPipe } from '../../../shared/pipes/markdown.pipe';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
@@ -34,6 +35,7 @@ import { selectAuthUser } from '../../../store/auth/auth.selectors';
     EntityHistoryComponent,
     AsyncPipe,
     LocalizedDatePipe,
+    MarkdownPipe,
     LowerCasePipe,
     RouterLink,
     MatCardModule,

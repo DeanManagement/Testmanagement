@@ -89,14 +89,14 @@
       @if (bug.description) {
         <div class="detail-section tm-card" data-test-id="bug-report-detail-description">
           <h3>{{ 'bugReport.form.description' | translate }}</h3>
-          <p class="detail-text">{{ bug.description }}</p>
+          <div class="tm-markdown" [innerHTML]="bug.description | markdown"></div>
         </div>
       }
 
       @if (bug.stepsToReproduce) {
         <div class="detail-section tm-card" data-test-id="bug-report-detail-steps">
           <h3>{{ 'bugReport.form.stepsToReproduce' | translate }}</h3>
-          <p class="detail-text">{{ bug.stepsToReproduce }}</p>
+          <div class="tm-markdown" [innerHTML]="bug.stepsToReproduce | markdown"></div>
         </div>
       }
 
@@ -104,13 +104,13 @@
         @if (bug.expectedBehavior) {
           <div class="detail-section tm-card" data-test-id="bug-report-detail-expected">
             <h3>{{ 'bugReport.form.expectedBehavior' | translate }}</h3>
-            <p class="detail-text">{{ bug.expectedBehavior }}</p>
+            <div class="tm-markdown" [innerHTML]="bug.expectedBehavior | markdown"></div>
           </div>
         }
         @if (bug.actualBehavior) {
           <div class="detail-section tm-card" data-test-id="bug-report-detail-actual">
             <h3>{{ 'bugReport.form.actualBehavior' | translate }}</h3>
-            <p class="detail-text">{{ bug.actualBehavior }}</p>
+            <div class="tm-markdown" [innerHTML]="bug.actualBehavior | markdown"></div>
           </div>
         }
       </div>
