@@ -877,7 +877,11 @@
       "status": "Status",
       "environment": "Environment",
       "assignee": "Assignee",
-      "noAssignee": "Unassigned"
+      "noAssignee": "Unassigned",
+      "labels": "Labels",
+      "foundInPlan": "Found in",
+      "fixedInPlan": "Fixed in",
+      "noPlan": "No test plan"
     },
     "status": {
       "NEW": "New",

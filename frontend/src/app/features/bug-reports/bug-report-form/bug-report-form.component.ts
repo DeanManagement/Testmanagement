@@ -25,6 +25,8 @@ import { CustomFieldsFormComponent } from '../../../shared/components/custom-fie
 import { CustomFieldValues } from '../../../shared/models/custom-field.model';
 import { EnvironmentInputComponent } from '../../../shared/components/environment-input/environment-input.component';
 import { EnvironmentApiService } from '../../../core/services/environment-api.service';
+import { TestPlanApiService } from '../../../core/services/test-plan-api.service';
+import { TestPlan } from '../../../shared/models/test-plan.model';
 import { BugReportApiService } from '../../../core/services/bug-report-api.service';
 import { AttachmentsComponent } from '../../../shared/components/attachments/attachments.component';
 
@@ -58,6 +60,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
   private readonly memberApi = inject(ProjectMemberApiService);
   private readonly projectApi = inject(ProjectApiService);
   private readonly bugReportApi = inject(BugReportApiService);
+  private readonly testPlanApi = inject(TestPlanApiService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -71,6 +74,7 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
   saving = false;
   dirty = false;
   members: ProjectMember[] = [];
+  plans: TestPlan[] = [];
   /** PRD-051: files picked before the bug exists; the create effect uploads them after saving. */
   queuedFiles: File[] = [];
   /** Step screenshots of the result reported from, which the server copies onto the new bug. */
@@ -89,6 +93,9 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     testResultId: [''],
     testRunId: [''],
     assigneeId: [''],
+    labels: [''],
+    foundInPlanId: [''],
+    fixedInPlanId: [''],
     customFields: this.fb.control<CustomFieldValues>({}),
   });
 
@@ -100,6 +107,10 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     if (this.projectId) {
       this.memberApi.getByProject(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((m) => {
         this.members = m;
+        this.cdr.detectChanges();
+      });
+      this.testPlanApi.getAll(this.projectId).pipe(take(1), takeUntilDestroyed(this.destroyRef)).subscribe((plans) => {
+        this.plans = plans;
         this.cdr.detectChanges();
       });
     }
@@ -158,6 +169,9 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             testResultId: bug.testResultId || '',
             testRunId: bug.testRunId || '',
             assigneeId: bug.assigneeId || '',
+            labels: (bug.labels ?? []).join(', '),
+            foundInPlanId: bug.foundInPlanId || '',
+            fixedInPlanId: bug.fixedInPlanId || '',
             customFields: bug.customFields ?? {},
           });
           this.cdr.detectChanges();
@@ -192,6 +206,9 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             testRunId: value.testRunId || undefined,
             assigneeId: value.assigneeId || undefined,
             customFields: value.customFields ?? undefined,
+            labels: splitLabels(value.labels ?? ''),
+            foundInPlanId: value.foundInPlanId || undefined,
+            fixedInPlanId: value.fixedInPlanId || undefined,
           },
         })
       );
@@ -213,6 +230,9 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
             exploratorySessionId: this.exploratorySessionId ?? undefined,
             stepResultId: this.stepResultId ?? undefined,
             customFields: value.customFields ?? undefined,
+            labels: splitLabels(value.labels ?? ''),
+            foundInPlanId: value.foundInPlanId || undefined,
+            fixedInPlanId: value.fixedInPlanId || undefined,
           },
           files: this.queuedFiles,
         })
@@ -249,4 +269,8 @@ export class BugReportFormComponent implements OnInit, HasUnsavedChanges {
     // re-arms the guard after a failed save. Queued files are lost on leaving, so they count too.
     return (this.form.dirty || this.dirty || this.queuedFiles.length > 0) && !this.saving;
   }
+}
+
+function splitLabels(labels: string): string[] {
+  return labels.split(',').map((l) => l.trim()).filter((l) => l);
 }

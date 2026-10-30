@@ -63,6 +63,12 @@ export interface BugReport {
   links: BugReportLink[];
   /** PRD-035: only fields that hold a value, in display order. */
   customFields: CustomFieldValues;
+  /** TM49 */
+  labels: string[];
+  foundInPlanId: string | null;
+  foundInPlanName: string | null;
+  fixedInPlanId: string | null;
+  fixedInPlanName: string | null;
 }
 
 export interface CreateBugReportRequest {
@@ -81,6 +87,9 @@ export interface CreateBugReportRequest {
   customFields?: CustomFieldValues;
   /** PRD-047: the failing step of testResultId. */
   stepResultId?: string;
+  labels?: string[];
+  foundInPlanId?: string;
+  fixedInPlanId?: string;
 }
 
 export interface UpdateBugReportRequest {
@@ -95,6 +104,10 @@ export interface UpdateBugReportRequest {
   testRunId?: string;
   assigneeId?: string;
   customFields?: CustomFieldValues;
+  /** TM49: omitted keeps the labels; an empty list clears them. Absent plans are cleared. */
+  labels?: string[];
+  foundInPlanId?: string;
+  fixedInPlanId?: string;
 }
 
 /** The bug list's filters, as they appear in the URL (PRD-045). assignee: user ids, 'none', 'me'. */

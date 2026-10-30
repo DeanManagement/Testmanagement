@@ -39,7 +39,7 @@ class McpBugMaintenanceToolsApiTest extends McpToolApiTestSupport {
     @Test
     void anUpdateChangesOnlyWhatIsPassedAndAnEmptyStringClears() {
         McpDtos.BugDetail updated = maintenanceTools.updateBugReport(bug.key(), "Checkout fails", "",
-                null, null, null, Priority.CRITICAL, null);
+                null, null, null, Priority.CRITICAL, null, null, null, null);
 
         assertThat(updated.title()).isEqualTo("Checkout fails");
         assertThat(updated.description()).isNull();
@@ -67,7 +67,7 @@ class McpBugMaintenanceToolsApiTest extends McpToolApiTestSupport {
     @Test
     void anUpdateWithNothingIsRefused() {
         assertThatThrownBy(() -> maintenanceTools.updateBugReport(bug.key(), null, null, null, null, null,
-                null, null))
+                null, null, null, null, null))
                 .isInstanceOf(McpToolException.class)
                 .hasMessageContaining("Nothing to update");
     }
@@ -80,7 +80,7 @@ class McpBugMaintenanceToolsApiTest extends McpToolApiTestSupport {
                 .hasMessageContaining("prod-eu")
                 .hasMessageContaining("staging");
         assertThatThrownBy(() -> maintenanceTools.updateBugReport(bug.key(), null, null, null, null, null,
-                null, "prod-eu"))
+                null, "prod-eu", null, null, null))
                 .isInstanceOf(McpToolException.class);
     }
 

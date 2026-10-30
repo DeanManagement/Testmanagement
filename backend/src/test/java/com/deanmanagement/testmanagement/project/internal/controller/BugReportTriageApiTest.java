@@ -32,8 +32,11 @@ import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.contains;
+import static org.hamcrest.Matchers.containsInAnyOrder;
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.user;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -334,6 +337,71 @@ class BugReportTriageApiTest {
         }
     }
 
+    /** TM49: labels, and the test plans a bug was found and fixed in. */
+    @Nested
+    class LabelsAndPlans {
+
+        @Test
+        void labelsAreTrimmedAndBlanksDropped() throws Exception {
+            fileWith(projectId, "{\"title\":\"A\",\"priority\":\"LOW\",\"labels\":[\" checkout \",\"\",\"ui\"]}")
+                    .andExpect(jsonPath("$.labels", containsInAnyOrder("checkout", "ui")));
+        }
+
+        @Test
+        void anUpdateWithoutLabelsKeepsThemAndAnEmptyListClearsThem() throws Exception {
+            UUID bug = id(fileWith(projectId, "{\"title\":\"A\",\"priority\":\"LOW\",\"labels\":[\"ui\"]}"));
+
+            update(bug, "{\"title\":\"A2\",\"priority\":\"LOW\"}").andExpect(jsonPath("$.labels", contains("ui")));
+            update(bug, "{\"title\":\"A2\",\"priority\":\"LOW\",\"labels\":[]}")
+                    .andExpect(jsonPath("$.labels", hasSize(0)));
+        }
+
+        @Test
+        void theProjectsLabelsAreListedOnceEach() throws Exception {
+            fileWith(projectId, "{\"title\":\"A\",\"priority\":\"LOW\",\"labels\":[\"ui\",\"api\"]}");
+            fileWith(projectId, "{\"title\":\"B\",\"priority\":\"LOW\",\"labels\":[\"ui\"]}");
+            fileWith(otherProjectId, "{\"title\":\"C\",\"priority\":\"LOW\",\"labels\":[\"elsewhere\"]}");
+
+            mockMvc.perform(get(url(projectId) + "/labels").with(user(viewer)))
+                    .andExpect(jsonPath("$", contains("api", "ui")));
+        }
+
+        @Test
+        void aBugNamesThePlansItWasFoundAndFixedIn() throws Exception {
+            UUID sprint1 = plan(projectId, "Sprint 1");
+            UUID sprint2 = plan(projectId, "Sprint 2");
+
+            fileWith(projectId, "{\"title\":\"A\",\"priority\":\"LOW\",\"foundInPlanId\":\"" + sprint1
+                    + "\",\"fixedInPlanId\":\"" + sprint2 + "\"}")
+                    .andExpect(jsonPath("$.foundInPlanName").value("Sprint 1"))
+                    .andExpect(jsonPath("$.fixedInPlanName").value("Sprint 2"));
+        }
+
+        @Test
+        void aPlanOfAnotherProjectIsNotFound() throws Exception {
+            UUID foreign = plan(otherProjectId, "Theirs");
+
+            mockMvc.perform(post(url(projectId)).with(user(tester)).contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"title\":\"A\",\"priority\":\"LOW\",\"foundInPlanId\":\"" + foreign + "\"}"))
+                    .andExpect(status().isNotFound());
+        }
+
+        @Test
+        void deletingAPlanKeepsTheBugsThatNameIt() throws Exception {
+            UUID sprint = plan(projectId, "Sprint");
+            UUID bug = id(fileWith(projectId, "{\"title\":\"A\",\"priority\":\"LOW\",\"foundInPlanId\":\"" + sprint
+                    + "\",\"fixedInPlanId\":\"" + sprint + "\"}"));
+
+            mockMvc.perform(delete("/api/projects/" + projectId + "/test-plans/" + sprint).with(user(admin)))
+                    .andExpect(status().isNoContent());
+
+            mockMvc.perform(get(url(projectId) + "/" + bug).with(user(tester)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.foundInPlanId").doesNotExist())
+                    .andExpect(jsonPath("$.fixedInPlanId").doesNotExist());
+        }
+    }
+
     // ---- helpers --------------------------------------------------------------------------------
 
     private ResultActions file(UUID project, String title) throws Exception {
@@ -344,6 +412,18 @@ class BugReportTriageApiTest {
         return mockMvc.perform(post(url(project)).with(user(tester))
                         .contentType(MediaType.APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated());
+    }
+
+    private ResultActions update(UUID bug, String body) throws Exception {
+        return mockMvc.perform(put(url(projectId) + "/" + bug).with(user(tester))
+                        .contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isOk());
+    }
+
+    private UUID plan(UUID project, String name) throws Exception {
+        return id(mockMvc.perform(post("/api/projects/" + project + "/test-plans").with(user(tester))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"" + name + "\"}"))
+                .andExpect(status().isCreated()));
     }
 
     private ResultActions list(String query) throws Exception {

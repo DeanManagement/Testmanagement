@@ -14,6 +14,8 @@ import org.springframework.ai.mcp.annotation.McpToolParam;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -47,6 +49,8 @@ public class BugReportMaintenanceTools {
                     changed; to CLEAR a text field or the environment pass an empty string "" (the
                     title cannot be cleared). priority: LOW | MEDIUM | HIGH | CRITICAL. environment
                     must be a name from list_environments.
+                    labels replaces the bug's labels ([] removes them all). foundInPlan and
+                    fixedInPlan take a test plan UUID from list_test_plans, "" clears one.
                     Status is not changed here: use change_bug_report_status. The assignee, the
                     linked result and run, and custom fields are left as they are.
                     """,
@@ -66,14 +70,21 @@ public class BugReportMaintenanceTools {
             String actualBehavior,
             @McpToolParam(description = "LOW, MEDIUM, HIGH or CRITICAL", required = false) Priority priority,
             @McpToolParam(description = "A name from list_environments; \"\" clears it", required = false)
-            String environment) {
+            String environment,
+            @McpToolParam(description = "The bug's labels, replacing the current ones", required = false)
+            List<String> labels,
+            @McpToolParam(description = "Test plan UUID the bug was found in; \"\" clears it", required = false)
+            String foundInPlan,
+            @McpToolParam(description = "Test plan UUID the fix ships in; \"\" clears it", required = false)
+            String fixedInPlan) {
 
         var caller = callerContext.requireWriter();
         writeThrottle.recordWrite(caller.apiKeyId());
         if (title == null && description == null && stepsToReproduce == null && expectedBehavior == null
-                && actualBehavior == null && priority == null && environment == null) {
+                && actualBehavior == null && priority == null && environment == null && labels == null
+                && foundInPlan == null && fixedInPlan == null) {
             throw new McpToolException("Nothing to update: pass title, description, stepsToReproduce, "
-                    + "expectedBehavior, actualBehavior, priority or environment.");
+                    + "expectedBehavior, actualBehavior, priority, environment, labels, foundInPlan or fixedInPlan.");
         }
         if (title != null && title.isBlank()) {
             throw new McpToolException("title must not be blank. Omit it to keep the current title.");
@@ -90,7 +101,9 @@ public class BugReportMaintenanceTools {
                     merge(actualBehavior, current.actualBehavior()),
                     priority == null ? current.priority() : priority,
                     merge(environment, current.environment()),
-                    current.testResultId(), current.testRunId(), current.assigneeId(), null);
+                    current.testResultId(), current.testRunId(), current.assigneeId(), null, null,
+                    labels == null ? null : new HashSet<>(labels),
+                    planId(foundInPlan, current.foundInPlanId()), planId(fixedInPlan, current.fixedInPlanId()));
             validator.validate(request);
             return bugReportService.update(caller.projectId(), current.id(), request, caller.userId());
         }));
@@ -181,5 +194,20 @@ public class BugReportMaintenanceTools {
             return current;
         }
         return requested.isBlank() ? null : requested;
+    }
+
+    /** Absent keeps the current plan, "" clears it, anything else must be a plan UUID. */
+    private static UUID planId(String given, UUID current) {
+        if (given == null) {
+            return current;
+        }
+        if (given.isBlank()) {
+            return null;
+        }
+        try {
+            return UUID.fromString(given.strip());
+        } catch (IllegalArgumentException notAUuid) {
+            throw new McpToolException("'" + given + "' is not a test plan UUID. Use list_test_plans to find it.");
+        }
     }
 }

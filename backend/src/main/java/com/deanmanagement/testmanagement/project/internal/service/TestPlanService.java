@@ -3,6 +3,7 @@ package com.deanmanagement.testmanagement.project.internal.service;
 import java.time.Instant;
 import java.time.Duration;
 import java.time.Clock;
+import com.deanmanagement.testmanagement.project.internal.repository.BugReportRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ExploratorySessionRepository;
 import com.deanmanagement.testmanagement.project.internal.dto.effort.BurnDownResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.effort.EffortSummary;
@@ -53,6 +54,7 @@ import java.util.UUID;
 public class TestPlanService {
 
     private final TestPlanRepository testPlanRepository;
+    private final BugReportRepository bugReportRepository;
     private final ProjectRepository projectRepository;
     private final TestPlanMapper testPlanMapper;
     private final AuditService auditService;
@@ -275,6 +277,15 @@ public class TestPlanService {
         // The runs stay (the FK is ON DELETE SET NULL). Detached here too, so a caller that already
         // loaded them in this transaction does not flush runs pointing at a deleted plan.
         plan.getTestRuns().forEach(run -> run.setTestPlan(null));
+        // Bugs found or fixed in it keep their other fields (TM49); same reason as the runs.
+        bugReportRepository.findByFoundInPlanIdOrFixedInPlanId(id, id).forEach(bug -> {
+            if (bug.getFoundInPlan() != null && id.equals(bug.getFoundInPlan().getId())) {
+                bug.setFoundInPlan(null);
+            }
+            if (bug.getFixedInPlan() != null && id.equals(bug.getFixedInPlan().getId())) {
+                bug.setFixedInPlan(null);
+            }
+        });
         testPlanRepository.delete(plan);
     }
 

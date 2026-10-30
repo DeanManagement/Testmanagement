@@ -26,6 +26,10 @@ public abstract class BugReportMapper {
     @Mapping(target = "projectKey", source = "bugReport.project.key")
     @Mapping(target = "exploratorySessionId", source = "bugReport.exploratorySession.id")
     @Mapping(target = "exploratorySessionKey", source = "bugReport.exploratorySession.key")
+    @Mapping(target = "foundInPlanId", source = "bugReport.foundInPlan.id")
+    @Mapping(target = "foundInPlanName", source = "bugReport.foundInPlan.name")
+    @Mapping(target = "fixedInPlanId", source = "bugReport.fixedInPlan.id")
+    @Mapping(target = "fixedInPlanName", source = "bugReport.fixedInPlan.name")
     @Mapping(target = "customFields", expression = "java(CustomFieldValueMaps.toMap(bugReport.getCustomFieldValues()))")
     public abstract BugReportResponse toResponse(BugReport bugReport, String reporterName, String updatedByName);
 

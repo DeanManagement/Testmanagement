@@ -54,6 +54,25 @@
             {{ 'bugReport.detail.reportedBy' | translate }}: {{ bug.reporterName }}
           </span>
         }
+        @if (bug.foundInPlanName) {
+          <span class="meta-item" data-test-id="bug-report-detail-found-in">
+            <mat-icon class="meta-icon">search</mat-icon>
+            {{ 'bugReport.form.foundInPlan' | translate }}:
+            <a [routerLink]="['/projects', projectId, 'test-plans', bug.foundInPlanId]">{{ bug.foundInPlanName }}</a>
+          </span>
+        }
+        @if (bug.fixedInPlanName) {
+          <span class="meta-item" data-test-id="bug-report-detail-fixed-in">
+            <mat-icon class="meta-icon">build</mat-icon>
+            {{ 'bugReport.form.fixedInPlan' | translate }}:
+            <a [routerLink]="['/projects', projectId, 'test-plans', bug.fixedInPlanId]">{{ bug.fixedInPlanName }}</a>
+          </span>
+        }
+        @for (label of bug.labels; track label) {
+          <span class="meta-item bug-label" data-test-id="bug-report-detail-label">
+            <mat-icon class="meta-icon">label</mat-icon>{{ label }}
+          </span>
+        }
         @if (bug.assigneeName) {
           <span class="meta-item" data-test-id="bug-report-detail-assignee">
             <mat-icon class="meta-icon">assignment_ind</mat-icon>

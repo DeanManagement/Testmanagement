@@ -76,6 +76,12 @@ public interface BugReportRepository extends JpaRepository<BugReport, UUID>, Jpa
 
     Optional<BugReport> findByKeyAndProjectId(String key, UUID projectId);
 
+    @Query("SELECT DISTINCT l FROM BugReport b JOIN b.labels l WHERE b.project.id = :projectId ORDER BY l")
+    List<String> findDistinctLabelsByProjectId(@Param("projectId") UUID projectId);
+
+    /** TM49: bugs found or fixed in this plan, to detach before the plan is deleted. */
+    List<BugReport> findByFoundInPlanIdOrFixedInPlanId(UUID foundInPlanId, UUID fixedInPlanId);
+
     /** PRD-047 dashboard: [status, count] rows. */
     @Query("SELECT b.status, COUNT(b) FROM BugReport b WHERE b.project.id = :projectId GROUP BY b.status")
     List<Object[]> countByStatus(@Param("projectId") UUID projectId);

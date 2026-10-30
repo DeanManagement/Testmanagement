@@ -383,7 +383,8 @@ final class McpDtos {
                      @Nullable String testCaseTitle, @Nullable UUID testRunId,
                      @Nullable String testRunName, @Nullable String assigneeName,
                      @Nullable String reporterName, @Nullable Integer stepNumber,
-                     List<BugOccurrence> occurrences, List<Attachment> attachments) {}
+                     List<BugOccurrence> occurrences, List<Attachment> attachments,
+                     Set<String> labels, @Nullable String foundInPlanName, @Nullable String fixedInPlanName) {}
 
     /** Where else the bug showed up (PRD-047); the found-in result is on the bug itself. */
     @JsonInclude(JsonInclude.Include.NON_NULL)

@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /** Edits a bug's content. Status is not here: it changes only through ChangeBugStatusRequest (PRD-045 §1). */
@@ -22,13 +23,17 @@ public record UpdateBugReportRequest(
         UUID assigneeId,
         UUID environmentId,
         /* PRD-035: keyed by field name; see CustomFieldValueWriter for null and clearing rules. */
-        Map<String, Object> customFields
+        Map<String, Object> customFields,
+        /* TM49: null leaves the labels as they are; the plans are cleared by null like the links above. */
+        Set<@Size(max = 255) String> labels,
+        UUID foundInPlanId,
+        UUID fixedInPlanId
 ) {
     public UpdateBugReportRequest(String title, String description, String stepsToReproduce,
                                   String expectedBehavior, String actualBehavior, Priority priority,
                                   String environment, UUID testResultId, UUID testRunId,
                                   UUID assigneeId, UUID environmentId) {
         this(title, description, stepsToReproduce, expectedBehavior, actualBehavior, priority, environment,
-                testResultId, testRunId, assigneeId, environmentId, null);
+                testResultId, testRunId, assigneeId, environmentId, null, null, null, null);
     }
 }

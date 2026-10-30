@@ -62,6 +62,33 @@
       </mat-select>
     </mat-form-field>
 
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>{{ 'bugReport.form.labels' | translate }}</mat-label>
+      <input matInput formControlName="labels" data-test-id="bug-report-form-labels" />
+      <mat-hint>{{ 'testCase.form.labelsHint' | translate }}</mat-hint>
+    </mat-form-field>
+
+    <div class="form-row">
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'bugReport.form.foundInPlan' | translate }}</mat-label>
+        <mat-select formControlName="foundInPlanId" data-test-id="bug-report-form-found-in">
+          <mat-option value="">{{ 'bugReport.form.noPlan' | translate }}</mat-option>
+          @for (plan of plans; track plan.id) {
+            <mat-option [value]="plan.id">{{ plan.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <mat-form-field appearance="outline">
+        <mat-label>{{ 'bugReport.form.fixedInPlan' | translate }}</mat-label>
+        <mat-select formControlName="fixedInPlanId" data-test-id="bug-report-form-fixed-in">
+          <mat-option value="">{{ 'bugReport.form.noPlan' | translate }}</mat-option>
+          @for (plan of plans; track plan.id) {
+            <mat-option [value]="plan.id">{{ plan.name }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+    </div>
+
     <app-custom-fields-form [projectId]="projectId" entityType="BUG_REPORT" formControlName="customFields" />
 
     <section class="attachments-field" data-test-id="bug-report-form-attachments">

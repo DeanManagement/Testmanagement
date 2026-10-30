@@ -139,7 +139,7 @@ public class BugReportTools {
                     : linkService.stepResultId(caller.projectId(), testResultId, stepNumber);
             var request = new CreateBugReportRequest(title, description, stepsToReproduce, expectedBehavior,
                     actualBehavior, priority, environment, testResultId, testRunId, null, null, null, null,
-                    stepResultId);
+                    stepResultId, null, null, null);
             validator.validate(request);
             return bugReportService.create(caller.projectId(), bugReportService.withTemplate(caller.projectId(), request),
                     caller.userId(), CustomFieldWriteMode.MACHINE);
@@ -440,7 +440,7 @@ public class BugReportTools {
                 b.assigneeName(), b.reporterName(), b.stepNumber(),
                 b.links().stream().map(l -> new McpDtos.BugOccurrence(l.testResultId(), l.testRunKey(),
                         l.testCaseKey(), l.stepNumber())).toList(),
-                attachments);
+                attachments, b.labels(), b.foundInPlanName(), b.fixedInPlanName());
     }
 
     private static McpDtos.Attachment attachment(AttachmentSummary a) {

@@ -4,7 +4,9 @@ import com.deanmanagement.testmanagement.shared.BaseEntity;
 import com.deanmanagement.testmanagement.user.User;
 
 import jakarta.persistence.CascadeType;
+import jakarta.persistence.CollectionTable;
 import jakarta.persistence.Column;
+import jakarta.persistence.ElementCollection;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
@@ -20,7 +22,9 @@ import lombok.Setter;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "bug_reports")
@@ -109,6 +113,22 @@ public class BugReport extends BaseEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assignee_id")
     private User assignee;
+
+    /** TM49: free-form, like a test case's labels. */
+    @ElementCollection
+    @CollectionTable(name = "bug_report_labels", joinColumns = @JoinColumn(name = "bug_report_id"))
+    @Column(name = "label", nullable = false)
+    private Set<String> labels = new HashSet<>();
+
+    /** TM49: the plan whose testing found it. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "found_in_plan_id")
+    private TestPlan foundInPlan;
+
+    /** TM49: the plan the fix ships in, so its retest can be planned there. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "fixed_in_plan_id")
+    private TestPlan fixedInPlan;
 
     /** PRD-035. Lazy; the global batch fetch size keeps list pages to one query per page. */
     @OneToMany(mappedBy = "bugReport", cascade = CascadeType.ALL, orphanRemoval = true)

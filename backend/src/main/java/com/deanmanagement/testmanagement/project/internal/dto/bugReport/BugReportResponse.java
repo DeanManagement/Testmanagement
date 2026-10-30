@@ -7,6 +7,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public record BugReportResponse(
@@ -51,6 +52,12 @@ public record BugReportResponse(
         Integer stepNumber,
         List<BugReportLinkResponse> links,
         /* PRD-035: values keyed by field name, in display order (CustomFieldValueMaps). */
-        Map<String, Object> customFields
+        Map<String, Object> customFields,
+        /* TM49 */
+        Set<String> labels,
+        UUID foundInPlanId,
+        String foundInPlanName,
+        UUID fixedInPlanId,
+        String fixedInPlanName
 ) {
 }

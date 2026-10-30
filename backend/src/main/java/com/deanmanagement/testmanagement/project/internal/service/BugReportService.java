@@ -14,6 +14,7 @@ import com.deanmanagement.testmanagement.project.internal.entity.BugReport;
 import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
 import com.deanmanagement.testmanagement.project.internal.entity.BugResolution;
 import com.deanmanagement.testmanagement.project.internal.entity.Project;
+import com.deanmanagement.testmanagement.project.internal.entity.TestPlan;
 import com.deanmanagement.testmanagement.project.internal.entity.TestResult;
 import com.deanmanagement.testmanagement.project.internal.entity.TestRun;
 import com.deanmanagement.testmanagement.project.internal.entity.WebhookEventType;
@@ -21,6 +22,7 @@ import com.deanmanagement.testmanagement.project.internal.webhook.WebhookEvent;
 import com.deanmanagement.testmanagement.project.internal.repository.BugReportRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectRepository;
+import com.deanmanagement.testmanagement.project.internal.repository.TestPlanRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestRunRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.spec.BugReportSpecifications;
@@ -37,12 +39,14 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -66,6 +70,7 @@ public class BugReportService {
     private final CustomFieldValueWriter customFieldWriter;
     private final ProjectSequenceService projectSequenceService;
     private final AttachmentService attachmentService;
+    private final TestPlanRepository testPlanRepository;
 
     /** Every bug of the project, unpaged: for duplicate checks, not for display. */
     public List<BugReportResponse> findByProject(UUID projectId) {
@@ -144,6 +149,11 @@ public class BugReportService {
         if (request.assigneeId() != null) {
             bugReport.setAssignee(requireProjectMember(projectId, request.assigneeId()));
         }
+        if (request.labels() != null) {
+            bugReport.setLabels(normalizeLabels(request.labels()));
+        }
+        bugReport.setFoundInPlan(planOrNull(projectId, request.foundInPlanId()));
+        bugReport.setFixedInPlan(planOrNull(projectId, request.fixedInPlanId()));
 
         bugReport = bugReportRepository.save(bugReport);
         auditService.log(projectId, userId, AuditAction.CREATED,
@@ -188,6 +198,11 @@ public class BugReportService {
         bugReport.setAssignee(request.assigneeId() == null
                 ? null : requireProjectMember(projectId, request.assigneeId()));
         customFieldWriter.write(bugReport, request.customFields(), CustomFieldWriteMode.INTERACTIVE);
+        if (request.labels() != null) {
+            bugReport.setLabels(normalizeLabels(request.labels()));
+        }
+        bugReport.setFoundInPlan(planOrNull(projectId, request.foundInPlanId()));
+        bugReport.setFixedInPlan(planOrNull(projectId, request.fixedInPlanId()));
 
         // Flushed so JPA auditing stamps updatedBy before the response is built from it.
         bugReport = bugReportRepository.saveAndFlush(bugReport);
@@ -291,7 +306,8 @@ public class BugReportService {
                 request.expectedBehavior(), request.actualBehavior(), request.priority(),
                 namesEnvironment ? request.environment() : project.getBugTemplateEnvironment(),
                 request.testResultId(), request.testRunId(), request.assigneeId(), request.environmentId(),
-                request.exploratorySessionId(), request.customFields(), request.stepResultId());
+                request.exploratorySessionId(), request.customFields(), request.stepResultId(),
+                request.labels(), request.foundInPlanId(), request.fixedInPlanId());
     }
 
     private static String orTemplate(String value, String template) {
@@ -315,7 +331,29 @@ public class BugReportService {
                 .with("resolution", bug.getResolution())
                 .with("duplicateOf", bug.getDuplicateOf() == null ? null : bug.getDuplicateOf().getKey())
                 .with("assignee", bug.getAssignee())
-                .with("environment", bug.getEnvironment());
+                .with("environment", bug.getEnvironment())
+                .with("labels", new TreeSet<>(bug.getLabels()))
+                .with("foundInPlan", bug.getFoundInPlan() == null ? null : bug.getFoundInPlan().getName())
+                .with("fixedInPlan", bug.getFixedInPlan() == null ? null : bug.getFixedInPlan().getName());
+    }
+
+    /** Trimmed, blanks dropped; a mutable set, as the collection mapping needs. */
+    private static Set<String> normalizeLabels(Set<String> labels) {
+        return labels.stream()
+                .filter(Objects::nonNull)
+                .map(String::strip)
+                .filter(label -> !label.isEmpty())
+                .collect(Collectors.toCollection(HashSet::new));
+    }
+
+    private TestPlan planOrNull(UUID projectId, UUID planId) {
+        return planId == null ? null : testPlanRepository.findByIdAndProjectId(planId, projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("TestPlan", planId));
+    }
+
+    /** The labels used on this project's bug reports, for autocomplete (TM49). */
+    public List<String> labels(UUID projectId) {
+        return bugReportRepository.findDistinctLabelsByProjectId(projectId);
     }
 
     /** How activity and notifications name a bug: its key, then its title. */

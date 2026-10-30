@@ -79,6 +79,13 @@ public class BugReportController {
         return bugReportService.search(projectId, filter, pageable);
     }
 
+    /** Labels already used on this project's bugs, for the form's autocomplete (TM49). */
+    @GetMapping("/labels")
+    @RequireProjectRole
+    public List<String> labels(@PathVariable UUID projectId) {
+        return bugReportService.labels(projectId);
+    }
+
     @GetMapping("/{idOrKey}")
     @RequireProjectRole
     public BugReportResponse findById(@PathVariable UUID projectId, @PathVariable String idOrKey) {

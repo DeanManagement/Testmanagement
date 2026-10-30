@@ -877,7 +877,11 @@
       "status": "Status",
       "environment": "Umgebung",
       "assignee": "Zugewiesen an",
-      "noAssignee": "Nicht zugewiesen"
+      "noAssignee": "Nicht zugewiesen",
+      "labels": "Labels",
+      "foundInPlan": "Gefunden in",
+      "fixedInPlan": "Behoben in",
+      "noPlan": "Kein Testplan"
     },
     "status": {
       "NEW": "Neu",
