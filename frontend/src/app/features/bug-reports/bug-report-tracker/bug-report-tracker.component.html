@@ -1,0 +1,44 @@
+@if (link(); as item) {
+  <div class="tracker-item" data-test-id="bug-tracker-item">
+    <a [href]="item.url" target="_blank" rel="noopener noreferrer">#{{ item.externalId }}</a>
+    <span class="tracker-title">{{ item.title }}</span>
+    @if (item.trackerState) {
+      <span class="tracker-state" data-test-id="bug-tracker-state">{{ item.trackerState }}</span>
+    } @else {
+      <span class="tracker-state tracker-state--gone">{{ 'bugReport.tracker.unknown' | translate }}</span>
+    }
+  </div>
+  <p class="tracker-hint">
+    {{ 'bugReport.tracker.follows' | translate }}
+    @if (item.stateCheckedAt) {
+      {{ 'bugReport.tracker.checked' | translate: { when: (item.stateCheckedAt | localizedDate: 'short') } }}
+    }
+  </p>
+  <div class="tracker-actions">
+    <button mat-stroked-button (click)="refresh()" [disabled]="busy()" data-test-id="bug-tracker-refresh">
+      <mat-icon>refresh</mat-icon>{{ 'bugReport.tracker.refresh' | translate }}
+    </button>
+    @if (canEdit()) {
+      <button mat-button (click)="detach()" [disabled]="busy()" data-test-id="bug-tracker-detach">
+        <mat-icon>link_off</mat-icon>{{ 'bugReport.tracker.detach' | translate }}
+      </button>
+    }
+  </div>
+} @else if (available() && canEdit()) {
+  <p class="tracker-hint">{{ 'bugReport.tracker.offer' | translate }}</p>
+  <div class="tracker-actions">
+    <mat-form-field appearance="outline" subscriptSizing="dynamic">
+      <mat-label>{{ 'bugReport.tracker.existingId' | translate }}</mat-label>
+      <input matInput [(ngModel)]="existingId" data-test-id="bug-tracker-existing-id" />
+    </mat-form-field>
+    <button mat-flat-button (click)="handOver()" [disabled]="busy()" data-test-id="bug-tracker-hand-over">
+      <mat-icon>send</mat-icon>
+      {{ (existingId.trim() ? 'bugReport.tracker.linkExisting' : 'bugReport.tracker.handOver') | translate }}
+    </button>
+  </div>
+} @else {
+  <p class="tracker-hint">{{ 'bugReport.tracker.none' | translate }}</p>
+}
+@if (error(); as message) {
+  <p class="tracker-error" role="alert">{{ message | translate }}</p>
+}

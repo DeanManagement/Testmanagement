@@ -49,6 +49,9 @@ import org.springframework.data.web.SortDefault;
 import org.springframework.data.domain.Sort;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportExportService;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportListParams;
+import com.deanmanagement.testmanagement.project.internal.service.BugTrackerHandoverService;
+import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueLinkResponse;
+import com.deanmanagement.testmanagement.project.internal.dto.bugReport.HandOverBugReportRequest;
 
 @RestController
 @RequestMapping("/api/projects/{projectId}/bug-reports")
@@ -61,6 +64,7 @@ public class BugReportController {
     private final BugReportLinkService linkService;
     private final BugReportRelationService relationService;
     private final BugReportExportService exportService;
+    private final BugTrackerHandoverService handoverService;
 
     /**
      * The bug list (PRD-045 §3.2), filtered as {@link BugReportListParams} describes. Sortable by
@@ -122,6 +126,39 @@ public class BugReportController {
     public BugReportResponse unlink(@PathVariable UUID projectId, @PathVariable String idOrKey,
                                     @PathVariable UUID linkId, Authentication authentication) {
         return linkService.unlink(projectId, idOrKey, linkId, actor(authentication));
+    }
+
+    /** TM50: the work item the bug was handed over to; 204 when it has none. */
+    @GetMapping("/{idOrKey}/tracker-issue")
+    @RequireProjectRole
+    public ResponseEntity<IssueLinkResponse> trackerIssue(@PathVariable UUID projectId, @PathVariable String idOrKey) {
+        return handoverService.find(projectId, idOrKey).map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.noContent().build());
+    }
+
+    /** TM50: files a work item in Azure DevOps from the bug, or links an existing one; its status follows. */
+    @PostMapping("/{idOrKey}/tracker-issue")
+    @RequireProjectRole(ProjectRole.TESTER)
+    @ResponseStatus(HttpStatus.CREATED)
+    public IssueLinkResponse handOver(@PathVariable UUID projectId, @PathVariable String idOrKey,
+                                      @RequestBody(required = false) HandOverBugReportRequest request,
+                                      Authentication authentication) {
+        String existing = request == null ? null : request.existingExternalId();
+        return handoverService.handOver(projectId, idOrKey, existing, actor(authentication));
+    }
+
+    @PostMapping("/{idOrKey}/tracker-issue/refresh")
+    @RequireProjectRole
+    public IssueLinkResponse refreshTrackerIssue(@PathVariable UUID projectId, @PathVariable String idOrKey) {
+        return handoverService.refresh(projectId, idOrKey);
+    }
+
+    @DeleteMapping("/{idOrKey}/tracker-issue")
+    @RequireProjectRole(ProjectRole.TESTER)
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void detachTrackerIssue(@PathVariable UUID projectId, @PathVariable String idOrKey,
+                                   Authentication authentication) {
+        handoverService.detach(projectId, idOrKey, actor(authentication));
     }
 
     /** TM46: test cases, requirements and other bugs linked by hand. */

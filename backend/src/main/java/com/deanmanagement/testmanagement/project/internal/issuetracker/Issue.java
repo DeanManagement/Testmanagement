@@ -10,6 +10,13 @@ public record Issue(
         String externalId,
         String url,
         String title,
-        IssueState state
+        IssueState state,
+        /* TM50, Azure DevOps only: the state's name and its category (Proposed, InProgress,
+           Resolved, Completed, Removed). Null for the other trackers. */
+        String trackerState,
+        String stateCategory
 ) {
+    public Issue(String externalId, String url, String title, IssueState state) {
+        this(externalId, url, title, state, null, null);
+    }
 }

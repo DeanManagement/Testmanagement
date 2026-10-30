@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { IssueLink } from '../../shared/models/issue-tracker.model';
 import { map } from 'rxjs/operators';
 import { BugReport, BugReportQuery, BulkUpdateBugReportsRequest, ChangeBugStatusRequest, CreateBugReportRequest, DefectDashboard, UpdateBugReportRequest, BugRelationType, BugReportRelations } from '../../shared/models/bug-report.model';
 import { Page } from '../../shared/models/page.model';
@@ -73,6 +74,24 @@ export class BugReportApiService {
 
   unlink(projectId: string, idOrKey: string, linkId: string): Observable<BugReport> {
     return this.http.delete<BugReport>(`${this.baseUrl(projectId)}/${idOrKey}/links/${linkId}`);
+  }
+
+  /** TM50: the work item the bug was handed over to, or null. */
+  getTrackerIssue(projectId: string, idOrKey: string): Observable<IssueLink | null> {
+    return this.http.get<IssueLink | null>(`${this.baseUrl(projectId)}/${idOrKey}/tracker-issue`);
+  }
+
+  /** TM50: files a work item, or links {@code existingExternalId}; the bug's status follows it. */
+  handOver(projectId: string, idOrKey: string, existingExternalId?: string): Observable<IssueLink> {
+    return this.http.post<IssueLink>(`${this.baseUrl(projectId)}/${idOrKey}/tracker-issue`, { existingExternalId });
+  }
+
+  refreshTrackerIssue(projectId: string, idOrKey: string): Observable<IssueLink> {
+    return this.http.post<IssueLink>(`${this.baseUrl(projectId)}/${idOrKey}/tracker-issue/refresh`, {});
+  }
+
+  detachTrackerIssue(projectId: string, idOrKey: string): Observable<void> {
+    return this.http.delete<void>(`${this.baseUrl(projectId)}/${idOrKey}/tracker-issue`);
   }
 
   /** TM46: test cases, requirements and bugs linked by hand. */

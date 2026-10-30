@@ -1,9 +1,9 @@
 package com.deanmanagement.testmanagement.project.internal.issuetracker;
 
 import com.deanmanagement.testmanagement.project.internal.entity.IssueLink;
-import com.deanmanagement.testmanagement.project.internal.entity.IssueState;
 import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerConfig;
 import com.deanmanagement.testmanagement.project.internal.repository.IssueLinkRepository;
+import com.deanmanagement.testmanagement.project.internal.service.BugTrackerHandoverService;
 import com.deanmanagement.testmanagement.project.internal.service.IssueTrackerConfigService;
 import com.deanmanagement.testmanagement.shared.exception.UpstreamServiceException;
 import lombok.RequiredArgsConstructor;
@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -34,6 +35,7 @@ public class IssueStateRefresher {
     private final IssueTrackerConfigService configService;
     private final IssueTrackerProviderRegistry providerRegistry;
     private final IssueTrackerProperties properties;
+    private final BugTrackerHandoverService handoverService;
 
     /**
      * @return number of links refreshed; 0 means there was nothing stale or the provider failed on
@@ -42,15 +44,20 @@ public class IssueStateRefresher {
     @Transactional
     public int refreshProject(IssueTrackerConfig config) {
         Instant staleBefore = Instant.now().minusMillis(properties.pollMinAgeMs());
-        List<IssueLink> links = issueLinkRepository.findStaleForActiveRuns(
-                config.getProjectId(), staleBefore, PageRequest.of(0, properties.pollBatchSize()));
-        if (links.isEmpty()) {
+        PageRequest batch = PageRequest.of(0, properties.pollBatchSize());
+        List<IssueLink> resultLinks = issueLinkRepository.findStaleForActiveRuns(
+                config.getProjectId(), staleBefore, batch);
+        // TM50: work items bugs were handed over to, whose status the bugs follow.
+        List<IssueLink> bugLinks = issueLinkRepository.findStaleForBugReports(config.getProjectId(), staleBefore, batch);
+        if (resultLinks.isEmpty() && bugLinks.isEmpty()) {
             return 0;
         }
 
         IssueTrackerProvider provider = providerRegistry.require(config.getProvider());
         IssueTrackerProvider.DecryptedConfig decrypted = configService.decrypt(config);
         int refreshed = 0;
+        List<IssueLink> links = new ArrayList<>(resultLinks);
+        links.addAll(bugLinks);
 
         for (IssueLink link : links) {
             if (link.getProvider() != config.getProvider()) {
@@ -59,20 +66,22 @@ public class IssueStateRefresher {
             }
             try {
                 Issue issue = provider.get(decrypted, link.getExternalId());
-                followIfMoved(link, issue);
-                link.setState(issue.state());
-                if (issue.title() != null) {
-                    link.setTitle(truncate(issue.title()));
+                if (link.getBugReportId() != null) {
+                    handoverService.follow(link, issue);
+                } else {
+                    followIfMoved(link, issue);
+                    link.setState(issue.state());
+                    if (issue.title() != null) {
+                        link.setTitle(truncate(issue.title()));
+                    }
+                    link.setStateCheckedAt(Instant.now());
+                    issueLinkRepository.save(link);
                 }
-                link.setStateCheckedAt(Instant.now());
-                issueLinkRepository.save(link);
                 refreshed++;
             } catch (IssueNotFoundException e) {
                 // Deleted on the tracker: this link's state is unknowable now, the others are fine.
                 log.info("Issue link {} points at an issue that no longer exists: {}", link.getId(), e.getMessage());
-                link.setState(IssueState.UNKNOWN);
-                link.setStateCheckedAt(Instant.now());
-                issueLinkRepository.save(link);
+                handoverService.markGone(link);
             } catch (UpstreamServiceException e) {
                 // Auth failure or rate limiting affects every link on this project equally, so the
                 // batch stops here instead of repeating the same rejected call dozens of times.
@@ -81,8 +90,8 @@ public class IssueStateRefresher {
                         config.getProjectId(), e.getMessage());
                 return refreshed;
             } catch (RuntimeException e) {
-                // A single unresolvable link (bad reference, deleted issue) should not stop the batch;
-                // stamping it as checked stops it monopolising the oldest-first ordering.
+                // A single unresolvable link (bad reference) should not stop the batch; stamping it
+                // as checked stops it monopolising the oldest-first ordering.
                 log.warn("Could not refresh issue link {}: {}", link.getId(), e.getMessage());
                 link.setStateCheckedAt(Instant.now());
                 issueLinkRepository.save(link);

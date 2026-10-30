@@ -1142,6 +1142,22 @@ The **Links** section on a bug's page links it by hand, by key, to test cases, t
 and to other bug reports: *Blocks*, *Is blocked by* or *Relates to*. A requirement lists its open
 bugs on the Requirements page. Where the bug showed up in runs is linked separately, from the run.
 
+### Handing a bug over to Azure DevOps
+
+On a project connected to Azure DevOps (Project Settings → Issue Tracker), a tester can **Hand
+over** a bug from its page. That files a work item of the configured type (normally *Bug*) with
+the title, the four texts, the environment, the priority (Critical 1 … Low 4) and the bug's key.
+To use a work item a developer already filed, type its ID first and choose **Link work item**.
+
+From then on the bug's **status follows the work item**: New → Open, Active → In progress,
+Resolved → Resolved, Closed → Closed (Fixed, unless it already had a resolution) and Removed →
+Closed (Won't fix), checked on the regular poll or at once with **Refresh**. Each change is in
+the bug's history as made by Azure DevOps. The status can't be changed here while the bug is
+handed over; title, texts, labels and assignee stay editable but are not sent to Azure DevOps.
+**Detach** gives the status back; the work item stays in Azure DevOps. If the work item is
+deleted there, the bug keeps its last status and shows the work item as no longer found. One
+work item belongs to one bug: close the others as duplicates of it.
+
 ### Comments on bug reports
 
 Every bug has a **Comments** section, open to all project members including viewers, so

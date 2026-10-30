@@ -214,7 +214,7 @@ public class IssueLinkService {
         return result;
     }
 
-    private static IssueLinkResponse toResponse(IssueLink link) {
+    static IssueLinkResponse toResponse(IssueLink link) {
         return new IssueLinkResponse(
                 link.getId(),
                 link.getTestResultId(),
@@ -223,7 +223,9 @@ public class IssueLinkService {
                 link.getUrl(),
                 link.getTitle(),
                 link.getState(),
-                link.getStateCheckedAt());
+                link.getStateCheckedAt(),
+                link.getBugReportId(),
+                link.getTrackerState());
     }
 
     private static String truncate(String value, int max) {

@@ -1,5 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.service;
 
+import com.deanmanagement.testmanagement.shared.exception.ConflictException;
+import com.deanmanagement.testmanagement.project.internal.repository.IssueLinkRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.ExploratorySessionRepository;
 import com.deanmanagement.testmanagement.project.internal.entity.ExploratorySession;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportFilter;
@@ -71,6 +73,7 @@ public class BugReportService {
     private final ProjectSequenceService projectSequenceService;
     private final AttachmentService attachmentService;
     private final TestPlanRepository testPlanRepository;
+    private final IssueLinkRepository issueLinkRepository;
 
     /** Every bug of the project, unpaged: for duplicate checks, not for display. */
     public List<BugReportResponse> findByProject(UUID projectId) {
@@ -224,6 +227,10 @@ public class BugReportService {
      * resolution, DUPLICATE needs another bug of the project, and reopening clears both.
      */
     void applyStatus(UUID projectId, BugReport bugReport, ChangeBugStatusRequest request, UUID userId) {
+        issueLinkRepository.findByBugReportId(bugReport.getId()).ifPresent(link -> {
+            throw new ConflictException(bugReport.getKey() + "'s status follows work item " + link.getExternalId()
+                    + " in the issue tracker. Change it there, or detach the work item first.");
+        });
         BugResolution resolution = request.resolution();
         if (request.status() == BugReportStatus.CLOSED && resolution == null) {
             throw new IllegalArgumentException("Closing a bug needs a resolution: "
@@ -245,6 +252,26 @@ public class BugReportService {
         auditService.log(projectId, userId, AuditAction.STATUS_CHANGED, AuditEntityType.BUG_REPORT,
                 bugReport.getId(), label(bugReport), request.reason(),
                 FieldChanges.between(before, snapshot(bugReport)));
+    }
+
+    /**
+     * TM50: the status the tracker's work item now implies, applied without the local rules (no
+     * reason, no duplicate target) and audited without a person, with {@code details} saying why.
+     */
+    void followTracker(BugReport bugReport, BugReportStatus status, BugResolution resolution, String details) {
+        if (bugReport.getStatus() == status && bugReport.getResolution() == resolution) {
+            return;
+        }
+        FieldChanges.Snapshot before = snapshot(bugReport);
+        trackResolution(bugReport, status);
+        bugReport.setStatus(status);
+        bugReport.setResolution(resolution);
+        if (resolution != BugResolution.DUPLICATE) {
+            bugReport.setDuplicateOf(null);
+        }
+        bugReportRepository.save(bugReport);
+        auditService.log(bugReport.getProject().getId(), null, AuditAction.STATUS_CHANGED, AuditEntityType.BUG_REPORT,
+                bugReport.getId(), label(bugReport), details, FieldChanges.between(before, snapshot(bugReport)));
     }
 
     /**

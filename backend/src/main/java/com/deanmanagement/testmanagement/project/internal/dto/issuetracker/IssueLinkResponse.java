@@ -18,6 +18,9 @@ public record IssueLinkResponse(
         String url,
         String title,
         IssueState state,
-        Instant stateCheckedAt
+        Instant stateCheckedAt,
+        /* TM50: set instead of testResultId on a bug report's work item, with the tracker's state name. */
+        UUID bugReportId,
+        String trackerState
 ) {
 }

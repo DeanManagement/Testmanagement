@@ -965,6 +965,21 @@
       "BLOCKS": "Blocks",
       "BLOCKED_BY": "Is blocked by",
       "RELATES_TO": "Relates to"
+    },
+    "tracker": {
+      "title": "Azure DevOps",
+      "offer": "Hand this bug over to Azure DevOps as a work item. Its status then follows the work item.",
+      "none": "Not handed over. The project has no Azure DevOps connection.",
+      "existingId": "Existing work item ID (optional)",
+      "handOver": "Hand over",
+      "linkExisting": "Link work item",
+      "follows": "The status follows this work item. Edits here are not sent to Azure DevOps.",
+      "checked": "Last checked {{when}}.",
+      "unknown": "No longer found",
+      "refresh": "Refresh",
+      "detach": "Detach",
+      "failed": "The work item could not be reached.",
+      "statusLocked": "Set in Azure DevOps"
     }
   },
   "myBugs": {

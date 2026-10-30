@@ -1,0 +1,25 @@
+.tracker-item,
+.tracker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.tracker-title {
+  flex: 1;
+  min-width: 0;
+}
+
+.tracker-state {
+  font-weight: 500;
+}
+
+.tracker-state--gone,
+.tracker-hint {
+  color: var(--tm-text-secondary);
+}
+
+.tracker-error {
+  color: var(--tm-danger);
+}

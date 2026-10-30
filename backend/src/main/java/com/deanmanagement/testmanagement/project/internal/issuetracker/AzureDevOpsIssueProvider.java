@@ -1,6 +1,7 @@
 package com.deanmanagement.testmanagement.project.internal.issuetracker;
 
 import com.deanmanagement.testmanagement.project.internal.entity.IssueState;
+import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.entity.IssueTrackerProviderType;
 import com.deanmanagement.testmanagement.shared.exception.UpstreamServiceException;
 import org.springframework.stereotype.Component;
@@ -226,13 +227,26 @@ public class AzureDevOpsIssueProvider extends HttpIssueProviderSupport implement
     }
 
     private HttpRequest patch(DecryptedConfig config, String url, IssueDraft draft, String bodyField) {
-        List<Map<String, Object>> operations = List.of(
+        List<Map<String, Object>> operations = new ArrayList<>(List.of(
                 Map.of("op", "add", "path", "/fields/System.Title", "value", truncate(draft.title(), MAX_TITLE_LENGTH)),
-                Map.of("op", "add", "path", "/fields/" + bodyField, "value", toHtml(draft.body())));
+                Map.of("op", "add", "path", "/fields/" + bodyField, "value", toHtml(draft.body()))));
+        if (draft.priority() != null) {
+            operations.add(Map.of("op", "add", "path", "/fields/" + PRIORITY, "value", priorityOf(draft.priority())));
+        }
         return request(config, url)
                 .header("Content-Type", "application/json-patch+json")
                 .POST(HttpRequest.BodyPublishers.ofString(serializeList(operations), StandardCharsets.UTF_8))
                 .build();
+    }
+
+    /** Azure Boards counts priority from 1 (most urgent) to 4; the inverse of the requirement sync. */
+    static int priorityOf(Priority priority) {
+        return switch (priority) {
+            case CRITICAL -> 1;
+            case HIGH -> 2;
+            case MEDIUM -> 3;
+            case LOW -> 4;
+        };
     }
 
     /** Escaped text with line breaks, deliberately not a Markdown renderer (PRD-026 §3.3). */
@@ -252,16 +266,18 @@ public class AzureDevOpsIssueProvider extends HttpIssueProviderSupport implement
         }
         JsonNode fields = item.path("fields");
         String project = firstNonNull(text(fields, "System.TeamProject"), config.projectRef());
+        String state = text(fields, "System.State");
+        String category = categoryOf(config, project, text(fields, "System.WorkItemType"), state);
         return new Issue(id, projectUrl(config, project) + "/_workitems/edit/" + id,
                 truncate(text(fields, "System.Title"), MAX_TITLE_LENGTH),
-                stateOf(config, project, text(fields, "System.WorkItemType"), text(fields, "System.State")));
+                StateCategories.toIssueState(category), state, category);
     }
 
-    private IssueState stateOf(DecryptedConfig config, String project, String type, String state) {
+    private String categoryOf(DecryptedConfig config, String project, String type, String state) {
         if (type == null || state == null) {
-            return IssueState.UNKNOWN;
+            return null;
         }
-        return StateCategories.toIssueState(categories(config, project, type).get(state));
+        return categories(config, project, type).get(state);
     }
 
     /** State name → category for one work item type, from {@code workitemtypes/{type}/states}. */

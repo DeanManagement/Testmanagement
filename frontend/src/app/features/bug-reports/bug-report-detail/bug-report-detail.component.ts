@@ -28,6 +28,7 @@ import { selectAuthUser } from '../../../store/auth/auth.selectors';
 import { MentionCandidate } from '../../../shared/models/comment.model';
 import { BugReportCommentsComponent } from '../bug-report-comments/bug-report-comments.component';
 import { BugReportRelationsComponent } from '../bug-report-relations/bug-report-relations.component';
+import { BugReportTrackerComponent } from '../bug-report-tracker/bug-report-tracker.component';
 
 @Component({
   selector: 'app-bug-report-detail',
@@ -41,6 +42,7 @@ import { BugReportRelationsComponent } from '../bug-report-relations/bug-report-
     MarkdownPipe,
     BugReportCommentsComponent,
     BugReportRelationsComponent,
+    BugReportTrackerComponent,
     LowerCasePipe,
     RouterLink,
     MatCardModule,
@@ -72,6 +74,8 @@ export class BugReportDetailComponent implements OnInit {
   /** Project or system admin: may delete anyone's comment. */
   readonly isAdmin = signal(false);
   readonly mentionCandidates = signal<MentionCandidate[]>([]);
+  /** TM50: the status follows an Azure DevOps work item and is not changed here. */
+  readonly trackerLinked = signal(false);
 
   ngOnInit(): void {
     this.projectId = this.route.parent?.snapshot.paramMap.get('id') ?? '';
@@ -86,6 +90,11 @@ export class BugReportDetailComponent implements OnInit {
     if (this.projectId) {
       this.loadRole();
     }
+  }
+
+  /** After a handover or refresh the tracker may have moved the status. */
+  reloadBug(): void {
+    this.store.dispatch(BugReportActions.loadBugReport({ projectId: this.projectId, id: this.bugId }));
   }
 
   attachmentsUrl(bug: BugReport): string {

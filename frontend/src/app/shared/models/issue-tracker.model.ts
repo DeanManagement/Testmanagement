@@ -48,7 +48,11 @@ export interface IssueSearchResult {
 
 export interface IssueLink {
   id: string;
-  testResultId: string;
+  /** Null on a bug report's work item (TM50), which has bugReportId instead. */
+  testResultId: string | null;
+  bugReportId?: string | null;
+  /** TM50: the tracker's own state name, e.g. "Active". */
+  trackerState?: string | null;
   provider: IssueTrackerProviderType;
   externalId: string;
   url: string;

@@ -95,11 +95,14 @@
       <div class="status-change">
         <mat-form-field appearance="outline" class="status-select">
           <mat-label>{{ 'bugReport.form.status' | translate }}</mat-label>
-          <mat-select [value]="bug.status" (selectionChange)="onStatusChange(bug, $event.value)" data-test-id="bug-report-detail-status-select">
+          <mat-select [value]="bug.status" [disabled]="trackerLinked()" (selectionChange)="onStatusChange(bug, $event.value)" data-test-id="bug-report-detail-status-select">
             @for (s of statuses; track s) {
               <mat-option [value]="s">{{ 'bugReport.status.' + s | translate }}</mat-option>
             }
           </mat-select>
+          @if (trackerLinked()) {
+            <mat-hint>{{ 'bugReport.tracker.statusLocked' | translate }}</mat-hint>
+          }
         </mat-form-field>
       </div>
     </div>
@@ -193,6 +196,12 @@
       <div class="detail-section tm-card" data-test-id="bug-report-attachments">
         <h3>{{ 'attachment.title' | translate }}</h3>
         <app-attachments [url]="attachmentsUrl(bug)" [canEdit]="canWrite()" />
+      </div>
+
+      <div class="detail-section tm-card" data-test-id="bug-report-tracker">
+        <h3>{{ 'bugReport.tracker.title' | translate }}</h3>
+        <app-bug-report-tracker [projectId]="projectId" [bugId]="bug.id" [canEdit]="canWrite()"
+          (linkedChange)="trackerLinked.set($event)" (statusChanged)="reloadBug()" />
       </div>
 
       <div class="detail-section tm-card" data-test-id="bug-report-relations">

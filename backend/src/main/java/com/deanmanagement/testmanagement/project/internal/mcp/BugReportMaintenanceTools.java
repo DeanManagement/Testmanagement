@@ -8,6 +8,8 @@ import com.deanmanagement.testmanagement.project.internal.entity.Priority;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportAttachmentService;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportLinkService;
 import com.deanmanagement.testmanagement.project.internal.service.BugReportRelationService;
+import com.deanmanagement.testmanagement.project.internal.service.BugTrackerHandoverService;
+import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueLinkResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.BugReportLinksResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.bugReport.RelateBugReportRequest;
 import com.deanmanagement.testmanagement.project.internal.entity.BugRelationType;
@@ -43,6 +45,7 @@ public class BugReportMaintenanceTools {
     private final BugReportService bugReportService;
     private final BugReportLinkService linkService;
     private final BugReportRelationService relationService;
+    private final BugTrackerHandoverService handoverService;
     private final BugReportAttachmentService attachmentService;
     private final McpEnvironmentGuard environmentGuard;
     private final McpWriteThrottle writeThrottle;
@@ -305,6 +308,47 @@ public class BugReportMaintenanceTools {
         if (Arrays.stream(targets).filter(BugReportMaintenanceTools::isGiven).count() != 1) {
             throw new McpToolException("Pass exactly one target: testCase, requirement, or the other bug.");
         }
+    }
+
+
+    @McpTool(
+            name = "hand_over_bug_report",
+            description = """
+                    Hand a bug report over to the project's Azure DevOps: files a work item from its
+                    title, texts and priority, or with existingWorkItemId links one a developer
+                    already filed. From then on the bug's status follows the work item and cannot
+                    be changed here; detach_bug_report_issue gives it back.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
+    @Transactional
+    public IssueLinkResponse handOverBugReport(
+            @McpToolParam(description = "Bug key (PROJ-BUG-12) or UUID") String idOrKey,
+            @McpToolParam(description = "Id of an existing work item to link instead of filing one",
+                    required = false) String existingWorkItemId) {
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        return BugReportTools.enabled(() ->
+                handoverService.handOver(caller.projectId(), idOrKey, existingWorkItemId, caller.userId()));
+    }
+
+    @McpTool(
+            name = "detach_bug_report_issue",
+            description = """
+                    Undo hand_over_bug_report: the bug keeps its last status and can be changed here
+                    again. The work item stays in Azure DevOps.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
+    @Transactional
+    public McpDtos.BugDetail detachBugReportIssue(
+            @McpToolParam(description = "Bug key (PROJ-BUG-12) or UUID") String idOrKey) {
+        var caller = callerContext.requireWriter();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        return BugReportTools.detail(attachmentService, BugReportTools.enabled(() -> {
+            handoverService.detach(caller.projectId(), idOrKey, caller.userId());
+            return bugReportService.findById(caller.projectId(), idOrKey);
+        }));
     }
 
     /** Absent keeps the current plan, "" clears it, anything else must be a plan UUID. */

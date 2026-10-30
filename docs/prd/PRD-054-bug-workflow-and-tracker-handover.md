@@ -102,6 +102,11 @@ exactly as today.
 
 ## 2. Hand a bug report to the issue tracker (TM50) — M (Azure DevOps); +S per other provider
 
+**Status: implemented for Azure DevOps (V99).** Deviations from the design below: no tracker
+badge on the list and kanban yet; `get_bug_report` does not include the work item (the handover
+tools return it, and status changes say what the bug follows); ResolvedReason is not read, so a
+closed work item closes the bug as FIXED unless it had a resolution; attachments are not sent.
+
 **Problem.** Internal bugs and tracker issues are separate worlds. From a failed result a tester
 files either a bug report (`BugReportService`) or a tracker issue (`IssueLinkService.link`, MCP
 `create_linked_issue`) — never both, and an existing bug cannot be moved to the tracker. Developers

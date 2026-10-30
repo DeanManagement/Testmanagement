@@ -173,7 +173,7 @@ on 2026-09-19 (`01d7da0` to `a71a07b`) and need a deploy to reach the test insta
 | [051](PRD-051-bug-report-attachments-and-image-viewer.md) | Bug Report Attachments and Image Viewer (with PRD-044) | P2 | M | ✅ Implemented |
 | [052](PRD-052-lists-filters-and-pickers.md) | Lists, Filters and Pickers | P2 | S-M | ✅ Implemented |
 | [053](PRD-053-review-2026-10-large-features.md) | Larger Features from the October 2026 Review | P2 | L (9 parts) | 📝 Proposed |
-| [054](PRD-054-bug-workflow-and-tracker-handover.md) | Configurable Bug Workflow and Tracker Handover | P2 | L (2 parts) | 📝 Proposed |
+| [054](PRD-054-bug-workflow-and-tracker-handover.md) | Configurable Bug Workflow and Tracker Handover | P2 | L (2 parts) | 🟡 Partial (§2 TM50 done) |
 
 **Suggested order:** 049 (small, and every later screen shows its numbers) → 045 → 046 → 047 → 048 →
 050 → 052; 051 together with or right after 044. The issue-tracker request (Jira, GitHub, Azure

@@ -161,12 +161,16 @@ its `source`, `sourceUrl` and `lastSyncedAt`; `update_requirement` refuses its s
 `remove_test_step`, `add_test_cases_to_run`, `remove_test_cases_from_run`, `reorder_test_run_cases`,
 `link_test_cases`, `unlink_test_cases`, `assign_test_run_cases`, `create_exploratory_session`,
 `update_exploratory_session`, `start_exploratory_session`, `complete_exploratory_session`,
-`abort_exploratory_session`, `add_session_note`, `relate_bug_report`, `unrelate_bug_report`.
+`abort_exploratory_session`, `add_session_note`, `relate_bug_report`, `unrelate_bug_report`,
+`hand_over_bug_report`, `detach_bug_report_issue`.
 
 `list_comments` and `add_comment` take `bugIdOrKey` for a bug report's discussion; on a bug,
 `add_comment` takes `mention` (member emails) to notify people. `update_bug_report` also sets
 `labels` and the `foundInPlan` / `fixedInPlan` test plans. `relate_bug_report` links a bug by hand
 to a test case, a requirement, or another bug (`BLOCKS`, `BLOCKED_BY`, `RELATES_TO`).
+`hand_over_bug_report` files an Azure DevOps work item from a bug (or links an existing one with
+`existingWorkItemId`); the bug's status then follows the work item and `change_bug_report_status`
+refuses it until `detach_bug_report_issue`.
 A tool that fails for an internal reason returns a generic message; the details are in the server
 log and the key's activity.
 
