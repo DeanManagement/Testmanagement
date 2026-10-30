@@ -1,5 +1,10 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.project.internal.service.BugStatusService;
+import com.deanmanagement.testmanagement.project.internal.entity.BugReportStatus;
+import com.deanmanagement.testmanagement.project.internal.dto.bugstatus.UpdateBugStatusRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.bugstatus.CreateBugStatusRequest;
+import com.deanmanagement.testmanagement.project.internal.dto.bugstatus.BugStatusTransitionsRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.ProjectWorkflowResponse;
 import com.deanmanagement.testmanagement.project.internal.dto.buildserver.SetProjectWorkflowsRequest;
 import com.deanmanagement.testmanagement.project.internal.dto.issuetracker.IssueTrackerConfigResponse;
@@ -37,12 +42,15 @@ import java.util.UUID;
  * and the responses carry {@code secretSet} / {@code tokenSet} instead. Outbound URLs are checked
  * by the services' SSRF validators, the same as the UI. Build servers and their workflows are
  * instance-admin settings and stay out of reach; a project admin only picks which of the workflows
- * open to the project testers may trigger, and so does this.
+ * open to the project testers may trigger, and so does this. The project's bug statuses and their
+ * transitions (TM47) are here too.
  */
 @Service
 @InToolGroup(McpToolGroup.CONFIGURATION)
 @RequiredArgsConstructor
 public class ProjectConfigurationTools {
+
+    private static final String DEFAULT_BUG_STATUS_COLOR = "#0ea5e9";
 
     private final McpCallerContext callerContext;
     private final WebhookService webhookService;
@@ -50,6 +58,7 @@ public class ProjectConfigurationTools {
     private final BuildWorkflowService workflowService;
     private final McpWriteThrottle writeThrottle;
     private final McpValidator validator;
+    private final BugStatusService bugStatusService;
 
     // --- webhooks --------------------------------------------------------------------------
 
@@ -348,5 +357,99 @@ public class ProjectConfigurationTools {
                         w.provider() == null ? null : w.provider().name(), w.defaultRef(), w.defaultParameters()))
                 .toList();
         return new McpDtos.WorkflowList(workflows, workflows.size());
+    }
+
+    // --- bug statuses (TM47) ----------------------------------------------------------------
+
+    @McpTool(
+            name = "create_bug_status",
+            description = """
+                    Add one of the project's own bug statuses. Requires an ADMIN key. category is the
+                    fixed status it counts as in reports and the release gate: NEW | OPEN |
+                    IN_PROGRESS | RESOLVED | CLOSED; it cannot be changed later. color: #rrggbb,
+                    default #0ea5e9. Returns every status, as list_bug_statuses does, archived ones
+                    included.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = false))
+    @Transactional
+    public McpDtos.BugStatusList createBugStatus(
+            @McpToolParam(description = "Name, unique in the project, max 100 characters") String name,
+            @McpToolParam(description = "NEW, OPEN, IN_PROGRESS, RESOLVED or CLOSED") BugReportStatus category,
+            @McpToolParam(description = "#rrggbb, default #0ea5e9", required = false) String color) {
+        var caller = callerContext.requireAdmin();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        var request = new CreateBugStatusRequest(name, color == null ? DEFAULT_BUG_STATUS_COLOR : color, category);
+        validator.validate(request);
+        bugStatusService.create(caller.projectId(), request, caller.userId());
+        return BugReportTools.bugStatusList(bugStatusService, caller.projectId(), true);
+    }
+
+    @McpTool(
+            name = "update_bug_status",
+            description = """
+                    Rename, recolour, reorder, archive or restore one of the project's bug statuses,
+                    named as it is now. Requires an ADMIN key. Only what you pass changes. An
+                    archived status stays on the bugs that have it but is no longer offered; the
+                    last active status of a category cannot be archived.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.BugStatusList updateBugStatus(
+            @McpToolParam(description = "The status's current name") String status,
+            @McpToolParam(description = "New name", required = false) String newName,
+            @McpToolParam(description = "#rrggbb", required = false) String color,
+            @McpToolParam(description = "Place in the order, 0 first", required = false) Integer position,
+            @McpToolParam(description = "true archives it, false restores it", required = false) Boolean archived) {
+        var caller = callerContext.requireAdmin();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        if (newName == null && color == null && position == null && archived == null) {
+            throw new McpToolException("Nothing to update: pass newName, color, position or archived.");
+        }
+        UUID id = bugStatus(caller.projectId(), status);
+        var request = new UpdateBugStatusRequest(newName, color, position, archived);
+        validator.validate(request);
+        bugStatusService.update(caller.projectId(), id, request, caller.userId());
+        return BugReportTools.bugStatusList(bugStatusService, caller.projectId(), true);
+    }
+
+    @McpTool(
+            name = "set_bug_status_transitions",
+            description = """
+                    Replace the project's allowed bug status moves. Requires an ADMIN key, and only
+                    do it because a human asked: once any move is listed, only listed moves are
+                    allowed, for everyone. Each transition names two statuses, from and to. An
+                    empty list allows any move again. A bug may always stay in its status.
+                    """,
+            generateOutputSchema = true,
+            annotations = @McpTool.McpAnnotations(destructiveHint = false, idempotentHint = true))
+    @Transactional
+    public McpDtos.BugStatusList setBugStatusTransitions(
+            @McpToolParam(description = "Every allowed move, as from/to status names; [] allows any")
+            List<McpDtos.BugTransition> transitions) {
+        var caller = callerContext.requireAdmin();
+        writeThrottle.recordWrite(caller.apiKeyId());
+        if (transitions == null) {
+            throw new McpToolException("transitions is required; pass [] to allow any move.");
+        }
+        var request = new BugStatusTransitionsRequest(transitions.stream()
+                .map(t -> new BugStatusTransitionsRequest.Transition(bugStatus(caller.projectId(), t.from()),
+                        bugStatus(caller.projectId(), t.to())))
+                .toList());
+        validator.validate(request);
+        bugStatusService.saveTransitions(caller.projectId(), request, caller.userId());
+        return BugReportTools.bugStatusList(bugStatusService, caller.projectId(), true);
+    }
+
+    /** A status by its name, archived ones included; an unknown name lists the ones there are. */
+    private UUID bugStatus(UUID projectId, String name) {
+        if (name == null || name.isBlank()) {
+            throw new McpToolException("A bug status name is required, e.g. from list_bug_statuses.");
+        }
+        return bugStatusService.findByName(projectId, name)
+                .orElseThrow(() -> new McpToolException("No bug status named '" + name + "'. This project has: "
+                        + bugStatusService.describeActive(projectId)))
+                .getId();
     }
 }

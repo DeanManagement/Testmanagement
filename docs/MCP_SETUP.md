@@ -188,7 +188,11 @@ VIEWER, TESTER or ADMIN; only system admins create keys.
 **Project configuration** (ADMIN keys that also hold the Configuration group, see below) —
 `list_webhooks`, `create_webhook`, `update_webhook`, `delete_webhook`, `test_webhook`,
 `get_issue_tracker_config`, `set_issue_tracker_config`, `test_issue_tracker_connection`,
-`delete_issue_tracker_config`, `list_available_pipeline_workflows`, `set_pipeline_workflows`.
+`delete_issue_tracker_config`, `list_available_pipeline_workflows`, `set_pipeline_workflows`,
+`create_bug_status`, `update_bug_status`, `set_bug_status_transitions`.
+Bug statuses are named, not passed by id; `update_bug_status` also finds archived ones to restore
+them, and `set_bug_status_transitions` replaces the whole table (`[]` allows any move). Unlike the
+other settings here, bug status changes are written to the project audit log, as in the UI.
 Secrets are write-only: webhook signing secrets and tracker API tokens are accepted but never
 returned (`secretSet` / `tokenSet` say whether one is stored), Slack / Teams URLs come back masked,
 and any `user:password@` or query string in a returned URL is cut off. Outbound URLs go through the

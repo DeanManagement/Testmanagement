@@ -197,6 +197,11 @@ public class BugStatusService {
                 + target.getName() + "'. Allowed: " + (names.isEmpty() ? "none" : names));
     }
 
+    /** By name, ignoring case and surrounding whitespace, archived ones included: to change them. */
+    public Optional<ProjectBugStatus> findByName(UUID projectId, String name) {
+        return repository.findByProjectIdAndNameNormalized(projectId, ProjectBugStatus.normalize(name));
+    }
+
     /** By name, ignoring case and surrounding whitespace; archived statuses are not found. */
     public Optional<ProjectBugStatus> findActiveByName(UUID projectId, String name) {
         return repository.findByProjectIdAndNameNormalized(projectId, ProjectBugStatus.normalize(name))

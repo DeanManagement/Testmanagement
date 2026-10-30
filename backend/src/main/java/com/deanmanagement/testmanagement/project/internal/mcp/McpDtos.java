@@ -389,7 +389,10 @@ final class McpDtos {
                      @Nullable String customStatus) {}
 
     /** TM47: one of the project's bug statuses, with the statuses a bug in it may move to. */
-    record BugStatus(String name, BugReportStatus category, List<String> allowedNext) {}
+    record BugStatus(String name, BugReportStatus category, List<String> allowedNext, boolean archived) {}
+
+    /** One allowed move, by status name. */
+    record BugTransition(String from, String to) {}
 
     record BugStatusList(List<BugStatus> statuses) {}
 

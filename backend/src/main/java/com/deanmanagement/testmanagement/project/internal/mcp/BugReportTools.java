@@ -231,13 +231,7 @@ public class BugReportTools {
     @Transactional(readOnly = true)
     public McpDtos.BugStatusList listBugStatuses() {
         var caller = callerContext.require();
-        var statuses = bugStatusService.list(caller.projectId(), false);
-        Map<UUID, String> names = statuses.stream()
-                .collect(Collectors.toMap(BugStatusResponse::id, BugStatusResponse::name));
-        return new McpDtos.BugStatusList(statuses.stream()
-                .map(s -> new McpDtos.BugStatus(s.name(), s.category(),
-                        s.allowedTargetIds().stream().map(names::get).toList()))
-                .toList());
+        return bugStatusList(bugStatusService, caller.projectId(), false);
     }
 
     @McpTool(
@@ -480,6 +474,17 @@ public class BugReportTools {
 
     private McpDtos.BugDetail detail(BugReportResponse b) {
         return detail(attachmentService, b);
+    }
+
+    /** The project's statuses with the names each may move to; archived ones only if asked (TM47). */
+    static McpDtos.BugStatusList bugStatusList(BugStatusService service, UUID projectId, boolean includeArchived) {
+        var statuses = service.list(projectId, includeArchived);
+        Map<UUID, String> names = statuses.stream()
+                .collect(Collectors.toMap(BugStatusResponse::id, BugStatusResponse::name));
+        return new McpDtos.BugStatusList(statuses.stream()
+                .map(s -> new McpDtos.BugStatus(s.name(), s.category(),
+                        s.allowedTargetIds().stream().map(names::get).toList(), s.archived()))
+                .toList());
     }
 
     static McpDtos.BugDetail detail(BugReportAttachmentService attachmentService, BugReportResponse b) {

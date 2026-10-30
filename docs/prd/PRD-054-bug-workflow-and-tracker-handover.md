@@ -17,8 +17,8 @@ TM49 and TM46, so this starts at V99.
 **Status: implemented (V100).** Open question 1 was decided as "binding for everyone": admins
 change the rules rather than bypass them. The list filters by project status (`statusId=`, and
 `customStatus` in `list_bug_reports`); `status=` category links still work. My queue and Watched
-items show the status name. Deviation: editing
-statuses over MCP is not offered (`list_bug_statuses` is read-only).
+items show the status name. Editing statuses over MCP: `create_bug_status`, `update_bug_status`
+and `set_bug_status_transitions`, behind an ADMIN key and the TM37 CONFIGURATION group.
 
 **Problem.** Bug statuses (`BugReportStatus`: NEW, OPEN, IN_PROGRESS, RESOLVED, CLOSED) and
 resolutions (`BugResolution`, six values) are fixed, and any status can follow any other. Result
