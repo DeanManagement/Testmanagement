@@ -12,6 +12,7 @@ import com.deanmanagement.testmanagement.project.internal.repository.CommentRepo
 import com.deanmanagement.testmanagement.project.internal.repository.ProjectMemberRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.repository.TestResultRepository;
+import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
 import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
 import com.deanmanagement.testmanagement.user.User;
 import com.deanmanagement.testmanagement.user.UserService;
@@ -66,7 +67,7 @@ public class CommentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Comment", commentId));
 
         if (!comment.getAuthorId().equals(userId)) {
-            throw new IllegalStateException("Only the author can edit a comment");
+            throw new ForbiddenException("Only the author can edit a comment");
         }
 
         comment.setContent(request.content());
@@ -84,7 +85,7 @@ public class CommentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Comment", commentId));
 
         if (!canDelete(userId, comment)) {
-            throw new IllegalStateException("Not authorized to delete this comment");
+            throw new ForbiddenException("Not authorized to delete this comment");
         }
 
         audit(projectId, userId, AuditAction.DELETED, comment);

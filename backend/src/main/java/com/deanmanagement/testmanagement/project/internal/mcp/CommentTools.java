@@ -7,6 +7,7 @@ import com.deanmanagement.testmanagement.project.internal.dto.comment.UpdateComm
 import com.deanmanagement.testmanagement.project.internal.entity.CommentEntityType;
 import com.deanmanagement.testmanagement.project.internal.repository.TestCaseRepository;
 import com.deanmanagement.testmanagement.project.internal.service.CommentService;
+import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.ai.mcp.annotation.McpToolParam;
@@ -134,11 +135,11 @@ public class CommentTools {
         });
     }
 
-    /** CommentService refuses someone else's comment with an IllegalStateException. */
+    /** CommentService refuses someone else's comment with a ForbiddenException. */
     private static <T> T ownComment(Supplier<T> call) {
         try {
             return call.get();
-        } catch (IllegalStateException notTheAuthor) {
+        } catch (ForbiddenException notTheAuthor) {
             throw new McpToolException("Only comments this API key wrote can be changed or deleted. "
                     + "Reply with add_comment instead.");
         }

@@ -112,6 +112,21 @@ class McpExploratorySessionToolsApiTest extends McpToolApiTestSupport {
     }
 
     @Test
+    void deleteRemovesACompletedSessionWithItsNotesAndScreenshots() {
+        authenticateAs(project, ProjectRole.TESTER);
+        McpDtos.ExploratorySession created = sessionTools.createExploratorySession("Explore", 30, null, null);
+        sessionTools.startExploratorySession(created.key());
+        sessionTools.addSessionNote(created.key(), SessionNoteType.NOTE, "Looked at the cart", PNG_BASE64,
+                "image/png", "cart.png");
+        sessionTools.completeExploratorySession(created.key(), null);
+
+        sessionTools.deleteExploratorySession(created.key());
+
+        assertThatThrownBy(() -> sessionTools.getExploratorySession(created.id().toString()))
+                .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
     void aKeyFromAnotherProjectIsNotFound() {
         authenticateAs(project, ProjectRole.TESTER);
         McpDtos.ExploratorySession created = sessionTools.createExploratorySession("Explore", 30, null, null);

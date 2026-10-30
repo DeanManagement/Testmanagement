@@ -1,13 +1,22 @@
 package com.deanmanagement.testmanagement.project.internal.mcp;
 
+import com.deanmanagement.testmanagement.shared.exception.ConflictException;
+import com.deanmanagement.testmanagement.shared.exception.DuplicateKeyException;
+import com.deanmanagement.testmanagement.shared.exception.ForbiddenException;
+import com.deanmanagement.testmanagement.shared.exception.ResourceNotFoundException;
+import com.deanmanagement.testmanagement.shared.exception.TooManyRequestsException;
+import com.deanmanagement.testmanagement.shared.exception.UpstreamServiceException;
 import lombok.RequiredArgsConstructor;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.reflect.MethodSignature;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.ai.mcp.annotation.McpTool;
 import org.springframework.core.Ordered;
 import org.springframework.core.annotation.Order;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
@@ -24,6 +33,11 @@ import java.util.UUID;
  *
  * <p>{@code REFUSED} is separated from {@code ERROR} so an admin reading the activity table can
  * tell "a guard stopped the agent" from "the tool broke" — the first is the system working.
+ *
+ * <p>An {@code ERROR} that is not a domain exception reaches the agent as a generic message, like
+ * the REST API's 500 body (TM41): a Hibernate or SQL message tells an agent nothing it can act on
+ * and tells anyone holding a key how the server is built. The full error goes to the log, and its
+ * message to the invocation row an admin reads.
  */
 @Aspect
 @Component
@@ -41,6 +55,9 @@ public class McpToolAuditor {
 
     private static final int MAX_ARGUMENTS_CHARS = 4000;
     private static final int MAX_ERROR_CHARS = 1000;
+    static final String INTERNAL_ERROR_MESSAGE =
+            "The server failed to complete this call. It has been logged; retrying is unlikely to help.";
+    private static final Logger log = LoggerFactory.getLogger(McpToolAuditor.class);
 
     private final McpInvocationRecorder recorder;
     private final McpCallerContext callerContext;
@@ -69,11 +86,27 @@ public class McpToolAuditor {
         } catch (Throwable error) {
             recorder.record(McpCallerHolder.get(), mcpTool.name(), arguments, "ERROR",
                     truncate(error.getMessage(), MAX_ERROR_CHARS), null, null, elapsedMs(start));
-            throw error;
+            if (isDomainError(error)) {
+                throw error;
+            }
+            log.error("MCP tool {} failed with an internal error", mcpTool.name(), error);
+            throw new IllegalStateException(INTERNAL_ERROR_MESSAGE);
         } finally {
             // Request threads are pooled; a stale caller here would misattribute the next call.
             McpCallerHolder.clear();
         }
+    }
+
+    /** The exceptions whose message is written for the caller; the REST API returns them as 4xx/502. */
+    private static boolean isDomainError(Throwable error) {
+        return error instanceof IllegalArgumentException
+                || error instanceof ResourceNotFoundException
+                || error instanceof ConflictException
+                || error instanceof DuplicateKeyException
+                || error instanceof ForbiddenException
+                || error instanceof AccessDeniedException
+                || error instanceof TooManyRequestsException
+                || error instanceof UpstreamServiceException;
     }
 
     private record Created(String type, UUID id) {

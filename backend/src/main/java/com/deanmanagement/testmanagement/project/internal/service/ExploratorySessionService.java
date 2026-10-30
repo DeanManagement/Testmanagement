@@ -166,7 +166,11 @@ public class ExploratorySessionService {
         // bug already loaded in this transaction doesn't still point at the deleted session.
         bugReportRepository.findByExploratorySessionIdOrderByCreatedAtAsc(id)
                 .forEach(bug -> bug.setExploratorySession(null));
-        // Notes and their images go with it (ON DELETE CASCADE).
+        // Notes are removed through the persistence context, not left to ON DELETE CASCADE: a caller
+        // that read the session first (get_exploratory_session's detail, as the MCP tool does) has
+        // its notes managed here, and flushing those against a deleted session fails. Their images
+        // still go by cascade; nothing on this path loads one.
+        noteRepository.deleteAll(noteRepository.findBySessionIdOrderByOccurredAtDescCreatedAtDesc(id));
         sessionRepository.delete(session);
     }
 
