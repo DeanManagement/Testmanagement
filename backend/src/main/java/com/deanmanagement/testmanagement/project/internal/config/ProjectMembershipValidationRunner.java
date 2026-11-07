@@ -13,7 +13,8 @@ import org.springframework.stereotype.Component;
 /**
  * One-off startup check supporting PRD-001 rollout. With project-role enforcement now active, a
  * project with no {@link ProjectRole#ADMIN} member is manageable only by system admins. This runner
- * logs any such projects so an operator can assign an owner. It is non-destructive (log only).
+ * logs any such projects so an operator can assign an owner. It is non-destructive (log only), and
+ * a failure here is logged rather than thrown: an advisory check must not keep the app from starting.
  */
 @Component
 @RequiredArgsConstructor
@@ -26,6 +27,15 @@ public class ProjectMembershipValidationRunner implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
+        try {
+            warnAboutProjectsWithoutAdmin();
+        } catch (RuntimeException e) {
+            log.error("Startup check for projects without an ADMIN member failed; skipping it. "
+                    + "The project or membership data may be invalid.", e);
+        }
+    }
+
+    private void warnAboutProjectsWithoutAdmin() {
         projectRepository.findAll().forEach(project -> {
             boolean hasAdmin = projectMemberRepository.findByProjectId(project.getId()).stream()
                     .anyMatch(member -> member.getRole() == ProjectRole.ADMIN);
